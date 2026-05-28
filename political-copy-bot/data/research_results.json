@@ -1,0 +1,256 @@
+{
+  "stats": [
+    {
+      "politician": "Michael McCaul",
+      "total": 200,
+      "buys": 144,
+      "sells": 56,
+      "ratio": 2.57,
+      "top_assets": [
+        {
+          "issuer": "MAYS ALLOCATE LP",
+          "ticker": "N/A",
+          "transactionCount": 15
+        },
+        {
+          "issuer": "NORTHERN TAX-ADVANTAGED ULTRA-SHORT FIXED INCOME FUND",
+          "ticker": "N/A",
+          "transactionCount": 14
+        },
+        {
+          "issuer": "S&P Global Inc",
+          "ticker": "SPGI:US",
+          "transactionCount": 10
+        },
+        {
+          "issuer": "Intuit Inc",
+          "ticker": "INTU:US",
+          "transactionCount": 9
+        },
+        {
+          "issuer": "NORTHERN TRUST INTERMEDI ETF",
+          "ticker": "TAXI:US",
+          "transactionCount": 7
+        }
+      ]
+    },
+    {
+      "politician": "Tommy Tuberville",
+      "total": 12,
+      "buys": 3,
+      "sells": 9,
+      "ratio": 0.33,
+      "top_assets": [
+        {
+          "issuer": "Apple Inc",
+          "ticker": "AAPL:US",
+          "transactionCount": 2
+        },
+        {
+          "issuer": "Alphabet Inc",
+          "ticker": "GOOGL:US",
+          "transactionCount": 2
+        },
+        {
+          "issuer": "The Utilities Select Sector SPDR Fund",
+          "ticker": "XLU:US",
+          "transactionCount": 1
+        },
+        {
+          "issuer": "The Consumer Staples Select Sector SPDR Fund",
+          "ticker": "XLP:US",
+          "transactionCount": 1
+        },
+        {
+          "issuer": "The Health Care Select Sector SPDR Fund",
+          "ticker": "XLV:US",
+          "transactionCount": 1
+        }
+      ]
+    },
+    {
+      "politician": "Marjorie Taylor Greene",
+      "total": 158,
+      "buys": 87,
+      "sells": 71,
+      "ratio": 1.23,
+      "top_assets": [
+        {
+          "issuer": "Lam Research Corp",
+          "ticker": "LRCX:US",
+          "transactionCount": 12
+        },
+        {
+          "issuer": "The Procter & Gamble Co",
+          "ticker": "PG:US",
+          "transactionCount": 10
+        },
+        {
+          "issuer": "Installed Building Products Inc",
+          "ticker": "IBP:US",
+          "transactionCount": 10
+        },
+        {
+          "issuer": "Visa Inc",
+          "ticker": "V:US",
+          "transactionCount": 8
+        },
+        {
+          "issuer": "Broadcom Inc",
+          "ticker": "AVGO:US",
+          "transactionCount": 7
+        }
+      ]
+    },
+    {
+      "politician": "Nancy Pelosi",
+      "total": 21,
+      "buys": 11,
+      "sells": 9,
+      "ratio": 1.22,
+      "top_assets": [
+        {
+          "issuer": "Apple Inc",
+          "ticker": "AAPL:US",
+          "transactionCount": 4
+        },
+        {
+          "issuer": "Alphabet Inc",
+          "ticker": "GOOGL:US",
+          "transactionCount": 3
+        },
+        {
+          "issuer": "Amazon.com Inc",
+          "ticker": "AMZN:US",
+          "transactionCount": 3
+        },
+        {
+          "issuer": "NVIDIA Corporation",
+          "ticker": "NVDA:US",
+          "transactionCount": 3
+        },
+        {
+          "issuer": "AllianceBernstein Holding LP",
+          "ticker": "AB:US",
+          "transactionCount": 1
+        }
+      ]
+    },
+    {
+      "politician": "Dan Crenshaw",
+      "total": 5,
+      "buys": 0,
+      "sells": 5,
+      "ratio": 0,
+      "top_assets": [
+        {
+          "issuer": "NVIDIA Corporation",
+          "ticker": "NVDA:US",
+          "transactionCount": 5
+        }
+      ]
+    },
+    {
+      "politician": "Josh Gottheimer",
+      "total": 132,
+      "buys": 46,
+      "sells": 86,
+      "ratio": 0.53,
+      "top_assets": [
+        {
+          "issuer": "Visa Inc",
+          "ticker": "V:US",
+          "transactionCount": 8
+        },
+        {
+          "issuer": "ServiceNow Inc",
+          "ticker": "NOW:US",
+          "transactionCount": 4
+        },
+        {
+          "issuer": "Infineon Technologies AG",
+          "ticker": "IFNNY:US",
+          "transactionCount": 3
+        },
+        {
+          "issuer": "International Business Machines Corp",
+          "ticker": "IBM:US",
+          "transactionCount": 3
+        },
+        {
+          "issuer": "Netease Inc",
+          "ticker": "NTES:US",
+          "transactionCount": 3
+        }
+      ]
+    },
+    {
+      "politician": "Mark Green",
+      "total": 9,
+      "buys": 0,
+      "sells": 9,
+      "ratio": 0,
+      "top_assets": [
+        {
+          "issuer": "SPDR S&P 500 BUYBACK ETF",
+          "ticker": "N/A",
+          "transactionCount": 2
+        },
+        {
+          "issuer": "Amazon.com Inc",
+          "ticker": "AMZN:US",
+          "transactionCount": 1
+        },
+        {
+          "issuer": "Apple Inc",
+          "ticker": "AAPL:US",
+          "transactionCount": 1
+        },
+        {
+          "issuer": "AT&T Inc",
+          "ticker": "T:US",
+          "transactionCount": 1
+        },
+        {
+          "issuer": "Berkshire Hathaway Inc",
+          "ticker": "BRK/B:US",
+          "transactionCount": 1
+        }
+      ]
+    },
+    {
+      "politician": "John Curtis",
+      "total": 199,
+      "buys": 108,
+      "sells": 91,
+      "ratio": 1.19,
+      "top_assets": [
+        {
+          "issuer": "Goldman Sachs Access Investment Grade Corporate Bond ETF",
+          "ticker": "GIGB:US",
+          "transactionCount": 6
+        },
+        {
+          "issuer": "Micron Technology Inc",
+          "ticker": "MU:US",
+          "transactionCount": 6
+        },
+        {
+          "issuer": "INVESCO SHORT TERM TREAS ETF",
+          "ticker": "TBLL:US",
+          "transactionCount": 5
+        },
+        {
+          "issuer": "iShares CMBS ETF",
+          "ticker": "CMBS:US",
+          "transactionCount": 5
+        },
+        {
+          "issuer": "Janus Henderson Mortgage-Backed Securities ETF",
+          "ticker": "JMBS:US",
+          "transactionCount": 5
+        }
+      ]
+    }
+  ]
+}

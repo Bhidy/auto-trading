@@ -1,0 +1,32 @@
+{
+  "core_equity": {
+    "symbols": ["SPY", "QQQ", "IWM", "DIA"],
+    "risk_level": "moderate",
+    "allocation_pct": 20,
+    "instrument_type": "etf"
+  },
+  "aggressive_growth": {
+    "symbols": ["NVDA", "TSLA", "META", "AMZN", "MSFT", "GOOGL", "AAPL"],
+    "risk_level": "high",
+    "allocation_pct": 25,
+    "instrument_type": "stock"
+  },
+  "sector_momentum": {
+    "symbols": ["XLK", "XLE", "XLF", "XLV", "XLY", "XLI"],
+    "risk_level": "high",
+    "allocation_pct": 15,
+    "instrument_type": "etf"
+  },
+  "crypto": {
+    "symbols": ["BTC/USD", "ETH/USD"],
+    "risk_level": "extreme",
+    "allocation_pct": 10,
+    "instrument_type": "crypto"
+  },
+  "defensive": {
+    "symbols": ["SHY", "BIL", "TLT", "GLD"],
+    "risk_level": "low",
+    "allocation_pct": 20,
+    "instrument_type": "etf"
+  }
+}

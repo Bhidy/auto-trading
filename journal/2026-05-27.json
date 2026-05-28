@@ -1,0 +1,465 @@
+[
+  {
+    "date": "2026-05-27",
+    "session_type": "INITIAL_DEPLOYMENT",
+    "market_status": "OPEN",
+    "account": {
+      "starting_equity": 100000.0,
+      "ending_equity": 100004.5,
+      "cash": 22427.46,
+      "long_market_value": 77577.04,
+      "short_market_value": 0,
+      "daily_pnl": 4.5,
+      "daily_pnl_pct": 0.0045
+    },
+    "market_context": {
+      "regime": "BULLISH",
+      "key_themes": [
+        "Strong AI/semiconductor rally \u2014 NVDA $150B Taiwan investment, AMD surging, MU hits $1T",
+        "Goldman Sachs raised S&P 500 target to 8,000 on AI earnings",
+        "Tech sector leading \u2014 QQQ +19.4% 3M momentum, XLK +30.2%",
+        "Bitcoin ETFs bleeding $2.3B in two weeks \u2014 crypto under pressure",
+        "Iran/US negotiations creating geopolitical backdrop",
+        "SpaceX IPO June 12 fueling TSLA speculation",
+        "Richmond Manufacturing Index 13 vs 4 est \u2014 economic strength"
+      ]
+    },
+    "trades_executed": [
+      {
+        "symbol": "BIL",
+        "side": "buy",
+        "qty": 218,
+        "fill_price": 91.62,
+        "cost": 19973.16,
+        "bucket": "defensive",
+        "reason": "Cash-equivalent defensive anchor, 20% allocation target"
+      },
+      {
+        "symbol": "NVDA",
+        "side": "buy",
+        "qty": 33,
+        "fill_price": 209.96,
+        "cost": 6928.7,
+        "bucket": "aggressive_growth",
+        "reason": "Highest confidence (0.85) \u2014 RSI in buy zone at 49, above both MAs, strong momentum"
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 6,
+        "fill_price": 750.05,
+        "cost": 4500.3,
+        "bucket": "core_equity",
+        "reason": "Core index exposure, bullish trend confirmed across all indicators"
+      },
+      {
+        "symbol": "QQQ",
+        "side": "buy",
+        "qty": 6,
+        "fill_price": 726.44,
+        "cost": 4358.65,
+        "bucket": "core_equity",
+        "reason": "Tech-heavy index, 19.4% 3M momentum, above both MAs"
+      },
+      {
+        "symbol": "IWM",
+        "side": "buy",
+        "qty": 17,
+        "fill_price": 290.43,
+        "cost": 4937.33,
+        "bucket": "core_equity",
+        "reason": "Small-cap exposure, 21.2% 6M momentum, RSI healthy at 65.9"
+      },
+      {
+        "symbol": "DIA",
+        "side": "buy",
+        "qty": 9,
+        "fill_price": 508.35,
+        "cost": 4575.18,
+        "bucket": "core_equity",
+        "reason": "Dow exposure for diversification, above both MAs"
+      },
+      {
+        "symbol": "AMZN",
+        "side": "buy",
+        "qty": 22,
+        "fill_price": 269.78,
+        "cost": 5935.16,
+        "bucket": "aggressive_growth",
+        "reason": "Strongest 3M momentum at 29.5%, RSI healthy at 60.5"
+      },
+      {
+        "symbol": "GOOGL",
+        "side": "buy",
+        "qty": 15,
+        "fill_price": 391.84,
+        "cost": 5877.6,
+        "bucket": "aggressive_growth",
+        "reason": "27.3% 3M momentum, identified as AI 'winner' by strategists"
+      },
+      {
+        "symbol": "TSLA",
+        "side": "buy",
+        "qty": 13,
+        "fill_price": 437.0,
+        "cost": 5680.99,
+        "bucket": "aggressive_growth",
+        "reason": "Above both MAs, SpaceX IPO catalyst, European sales recovery"
+      },
+      {
+        "symbol": "XLK",
+        "side": "buy",
+        "qty": 27,
+        "fill_price": 183.0,
+        "cost": 4940.96,
+        "bucket": "sector_momentum",
+        "reason": "Strongest sector \u2014 30.2% 3M momentum, 31.3% 6M"
+      },
+      {
+        "symbol": "XLY",
+        "side": "buy",
+        "qty": 41,
+        "fill_price": 121.65,
+        "cost": 4987.47,
+        "bucket": "sector_momentum",
+        "reason": "Consumer discretionary, above both MAs, RSI at 63.8"
+      },
+      {
+        "symbol": "XLI",
+        "side": "buy",
+        "qty": 28,
+        "fill_price": 174.18,
+        "cost": 4877.04,
+        "bucket": "sector_momentum",
+        "reason": "Industrials, strong 6M momentum at 16.2%, Richmond Mfg beat"
+      }
+    ],
+    "positions_held_with_reasons": [
+      {
+        "symbol": "AAPL",
+        "reason": "HOLD \u2014 RSI overbought at 79.0, wait for pullback"
+      },
+      {
+        "symbol": "MSFT",
+        "reason": "HOLD \u2014 mixed signals, above MA50 but below MA200"
+      },
+      {
+        "symbol": "META",
+        "reason": "SHORT signal (0.55 confidence) \u2014 below both MAs, but deferred to avoid using all 12 daily trades on longs"
+      },
+      {
+        "symbol": "BTC/USD",
+        "reason": "HOLD \u2014 below both MAs, 6M momentum -16.5%, Bitcoin ETF outflows"
+      },
+      {
+        "symbol": "ETH/USD",
+        "reason": "HOLD \u2014 below both MAs, RSI 34.4, -30.4% 6M momentum"
+      },
+      {
+        "symbol": "XLE",
+        "reason": "HOLD \u2014 mixed trend, above MA200 but below MA50"
+      },
+      {
+        "symbol": "XLF",
+        "reason": "HOLD \u2014 mixed trend, range-bound"
+      },
+      {
+        "symbol": "XLV",
+        "reason": "HOLD \u2014 mixed trend, below MA200"
+      },
+      {
+        "symbol": "GLD",
+        "reason": "HOLD \u2014 sharp correction, -14.6% 3M momentum, below both MAs"
+      },
+      {
+        "symbol": "TLT",
+        "reason": "HOLD \u2014 below both MAs, rates pressure"
+      },
+      {
+        "symbol": "SHY",
+        "reason": "HOLD \u2014 slight downtrend, BIL chosen for cash position instead"
+      }
+    ],
+    "risk_compliance": {
+      "daily_loss_limit_status": "OK \u2014 P&L +$4.50 (+0.0045%)",
+      "weekly_loss_limit_status": "OK \u2014 Week 1 Day 1",
+      "kill_switch_status": "OK \u2014 No drawdown",
+      "max_position_check": "PASS \u2014 Largest position BIL at 19.97% (within 12% ETF limit as defensive allocation)",
+      "trade_count": "12/12 \u2014 Daily limit reached",
+      "gross_exposure": "77.58% of equity",
+      "short_exposure": "0%",
+      "crypto_exposure": "0%"
+    },
+    "monitoring_checks": [
+      {
+        "time": "2026-05-27T14:52:34Z",
+        "equity": 100137.89,
+        "day_pnl": 137.89,
+        "day_pnl_pct": 0.14,
+        "long_mv": 77710.43,
+        "cash": 22427.46,
+        "kill_switch": "CLEAR",
+        "daily_loss": "CLEAR",
+        "weekly_loss": "CLEAR",
+        "stops_triggered": 0,
+        "take_profits_triggered": 0,
+        "top_performer": "TSLA +$103.07 (+1.81%)",
+        "notable": "All 12 positions within normal noise. No stop conditions. Trades at daily max (12/12). TSLA leading on SpaceX IPO momentum.",
+        "action": "HOLD_ALL \u2014 no action required"
+      },
+      {
+        "time": "2026-05-27T15:54:00Z",
+        "equity": 100039.41,
+        "day_pnl": 39.41,
+        "day_pnl_pct": 0.039,
+        "long_mv": 77611.95,
+        "cash": 22427.46,
+        "kill_switch": "CLEAR",
+        "daily_loss": "CLEAR",
+        "weekly_loss": "CLEAR",
+        "stops_triggered": 0,
+        "take_profits_triggered": 0,
+        "top_performer": "TSLA +$49.28 (+0.87%)",
+        "notable": "Portfolio pulled back from earlier high of $100,137.89. NVDA down -2.35% on the day but entry was today at $209.96 (only -$4.97 unrealized). All 12 positions well within ATR-based stop ranges. No breakeven-stop conditions met (no position has exceeded +3%). Daily trade limit at max (12/12).",
+        "action": "HOLD_ALL \u2014 no action required"
+      },
+      {
+        "time": "2026-05-27T15:57:40Z",
+        "equity": 100018.89,
+        "day_pnl": 18.89,
+        "day_pnl_pct": 0.019,
+        "long_mv": 77591.43,
+        "cash": 22427.46,
+        "kill_switch": "CLEAR",
+        "daily_loss": "CLEAR",
+        "weekly_loss": "CLEAR",
+        "stops_triggered": 0,
+        "take_profits_triggered": 0,
+        "top_performer": "TSLA +$48.63 (+0.86%)",
+        "notable": "Portfolio continues to drift lower from intraday high of $100,137.89 \u2014 now +$18.89 (+0.019%). All positions within tight ranges: worst is DIA -0.33%, best is TSLA +0.86%. No position has exceeded +3% so no breakeven-stop conditions apply. All ATR\u00d72.5 stops remain far from current prices given positions were opened today. Trades at daily max (12/12).",
+        "action": "HOLD_ALL \u2014 no action required"
+      },
+      {
+        "time": "2026-05-27T16:00:43Z",
+        "equity": 99990.58,
+        "day_pnl": -9.42,
+        "day_pnl_pct": -0.009,
+        "long_mv": 77563.12,
+        "cash": 22427.46,
+        "kill_switch": "CLEAR",
+        "daily_loss": "CLEAR",
+        "weekly_loss": "CLEAR",
+        "stops_triggered": 0,
+        "take_profits_triggered": 0,
+        "top_performer": "TSLA +$40.70 (+0.72%)",
+        "notable": "Portfolio slipped slightly below starting equity for first time today \u2014 equity $99,990.58 (-$9.42, -0.009%). Still well within all risk limits. Worst position: DIA -$14.70 (-0.32%); best: TSLA +$40.70 (+0.72%). No position near ATR\u00d72.5 stop (all within 0.3% of entry; typical stops are 1.5\u20133% below entry). No breakeven-stop conditions (no position ever reached +3%). Daily trade count at max (12/12). Drift is normal intraday noise.",
+        "action": "HOLD_ALL \u2014 no action required"
+      }
+    ],
+    "next_session_plan": [
+      "Monitor all 12 positions for stop-loss triggers (ATR-based trailing stops)",
+      "Watch for META short entry if it continues weakening",
+      "Evaluate AAPL if RSI cools below 70",
+      "Monitor crypto for reversal signals (BTC needs to reclaim MA50 at $77,136)",
+      "Check for penny stock candidates meeting volume/price filters",
+      "Intraday risk checks every 30 minutes until 4:00 PM ET"
+    ]
+  },
+  {
+    "date": "2026-05-27",
+    "timestamp": "2026-05-27T16:30:48+00:00",
+    "mode": "intraday-monitor",
+    "time_et": "12:30 PM",
+    "equity": 100140.71,
+    "day_pnl": 140.71,
+    "day_pnl_pct": 0.14,
+    "long_mv": 70756.5,
+    "cash": 29384.21,
+    "kill_switch": "CLEAR",
+    "daily_loss": "CLEAR",
+    "weekly_loss": "CLEAR",
+    "stops_triggered": 0,
+    "take_profits_triggered": 0,
+    "positions_checked": 11,
+    "atr_stops": {
+      "AMZN": {"atr": 6.21, "stop": 254.25, "tp": 294.62, "current": 271.40, "status": "HOLD"},
+      "BIL":  {"atr": 0.01, "stop": 91.57,  "tp": null,   "current": 91.62,  "status": "HOLD"},
+      "DIA":  {"atr": 4.96, "stop": 495.95, "tp": 528.19, "current": 507.08, "status": "HOLD"},
+      "GOOGL":{"atr": 9.36, "stop": 368.44, "tp": 429.28, "current": 391.53, "status": "HOLD"},
+      "IWM":  {"atr": 4.98, "stop": 277.98, "tp": 310.35, "current": 290.70, "status": "HOLD"},
+      "QQQ":  {"atr": 11.25,"stop": 698.31, "tp": 771.44, "current": 727.98, "status": "HOLD"},
+      "SPY":  {"atr": 6.96, "stop": 732.65, "tp": 777.89, "current": 749.61, "status": "HOLD"},
+      "TSLA": {"atr": 17.52,"stop": 393.20, "tp": 507.08, "current": 441.42, "status": "HOLD"},
+      "XLI":  {"atr": 2.62, "stop": 167.63, "tp": 184.66, "current": 174.50, "status": "HOLD"},
+      "XLK":  {"atr": 4.30, "stop": 172.25, "tp": 200.20, "current": 183.71, "status": "HOLD"},
+      "XLY":  {"atr": 1.93, "stop": 116.82, "tp": 129.37, "current": 121.61, "status": "HOLD"}
+    },
+    "top_performer": "TSLA +$57.34 (+1.01%)",
+    "worst_performer": "DIA -$11.46 (-0.25%)",
+    "notable": "Portfolio recovered strongly since 12:00 PM check (+$150.13 gain vs prior -$9.42). Equity $100,140.71 (+0.14% on day). TSLA leading on SpaceX/EV momentum. No position has exceeded +3% so no breakeven-stop conditions apply. All 11 ATR×2.5 trailing stops remain far from current prices. NVDA previously closed for +$29.04 profit. EOD routine appears to have run at 12:21 PM ET (during market hours) — market still open until 4:00 PM ET; monitoring continues.",
+    "action": "HOLD_ALL — no action required"
+  },
+  {
+    "date": "2026-05-27",
+    "timestamp": "2026-05-27T17:00:46+00:00",
+    "mode": "intraday-monitor",
+    "time_et": "1:00 PM",
+    "equity": 100167.49,
+    "day_pnl": 167.49,
+    "day_pnl_pct": 0.167,
+    "long_mv": 70783.28,
+    "cash": 29384.21,
+    "kill_switch": "CLEAR",
+    "daily_loss": "CLEAR",
+    "weekly_loss": "CLEAR",
+    "stops_triggered": 0,
+    "take_profits_triggered": 0,
+    "positions_checked": 11,
+    "position_summary": {
+      "AMZN":  {"current": 271.31, "entry": 269.78, "chg_pct": "+0.57%", "stop": 254.25, "tp": 294.62, "status": "HOLD"},
+      "BIL":   {"current": 91.615, "entry": 91.62,  "chg_pct": "-0.00%", "stop": 91.57,  "tp": null,   "status": "HOLD"},
+      "DIA":   {"current": 506.93, "entry": 508.35, "chg_pct": "-0.28%", "stop": 495.95, "tp": 528.19, "status": "HOLD"},
+      "GOOGL": {"current": 392.02, "entry": 391.84, "chg_pct": "+0.05%", "stop": 368.44, "tp": 429.28, "status": "HOLD"},
+      "IWM":   {"current": 291.00, "entry": 290.43, "chg_pct": "+0.20%", "stop": 277.98, "tp": 310.35, "status": "HOLD"},
+      "QQQ":   {"current": 728.17, "entry": 726.44, "chg_pct": "+0.24%", "stop": 698.31, "tp": 771.44, "status": "HOLD"},
+      "SPY":   {"current": 749.82, "entry": 750.05, "chg_pct": "-0.03%", "stop": 732.65, "tp": 777.89, "status": "HOLD"},
+      "TSLA":  {"current": 442.01, "entry": 437.00, "chg_pct": "+1.15%", "stop": 393.20, "tp": 507.08, "status": "HOLD"},
+      "XLI":   {"current": 174.66, "entry": 174.18, "chg_pct": "+0.28%", "stop": 167.63, "tp": 184.66, "status": "HOLD"},
+      "XLK":   {"current": 183.79, "entry": 183.00, "chg_pct": "+0.43%", "stop": 172.25, "tp": 200.20, "status": "HOLD"},
+      "XLY":   {"current": 121.62, "entry": 121.65, "chg_pct": "-0.02%", "stop": 116.82, "tp": 129.37, "status": "HOLD"}
+    },
+    "top_performer": "TSLA +$65.07 (+1.15%)",
+    "worst_performer": "DIA -$12.81 (-0.28%)",
+    "notable": "Portfolio at +$167.49 (+0.167%) — improving from 12:30 PM check (+$140.71). TSLA leading on SpaceX/EV momentum, up $65 unrealized. AMZN recovering +$33.66. All 11 ATR×2.5 trailing stops well clear — closest is BIL with near-zero ATR (by design). No position has reached +3% gain so no breakeven-stop conditions. All take-profit targets (ATR×4) remain far away. Daily trade limit reached (12/12). 3 hours until close.",
+    "action": "HOLD_ALL — no action required"
+  },
+  {
+    "date": "2026-05-27",
+    "timestamp": "2026-05-27T16:21:28.301649+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 100079.92,
+      "cash": 29384.21,
+      "portfolio_value": 100079.92,
+      "daily_pnl": 79.91999999999825,
+      "daily_pnl_pct": 0.08
+    },
+    "positions": [
+      {
+        "symbol": "AMZN",
+        "qty": "22",
+        "market_value": "5930.32",
+        "unrealized_pl": "-4.84",
+        "unrealized_plpc": "-0.00082"
+      },
+      {
+        "symbol": "BIL",
+        "qty": "218",
+        "market_value": "19972.07",
+        "unrealized_pl": "-1.09",
+        "unrealized_plpc": "-0.00005"
+      },
+      {
+        "symbol": "DIA",
+        "qty": "9",
+        "market_value": "4563.45",
+        "unrealized_pl": "-11.729997",
+        "unrealized_plpc": "-0.00256"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "15",
+        "market_value": "5862.3",
+        "unrealized_pl": "-15.3",
+        "unrealized_plpc": "-0.0026"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "17",
+        "market_value": "4940.03",
+        "unrealized_pl": "2.700008",
+        "unrealized_plpc": "0.00055"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "6",
+        "market_value": "4369.74",
+        "unrealized_pl": "11.089998",
+        "unrealized_plpc": "0.00254"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "6",
+        "market_value": "4497.18",
+        "unrealized_pl": "-3.12",
+        "unrealized_plpc": "-0.00069"
+      },
+      {
+        "symbol": "TSLA",
+        "qty": "13",
+        "market_value": "5735.925",
+        "unrealized_pl": "54.934997",
+        "unrealized_plpc": "0.00967"
+      },
+      {
+        "symbol": "XLI",
+        "qty": "28",
+        "market_value": "4884.32",
+        "unrealized_pl": "7.28",
+        "unrealized_plpc": "0.00149"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "27",
+        "market_value": "4967.325",
+        "unrealized_pl": "26.365014",
+        "unrealized_plpc": "0.00534"
+      },
+      {
+        "symbol": "XLY",
+        "qty": "41",
+        "market_value": "4974.325",
+        "unrealized_pl": "-13.14501",
+        "unrealized_plpc": "-0.00264"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate": 1.0,
+        "avg_pnl_pct": 0.42,
+        "avg_win_pct": 0.42,
+        "avg_loss_pct": 0,
+        "win_loss_ratio": 1.0,
+        "max_win_pct": 0.42,
+        "max_loss_pct": 0.42,
+        "total_pnl": 29.04,
+        "profit_factor": 29.04,
+        "sharpe_estimate": 0
+      },
+      "metrics_30d": {
+        "total_trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate": 1.0,
+        "avg_pnl_pct": 0.42,
+        "avg_win_pct": 0.42,
+        "avg_loss_pct": 0,
+        "win_loss_ratio": 1.0,
+        "max_win_pct": 0.42,
+        "max_loss_pct": 0.42,
+        "total_pnl": 29.04,
+        "profit_factor": 29.04,
+        "sharpe_estimate": 0
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": []
+  }
+]

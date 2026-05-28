@@ -1,0 +1,28 @@
+{
+  "max_risk_per_trade_pct": 1.5,
+  "max_sector_exposure_pct": 20.0,
+  "kill_switch_daily_loss_pct": 5.0,
+  "kill_switch_halt_hours": 24,
+  "max_trades_per_day": 15,
+  "max_gross_exposure_pct": 80.0,
+  "min_market_cap_billions": 2.0,
+  "min_avg_daily_volume": 2000000,
+  "min_eps_growth_pct": 15.0,
+  "min_rs_vs_spy_3m": 0.0,
+  "capital_tranches": {
+    "core_swing": 0.60,
+    "event_driven": 0.20,
+    "cash_reserve": 0.20
+  },
+  "swing_hold_days": {"min": 3, "max": 15},
+  "event_hold_days": {"min": 0, "max": 1},
+  "atr_stop_multiplier": 1.5,
+  "atr_tp1_multiplier": 3.0,
+  "atr_trailing_multiplier": 1.5,
+  "tp1_sell_pct": 50,
+  "breakout_rvol_threshold": 1.5,
+  "news_rvol_threshold": 3.0,
+  "regime_filter_enabled": true,
+  "order_type": "market",
+  "notes": "Risk limits for multi-factor event-driven system — NEVER modify programmatically"
+}

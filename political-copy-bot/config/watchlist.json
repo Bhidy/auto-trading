@@ -1,0 +1,23 @@
+{
+  "primary_politician": "Michael McCaul",
+  "backup_politicians": ["Marjorie Taylor Greene", "John Curtis"],
+  "scan_all_politicians": true,
+  "check_intervals": {
+    "primary_scan_days": 30,
+    "deep_scan_days": 90,
+    "full_history_days": 365
+  },
+  "copy_filters": {
+    "transaction_types": ["BUY"],
+    "min_trade_size": "1K–15K",
+    "skip_private_investments": true,
+    "skip_municipal_bonds": true,
+    "skip_treasury_bills": true
+  },
+  "sell_logic": {
+    "copy_politician_sells": true,
+    "trailing_stop_pct": 8.0,
+    "take_profit_pct": 25.0,
+    "max_hold_days": 180
+  }
+}

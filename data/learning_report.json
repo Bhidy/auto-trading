@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-05-27T16:21:28.300835+00:00",
+  "overall": {
+    "total_trades": 1,
+    "wins": 1,
+    "losses": 0,
+    "win_rate": 1.0,
+    "avg_pnl_pct": 0.42,
+    "avg_win_pct": 0.42,
+    "avg_loss_pct": 0,
+    "win_loss_ratio": 1.0,
+    "max_win_pct": 0.42,
+    "max_loss_pct": 0.42,
+    "total_pnl": 29.04,
+    "profit_factor": 29.04,
+    "sharpe_estimate": 0
+  },
+  "last_7_days": {
+    "total_trades": 1,
+    "wins": 1,
+    "losses": 0,
+    "win_rate": 1.0,
+    "avg_pnl_pct": 0.42,
+    "avg_win_pct": 0.42,
+    "avg_loss_pct": 0,
+    "win_loss_ratio": 1.0,
+    "max_win_pct": 0.42,
+    "max_loss_pct": 0.42,
+    "total_pnl": 29.04,
+    "profit_factor": 29.04,
+    "sharpe_estimate": 0
+  },
+  "last_30_days": {
+    "total_trades": 1,
+    "wins": 1,
+    "losses": 0,
+    "win_rate": 1.0,
+    "avg_pnl_pct": 0.42,
+    "avg_win_pct": 0.42,
+    "avg_loss_pct": 0,
+    "win_loss_ratio": 1.0,
+    "max_win_pct": 0.42,
+    "max_loss_pct": 0.42,
+    "total_pnl": 29.04,
+    "profit_factor": 29.04,
+    "sharpe_estimate": 0
+  },
+  "by_bucket": {
+    "aggressive_growth": {
+      "trades": 1,
+      "win_rate": 1.0,
+      "total_pnl": 29.04,
+      "avg_pnl_pct": 0.42
+    }
+  },
+  "by_symbol": {
+    "NVDA": {
+      "trades": 1,
+      "win_rate": 1.0,
+      "total_pnl": 29.04,
+      "avg_pnl_pct": 0.42
+    }
+  },
+  "insights": []
+}

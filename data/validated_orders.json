@@ -1,0 +1,349 @@
+{
+  "timestamp": "2026-05-27T14:28:18.515007+00:00",
+  "portfolio_equity": 100000,
+  "trades_today": 0,
+  "approved_orders": [
+    {
+      "approved": true,
+      "symbol": "NVDA",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.29,
+      "approved_dollar_amount": 290.0,
+      "approved_qty": 1,
+      "price": 210.3,
+      "confidence": 0.85,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (13.7%)",
+        "6M momentum positive (15.2%)",
+        "RSI not overbought (49.0)",
+        "RSI in buy zone"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "SPY",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 1.03,
+      "approved_dollar_amount": 1030.0,
+      "approved_qty": 1,
+      "price": 750.15,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (8.8%)",
+        "6M momentum positive (12.2%)",
+        "RSI not overbought (70.7)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "QQQ",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.69,
+      "approved_dollar_amount": 690.0,
+      "approved_qty": 0,
+      "price": 727.5301,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (19.4%)",
+        "6M momentum positive (20.2%)",
+        "RSI not overbought (73.0)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "IWM",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.6,
+      "approved_dollar_amount": 600.0,
+      "approved_qty": 2,
+      "price": 290.72,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (9.3%)",
+        "6M momentum positive (21.2%)",
+        "RSI not overbought (65.9)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "DIA",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.96,
+      "approved_dollar_amount": 960.0,
+      "approved_qty": 1,
+      "price": 507.8,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (2.6%)",
+        "6M momentum positive (9.3%)",
+        "RSI not overbought (66.0)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "TSLA",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.28,
+      "approved_dollar_amount": 280.0,
+      "approved_qty": 0,
+      "price": 437.245,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (7.0%)",
+        "6M momentum positive (4.7%)",
+        "RSI not overbought (62.1)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "AMZN",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.41,
+      "approved_dollar_amount": 410.0,
+      "approved_qty": 1,
+      "price": 269.31,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (29.5%)",
+        "6M momentum positive (19.0%)",
+        "RSI not overbought (60.5)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "GOOGL",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.41,
+      "approved_dollar_amount": 410.0,
+      "approved_qty": 1,
+      "price": 391.175,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (27.3%)",
+        "6M momentum positive (22.8%)",
+        "RSI not overbought (62.3)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "XLK",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.48,
+      "approved_dollar_amount": 480.0,
+      "approved_qty": 2,
+      "price": 183.58,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (30.2%)",
+        "6M momentum positive (31.3%)",
+        "RSI not overbought (73.1)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "XLY",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.61,
+      "approved_dollar_amount": 610.0,
+      "approved_qty": 5,
+      "price": 121.55,
+      "confidence": 0.75,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (3.8%)",
+        "6M momentum positive (6.4%)",
+        "RSI not overbought (63.8)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "BIL",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 12.0,
+      "approved_dollar_amount": 12000.0,
+      "approved_qty": 130,
+      "price": 91.615,
+      "confidence": 0.6,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (0.0%)",
+        "RSI not overbought (65.8)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "META",
+      "signal": "SHORT",
+      "rejections": [],
+      "approved_position_pct": 0.43,
+      "approved_dollar_amount": 430.0,
+      "approved_qty": 0,
+      "price": 614.165,
+      "confidence": 0.55,
+      "reasons": [
+        "Price below MA50 and MA200",
+        "3M momentum negative (-6.5%)",
+        "RSI not oversold (47.5)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "XLI",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 0.63,
+      "approved_dollar_amount": 630.0,
+      "approved_qty": 3,
+      "price": 174.35,
+      "confidence": 0.55,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "6M momentum positive (16.2%)",
+        "RSI not overbought (55.7)"
+      ]
+    }
+  ],
+  "rejected_orders": [
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.0,
+      "reasons": [
+        "Mixed trend signals (MA50/MA200 divergence)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.4,
+      "reasons": [
+        "Price above MA50 and MA200",
+        "3M momentum positive (14.0%)",
+        "6M momentum positive (12.8%)",
+        "RSI overbought (79.0) - caution"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.0,
+      "reasons": [
+        "Mixed trend signals (MA50/MA200 divergence)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.0,
+      "reasons": [
+        "Mixed trend signals (MA50/MA200 divergence)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.0,
+      "reasons": [
+        "Mixed trend signals (MA50/MA200 divergence)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.5,
+      "reasons": [
+        "Price below MA50 and MA200",
+        "6M momentum negative (-16.5%)",
+        "RSI not oversold (39.2)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.7,
+      "reasons": [
+        "Price below MA50 and MA200",
+        "3M momentum negative (-0.3%)",
+        "6M momentum negative (-30.4%)",
+        "RSI not oversold (34.4)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.7,
+      "reasons": [
+        "Price below MA50 and MA200",
+        "3M momentum negative (-1.0%)",
+        "6M momentum negative (-1.0%)",
+        "RSI not oversold (48.8)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.7,
+      "reasons": [
+        "Price below MA50 and MA200",
+        "3M momentum negative (-5.5%)",
+        "6M momentum negative (-5.2%)",
+        "RSI not oversold (50.9)"
+      ]
+    },
+    {
+      "approved": false,
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.55,
+      "reasons": [
+        "Price below MA50 and MA200",
+        "3M momentum negative (-14.6%)",
+        "RSI not oversold (36.1)"
+      ]
+    }
+  ],
+  "summary": {
+    "total_signals": 23,
+    "approved": 13,
+    "rejected": 10
+  }
+}

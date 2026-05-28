@@ -1,0 +1,1120 @@
+{
+  "timestamp": "2026-05-28T15:53:58.315981+00:00",
+  "market_regime": "STRONG_BULL",
+  "regime_modifiers": {
+    "equity_mult": 1.2,
+    "defensive_mult": 0.6,
+    "cash_target": 0.1
+  },
+  "relative_strength_ranking": [
+    {
+      "symbol": "XLK",
+      "rs_score": 27.69,
+      "m1": 17.69,
+      "m3": 34.95,
+      "m6": 33.53,
+      "rank": 1,
+      "percentile": 100.0
+    },
+    {
+      "symbol": "GOOGL",
+      "rs_score": 18.56,
+      "m1": 11.49,
+      "m3": 25.15,
+      "m6": 20.63,
+      "rank": 2,
+      "percentile": 95.5
+    },
+    {
+      "symbol": "QQQ",
+      "rs_score": 16.98,
+      "m1": 11.1,
+      "m3": 21.03,
+      "m6": 20.71,
+      "rank": 3,
+      "percentile": 90.9
+    },
+    {
+      "symbol": "AMZN",
+      "rs_score": 15.51,
+      "m1": 2.7,
+      "m3": 28.64,
+      "m6": 17.63,
+      "rank": 4,
+      "percentile": 86.4
+    },
+    {
+      "symbol": "AAPL",
+      "rs_score": 15.19,
+      "m1": 14.99,
+      "m3": 17.59,
+      "m6": 12.16,
+      "rank": 5,
+      "percentile": 81.8
+    },
+    {
+      "symbol": "NVDA",
+      "rs_score": 12.84,
+      "m1": 1.89,
+      "m3": 20.32,
+      "m6": 19.89,
+      "rank": 6,
+      "percentile": 77.3
+    },
+    {
+      "symbol": "TSLA",
+      "rs_score": 12.12,
+      "m1": 18.47,
+      "m3": 9.72,
+      "m6": 5.31,
+      "rank": 7,
+      "percentile": 72.7
+    },
+    {
+      "symbol": "IWM",
+      "rs_score": 11.74,
+      "m1": 7.26,
+      "m3": 11.63,
+      "m6": 19.05,
+      "rank": 8,
+      "percentile": 68.2
+    },
+    {
+      "symbol": "SPY",
+      "rs_score": 8.81,
+      "m1": 5.99,
+      "m3": 9.94,
+      "m6": 11.73,
+      "rank": 9,
+      "percentile": 63.6
+    },
+    {
+      "symbol": "XLE",
+      "rs_score": 6.92,
+      "m1": -3.02,
+      "m3": 2.37,
+      "m6": 29.19,
+      "rank": 10,
+      "percentile": 59.1
+    },
+    {
+      "symbol": "DIA",
+      "rs_score": 4.7,
+      "m1": 3.81,
+      "m3": 3.6,
+      "m6": 7.67,
+      "rank": 11,
+      "percentile": 54.5
+    },
+    {
+      "symbol": "XLI",
+      "rs_score": 4.17,
+      "m1": 2.6,
+      "m3": -1.58,
+      "m6": 14.76,
+      "rank": 12,
+      "percentile": 50.0
+    },
+    {
+      "symbol": "XLY",
+      "rs_score": 4.0,
+      "m1": 3.98,
+      "m3": 3.96,
+      "m6": 4.1,
+      "rank": 13,
+      "percentile": 45.5
+    },
+    {
+      "symbol": "MSFT",
+      "rs_score": 0.11,
+      "m1": 0.03,
+      "m3": 8.11,
+      "m6": -10.98,
+      "rank": 14,
+      "percentile": 40.9
+    },
+    {
+      "symbol": "BIL",
+      "rs_score": -0.01,
+      "m1": 0,
+      "m3": 0.01,
+      "m6": -0.05,
+      "rank": 15,
+      "percentile": 36.4
+    },
+    {
+      "symbol": "SHY",
+      "rs_score": -0.71,
+      "m1": -0.17,
+      "m3": -1.12,
+      "m6": -1.01,
+      "rank": 16,
+      "percentile": 31.8
+    },
+    {
+      "symbol": "XLV",
+      "rs_score": -1.15,
+      "m1": 5.5,
+      "m3": -5.93,
+      "m6": -5.08,
+      "rank": 17,
+      "percentile": 27.3
+    },
+    {
+      "symbol": "XLF",
+      "rs_score": -1.3,
+      "m1": -1.34,
+      "m3": -0.4,
+      "m6": -2.5,
+      "rank": 18,
+      "percentile": 22.7
+    },
+    {
+      "symbol": "META",
+      "rs_score": -3.15,
+      "m1": -5.44,
+      "m3": -2.38,
+      "m6": -0.55,
+      "rank": 19,
+      "percentile": 18.2
+    },
+    {
+      "symbol": "TLT",
+      "rs_score": -3.4,
+      "m1": -0.18,
+      "m3": -5.8,
+      "m6": -5.2,
+      "rank": 20,
+      "percentile": 13.6
+    },
+    {
+      "symbol": "GLD",
+      "rs_score": -3.75,
+      "m1": -1.44,
+      "m3": -14.96,
+      "m6": 8.24,
+      "rank": 21,
+      "percentile": 9.1
+    },
+    {
+      "symbol": "BTC/USD",
+      "rs_score": -4.98,
+      "m1": -9.24,
+      "m3": 9.68,
+      "m6": -18.67,
+      "rank": 22,
+      "percentile": 4.5
+    },
+    {
+      "symbol": "ETH/USD",
+      "rs_score": -13.79,
+      "m1": -13.87,
+      "m3": -0.19,
+      "m6": -32.7,
+      "rank": 23,
+      "percentile": 0.0
+    }
+  ],
+  "adaptive_params": {
+    "win_rate_30d": 1.0,
+    "position_size_multiplier": 1.0,
+    "rsi_overbought": 75
+  },
+  "signals": [
+    {
+      "symbol": "IWM",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.882,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:7.3% 3M:11.6%)",
+        "RSI neutral (67)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 291.82,
+        "ma_fast": 269.1432,
+        "ma_slow": 258.494,
+        "rsi14": 66.72,
+        "atr14": 4.8148,
+        "atr_pct": 1.65,
+        "momentum_1m": 7.26,
+        "momentum_3m": 11.63,
+        "momentum_6m": 19.05,
+        "macd": 4.6771,
+        "macd_signal": 4.2595,
+        "macd_histogram": 0.4175,
+        "bb_lower": 272.9526,
+        "bb_upper": 292.3164,
+        "volume_trend_pct": -12.95,
+        "avg_volume_20d": 25615853.0,
+        "rs_rank": 8,
+        "rs_percentile": 68.2
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.24,
+        "stop_loss": 279.78,
+        "take_profit": 311.08,
+        "trailing_stop_pct": 4.12
+      }
+    },
+    {
+      "symbol": "DIA",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.882,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:3.8% 3M:3.6%)",
+        "RSI neutral (66)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 507.3,
+        "ma_fast": 484.7986,
+        "ma_slow": 483.3325,
+        "rsi14": 65.59,
+        "atr14": 5.2556,
+        "atr_pct": 1.04,
+        "momentum_1m": 3.81,
+        "momentum_3m": 3.6,
+        "momentum_6m": 7.67,
+        "macd": 5.0503,
+        "macd_signal": 4.6077,
+        "macd_histogram": 0.4426,
+        "bb_lower": 489.128,
+        "bb_upper": 508.22,
+        "volume_trend_pct": 11.19,
+        "avg_volume_20d": 4675970.0,
+        "rs_rank": 11,
+        "rs_percentile": 54.5
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.39,
+        "stop_loss": 494.16,
+        "take_profit": 528.32,
+        "trailing_stop_pct": 2.59
+      }
+    },
+    {
+      "symbol": "XLY",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.882,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:4.0% 3M:4.0%)",
+        "RSI neutral (64)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 121.49,
+        "ma_fast": 115.3066,
+        "ma_slow": 117.5167,
+        "rsi14": 63.56,
+        "atr14": 1.9289,
+        "atr_pct": 1.59,
+        "momentum_1m": 3.98,
+        "momentum_3m": 3.96,
+        "momentum_6m": 4.1,
+        "macd": 1.0068,
+        "macd_signal": 0.8109,
+        "macd_histogram": 0.196,
+        "bb_lower": 115.5921,
+        "bb_upper": 121.8039,
+        "volume_trend_pct": 3.53,
+        "avg_volume_20d": 8139779.0,
+        "rs_rank": 13,
+        "rs_percentile": 45.5
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.25,
+        "stop_loss": 116.67,
+        "take_profit": 129.21,
+        "trailing_stop_pct": 3.97
+      }
+    },
+    {
+      "symbol": "AMZN",
+      "instrument_type": "stock",
+      "signal": "BUY",
+      "score": 0.861,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:2.7% 3M:28.6%)",
+        "RSI neutral (60)",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 14% relative strength (rank #4)"
+      ],
+      "indicators": {
+        "price": 270.15,
+        "ma_fast": 245.3772,
+        "ma_slow": 233.1266,
+        "rsi14": 60.31,
+        "atr14": 6.5993,
+        "atr_pct": 2.44,
+        "momentum_1m": 2.7,
+        "momentum_3m": 28.64,
+        "momentum_6m": 17.63,
+        "macd": 5.2487,
+        "macd_signal": 6.588,
+        "macd_histogram": -1.3393,
+        "bb_lower": 260.7212,
+        "bb_upper": 275.8128,
+        "volume_trend_pct": -12.58,
+        "avg_volume_20d": 40592445.0,
+        "rs_rank": 4,
+        "rs_percentile": 86.4
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.16,
+        "stop_loss": 253.65,
+        "take_profit": 296.55,
+        "trailing_stop_pct": 6.11
+      }
+    },
+    {
+      "symbol": "GOOGL",
+      "instrument_type": "stock",
+      "signal": "BUY",
+      "score": 0.861,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:11.5% 3M:25.1%)",
+        "RSI neutral (62)",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 4% relative strength (rank #2)"
+      ],
+      "indicators": {
+        "price": 390.165,
+        "ma_fast": 346.1225,
+        "ma_slow": 320.4455,
+        "rsi14": 61.8,
+        "atr14": 9.306,
+        "atr_pct": 2.39,
+        "momentum_1m": 11.49,
+        "momentum_3m": 25.15,
+        "momentum_6m": 20.63,
+        "macd": 11.1108,
+        "macd_signal": 14.5189,
+        "macd_histogram": -3.4081,
+        "bb_lower": 379.1259,
+        "bb_upper": 403.6216,
+        "volume_trend_pct": 13.33,
+        "avg_volume_20d": 28070810.0,
+        "rs_rank": 2,
+        "rs_percentile": 95.5
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.17,
+        "stop_loss": 366.9,
+        "take_profit": 427.39,
+        "trailing_stop_pct": 5.96
+      }
+    },
+    {
+      "symbol": "TSLA",
+      "instrument_type": "stock",
+      "signal": "BUY",
+      "score": 0.844,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:18.5% 3M:9.7%)",
+        "RSI neutral (63)",
+        "MACD bullish",
+        "Volume declining -24% \u2014 weak confirmation",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 441.65,
+        "ma_fast": 390.9258,
+        "ma_slow": 418.4023,
+        "rsi14": 63.47,
+        "atr14": 15.0003,
+        "atr_pct": 3.4,
+        "momentum_1m": 18.47,
+        "momentum_3m": 9.72,
+        "momentum_6m": 5.31,
+        "macd": 12.1557,
+        "macd_signal": 11.1845,
+        "macd_histogram": 0.9713,
+        "bb_lower": 378.5822,
+        "bb_upper": 458.7458,
+        "volume_trend_pct": -23.52,
+        "avg_volume_20d": 52451802.0,
+        "rs_rank": 7,
+        "rs_percentile": 72.7
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.12,
+        "stop_loss": 404.15,
+        "take_profit": 501.65,
+        "trailing_stop_pct": 8.49
+      }
+    },
+    {
+      "symbol": "SPY",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.756,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:6.0% 3M:9.9%)",
+        "RSI neutral (73)",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 754.205,
+        "ma_fast": 701.7381,
+        "ma_slow": 688.6679,
+        "rsi14": 73.02,
+        "atr14": 7.1907,
+        "atr_pct": 0.95,
+        "momentum_1m": 5.99,
+        "momentum_3m": 9.94,
+        "momentum_6m": 11.73,
+        "macd": 12.5443,
+        "macd_signal": 12.9105,
+        "macd_histogram": -0.3662,
+        "bb_lower": 716.7337,
+        "bb_upper": 758.1158,
+        "volume_trend_pct": -17.51,
+        "avg_volume_20d": 46634677.0,
+        "rs_rank": 9,
+        "rs_percentile": 63.6
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.42,
+        "stop_loss": 736.23,
+        "take_profit": 782.97,
+        "trailing_stop_pct": 2.38
+      }
+    },
+    {
+      "symbol": "NVDA",
+      "instrument_type": "stock",
+      "signal": "BUY",
+      "score": 0.756,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:1.9% 3M:20.3%)",
+        "RSI neutral (52)",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 213.195,
+        "ma_fast": 198.7129,
+        "ma_slow": 190.1006,
+        "rsi14": 51.61,
+        "atr14": 7.0782,
+        "atr_pct": 3.32,
+        "momentum_1m": 1.89,
+        "momentum_3m": 20.32,
+        "momentum_6m": 19.89,
+        "macd": 4.5103,
+        "macd_signal": 6.4983,
+        "macd_histogram": -1.9879,
+        "bb_lower": 194.4131,
+        "bb_upper": 235.2404,
+        "volume_trend_pct": 9.24,
+        "avg_volume_20d": 159265562.0,
+        "rs_rank": 6,
+        "rs_percentile": 77.3
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.12,
+        "stop_loss": 195.5,
+        "take_profit": 241.51,
+        "trailing_stop_pct": 8.3
+      }
+    },
+    {
+      "symbol": "AAPL",
+      "instrument_type": "stock",
+      "signal": "BUY",
+      "score": 0.735,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:15.0% 3M:17.6%)",
+        "RSI overbought (78)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 18% relative strength (rank #5)"
+      ],
+      "indicators": {
+        "price": 310.66,
+        "ma_fast": 274.0052,
+        "ma_slow": 269.5625,
+        "rsi14": 78.43,
+        "atr14": 5.5711,
+        "atr_pct": 1.79,
+        "momentum_1m": 14.99,
+        "momentum_3m": 17.59,
+        "momentum_6m": 12.16,
+        "macd": 10.2767,
+        "macd_signal": 9.594,
+        "macd_histogram": 0.6827,
+        "bb_lower": 273.3255,
+        "bb_upper": 317.5015,
+        "volume_trend_pct": 18.63,
+        "avg_volume_20d": 48558610.0,
+        "rs_rank": 5,
+        "rs_percentile": 81.8
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.22,
+        "stop_loss": 296.73,
+        "take_profit": 332.94,
+        "trailing_stop_pct": 4.48
+      }
+    },
+    {
+      "symbol": "XLK",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.735,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:17.7% 3M:34.9%)",
+        "RSI overbought (77)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 0% relative strength (rank #1)"
+      ],
+      "indicators": {
+        "price": 187.25,
+        "ma_fast": 156.3506,
+        "ma_slow": 147.7698,
+        "rsi14": 77.18,
+        "atr14": 3.8579,
+        "atr_pct": 2.06,
+        "momentum_1m": 17.69,
+        "momentum_3m": 34.95,
+        "momentum_6m": 33.53,
+        "macd": 7.7522,
+        "macd_signal": 7.4701,
+        "macd_histogram": 0.2821,
+        "bb_lower": 159.4114,
+        "bb_upper": 189.6416,
+        "volume_trend_pct": 8.43,
+        "avg_volume_20d": 11719774.0,
+        "rs_rank": 1,
+        "rs_percentile": 100.0
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.19,
+        "stop_loss": 177.61,
+        "take_profit": 202.68,
+        "trailing_stop_pct": 5.15
+      }
+    },
+    {
+      "symbol": "XLI",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.63,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:2.6% 3M:-1.6%)",
+        "RSI neutral (56)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 174.34,
+        "ma_fast": 169.7986,
+        "ma_slow": 164.2981,
+        "rsi14": 55.7,
+        "atr14": 2.7314,
+        "atr_pct": 1.57,
+        "momentum_1m": 2.6,
+        "momentum_3m": -1.58,
+        "momentum_6m": 14.76,
+        "macd": 0.5558,
+        "macd_signal": 0.5277,
+        "macd_histogram": 0.0282,
+        "bb_lower": 169.0887,
+        "bb_upper": 176.8493,
+        "volume_trend_pct": -17.74,
+        "avg_volume_20d": 7708509.0,
+        "rs_rank": 12,
+        "rs_percentile": 50.0
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.26,
+        "stop_loss": 167.51,
+        "take_profit": 185.27,
+        "trailing_stop_pct": 3.92
+      }
+    },
+    {
+      "symbol": "ETH/USD",
+      "instrument_type": "crypto",
+      "signal": "HOLD",
+      "score": -0.63,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-13.9% 3M:-0.2%)",
+        "RSI oversold (30) \u2014 potential bounce",
+        "MACD bearish",
+        "Bottom 0% relative strength"
+      ],
+      "indicators": {
+        "price": 1987.18,
+        "ma_fast": 2255.0653,
+        "ma_slow": 2519.2088,
+        "rsi14": 29.7,
+        "atr14": 75.5714,
+        "atr_pct": 3.8,
+        "momentum_1m": -13.87,
+        "momentum_3m": -0.19,
+        "momentum_6m": -32.7,
+        "macd": -64.9929,
+        "macd_signal": -49.3524,
+        "macd_histogram": -15.6405,
+        "bb_lower": 1954.8868,
+        "bb_upper": 2380.3552,
+        "volume_trend_pct": 3.73,
+        "avg_volume_20d": 30.0,
+        "rs_rank": 23,
+        "rs_percentile": 0.0
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.11,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "QQQ",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.609,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:11.1% 3M:21.0%)",
+        "RSI overbought (76)",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 9% relative strength (rank #3)"
+      ],
+      "indicators": {
+        "price": 734.9862,
+        "ma_fast": 650.0507,
+        "ma_slow": 626.3387,
+        "rsi14": 76.25,
+        "atr14": 10.568,
+        "atr_pct": 1.44,
+        "momentum_1m": 11.1,
+        "momentum_3m": 21.03,
+        "momentum_6m": 20.71,
+        "macd": 21.211,
+        "macd_signal": 21.4198,
+        "macd_histogram": -0.2088,
+        "bb_lower": 668.0514,
+        "bb_upper": 742.9092,
+        "volume_trend_pct": -11.76,
+        "avg_volume_20d": 38874220.0,
+        "rs_rank": 3,
+        "rs_percentile": 90.9
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.28,
+        "stop_loss": 708.57,
+        "take_profit": 777.26,
+        "trailing_stop_pct": 3.59
+      }
+    },
+    {
+      "symbol": "TLT",
+      "instrument_type": "etf",
+      "signal": "HOLD",
+      "score": -0.578,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-0.2% 3M:-5.8%)",
+        "RSI neutral (53)",
+        "Bottom 14% relative strength"
+      ],
+      "indicators": {
+        "price": 85.55,
+        "ma_fast": 85.9198,
+        "ma_slow": 87.7825,
+        "rsi14": 52.75,
+        "atr14": 0.6784,
+        "atr_pct": 0.79,
+        "momentum_1m": -0.18,
+        "momentum_3m": -5.8,
+        "momentum_6m": -5.2,
+        "macd": -0.3756,
+        "macd_signal": -0.5446,
+        "macd_histogram": 0.1689,
+        "bb_lower": 83.2578,
+        "bb_upper": 86.6122,
+        "volume_trend_pct": 31.65,
+        "avg_volume_20d": 26647753.0,
+        "rs_rank": 20,
+        "rs_percentile": 13.6
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.5,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "BIL",
+      "instrument_type": "etf",
+      "signal": "BUY",
+      "score": 0.567,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:0.0% 3M:0.0%)",
+        "RSI neutral (68)",
+        "MACD bullish",
+        "Volume declining -28% \u2014 weak confirmation",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 91.63,
+        "ma_fast": 91.535,
+        "ma_slow": 91.5275,
+        "rsi14": 67.73,
+        "atr14": 0.0242,
+        "atr_pct": 0.03,
+        "momentum_1m": null,
+        "momentum_3m": 0.01,
+        "momentum_6m": -0.05,
+        "macd": 0.0245,
+        "macd_signal": 0.0097,
+        "macd_histogram": 0.0148,
+        "bb_lower": 91.3696,
+        "bb_upper": 91.6684,
+        "volume_trend_pct": -28.23,
+        "avg_volume_20d": 8826554.0,
+        "rs_rank": 15,
+        "rs_percentile": 36.4
+      },
+      "risk_management": {
+        "suggested_position_pct": 12.0,
+        "stop_loss": 91.57,
+        "take_profit": 91.73,
+        "trailing_stop_pct": 0.07
+      }
+    },
+    {
+      "symbol": "GLD",
+      "instrument_type": "etf",
+      "signal": "HOLD",
+      "score": -0.483,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-1.4% 3M:-15.0%)",
+        "RSI in buy zone (40)",
+        "MACD bearish",
+        "Bottom 9% relative strength"
+      ],
+      "indicators": {
+        "price": 411.3976,
+        "ma_fast": 425.6728,
+        "ma_slow": 421.4153,
+        "rsi14": 39.63,
+        "atr14": 7.5034,
+        "atr_pct": 1.82,
+        "momentum_1m": -1.44,
+        "momentum_3m": -14.96,
+        "momentum_6m": 8.24,
+        "macd": -5.414,
+        "macd_signal": -4.3344,
+        "macd_histogram": -1.0795,
+        "bb_lower": 404.9546,
+        "bb_upper": 438.1292,
+        "volume_trend_pct": -22.97,
+        "avg_volume_20d": 5828873.0,
+        "rs_rank": 21,
+        "rs_percentile": 9.1
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.22,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "SHY",
+      "instrument_type": "etf",
+      "signal": "HOLD",
+      "score": -0.473,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-0.2% 3M:-1.1%)",
+        "RSI in buy zone (50)"
+      ],
+      "indicators": {
+        "price": 82.25,
+        "ma_fast": 82.3468,
+        "ma_slow": 82.6956,
+        "rsi14": 49.6,
+        "atr14": 0.0983,
+        "atr_pct": 0.12,
+        "momentum_1m": -0.17,
+        "momentum_3m": -1.12,
+        "momentum_6m": -1.01,
+        "macd": -0.0619,
+        "macd_signal": -0.0814,
+        "macd_histogram": 0.0195,
+        "bb_lower": 82.0071,
+        "bb_upper": 82.3849,
+        "volume_trend_pct": -21.61,
+        "avg_volume_20d": 3115464.0,
+        "rs_rank": 16,
+        "rs_percentile": 31.8
+      },
+      "risk_management": {
+        "suggested_position_pct": 3.35,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "BTC/USD",
+      "instrument_type": "crypto",
+      "signal": "HOLD",
+      "score": -0.367,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-9.2% 3M:9.7%)",
+        "RSI in buy zone (34)",
+        "MACD bearish",
+        "Price below lower Bollinger Band \u2014 mean reversion opportunity",
+        "Bottom 4% relative strength"
+      ],
+      "indicators": {
+        "price": 72776.098,
+        "ma_fast": 77162.1616,
+        "ma_slow": 79971.4494,
+        "rsi14": 33.9,
+        "atr14": 2029.9975,
+        "atr_pct": 2.79,
+        "momentum_1m": -9.24,
+        "momentum_3m": 9.68,
+        "momentum_6m": -18.67,
+        "macd": -819.7896,
+        "macd_signal": -174.9345,
+        "macd_histogram": -644.8552,
+        "bb_lower": 73085.0611,
+        "bb_upper": 82715.2001,
+        "volume_trend_pct": -42.59,
+        "avg_volume_20d": 2.0,
+        "rs_rank": 22,
+        "rs_percentile": 4.5
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.14,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "META",
+      "instrument_type": "stock",
+      "signal": "HOLD",
+      "score": -0.315,
+      "reasons": [
+        "Mixed trend",
+        "Negative momentum (1M:-5.4% 3M:-2.4%)",
+        "RSI neutral (56)",
+        "Price above upper Bollinger Band \u2014 stretched",
+        "Bottom 18% relative strength"
+      ],
+      "indicators": {
+        "price": 632.725,
+        "ma_fast": 618.1439,
+        "ma_slow": 641.7476,
+        "rsi14": 55.57,
+        "atr14": 15.7823,
+        "atr_pct": 2.49,
+        "momentum_1m": -5.44,
+        "momentum_3m": -2.38,
+        "momentum_6m": -0.55,
+        "macd": -2.5698,
+        "macd_signal": -5.1406,
+        "macd_histogram": 2.5709,
+        "bb_lower": 594.5892,
+        "bb_upper": 629.7443,
+        "volume_trend_pct": 13.27,
+        "avg_volume_20d": 16288852.0,
+        "rs_rank": 19,
+        "rs_percentile": 18.2
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.16,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "instrument_type": "stock",
+      "signal": "HOLD",
+      "score": 0.202,
+      "reasons": [
+        "Mixed trend",
+        "Positive momentum (1M:0.0% 3M:8.1%)",
+        "RSI neutral (58)",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 424.6,
+        "ma_fast": 401.6088,
+        "ma_slow": 441.6517,
+        "rsi14": 57.97,
+        "atr14": 10.865,
+        "atr_pct": 2.56,
+        "momentum_1m": 0.03,
+        "momentum_3m": 8.11,
+        "momentum_6m": -10.98,
+        "macd": 3.2863,
+        "macd_signal": 3.6656,
+        "macd_histogram": -0.3794,
+        "bb_lower": 404.6235,
+        "bb_upper": 426.0805,
+        "volume_trend_pct": 2.74,
+        "avg_volume_20d": 33287405.0,
+        "rs_rank": 14,
+        "rs_percentile": 40.9
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.16,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "XLE",
+      "instrument_type": "etf",
+      "signal": "HOLD",
+      "score": 0.202,
+      "reasons": [
+        "Mixed trend",
+        "Positive momentum (1M:-3.0% 3M:2.4%)",
+        "RSI in buy zone (45)",
+        "Volume declining -22% \u2014 weak confirmation",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 57.245,
+        "ma_fast": 58.3865,
+        "ma_slow": 51.8126,
+        "rsi14": 45.44,
+        "atr14": 1.3749,
+        "atr_pct": 2.4,
+        "momentum_1m": -3.02,
+        "momentum_3m": 2.37,
+        "momentum_6m": 29.19,
+        "macd": 0.1427,
+        "macd_signal": 0.322,
+        "macd_histogram": -0.1793,
+        "bb_lower": 55.4629,
+        "bb_upper": 61.3616,
+        "volume_trend_pct": -21.75,
+        "avg_volume_20d": 38021517.0,
+        "rs_rank": 10,
+        "rs_percentile": 59.1
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.17,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "XLF",
+      "instrument_type": "etf",
+      "signal": "HOLD",
+      "score": -0.158,
+      "reasons": [
+        "Mixed trend",
+        "Negative momentum (1M:-1.3% 3M:-0.4%)",
+        "RSI in buy zone (47)"
+      ],
+      "indicators": {
+        "price": 51.225,
+        "ma_fast": 50.9643,
+        "ma_slow": 52.3494,
+        "rsi14": 47.11,
+        "atr14": 0.6602,
+        "atr_pct": 1.29,
+        "momentum_1m": -1.34,
+        "momentum_3m": -0.4,
+        "momentum_6m": -2.5,
+        "macd": 0.0535,
+        "macd_signal": 0.0871,
+        "macd_histogram": -0.0336,
+        "bb_lower": 50.8973,
+        "bb_upper": 52.1682,
+        "volume_trend_pct": -1.01,
+        "avg_volume_20d": 33903547.0,
+        "rs_rank": 18,
+        "rs_percentile": 22.7
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.31,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    },
+    {
+      "symbol": "XLV",
+      "instrument_type": "etf",
+      "signal": "HOLD",
+      "score": 0.013,
+      "reasons": [
+        "Mixed trend",
+        "Negative momentum (1M:5.5% 3M:-5.9%)",
+        "RSI neutral (63)",
+        "MACD bullish",
+        "Price above upper Bollinger Band \u2014 stretched",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ],
+      "indicators": {
+        "price": 150.7,
+        "ma_fast": 146.332,
+        "ma_slow": 151.3164,
+        "rsi14": 62.77,
+        "atr14": 2.0975,
+        "atr_pct": 1.39,
+        "momentum_1m": 5.5,
+        "momentum_3m": -5.93,
+        "momentum_6m": -5.08,
+        "macd": 0.7807,
+        "macd_signal": 0.1584,
+        "macd_histogram": 0.6223,
+        "bb_lower": 142.4882,
+        "bb_upper": 150.3448,
+        "volume_trend_pct": 10.25,
+        "avg_volume_20d": 9389418.0,
+        "rs_rank": 17,
+        "rs_percentile": 27.3
+      },
+      "risk_management": {
+        "suggested_position_pct": 0.29,
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+name: "P1 Self Improving Brain — Intraday Monitor"
+
+on:
+  schedule:
+    # Every 30 min during market hours: 10:30AM-3:30PM ET = 14:30-19:30 UTC
+    - cron: "30 14 * * 1-5"
+    - cron: "0 15 * * 1-5"
+    - cron: "30 15 * * 1-5"
+    - cron: "0 16 * * 1-5"
+    - cron: "30 16 * * 1-5"
+    - cron: "0 17 * * 1-5"
+    - cron: "30 17 * * 1-5"
+    - cron: "0 18 * * 1-5"
+    - cron: "30 18 * * 1-5"
+    - cron: "0 19 * * 1-5"
+    - cron: "30 19 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Create Alpaca config
+        run: |
+          cat > config/alpaca_config.json << 'CONF'
+          {
+            "api_key": "${{ secrets.P1_API_KEY }}",
+            "api_secret": "${{ secrets.P1_API_SECRET }}",
+            "base_url": "https://paper-api.alpaca.markets",
+            "data_url": "https://data.alpaca.markets"
+          }
+          CONF
+
+      - name: Check market open
+        id: market
+        run: |
+          python3 -c "
+          import requests
+          h = {'APCA-API-KEY-ID': '${{ secrets.P1_API_KEY }}', 'APCA-API-SECRET-KEY': '${{ secrets.P1_API_SECRET }}'}
+          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h).json()
+          is_open = clock.get('is_open', False)
+          print(f'Market open: {is_open}')
+          with open('$GITHUB_OUTPUT', 'a') as f:
+            f.write(f'is_open={str(is_open).lower()}\n')
+          "
+
+      - name: Run intraday monitor
+        if: steps.market.outputs.is_open == 'true'
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
+          python3 scripts/autonomous_runner.py intraday-monitor
+
+      - name: Commit state
+        if: always()
+        run: |
+          git config user.name "Auto Trading Bot"
+          git config user.email "bot@autotrading.local"
+          git add data/ journal/ -f 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "P1: $(date -u +%Y-%m-%d %H:%M) monitor update"
+          git push || true

@@ -1,0 +1,92 @@
+name: "P3 Cautious Sniper — Daily Trading Pipeline"
+
+on:
+  schedule:
+    # 9:50 AM ET = 13:50 UTC (M-F)
+    - cron: "50 13 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode"
+        required: false
+        default: "full"
+        type: choice
+        options: [full, weekly-screen, morning-scan, trading-session, news-scan, eod-journal, weekly-review]
+
+jobs:
+  trading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Create Alpaca config
+        run: |
+          cat > event-driven-bot/config/alpaca_config.json << 'CONF'
+          {
+            "api_key": "${{ secrets.P3_API_KEY }}",
+            "api_secret": "${{ secrets.P3_API_SECRET }}",
+            "base_url": "https://paper-api.alpaca.markets",
+            "data_url": "https://data.alpaca.markets"
+          }
+          CONF
+
+      - name: Check market open
+        id: market
+        run: |
+          python3 -c "
+          import requests
+          h = {'APCA-API-KEY-ID': '${{ secrets.P3_API_KEY }}', 'APCA-API-SECRET-KEY': '${{ secrets.P3_API_SECRET }}'}
+          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h).json()
+          is_open = clock.get('is_open', False)
+          print(f'Market open: {is_open}')
+          with open('$GITHUB_OUTPUT', 'a') as f:
+            f.write(f'is_open={str(is_open).lower()}\n')
+          "
+
+      - name: Weekly screen (Mondays only)
+        if: steps.market.outputs.is_open == 'true' && (github.event.inputs.mode == 'full' || github.event.inputs.mode == 'weekly-screen')
+        run: |
+          DAY=$(date -u +%u)
+          if [ "$DAY" = "1" ] || [ "${{ github.event.inputs.mode }}" = "weekly-screen" ]; then
+            cd "$GITHUB_WORKSPACE/event-driven-bot"
+            export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+            python3 scripts/event_driven_bot.py weekly-screen
+          fi
+
+      - name: Morning scan
+        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'morning-scan')
+        run: |
+          cd "$GITHUB_WORKSPACE/event-driven-bot"
+          export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+          python3 scripts/event_driven_bot.py morning-scan
+
+      - name: Trading session
+        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
+        run: |
+          cd "$GITHUB_WORKSPACE/event-driven-bot"
+          export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+          python3 scripts/event_driven_bot.py trading-session
+
+      - name: News scan
+        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'news-scan')
+        run: |
+          cd "$GITHUB_WORKSPACE/event-driven-bot"
+          export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+          python3 scripts/event_driven_bot.py news-scan || true
+
+      - name: Commit state
+        if: always()
+        run: |
+          git config user.name "Auto Trading Bot"
+          git config user.email "bot@autotrading.local"
+          git add event-driven-bot/data/ event-driven-bot/journal/ -f 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "P3: $(date -u +%Y-%m-%d) trading pipeline"
+          git push || true

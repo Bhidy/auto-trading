@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-05-28T19:02:35.452555",
+  "account": {
+    "equity": "99952.48",
+    "cash": "91858.64",
+    "buying_power": "191811.12",
+    "portfolio_value": "99952.48",
+    "daily_pnl_pct": -0.02
+  },
+  "positions": [
+    {
+      "symbol": "HD",
+      "qty": "4",
+      "avg_entry": "317.0925",
+      "market_value": "1277.66",
+      "unrealized_pl": "9.29",
+      "unrealized_plpc": "0.00732"
+    },
+    {
+      "symbol": "INTU",
+      "qty": "4",
+      "avg_entry": "312.62",
+      "market_value": "1259.8",
+      "unrealized_pl": "9.32",
+      "unrealized_plpc": "0.00745"
+    },
+    {
+      "symbol": "PG",
+      "qty": "10",
+      "avg_entry": "147.36",
+      "market_value": "1458.5",
+      "unrealized_pl": "-15.1",
+      "unrealized_plpc": "-0.01025"
+    },
+    {
+      "symbol": "TER",
+      "qty": "7",
+      "avg_entry": "368.88",
+      "market_value": "2693.95",
+      "unrealized_pl": "111.79",
+      "unrealized_plpc": "0.04329"
+    },
+    {
+      "symbol": "WDAY",
+      "qty": "11",
+      "avg_entry": "125.88",
+      "market_value": "1403.93",
+      "unrealized_pl": "19.25",
+      "unrealized_plpc": "0.0139"
+    }
+  ],
+  "open_orders": 0,
+  "total_positions": 5
+}

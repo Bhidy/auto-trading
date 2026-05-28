@@ -1,0 +1,754 @@
+#!/usr/bin/env python3
+"""
+Autonomous Runner — Production orchestrator for Portfolio 1 (Quantitative Multi-Factor).
+Replaces Claude's /schedule by calling the existing analysis scripts and executing via Alpaca REST API.
+Runs entirely via cron — no Claude window needed.
+
+Modes:
+  morning-research   Pull bars, compute signals, detect regime
+  trading-session     Validate signals, execute limit orders
+  intraday-monitor    Check P&L, enforce stops, kill switch
+  end-of-day-journal  Log performance, run self-learning, adapt parameters
+  weekly-review       Deep analysis, rebalancing, strategy tuning
+"""
+
+import json
+import os
+import sys
+import time
+import logging
+import requests
+import math
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+BASE_DIR = Path("/Users/home/Documents/Auto Trading")
+SCRIPTS_DIR = BASE_DIR / "scripts"
+CONFIG_DIR = BASE_DIR / "config"
+DATA_DIR = BASE_DIR / "data"
+JOURNAL_DIR = BASE_DIR / "journal"
+LOGS_DIR = BASE_DIR / "logs"
+
+LOGS_DIR.mkdir(exist_ok=True)
+JOURNAL_DIR.mkdir(exist_ok=True)
+
+sys.path.insert(0, str(SCRIPTS_DIR))
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(LOGS_DIR / f"p1_{datetime.now().strftime('%Y-%m-%d')}.log"),
+        logging.StreamHandler(),
+    ],
+)
+log = logging.getLogger("p1_autonomous")
+
+# ---------------------------------------------------------------------------
+# ALPACA CLIENT
+# ---------------------------------------------------------------------------
+
+class AlpacaClient:
+    def __init__(self):
+        with open(CONFIG_DIR / "alpaca_config.json") as f:
+            cfg = json.load(f)
+        self.api_key = cfg["api_key"]
+        self.api_secret = cfg["api_secret"]
+        self.base_url = cfg["base_url"]
+        self.data_url = cfg["data_url"]
+        self.headers = {
+            "APCA-API-KEY-ID": self.api_key,
+            "APCA-API-SECRET-KEY": self.api_secret,
+        }
+
+    def _get(self, url, params=None):
+        r = requests.get(url, headers=self.headers, params=params, timeout=30)
+        r.raise_for_status()
+        return r.json()
+
+    def _post(self, url, data):
+        r = requests.post(url, headers=self.headers, json=data, timeout=30)
+        r.raise_for_status()
+        return r.json()
+
+    def _delete(self, url):
+        r = requests.delete(url, headers=self.headers, timeout=30)
+        if r.status_code == 204:
+            return {}
+        r.raise_for_status()
+        return r.json()
+
+    def get_account(self):
+        return self._get(f"{self.base_url}/v2/account")
+
+    def get_clock(self):
+        return self._get(f"{self.base_url}/v2/clock")
+
+    def is_market_open(self):
+        return self.get_clock().get("is_open", False)
+
+    def get_positions(self):
+        return self._get(f"{self.base_url}/v2/positions")
+
+    def get_position(self, symbol):
+        try:
+            return self._get(f"{self.base_url}/v2/positions/{symbol}")
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                return None
+            raise
+
+    def get_orders(self, status="open"):
+        return self._get(f"{self.base_url}/v2/orders", {"status": status})
+
+    def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
+        params = {"timeframe": timeframe, "limit": limit, "feed": "sip"}
+        if start:
+            params["start"] = start
+        return self._get(f"{self.data_url}/v2/stocks/{symbol}/bars", params)
+
+    def get_crypto_bars(self, symbol, timeframe="1Day", limit=220):
+        return self._get(f"{self.data_url}/v1beta3/crypto/us/bars",
+                         {"symbols": symbol, "timeframe": timeframe, "limit": limit})
+
+    def get_latest_quote(self, symbol):
+        return self._get(f"{self.data_url}/v2/stocks/{symbol}/quotes/latest")
+
+    def get_latest_trade(self, symbol):
+        return self._get(f"{self.data_url}/v2/stocks/{symbol}/trades/latest")
+
+    def place_order(self, symbol, qty, side, order_type="limit",
+                    limit_price=None, time_in_force="day"):
+        data = {
+            "symbol": symbol,
+            "qty": str(qty),
+            "side": side,
+            "type": order_type,
+            "time_in_force": time_in_force,
+        }
+        if limit_price and order_type == "limit":
+            data["limit_price"] = str(round(limit_price, 2))
+        return self._post(f"{self.base_url}/v2/orders", data)
+
+    def place_crypto_order(self, symbol, qty, side, order_type="limit",
+                           limit_price=None, time_in_force="gtc"):
+        data = {
+            "symbol": symbol.replace("/", ""),
+            "qty": str(qty),
+            "side": side,
+            "type": order_type,
+            "time_in_force": time_in_force,
+        }
+        if limit_price and order_type == "limit":
+            data["limit_price"] = str(round(limit_price, 2))
+        return self._post(f"{self.base_url}/v2/orders", data)
+
+    def cancel_all_orders(self):
+        return self._delete(f"{self.base_url}/v2/orders")
+
+    def close_position(self, symbol):
+        return self._delete(f"{self.base_url}/v2/positions/{symbol}")
+
+    def close_all_positions(self):
+        return self._delete(f"{self.base_url}/v2/positions")
+
+
+# ---------------------------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------------------------
+
+def load_json(path, default=None):
+    if os.path.exists(path):
+        with open(path) as f:
+            return json.load(f)
+    return default if default is not None else {}
+
+def save_json(path, data):
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+
+def get_bucket_for_symbol(symbol):
+    watchlist = load_json(CONFIG_DIR / "watchlist.json", {})
+    for bucket, info in watchlist.items():
+        if symbol in info.get("symbols", []):
+            return bucket
+    return "unknown"
+
+def get_instrument_type(symbol):
+    watchlist = load_json(CONFIG_DIR / "watchlist.json", {})
+    for bucket, info in watchlist.items():
+        if symbol in info.get("symbols", []):
+            return info.get("instrument_type", "stock")
+    return "stock"
+
+
+# ---------------------------------------------------------------------------
+# MODE 1: MORNING RESEARCH
+# ---------------------------------------------------------------------------
+
+def run_morning_research(alpaca: AlpacaClient):
+    log.info("=" * 60)
+    log.info("MORNING RESEARCH — Pulling bars, computing signals")
+    log.info("=" * 60)
+
+    watchlist = load_json(CONFIG_DIR / "watchlist.json", {})
+    start_date = (datetime.now(timezone.utc) - timedelta(days=330)).strftime("%Y-%m-%d")
+
+    for bucket, info in watchlist.items():
+        symbols = info.get("symbols", [])
+        itype = info.get("instrument_type", "stock")
+        bucket_data = {}
+
+        for sym in symbols:
+            log.info(f"  Fetching {sym} ({bucket})...")
+            try:
+                if itype == "crypto":
+                    resp = alpaca.get_crypto_bars(sym, limit=220)
+                    bars_raw = resp.get("bars", {}).get(sym, [])
+                else:
+                    resp = alpaca.get_stock_bars(sym, start=start_date, limit=220)
+                    bars_raw = resp.get("bars", [])
+
+                bars = []
+                for b in bars_raw:
+                    bars.append({
+                        "t": b.get("t", ""),
+                        "o": b.get("o", 0),
+                        "h": b.get("h", 0),
+                        "l": b.get("l", 0),
+                        "c": b.get("c", 0),
+                        "v": b.get("v", 0),
+                    })
+                bucket_data[sym] = bars
+                log.info(f"    Got {len(bars)} bars for {sym}")
+                time.sleep(0.3)
+            except Exception as e:
+                log.error(f"    Failed to fetch {sym}: {e}")
+
+        save_json(DATA_DIR / f"{bucket}.json", {"bars": bucket_data})
+        log.info(f"  Saved {bucket}.json with {len(bucket_data)} symbols")
+
+    log.info("Running analyst_v2 signal generation...")
+    from analyst_v2 import run_full_analysis
+    result = run_full_analysis()
+
+    regime = result.get("market_regime", "UNKNOWN")
+    signals = result.get("signals", [])
+    buy_signals = [s for s in signals if s["signal"] == "BUY"]
+    short_signals = [s for s in signals if s["signal"] == "SHORT"]
+    hold_signals = [s for s in signals if s["signal"] == "HOLD"]
+
+    log.info(f"Regime: {regime}")
+    log.info(f"Signals: {len(buy_signals)} BUY, {len(short_signals)} SHORT, {len(hold_signals)} HOLD")
+    for s in buy_signals:
+        log.info(f"  BUY  {s['symbol']:6s} score={s['score']:+.3f} | {'; '.join(s['reasons'][:2])}")
+    for s in short_signals:
+        log.info(f"  SHORT {s['symbol']:6s} score={s['score']:+.3f}")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# MODE 2: TRADING SESSION
+# ---------------------------------------------------------------------------
+
+def run_trading_session(alpaca: AlpacaClient):
+    log.info("=" * 60)
+    log.info("TRADING SESSION — Validating signals, executing orders")
+    log.info("=" * 60)
+
+    account = alpaca.get_account()
+    equity = float(account["equity"])
+    cash = float(account["cash"])
+    last_equity = float(account["last_equity"])
+
+    portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
+    limits = load_json(CONFIG_DIR / "risk_limits.json")
+
+    # Kill switch check
+    starting_equity = portfolio_state.get("starting_equity", 100000)
+    drawdown_pct = (starting_equity - equity) / starting_equity * 100
+    if drawdown_pct >= limits["kill_switch_drawdown_pct"]:
+        log.critical(f"KILL SWITCH: Drawdown {drawdown_pct:.2f}% — HALTING ALL TRADING")
+        portfolio_state["halted"] = True
+        portfolio_state["halt_reason"] = f"Kill switch: {drawdown_pct:.2f}% drawdown"
+        save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+        return
+
+    # Daily loss check
+    daily_pnl_pct = (equity - last_equity) / last_equity * 100 if last_equity > 0 else 0
+    if daily_pnl_pct <= -limits["max_daily_loss_pct"]:
+        log.warning(f"Daily loss limit: {daily_pnl_pct:.2f}% — no new trades today")
+        return
+
+    if portfolio_state.get("halted"):
+        log.warning(f"System halted: {portfolio_state.get('halt_reason')}")
+        return
+
+    # Run risk officer validation
+    from risk_officer import run_validation
+    # Update portfolio state for risk officer
+    positions = alpaca.get_positions()
+    portfolio_state["equity"] = equity
+    portfolio_state["day_start_equity"] = portfolio_state.get("day_start_equity", last_equity)
+    portfolio_state["week_start_equity"] = portfolio_state.get("week_start_equity", last_equity)
+    portfolio_state["trades_today"] = len([
+        t for t in load_json(DATA_DIR / "trade_log.json", [])
+        if t.get("timestamp", "").startswith(datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    ])
+    portfolio_state["total_exposure"] = sum(abs(float(p.get("market_value", 0))) for p in positions)
+    portfolio_state["short_exposure"] = sum(
+        abs(float(p.get("market_value", 0))) for p in positions if p.get("side") == "short"
+    )
+    portfolio_state["crypto_exposure"] = 0
+    save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+
+    validated = run_validation()
+    approved = validated.get("approved_orders", [])
+    log.info(f"Validated: {validated['summary']['approved']} approved, {validated['summary']['rejected']} rejected")
+
+    if not approved:
+        log.info("No approved orders to execute")
+        _sync_portfolio_state(alpaca, portfolio_state)
+        return
+
+    trades_executed = 0
+    max_trades = limits["max_trades_per_day"] - portfolio_state["trades_today"]
+
+    for order in approved:
+        if trades_executed >= max_trades:
+            log.warning(f"Daily trade limit reached ({limits['max_trades_per_day']})")
+            break
+
+        symbol = order["symbol"]
+        signal = order["signal"]
+        qty = order.get("approved_qty", 0)
+        price = order.get("price", 0)
+
+        if qty <= 0 or price <= 0:
+            continue
+
+        existing = alpaca.get_position(symbol)
+        if existing and signal == "BUY":
+            existing_pct = abs(float(existing["market_value"])) / equity * 100
+            itype = get_instrument_type(symbol)
+            max_pct = limits["max_single_position_pct"].get(itype, 8)
+            if existing_pct >= max_pct * 0.85:
+                log.info(f"  Already hold {existing_pct:.1f}% of {symbol}, skipping")
+                continue
+
+        dollar_amount = order.get("approved_dollar_amount", qty * price)
+        if dollar_amount > cash * 0.95:
+            qty = int(cash * 0.90 / price)
+            if qty <= 0:
+                log.warning(f"  Insufficient cash for {symbol}")
+                continue
+
+        itype = get_instrument_type(symbol)
+        side = "buy" if signal == "BUY" else "sell"
+
+        try:
+            if itype == "crypto":
+                quote_price = price
+                limit_price = round(quote_price * (1.002 if side == "buy" else 0.998), 2)
+                result = alpaca.place_crypto_order(
+                    symbol=symbol, qty=qty, side=side,
+                    order_type="limit", limit_price=limit_price,
+                )
+            else:
+                quote = alpaca.get_latest_quote(symbol)
+                ask = float(quote.get("quote", {}).get("ap", 0))
+                bid = float(quote.get("quote", {}).get("bp", 0))
+                mid = (ask + bid) / 2 if bid > 0 and ask > 0 else price
+
+                if side == "buy":
+                    limit_price = round(mid * 1.0015, 2)
+                else:
+                    limit_price = round(mid * 0.9985, 2)
+
+                result = alpaca.place_order(
+                    symbol=symbol, qty=qty, side=side,
+                    order_type="limit", limit_price=limit_price,
+                )
+
+            log.info(f"  {side.upper()} {qty} x {symbol} @ limit ${limit_price:.2f} (${qty*limit_price:,.0f}) — {result.get('status')}")
+
+            from performance_tracker import log_trade
+            bucket = get_bucket_for_symbol(symbol)
+            log_trade(
+                symbol=symbol, side=side, qty=qty, entry_price=limit_price,
+                bucket=bucket, signal_score=order.get("confidence", 0),
+                reasons=order.get("reasons", []),
+            )
+            trades_executed += 1
+            cash -= qty * limit_price
+            time.sleep(0.5)
+
+        except requests.HTTPError as e:
+            log.error(f"  Order failed for {symbol}: {e}")
+            if hasattr(e, "response") and e.response is not None:
+                log.error(f"  Response: {e.response.text}")
+        except Exception as e:
+            log.error(f"  Unexpected error for {symbol}: {e}")
+
+    log.info(f"Trading session complete: {trades_executed} orders placed")
+    _sync_portfolio_state(alpaca, portfolio_state)
+
+
+# ---------------------------------------------------------------------------
+# MODE 3: INTRADAY MONITOR
+# ---------------------------------------------------------------------------
+
+def run_intraday_monitor(alpaca: AlpacaClient):
+    log.info("=" * 60)
+    log.info("INTRADAY MONITOR — Checking P&L, stops, kill switch")
+    log.info("=" * 60)
+
+    account = alpaca.get_account()
+    equity = float(account["equity"])
+    last_equity = float(account["last_equity"])
+    positions = alpaca.get_positions()
+
+    portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
+    limits = load_json(CONFIG_DIR / "risk_limits.json")
+
+    # Kill switch
+    starting_equity = portfolio_state.get("starting_equity", 100000)
+    drawdown_pct = (starting_equity - equity) / starting_equity * 100
+    if drawdown_pct >= limits["kill_switch_drawdown_pct"]:
+        log.critical(f"KILL SWITCH TRIGGERED: {drawdown_pct:.2f}% drawdown — LIQUIDATING ALL")
+        try:
+            alpaca.close_all_positions()
+            alpaca.cancel_all_orders()
+        except Exception as e:
+            log.error(f"Liquidation error: {e}")
+        portfolio_state["halted"] = True
+        portfolio_state["halt_reason"] = f"Kill switch at {drawdown_pct:.2f}%"
+        save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+        return
+
+    # Daily loss
+    daily_pnl_pct = (equity - last_equity) / last_equity * 100 if last_equity > 0 else 0
+    if daily_pnl_pct <= -limits["max_daily_loss_pct"]:
+        log.warning(f"Daily loss limit breached: {daily_pnl_pct:.2f}% — halting for 24h")
+        portfolio_state["halted"] = True
+        portfolio_state["halt_reason"] = f"Daily loss: {daily_pnl_pct:.2f}%"
+        portfolio_state["halt_until"] = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+        save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+        return
+
+    # Check halt expiry
+    if portfolio_state.get("halted") and portfolio_state.get("halt_until"):
+        halt_until = datetime.fromisoformat(portfolio_state["halt_until"])
+        if datetime.now(timezone.utc) > halt_until:
+            log.info("Halt period expired — resuming trading")
+            portfolio_state["halted"] = False
+            portfolio_state["halt_reason"] = None
+            portfolio_state["halt_until"] = None
+
+    # Stop-loss and take-profit checks
+    signals_data = load_json(DATA_DIR / "signals.json", {})
+    from portfolio_manager import check_stop_triggers
+    triggers = check_stop_triggers(positions, signals_data)
+
+    for trigger in triggers:
+        sym = trigger["symbol"]
+        action = trigger["action"]
+        log.warning(f"  TRIGGER: {action} for {sym} (P&L: {trigger['pnl_pct']:.1f}%)")
+
+        try:
+            pos = alpaca.get_position(sym)
+            if not pos:
+                continue
+            qty = int(float(pos["qty"]))
+
+            if action == "STOP_LOSS_SELL":
+                alpaca.place_order(symbol=sym, qty=qty, side="sell",
+                                   order_type="market", time_in_force="day")
+                log.warning(f"  STOP LOSS executed: sold {qty} x {sym}")
+                from performance_tracker import find_open_trade, close_trade
+                trade = find_open_trade(sym)
+                if trade:
+                    close_trade(trade["id"], float(pos.get("current_price", trigger["current_price"])))
+
+            elif action == "TAKE_PROFIT_SELL":
+                sell_qty = max(1, qty // 2)
+                quote = alpaca.get_latest_quote(sym)
+                bid = float(quote.get("quote", {}).get("bp", 0))
+                limit_price = round(bid * 0.999, 2) if bid > 0 else None
+                alpaca.place_order(
+                    symbol=sym, qty=sell_qty, side="sell",
+                    order_type="limit" if limit_price else "market",
+                    limit_price=limit_price,
+                )
+                log.info(f"  TAKE PROFIT: sold {sell_qty} of {qty} x {sym}")
+
+        except Exception as e:
+            log.error(f"  Stop/TP order failed for {sym}: {e}")
+
+    # Portfolio health
+    from portfolio_manager import portfolio_health_check
+    health = portfolio_health_check(account, positions)
+    for alert in health.get("alerts", []):
+        level = alert["level"]
+        if level in ("CRITICAL", "EMERGENCY"):
+            log.critical(f"  ALERT [{level}]: {alert['msg']}")
+        elif level == "WARNING":
+            log.warning(f"  ALERT [{level}]: {alert['msg']}")
+        else:
+            log.info(f"  ALERT [{level}]: {alert['msg']}")
+
+    _sync_portfolio_state(alpaca, portfolio_state)
+    log.info(f"Monitor: equity=${equity:,.2f}, daily P&L={daily_pnl_pct:+.2f}%, {len(positions)} positions, {len(triggers)} triggers")
+
+
+# ---------------------------------------------------------------------------
+# MODE 4: END-OF-DAY JOURNAL
+# ---------------------------------------------------------------------------
+
+def run_end_of_day(alpaca: AlpacaClient):
+    log.info("=" * 60)
+    log.info("END-OF-DAY JOURNAL — Performance, self-learning, adapt params")
+    log.info("=" * 60)
+
+    account = alpaca.get_account()
+    equity = float(account["equity"])
+    positions = alpaca.get_positions()
+
+    # Close open trades that were filled
+    trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    position_symbols = {p["symbol"] for p in positions}
+    from performance_tracker import find_open_trade, close_trade
+
+    for trade in trade_log:
+        if trade["status"] == "open" and trade["symbol"] not in position_symbols:
+            pos_data = alpaca.get_position(trade["symbol"])
+            if pos_data is None:
+                orders = alpaca.get_orders("closed")
+                sell_orders = [o for o in orders if o["symbol"] == trade["symbol"] and o["side"] == "sell" and o["filled_qty"] != "0"]
+                if sell_orders:
+                    exit_price = float(sell_orders[0].get("filled_avg_price", trade["entry_price"]))
+                    close_trade(trade["id"], exit_price)
+                    log.info(f"  Closed trade #{trade['id']} {trade['symbol']} @ ${exit_price:.2f}")
+
+    # Run self-learning
+    from performance_tracker import adapt_parameters, generate_learning_report
+
+    log.info("Running self-learning adaptation...")
+    adaptation = adapt_parameters()
+    log.info(f"  7d win rate: {adaptation['metrics_7d']['win_rate']:.1%}")
+    log.info(f"  30d win rate: {adaptation['metrics_30d']['win_rate']:.1%}")
+    log.info(f"  Position size mult: {adaptation['updated_params'].get('position_size_multiplier', 1.0):.2f}")
+
+    report = generate_learning_report()
+    for insight in report.get("insights", []):
+        log.info(f"  INSIGHT: {insight}")
+
+    # Write journal
+    today = datetime.now().strftime("%Y-%m-%d")
+    journal_entry = {
+        "date": today,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "mode": "end-of-day",
+        "account": {
+            "equity": equity,
+            "cash": float(account["cash"]),
+            "portfolio_value": float(account["portfolio_value"]),
+            "daily_pnl": equity - float(account["last_equity"]),
+            "daily_pnl_pct": round((equity - float(account["last_equity"])) / float(account["last_equity"]) * 100, 3),
+        },
+        "positions": [
+            {
+                "symbol": p["symbol"],
+                "qty": p["qty"],
+                "market_value": p["market_value"],
+                "unrealized_pl": p["unrealized_pl"],
+                "unrealized_plpc": p["unrealized_plpc"],
+            }
+            for p in positions
+        ],
+        "learning": {
+            "metrics_7d": adaptation["metrics_7d"],
+            "metrics_30d": adaptation["metrics_30d"],
+            "updated_params_snapshot": {
+                "position_size_multiplier": adaptation["updated_params"].get("position_size_multiplier"),
+                "confidence_buy_threshold": adaptation["updated_params"].get("confidence_buy_threshold"),
+                "trailing_stop_atr_mult": adaptation["updated_params"].get("trailing_stop_atr_mult"),
+            },
+        },
+        "insights": report.get("insights", []),
+    }
+
+    journal_path = JOURNAL_DIR / f"{today}.json"
+    if journal_path.exists():
+        existing = load_json(journal_path)
+        if isinstance(existing, list):
+            existing.append(journal_entry)
+        else:
+            existing = [existing, journal_entry]
+        save_json(journal_path, existing)
+    else:
+        save_json(journal_path, [journal_entry])
+
+    # Update portfolio state for next day
+    portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
+    portfolio_state["day_start_equity"] = equity
+    portfolio_state["trades_today"] = 0
+    if datetime.now().weekday() == 0:
+        portfolio_state["week_start_equity"] = equity
+    _sync_portfolio_state(alpaca, portfolio_state)
+
+    log.info(f"EOD complete: equity=${equity:,.2f}, {len(positions)} positions")
+
+
+# ---------------------------------------------------------------------------
+# MODE 5: WEEKLY REVIEW
+# ---------------------------------------------------------------------------
+
+def run_weekly_review(alpaca: AlpacaClient):
+    log.info("=" * 60)
+    log.info("WEEKLY REVIEW — Deep analysis, rebalancing, strategy tuning")
+    log.info("=" * 60)
+
+    account = alpaca.get_account()
+    equity = float(account["equity"])
+    positions = alpaca.get_positions()
+
+    from performance_tracker import compute_metrics, compute_metrics_by_bucket, compute_metrics_by_symbol
+    from portfolio_manager import compute_rebalance_orders
+
+    metrics_all = compute_metrics()
+    metrics_7d = compute_metrics(7)
+    metrics_30d = compute_metrics(30)
+    by_bucket = compute_metrics_by_bucket()
+    by_symbol = compute_metrics_by_symbol()
+
+    log.info(f"Overall: {metrics_all['total_trades']} trades, {metrics_all['win_rate']:.1%} win rate, PF={metrics_all['profit_factor']:.2f}")
+    log.info(f"30d: {metrics_30d['total_trades']} trades, {metrics_30d['win_rate']:.1%} win rate")
+
+    for bucket, data in by_bucket.items():
+        log.info(f"  {bucket}: {data['trades']} trades, {data['win_rate']:.1%} WR, ${data['total_pnl']:+,.2f}")
+
+    # Rebalancing analysis
+    signals_data = load_json(DATA_DIR / "signals.json", {})
+    regime = signals_data.get("market_regime", "UNKNOWN")
+    rebalance = compute_rebalance_orders(positions, equity, regime)
+
+    for action in rebalance.get("rebalance_actions", []):
+        log.info(f"  REBALANCE: {action['bucket']} {action['action']} "
+                 f"{action['current_pct']:.1f}% -> {action['target_pct']:.1f}% (drift {action['drift_pct']:+.1f}%)")
+
+    # Write weekly review
+    week_num = datetime.now().strftime("%Y-W%W")
+    review = {
+        "week": week_num,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "account": {
+            "equity": equity,
+            "cash": float(account["cash"]),
+            "portfolio_value": float(account["portfolio_value"]),
+        },
+        "performance": {
+            "overall": metrics_all,
+            "last_7d": metrics_7d,
+            "last_30d": metrics_30d,
+            "by_bucket": by_bucket,
+            "by_symbol": by_symbol,
+        },
+        "market_regime": regime,
+        "rebalancing": rebalance,
+        "positions": [
+            {
+                "symbol": p["symbol"],
+                "qty": p["qty"],
+                "market_value": p["market_value"],
+                "unrealized_pl": p["unrealized_pl"],
+                "unrealized_plpc": p["unrealized_plpc"],
+                "bucket": get_bucket_for_symbol(p["symbol"]),
+            }
+            for p in positions
+        ],
+    }
+
+    save_json(JOURNAL_DIR / f"weekly-{week_num}.json", review)
+    log.info(f"Weekly review saved: weekly-{week_num}.json")
+
+
+# ---------------------------------------------------------------------------
+# SHARED HELPERS
+# ---------------------------------------------------------------------------
+
+def _sync_portfolio_state(alpaca: AlpacaClient, portfolio_state: dict):
+    account = alpaca.get_account()
+    positions = alpaca.get_positions()
+
+    equity = float(account["equity"])
+    cash = float(account["cash"])
+    long_mv = sum(float(p.get("market_value", 0)) for p in positions if p.get("side") == "long")
+    short_mv = sum(abs(float(p.get("market_value", 0))) for p in positions if p.get("side") == "short")
+
+    portfolio_state["equity"] = equity
+    portfolio_state["cash"] = cash
+    portfolio_state["long_market_value"] = long_mv
+    portfolio_state["short_exposure"] = short_mv
+    portfolio_state["total_exposure"] = long_mv + short_mv
+    portfolio_state["last_updated"] = datetime.now(timezone.utc).isoformat()
+
+    pos_dict = {}
+    for p in positions:
+        sym = p["symbol"]
+        pos_dict[sym] = {
+            "qty": int(float(p["qty"])),
+            "avg_price": float(p["avg_entry_price"]),
+            "bucket": get_bucket_for_symbol(sym),
+        }
+    portfolio_state["positions"] = pos_dict
+
+    day_start = portfolio_state.get("day_start_equity", float(account["last_equity"]))
+    portfolio_state["day_pnl"] = round(equity - day_start, 2)
+    portfolio_state["day_pnl_pct"] = round((equity - day_start) / day_start, 6) if day_start > 0 else 0
+
+    week_start = portfolio_state.get("week_start_equity", day_start)
+    portfolio_state["week_pnl"] = round(equity - week_start, 2)
+    portfolio_state["week_pnl_pct"] = round((equity - week_start) / week_start, 6) if week_start > 0 else 0
+
+    save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+
+
+# ---------------------------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------------------------
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Portfolio 1 Autonomous Runner")
+    parser.add_argument("mode", choices=[
+        "morning-research", "trading-session", "intraday-monitor",
+        "end-of-day-journal", "weekly-review",
+    ])
+    args = parser.parse_args()
+
+    alpaca = AlpacaClient()
+
+    # Quick health check
+    try:
+        acct = alpaca.get_account()
+        log.info(f"Account {acct['account_number']}: equity=${float(acct['equity']):,.2f}, status={acct['status']}")
+    except Exception as e:
+        log.critical(f"Cannot connect to Alpaca: {e}")
+        sys.exit(1)
+
+    if args.mode == "morning-research":
+        run_morning_research(alpaca)
+    elif args.mode == "trading-session":
+        run_trading_session(alpaca)
+    elif args.mode == "intraday-monitor":
+        run_intraday_monitor(alpaca)
+    elif args.mode == "end-of-day-journal":
+        run_end_of_day(alpaca)
+    elif args.mode == "weekly-review":
+        run_weekly_review(alpaca)
+
+
+if __name__ == "__main__":
+    main()
