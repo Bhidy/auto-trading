@@ -24,7 +24,7 @@ import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-BASE_DIR = Path("/Users/home/Documents/Auto Trading/event-driven-bot")
+BASE_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = BASE_DIR / "scripts"
 CONFIG_DIR = BASE_DIR / "config"
 DATA_DIR = BASE_DIR / "data"

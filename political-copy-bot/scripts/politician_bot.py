@@ -14,10 +14,11 @@ import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-BASE_DIR = Path("/Users/home/Documents/Auto Trading/political-copy-bot")
+BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR / "scripts"))
 from mcp_client import call_mcp_tool
 
+(BASE_DIR / "logs").mkdir(exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",

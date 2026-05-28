@@ -9,7 +9,7 @@ import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-BASE_DIR = Path("/Users/home/Documents/Auto Trading")
+BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG = BASE_DIR / "config" / "portfolios.json"
 DATA_DIR = BASE_DIR / "data"
 

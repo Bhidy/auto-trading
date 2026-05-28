@@ -5,7 +5,7 @@ import json
 import requests
 from pathlib import Path
 
-CONFIG_PATH = Path("/Users/home/Documents/Auto Trading/event-driven-bot/config/alpaca_config.json")
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "alpaca_config.json"
 
 
 class AlpacaClient:
