@@ -1078,11 +1078,27 @@ app.get('/api/market-indices', async (req, res) => {
         res.json(responseData);
     } catch (e) {
         console.warn('Failed to fetch live market indices:', e.message);
+        res.json({});
+    }
+});
+
+// 5b. Market clock — Alpaca clock/calendar
+app.get('/api/market/clock', async (req, res) => {
+    loadConfig();
+    const cfg = Object.values(portfoliosConfig)[0];
+    if (!cfg) return res.json({ is_open: false, next_open: null, next_close: null, timestamp: null });
+
+    try {
+        const clock = await alpacaRequest('GET', `${cfg.base_url}/v2/clock`, cfg.api_key, cfg.api_secret);
         res.json({
-            SPY: { price: 549.61, change: 1.25, change_pct: 0.23 },
-            QQQ: { price: 727.98, change: 3.12, change_pct: 0.43 },
-            DIA: { price: 507.08, change: -1.14, change_pct: -0.22 }
+            is_open: clock.is_open,
+            next_open: clock.next_open,
+            next_close: clock.next_close,
+            timestamp: clock.timestamp
         });
+    } catch (e) {
+        console.warn('Failed to fetch market clock:', e.message);
+        res.json({ is_open: false, next_open: null, next_close: null, timestamp: null });
     }
 });
 

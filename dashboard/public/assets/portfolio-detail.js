@@ -32,21 +32,25 @@
     var selectedSymbol = null;
     var selectedChartType = 'portfolio'; // 'portfolio' or 'stock'
 
-    // Premium Stock Profile Data Bank (seeded details)
-    var STOCK_PROFILES = {
-        NVDA: { name: 'NVIDIA Corporation', ceo: 'Jensen Huang', mcap: '$3.1T', pe: '68.4', yield: '0.02%', beta: '1.95', sector: 'Semiconductors', desc: 'NVIDIA Corporation designs graphics processing units (GPUs) for the gaming and professional markets, as well as system on a chip units for the mobile computing and automotive market.' },
-        GOOGL: { name: 'Alphabet Inc.', ceo: 'Sundar Pichai', mcap: '$2.2T', pe: '24.8', yield: '0.45%', beta: '1.12', sector: 'Internet Services', desc: 'Alphabet Inc. is a multinational conglomerate corporation that is the parent company of Google and several former Google subsidiaries, focusing on search, advertising, cloud, and hardware.' },
-        AMZN: { name: 'Amazon.com, Inc.', ceo: 'Andy Jassy', mcap: '$1.9T', pe: '39.2', yield: 'N/A', beta: '1.20', sector: 'E-Commerce & Cloud', desc: 'Amazon.com, Inc. is an e-commerce, cloud computing, online advertising, digital streaming, and artificial intelligence conglomerate, pioneering retail and AWS infrastructure.' },
-        AAPL: { name: 'Apple Inc.', ceo: 'Tim Cook', mcap: '$3.2T', pe: '30.1', yield: '0.52%', beta: '1.05', sector: 'Consumer Electronics', desc: 'Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide, driven by iPhone sales and services.' },
-        TSLA: { name: 'Tesla, Inc.', ceo: 'Elon Musk', mcap: '$570B', pe: '54.5', yield: 'N/A', beta: '1.90', sector: 'Automotive & Energy', desc: 'Tesla, Inc. designs, develops, manufactures, sells, and leases fully electric vehicles, energy generation and storage systems, and offers services related to its products.' },
-        SPY: { name: 'SPDR S&P 500 ETF', ceo: 'State Street Global Advisors', mcap: '$510B', pe: '23.4', yield: '1.35%', beta: '1.00', sector: 'Core Equity ETF', desc: 'The SPDR S&P 500 ETF Trust is an exchange-traded fund incorporated in the USA. The Fund tracks the performance of the S&P 500 Index, representing large-cap US equities.' },
-        QQQ: { name: 'Invesco QQQ Trust', ceo: 'Invesco Distributors', mcap: '$225B', pe: '31.2', yield: '0.62%', beta: '1.24', sector: 'Technology Sector ETF', desc: 'The Invesco QQQ Trust is an exchange-traded fund that tracks the Nasdaq-100 Index. It holds large non-financial companies listed on the Nasdaq stock exchange.' },
-        XLK: { name: 'Technology Select Sector SPDR', ceo: 'State Street Advisors', mcap: '$68B', pe: '32.1', yield: '0.70%', beta: '1.28', sector: 'Sector ETF', desc: 'The Technology Select Sector SPDR Fund seeks to provide investment results that correspond to the price and yield performance of the Technology Select Sector Index.' },
-        XLI: { name: 'Industrial Select Sector SPDR', ceo: 'State Street Advisors', mcap: '$18B', pe: '19.5', yield: '1.58%', beta: '0.92', sector: 'Sector ETF', desc: 'The Industrial Select Sector SPDR Fund tracks the Industrial Select Sector Index, providing exposure to aerospace, defense, machinery, and logistics companies.' },
-        PANW: { name: 'Palo Alto Networks', ceo: 'Nikesh Arora', mcap: '$98B', pe: '42.5', yield: 'N/A', beta: '1.18', sector: 'Cybersecurity', desc: 'Palo Alto Networks, Inc. provides enterprise security solutions worldwide, specializing in next-generation firewalls, cloud-native security, and cyber threat detection.' },
-        CSCO: { name: 'Cisco Systems', ceo: 'Chuck Robbins', mcap: '$190B', pe: '15.2', yield: '3.12%', beta: '0.88', sector: 'Networking Hardware', desc: 'Cisco Systems, Inc. designs, manufactures, and sells Internet Protocol-based networking and other products related to the communications and IT industry worldwide.' },
-        WDAY: { name: 'Workday, Inc.', ceo: 'Carl Eschenbach', mcap: '$65B', pe: '38.4', yield: 'N/A', beta: '1.25', sector: 'Enterprise Cloud App', desc: 'Workday, Inc. provides enterprise cloud applications for finance, human resources, and planning worldwide, delivering unified HCM and financial management analytics.' }
-    };
+    // Premium stock metadata fetched live from Alpaca API
+    var STOCK_PROFILES = {};
+
+    function getStockProfile(symbol, callback) {
+        if (STOCK_PROFILES[symbol]) { callback(STOCK_PROFILES[symbol]); return; }
+        fetch('/api/stock/' + symbol + '/details')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var p = data.profile || {};
+                var info = { name: p.name || symbol, exchange: p.exchange, asset_class: p.asset_class, tradable: p.tradable, shortable: p.shortable, fractionable: p.fractionable };
+                STOCK_PROFILES[symbol] = info;
+                callback(info);
+            })
+            .catch(function() {
+                var info = { name: symbol };
+                STOCK_PROFILES[symbol] = info;
+                callback(info);
+            });
+    }
 
     /* ─── Translations Dictionary ───────────────────────────────────────── */
     var T = {
@@ -379,8 +383,8 @@
                     '<h2 style="font-family:\'DM Serif Display\', serif; font-size:1.4rem; font-weight:400; margin:0; line-height:1;">' + 
                         (selectedChartType === 'stock' ? 'STOCK CHART: ' + selectedSymbol : t('perfTitle')) + 
                     '</h2>' +
-                    '<span class="pf-num" style="font-size:1.6rem; font-weight:700; display:block; margin-top:0.25rem; font-family:var(--pf-mono);">' + 
-                        (selectedChartType === 'stock' ? '$' + fmt(STOCK_PROFILES[selectedSymbol]?.basePrice || 185) : '$' + fmt(metrics.totalValue)) + 
+                    '<span class="pf-num" style="font-size:1.6rem; font-weight:700; display:block; margin-top:0.25rem; font-family:var(--pf-mono);" id="chartHeadlinePrice">' + 
+                        (selectedChartType === 'stock' ? (lang === 'ar' ? 'جاري التحميل...' : 'Loading...') : '$' + fmt(metrics.totalValue)) + 
                     '</span>' +
                     (pfId === 'all' ? '<span style="font-size:0.7rem; color:var(--teal); font-weight:700; margin-top:0.15rem; display:block;">3 Combined Portfolios · $300K Paper Baseline</span>' : '') +
                 '</div>' +
@@ -1182,13 +1186,26 @@
 
     function renderRiskPanel() {
         var limits = detailCache ? detailCache.strategy_params || {} : {};
-        var ddCap = pfId === 'all' ? '-12.0%' : '-4.0%';
-        var ddPct = pfId === 'all' ? 80 : 80;
+        var tradesToday = detailCache ? (detailCache.trade_log || []).length : 0;
+        var signalCount = detailCache ? ((detailCache.signals || {}).signals || []).length : 0;
         return '<div class="pf-panel__title">' + t('riskMetrics') + '</div>' +
-            '<div class="pf-risk-gauges-wrap" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.65rem; padding-top:0.45rem;">' +
-                makeGauge(t('sharpeLabel'), '1.84', 61, 'Calculated 30D rolling') +
-                makeGauge(t('volatilityLabel'), '12.8%', 43, 'Standard deviation') +
-                makeGauge(t('maxDDLabel'), ddCap, ddPct, (pfId === 'all' ? 'Combined portfolio cap' : 'Max daily limit cap')) +
+            '<div class="pf-risk-status" style="display:flex;flex-direction:column;gap:0.75rem;padding-top:0.45rem;">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
+                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'حالة النظام' : 'System Status') + '</span>' +
+                    '<span class="pf-pos" style="font-size:0.75rem;font-weight:800;">' + (portfolio.halted ? (lang === 'ar' ? 'متوقف' : 'HALTED') : (lang === 'ar' ? 'نشط' : 'ACTIVE')) + '</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
+                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'صفقات اليوم' : 'Trades Today') + '</span>' +
+                    '<span class="pf-num" style="font-size:0.9rem;font-weight:800;color:var(--ink);">' + tradesToday + '</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
+                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'إشارات نشطة' : 'Active Signals') + '</span>' +
+                    '<span class="pf-num" style="font-size:0.9rem;font-weight:800;color:var(--teal);">' + signalCount + '</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
+                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'حد الخسارة اليومي' : 'Daily Loss Limit') + '</span>' +
+                    '<span style="font-size:0.9rem;font-weight:800;color:var(--ink);font-family:var(--pf-mono);">4.0%</span>' +
+                '</div>' +
             '</div>';
     }
 

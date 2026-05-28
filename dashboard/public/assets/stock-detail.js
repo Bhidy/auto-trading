@@ -198,7 +198,7 @@
         renderPeers(symbol, profile);
         
         // Load Chart
-        renderTechnicalChart('1M');
+        renderTechnicalChart('1D');
     }
 
     function renderFundamentals(p, prevClose) {
@@ -206,30 +206,29 @@
         var dict = T[lang] || T.en;
 
         var items = [
-            { label: dict.m_ceo || 'CEO', val: p.CEO || 'N/A' },
-            { label: dict.m_cap || 'Market Cap', val: p.cap || 'N/A' },
-            { label: dict.m_pe || 'P/E Ratio', val: p.pe || 'N/A' },
-            { label: dict.m_yield || 'Div Yield', val: p.yield || '0.00%' },
-            { label: dict.m_beta || 'Beta', val: p.beta || '1.00' },
-            { label: dict.m_prev || 'Prev Close', val: '$' + prevClose.toFixed(2) }
+            { label: dict.m_prev || 'Prev Close', val: '$' + prevClose.toFixed(2) },
+            { label: 'Exchange', val: p.exchange || '—' },
+            { label: 'Asset Class', val: p.asset_class || '—' },
+            { label: 'Tradable', val: p.tradable ? 'Yes' : 'No' },
+            { label: 'Shortable', val: p.shortable ? 'Yes' : 'No' },
+            { label: 'Fractionable', val: p.fractionable ? 'Yes' : 'No' }
         ];
 
         grid.innerHTML = items.map(function(item) {
-            return `<div class="metric-card">
-                <span class="label">${item.label}</span>
-                <span class="value">${item.val}</span>
-            </div>`;
+            return '<div class="metric-card">' +
+                '<span class="label">' + item.label + '</span>' +
+                '<span class="value">' + item.val + '</span>' +
+            '</div>';
         }).join('');
     }
 
     function renderSECFilings(symbol) {
-        var list = document.getElementById('secFilingsList');
-        list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); font-size:0.75rem; padding:1rem;">SEC filings data requires integration — not available via Alpaca API.</td></tr>';
+        // SEC filings not available via Alpaca free tier — section removed from UI
     }
 
     function renderOptionsChain(price) {
         var list = document.getElementById('optionsChainList');
-        list.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:1rem;">Loading options chain...</td></tr>';
+        list.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:1rem;">Loading options chain from Alpaca...</td></tr>';
 
         fetch('/api/options/chain/' + currentSymbol)
             .then(function(r) { return r.json(); })
@@ -244,15 +243,15 @@
                 keys.forEach(function(contractId) {
                     var snap = snapshots[contractId];
                     var q = snap.latestQuote || {};
-                    var t = snap.latestTrade || {};
                     var greeks = snap.greeks || {};
                     var bid = parseFloat(q.bp || 0);
                     var ask = parseFloat(q.ap || 0);
-                    var vol = parseInt(snap.impliedVolatility || t.s || 0);
+                    var vol = parseInt(snap.impliedVolatility || 0);
                     var parts = contractId.match(/(\d{6})([CP])(\d+)/);
                     var strike = parts ? (parseInt(parts[3]) / 1000).toFixed(0) : '—';
                     var isCall = parts ? parts[2] === 'C' : true;
-                    html += '<tr>';
+                    var rowId = 'opt-row-' + contractId.slice(-8);
+                    html += '<tr id="' + rowId + '" class="opt-clickable" style="cursor:pointer;" onclick="var snap=arguments[0];window._showGreeks && window._showGreeks(\'' + contractId + '\', snap)">';
                     if (isCall) {
                         html += '<td style="color:#2ecc71; font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
                         html += '<td style="color:#2ecc71; font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
@@ -269,6 +268,17 @@
                     html += '</tr>';
                 });
                 list.innerHTML = html;
+                // Wire click handlers
+                var rows = list.querySelectorAll('tr');
+                rows.forEach(function(row) {
+                    row.addEventListener('click', function(e) {
+                        var idx = Array.from(list.querySelectorAll('tr')).indexOf(row) - 0;
+                        var contractId = keys[idx];
+                        if (contractId && snapshots[contractId]) {
+                            renderOptionsGreeks(contractId, snapshots[contractId]);
+                        }
+                    });
+                });
             })
             .catch(function() {
                 list.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); font-size:0.75rem; padding:1rem;">Options data unavailable.</td></tr>';
@@ -310,37 +320,36 @@
     }
 
     function renderLevel2Depth(price) {
-        var list = document.getElementById('l2DepthBookList');
-
-        fetch('/api/stock/' + currentSymbol + '/quotes?limit=5')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var quotes = data.quotes || [];
-                if (quotes.length === 0) {
-                    list.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem; padding:1rem;">Real-time NBBO depth data loading...</div>';
-                    renderL2FromQuote(list, price);
-                    return;
-                }
-                var latest = quotes[quotes.length - 1] || {};
-                var bid = parseFloat(latest.bp || price - 0.05);
-                var ask = parseFloat(latest.ap || price + 0.05);
-                var bidSize = parseInt(latest.bs || 0);
-                var askSize = parseInt(latest.as || 0);
-                var spread = (ask - bid).toFixed(2);
-
-                var html = '';
-                html += '<div class="l2-row ask"><span class="price">$' + ask.toFixed(2) + '</span><span class="size">' + askSize + '</span><div class="l2-depth-fill" style="width:' + Math.min(100, askSize * 5) + '%; background:#e74c3c;"></div></div>';
-                html += '<div style="text-align:center; font-family:var(--pf-mono); font-size:0.7rem; color:var(--muted); padding:0.2rem 0; border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); margin:0.35rem 0;">SPREAD: $' + spread + '</div>';
-                html += '<div class="l2-row bid"><span class="price">$' + bid.toFixed(2) + '</span><span class="size">' + bidSize + '</span><div class="l2-depth-fill" style="width:' + Math.min(100, bidSize * 5) + '%; background:#2ecc71;"></div></div>';
-                list.innerHTML = html;
-            })
-            .catch(function() {
-                renderL2FromQuote(list, price);
-            });
+        // L2 depth requires paid SIP subscription — replaced with Options Greeks card
+        var list = document.getElementById('optionsGreeksGrid');
+        if (!list) return;
+        list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1rem;font-size:0.72rem;">Click an options contract row to view live Greeks (delta, gamma, theta, vega, IV)</div>';
     }
 
     function renderL2FromQuote(list, price) {
-        list.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem; padding:1rem;">Level 2 depth data not available for this symbol.</div>';
+        // No-op — L2 replaced by Greeks
+    }
+
+    function renderOptionsGreeks(contractId, snap) {
+        var grid = document.getElementById('optionsGreeksGrid');
+        if (!grid) return;
+        var greeks = snap.greeks || {};
+        var iv = snap.impliedVolatility;
+        var items = [
+            { label: 'Delta', val: greeks.delta ? greeks.delta.toFixed(4) : '—', color: '#FF8A3D' },
+            { label: 'Gamma', val: greeks.gamma ? greeks.gamma.toFixed(4) : '—', color: '#E55A1F' },
+            { label: 'Theta', val: greeks.theta ? greeks.theta.toFixed(4) : '—', color: '#e74c3c' },
+            { label: 'Vega', val: greeks.vega ? greeks.vega.toFixed(4) : '—', color: '#2ecc71' },
+            { label: 'Rho', val: greeks.rho ? greeks.rho.toFixed(4) : '—', color: '#8b5cf6' },
+            { label: 'IV', val: iv ? (iv * 100).toFixed(1) + '%' : '—', color: 'var(--teal)' }
+        ];
+        grid.innerHTML = '<div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">' + contractId.slice(0, 18) + '</div>' +
+            items.map(function(item) {
+                return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--line);">' +
+                    '<span style="font-weight:700;font-size:0.75rem;color:var(--ink);">' + item.label + '</span>' +
+                    '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.8rem;color:' + item.color + ';">' + item.val + '</span>' +
+                '</div>';
+            }).join('');
     }
 
     function renderAnalystConsensus(symbol) {
@@ -418,25 +427,31 @@
         var ctx = document.getElementById('stockDetailChart');
         if (!ctx) return;
 
-        var limit = 30;
-        if (range === '1D') limit = 5;
-        else if (range === '3M') limit = 45;
-        else if (range === '1Y') limit = 60;
+        if (range === '1D') {
+            fetch('/api/market/bars/' + currentSymbol + '?timeframe=5Min&limit=78')
+                .then(function(r) { return r.ok ? r.json() : []; })
+                .then(function(bars) {
+                    renderChartFromBars(ctx, bars || []);
+                })
+                .catch(function() {
+                    renderChartFallback(ctx);
+                });
+            return;
+        }
 
-        var slice = rawBarsData.length > limit ? rawBarsData.slice(rawBarsData.length - limit) : rawBarsData;
+        renderChartFromBars(ctx, rawBarsData);
+    }
+
+    function renderChartFromBars(ctx, bars) {
+        var slice = bars.length > 78 ? bars.slice(bars.length - 78) : bars;
         if (slice.length === 0) {
-            var ctxCanvas = ctx.getContext ? ctx.getContext('2d') : null;
-            if (ctxCanvas) {
-                ctxCanvas.font = '12px Manrope';
-                ctxCanvas.fillStyle = StartaTheme.current() === 'dark' ? '#a39a92' : '#7a6b5e';
-                ctxCanvas.textAlign = 'center';
-                ctxCanvas.fillText('No chart data available', ctx.width / 2, ctx.height / 2);
-            }
+            renderChartFallback(ctx);
             return;
         }
 
         var labels = slice.map(function(b) {
             var date = new Date(b.t);
+            if (b.t && b.t.includes('T')) return b.t.slice(11, 16);
             return isNaN(date.getTime()) ? b.t : date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
         });
         var prices = slice.map(function(b) { return b.c; });
@@ -447,6 +462,7 @@
 
         var gridColor = StartaTheme.current() === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(26,15,8,0.06)';
         var inkColor = StartaTheme.current() === 'dark' ? '#FFF1E8' : '#1A0F08';
+        var isIntraday = slice.length > 0 && slice[0].t && slice[0].t.includes('T');
 
         stockChartInstance = new Chart(ctx, {
             type: 'line',
@@ -460,7 +476,7 @@
                     backgroundColor: 'rgba(255, 138, 61, 0.05)',
                     fill: true,
                     tension: 0.3,
-                    pointRadius: prices.length > 30 ? 0 : 3,
+                    pointRadius: prices.length > 30 ? 0 : 2,
                     pointHoverRadius: 6,
                     pointBackgroundColor: '#FF8A3D'
                 }]
@@ -474,16 +490,26 @@
                 scales: {
                     x: {
                         grid: { color: gridColor },
-                        ticks: { color: inkColor, font: { size: 10 } }
+                        ticks: { color: inkColor, font: { size: isIntraday ? 8 : 10 }, maxTicksLimit: isIntraday ? 12 : 8, maxRotation: 0 }
                     },
                     y: {
                         position: lang === 'ar' ? 'right' : 'left',
                         grid: { color: gridColor },
-                        ticks: { color: inkColor, font: { size: 10 } }
+                        ticks: { color: inkColor, font: { size: 10 }, callback: function(v) { return '$' + v.toFixed(1); } }
                     }
                 }
             }
         });
+    }
+
+    function renderChartFallback(ctx) {
+        var ctxCanvas = ctx.getContext ? ctx.getContext('2d') : null;
+        if (ctxCanvas) {
+            ctxCanvas.font = '12px Manrope';
+            ctxCanvas.fillStyle = StartaTheme.current() === 'dark' ? '#a39a92' : '#7a6b5e';
+            ctxCanvas.textAlign = 'center';
+            ctxCanvas.fillText('Intraday chart data loading...', ctx.width / 2, ctx.height / 2);
+        }
     }
 
     function renderDetails() {
@@ -519,7 +545,7 @@
 
         // Theme sync
         document.addEventListener('starta:themechange', function() {
-            renderTechnicalChart('1M');
+            renderTechnicalChart('1D');
         });
 
         // Lang switch bind

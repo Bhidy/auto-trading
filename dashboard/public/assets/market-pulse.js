@@ -156,14 +156,20 @@
     async function loadAndRenderSpySparkline() {
         var canvas = document.getElementById('spySparklineCanvas');
         if (!canvas) return;
-        var spyBars = await apiFetch('/api/market/bars/SPY?limit=30&timeframe=1Day');
+        var spyBars = await apiFetch('/api/market/bars/SPY?timeframe=5Min&limit=78');
         var points, labels;
         if (spyBars && spyBars.length > 0) {
             points = spyBars.map(function (b) { return parseFloat(b.c); });
-            labels = spyBars.map(function (b) { return b.t ? b.t.slice(5, 10) : ''; });
+            labels = spyBars.map(function (b) { return b.t ? b.t.slice(11, 16) : ''; });
         } else {
-            points = [545, 547, 546, 548, 549, 550, 549, 551, 550, 552, 553, 554, 552, 553, 555, 554, 556, 557, 558, 557, 559, 560, 561, 560, 562, 561, 563, 564, 565, 564];
-            labels = points.map(function (_, i) { return 'D' + (i + 1); });
+            var ctxFallback = canvas.getContext('2d');
+            if (ctxFallback) {
+                ctxFallback.font = '10px Manrope';
+                ctxFallback.fillStyle = getTheme() === 'dark' ? '#a39a92' : '#7a6b5e';
+                ctxFallback.textAlign = 'center';
+                ctxFallback.fillText('SPY intraday chart — market closed', canvas.width / 2, canvas.height / 2);
+            }
+            return;
         }
         var ctx = canvas.getContext('2d');
         if (sparklineChart) sparklineChart.destroy();
@@ -380,43 +386,26 @@
     function renderKeyFinancials(symbol, profile) {
         var body = document.getElementById('keyFinancialsBody');
         if (!body) return;
-        var peNum = parseFloat(profile.pe) || 15;
-        var capStr = profile.cap || '100B';
-        var rev = parseFloat(capStr) ? (parseFloat(capStr) * 0.08).toFixed(1) + 'B' : '$60.92B';
-        if (symbol === 'NVDA') rev = '$60.92B';
-        else if (symbol === 'AAPL') rev = '$383.29B';
-        else if (symbol === 'MSFT') rev = '$227.58B';
-        
         body.innerHTML = `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Revenue</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);">${rev}</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono); color:#2ecc71;">▲ +122.1%</td>
+                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Exchange</td>
+                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);" colspan="2">${profile.exchange || '—'}</td>
             </tr>
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Gross Margin</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);">75.89%</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono); color:#2ecc71;">▲ +2.91%</td>
+                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Asset Class</td>
+                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);" colspan="2">${profile.asset_class || '—'}</td>
             </tr>
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Operating Margin</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);">62.68%</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono); color:#2ecc71;">▲ +33.53%</td>
+                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Tradable</td>
+                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);" colspan="2">${profile.tradable === undefined ? '—' : (profile.tradable ? 'Yes' : 'No')}</td>
             </tr>
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Net Income</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);">$29.76B</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono); color:#2ecc71;">▲ +581.35%</td>
+                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Shortable</td>
+                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);" colspan="2">${profile.shortable === undefined ? '—' : (profile.shortable ? 'Yes' : 'No')}</td>
             </tr>
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">EPS (Diluted)</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);">$11.93</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono); color:#2ecc71;">▲ +579.95%</td>
-            </tr>
-            <tr>
-                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">ROE (TTM)</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);">114.17%</td>
-                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono); color:#2ecc71;">▲ +84.21%</td>
+                <td style="padding:0.45rem 0.55rem; font-weight:600; color:var(--ink);">Fractionable</td>
+                <td style="padding:0.45rem 0.55rem; text-align:right; font-family:var(--pf-mono);" colspan="2">${profile.fractionable === undefined ? '—' : (profile.fractionable ? 'Yes' : 'No')}</td>
             </tr>
         `;
     }
@@ -804,12 +793,43 @@
     }
 
     function getSvgSparkline(sym, isPos) {
-        var stroke = isPos ? '#2ecc71' : '#FF8A3D';
-        var startY = isPos ? 26 : 6;
-        var endY = isPos ? 6 : 26;
-        return '<svg width="55" height="24" viewBox="0 0 60 32" style="overflow:visible; display:block;">' +
-            '<path d="M 0 ' + startY + ' L 30 16 L 60 ' + endY + '" fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />' +
+        var stroke = isPos ? '#2ecc71' : '#e74c3c';
+        var db = stockPriceDatabase[sym];
+        if (!db || !db._sparkData) {
+            return '<svg width="55" height="24" viewBox="0 0 55 24" style="display:block;"><line x1="0" y1="12" x2="55" y2="12" stroke="var(--line)" stroke-width="1"/></svg>';
+        }
+        var pts = db._sparkData;
+        var min = Math.min.apply(null, pts);
+        var max = Math.max.apply(null, pts);
+        var range = max - min || 1;
+        var h = 20;
+        var path = '';
+        for (var i = 0; i < pts.length; i++) {
+            var x = (i / (pts.length - 1)) * 52 + 1;
+            var y = h - ((pts[i] - min) / range) * (h - 4) + 2;
+            path += (i === 0 ? 'M' : 'L') + ' ' + x.toFixed(1) + ' ' + y.toFixed(1);
+        }
+        return '<svg width="55" height="24" viewBox="0 0 55 24" style="display:block;">' +
+            '<path d="' + path + '" fill="none" stroke="' + stroke + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
             '</svg>';
+    }
+
+    /* ─── Sparkline Intraday Data Loader ──────────────────────────────── */
+    async function loadSparklineData(symbols) {
+        var syms = symbols || watchlistSymbols;
+        var promises = syms.map(function(sym) {
+            return apiFetch('/api/market/bars/' + sym + '?timeframe=5Min&limit=78')
+                .then(function(bars) {
+                    if (bars && bars.length > 0) {
+                        var db = stockPriceDatabase[sym] || {};
+                        db._sparkData = bars.map(function(b) { return parseFloat(b.c); });
+                        stockPriceDatabase[sym] = db;
+                    }
+                })
+                .catch(function() {});
+        });
+        await Promise.all(promises);
+        renderWatchlistPane();
     }
 
     /* ─── Watchlist & Tabbed Portfolios List ─────────────────────────── */
@@ -1423,6 +1443,8 @@
         renderWatchlistPane();
         renderTopLists();
 
+        loadSparklineData(watchlistSymbols);
+
         checkChartLoaded(function () {
             loadAndRenderSpySparkline();
             loadStockDetails(activeSymbol);
@@ -1438,6 +1460,7 @@
         quotesRefreshInterval = setInterval(function () {
             refreshAllData();
             loadAndRenderSectors();
+            loadSparklineData(watchlistSymbols);
             loadMarketClock();
         }, 30000);
     }
