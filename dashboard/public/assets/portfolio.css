@@ -457,6 +457,24 @@
     overflow-x: auto; border-radius: var(--pf-radius);
     border: 1px solid var(--line);
 }
+.pf-table-scroll {
+    max-height: 19rem; overflow-y: auto;
+}
+.pf-table-scroll thead { position: sticky; top: 0; z-index: 2; }
+.pf-table-scroll thead th { background: var(--surface); }
+
+.pf-chart-area { min-height: 320px; }
+.pf-chart-card { padding: 1rem; }
+.pf-chart-card__title {
+    font-size: 0.75rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+}
+.pf-view-toggle { transition: all 180ms ease; }
+.pf-view-toggle:hover { border-color: var(--teal); color: var(--teal); }
+.pf-mini-card:hover { border-color: var(--teal); background: var(--teal-soft); }
+.pf-alloc-legend::-webkit-scrollbar { width: 4px; }
+.pf-alloc-legend::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
 .pf-table {
     width: 100%; border-collapse: collapse;
     font-size: .82rem;

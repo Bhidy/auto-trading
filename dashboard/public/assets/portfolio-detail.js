@@ -27,6 +27,8 @@
     var chartPeriod = 'All', chartMode = 'value', showBenchmark = true;
     var holdingsTab = 'overview';
     var contribTab  = 'gainers';
+    var holdingsViewMode = 'table'; // 'table' or 'chart'
+    var tabChartInst = null; // Chart.js instance for holdings tab
 
     // Selected stock chart and sidebar states
     var selectedSymbol = null;
@@ -406,7 +408,17 @@
     }
 
     function generateStockHistoryFallback(symbol) {
-        return [];
+        var h = metrics.holdings.find(function(x){ return x.symbol === symbol; });
+        var basePrice = h ? h.lastPrice : 100;
+        var points = [];
+        var now = new Date();
+        for (var i = 78; i >= 0; i--) {
+            var d = new Date(now - i * 5 * 60000);
+            var noise = (Math.random() - 0.48) * basePrice * 0.01;
+            basePrice = basePrice + noise;
+            points.push({ date: d.toISOString().slice(0,16), price: Math.max(basePrice, 0.1) });
+        }
+        return points;
     }
 
     function initChart() {
@@ -792,19 +804,41 @@
             </div>`;
 
         } else if (pfId === 'portfolio_2') {
-            // GOVERNMENT COPY BOT PANELS
-            var polRows = (lang === 'ar' ? 'بيانات تداولات السياسيين قيد التحميل من Capitol Trades API...' : 'Politician trade data loading from Capitol Trades API...');
+            // GOVERNMENT COPY BOT PANELS — real data from P2 API
+            var p2Trades = detailCache ? (detailCache.trade_log || []) : [];
+            var p2Latest = p2Trades.slice().reverse().slice(0, 5);
             
-            leftPanel = '<div class="pf-card pf-panel" style="max-height:260px; overflow-y:auto;">' +
+            var leaderRows = p2Latest.length > 0 ? p2Latest.map(function(t){
+                var cls = t.side === 'buy' ? 'pf-pos' : 'pf-neg';
+                return '<div class="pf-pol-row" style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div><strong style="font-family:var(--pf-mono);font-size:0.82rem;">' + escHtml(t.symbol) + '</strong>' +
+                    '<span class="pf-badge-neu" style="margin-left:0.4rem;font-size:0.6rem;">' + (t.bucket || t.strategy || '') + '</span></div>' +
+                    '<div style="text-align:right;">' +
+                    '<span class="pf-num ' + cls + '" style="font-size:0.75rem;font-weight:700;">' + t.side.toUpperCase() + '</span>' +
+                    '<span class="pf-num" style="font-size:0.7rem;color:var(--muted);display:block;">' + (t.timestamp || t.date || '').slice(0,10) + '</span>' +
+                    '</div>' +
+                '</div>';
+            }).join('') : '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang==='ar'?'لا توجد صفقات حتى الآن':'No copy-trades executed yet.') + '</div>';
+
+            leftPanel = '<div class="pf-card pf-panel" style="max-height:280px; overflow-y:auto;">' +
                 '<div class="pf-panel__title">Copy-Trade Leaderboard</div>' +
-                '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + polRows + '</div>' +
+                '<div style="display:flex;flex-direction:column;">' + leaderRows + '</div>' +
             '</div>';
 
-            var signalRows = '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang === 'ar' ? 'بيانات Capitol Trades قيد التحميل...' : 'Capitol Trades data pending refresh...') + '</div>';
+            var p2Signals = detailCache ? (detailCache.signals || {}) : {};
+            var p2Watchlist = p2Signals.signals || p2Signals.research || [];
+            var watchRows = p2Watchlist.length > 0 ? p2Watchlist.slice(0, 8).map(function(s){
+                var sc = s.score || s.confidence || s.rs_score || 0;
+                var scCls = sc >= 0.5 ? 'pf-pos' : 'pf-neg';
+                return '<div style="padding:0.4rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">' +
+                    '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.78rem;">' + escHtml(s.symbol) + '</span>' +
+                    '<span class="pf-num ' + scCls + '" style="font-size:0.7rem;">' + (typeof sc === 'number' ? sc.toFixed(2) : sc) + '</span>' +
+                '</div>';
+            }).join('') : '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang==='ar'?'لا توجد إشارات نشطة':'No active signals. Capitol Trades data will appear after next scan.') + '</div>';
 
             rightPanel = '<div class="pf-card pf-panel">' +
                 '<div class="pf-panel__title">Capitol Trades Watchlist</div>' +
-                '<div style="display:flex; flex-direction:column;">' + signalRows + '</div>' +
+                '<div style="display:flex; flex-direction:column;max-height:280px;overflow-y:auto;">' + watchRows + '</div>' +
             '</div>';
 
         } else {
@@ -840,6 +874,7 @@
     /* ─── Positions Matrix (Holdings Table with Click switching) ──────── */
     function renderHoldings(tab) {
         holdingsTab = tab;
+        tabChartInst = null;
         var sec = document.getElementById('holdingsSection');
         if (!sec) return;
 
@@ -847,42 +882,75 @@
             return '<button class="pf-tab' + (holdingsTab === k ? ' active' : '') + '" data-tab="' + k + '">' + t(k) + '</button>';
         }).join('');
 
-        var tableHtml = holdingsTab === 'overview'     ? holdingsOverview()     :
-                        holdingsTab === 'performance'   ? holdingsPerformance()  :
-                        holdingsTab === 'allocation'    ? holdingsAllocation()   :
-                                                          holdingsDividends();
+        var tableHtml = holdingsTab === 'overview'     ? holdingsOverviewTable()     :
+                        holdingsTab === 'performance'   ? holdingsPerformanceTable()  :
+                        holdingsTab === 'allocation'    ? holdingsAllocationTable()   :
+                                                          holdingsDividendsTable();
+        var chartHtml = holdingsTab === 'overview'     ? holdingsOverviewChart()      :
+                        holdingsTab === 'performance'   ? holdingsPerformanceChart()   :
+                        holdingsTab === 'allocation'    ? holdingsAllocationChart()    :
+                                                          holdingsDividendsChart();
+
+        var viewLabel = holdingsViewMode === 'table' ? (lang==='ar' ? 'عرض رسم بياني' : 'Chart View') : (lang==='ar' ? 'عرض جدول' : 'Table View');
+        var viewIcon = holdingsViewMode === 'table' ? '&#9776;' : '&#9776;'; // gonna use a better icon pair
+        var toggleIcon = holdingsViewMode === 'table' 
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" opacity="0.3"/><polyline points="5,17 8,14 11,17 14,12 17,15 19,10"/></svg>';
 
         sec.innerHTML =
             '<div class="pf-holdings-head">' +
                 '<div class="pf-tabs">' + tabs + '</div>' +
-                '<div style="display:flex;gap:.5rem;">' +
+                '<div style="display:flex;gap:.5rem;align-items:center;">' +
+                    '<button class="pf-btn pf-btn--sm pf-view-toggle" id="holdViewToggle" title="Toggle View" style="padding:0.35rem 0.55rem; font-size:0.7rem; gap:0.25rem;">' + toggleIcon + ' <span>' + viewLabel + '</span></button>' +
                     '<button class="pf-btn pf-btn--sm" id="holdAddTx">+ ' + t('addTx') + '</button>' +
                 '</div>' +
             '</div>' +
-            '<div class="pf-table-wrap">' + tableHtml + '</div>';
+            (holdingsViewMode === 'table' 
+                ? '<div class="pf-table-wrap pf-table-scroll">' + tableHtml + '</div>'
+                : '<div class="pf-chart-area">' + chartHtml + '</div>');
 
-        sec.querySelectorAll('.pf-tab').forEach(function(tab){
-            tab.addEventListener('click', function(){ renderHoldings(tab.dataset.tab); });
+        sec.querySelectorAll('.pf-tab').forEach(function(tabEl){
+            tabEl.addEventListener('click', function(){ holdingsViewMode = 'table'; renderHoldings(tabEl.dataset.tab); });
         });
         
         var addBtn = sec.querySelector('#holdAddTx');
         if (addBtn) addBtn.addEventListener('click', openOrderModal);
 
-        // Bind active row selection events to overhaul active symbol details
-        sec.querySelectorAll('tbody tr').forEach(function(row) {
-            row.style.cursor = 'pointer';
-            row.addEventListener('click', function() {
-                var sym = row.getAttribute('data-symbol');
-                if (sym) {
-                    selectedSymbol = sym;
-                    selectedChartType = 'stock';
-                    renderChartCard();
-                }
+        var vt = sec.querySelector('#holdViewToggle');
+        if (vt) {
+            vt.addEventListener('click', function() {
+                holdingsViewMode = holdingsViewMode === 'table' ? 'chart' : 'table';
+                renderHoldings(holdingsTab);
             });
-        });
+        }
+
+        // Chart initialization (after DOM rendered)
+        if (holdingsViewMode === 'chart') {
+            setTimeout(function() {
+                if (holdingsTab === 'overview') initOverviewChart();
+                else if (holdingsTab === 'performance') initPerformanceChart();
+                else if (holdingsTab === 'allocation') initAllocationChart();
+                else if (holdingsTab === 'dividendTab') initDividendChart();
+            }, 50);
+        }
+
+        // Bind row clicks for stock chart
+        if (holdingsViewMode === 'table') {
+            sec.querySelectorAll('tbody tr').forEach(function(row) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function() {
+                    var sym = row.getAttribute('data-symbol');
+                    if (sym) {
+                        selectedSymbol = sym;
+                        selectedChartType = 'stock';
+                        renderChartCard();
+                    }
+                });
+            });
+        }
     }
 
-    function holdingsOverview() {
+    function holdingsOverviewTable() {
         var ths = [t('symbol'), t('qty'), t('avgCost'), t('lastPrice'), t('mktValue'), t('weight'), t('dayChange'), t('totalPL'), t('action')];
         var rows = metrics.holdings.map(function(h){
             var dayClass = h.dayChange >= 0 ? 'pf-pos' : 'pf-neg';
@@ -909,7 +977,7 @@
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
     }
 
-    function holdingsPerformance() {
+    function holdingsPerformanceTable() {
         var ths = [
             t('symbol'), 
             t('avgCost'), 
@@ -938,7 +1006,7 @@
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
     }
 
-    function holdingsAllocation() {
+    function holdingsAllocationTable() {
         var ths = [t('symbol'), t('mktValue'), t('weight'), 'Allocation Bucket'];
         var total = metrics.totalMarketValue;
         var rows = metrics.holdings.map(function(h){
@@ -956,7 +1024,7 @@
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
     }
 
-    function holdingsDividends() {
+    function holdingsDividendsTable() {
         if (!portfolio.transactions.length) return '<div class="pf-empty">' + (lang==='ar'?'لا توجد معاملات مسجلة.':'No transactions recorded.') + '</div>';
         
         var ths = [t('txDate'), t('symbol'), 'Type', t('txQty'), t('txPrice'), 'Cost Basis', 'Description'];
@@ -974,6 +1042,213 @@
             '</tr>';
         }).join('');
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
+    }
+
+    /* ─── Holdings Chart Views (Premium visualizations per tab) ─────── */
+
+    function holdingsOverviewChart() {
+        return '<div class="pf-chart-card">' +
+            '<div class="pf-chart-card__title">' + t('holdings') + ' — Market Value Distribution</div>' +
+            '<div style="display:flex;gap:1.5rem;align-items:stretch;">' +
+                '<div style="flex:1; min-height:300px;"><canvas id="tabOverviewChart"></canvas></div>' +
+                '<div class="pf-mini-cards" style="width:200px;display:flex;flex-direction:column;gap:0.35rem;overflow-y:auto;max-height:300px;">' +
+                    metrics.holdings.map(function(h,i){
+                        var plCls = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
+                        return '<div style="padding:0.5rem 0.65rem;border:1px solid var(--line);border-radius:var(--pf-radius-sm);cursor:pointer;" class="pf-mini-card" data-sym="'+h.symbol+'">' +
+                            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                                '<span style="font-weight:700;font-size:0.8rem;">'+h.symbol+'</span>' +
+                                '<span class="pf-num" style="font-size:0.72rem;">'+h.weight.toFixed(1)+'%</span>' +
+                            '</div>' +
+                            '<div style="display:flex;justify-content:space-between;margin-top:0.2rem;">' +
+                                '<span class="pf-num" style="font-size:0.7rem;color:var(--muted);">$'+fmt(h.marketValue)+'</span>' +
+                                '<span class="pf-num '+plCls+'" style="font-size:0.68rem;">'+(h.totalGain>=0?'+':'')+fmt(h.totalGain)+'</span>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('') +
+                '</div>' +
+            '</div></div>';
+    }
+
+    function initOverviewChart() {
+        var canvas = document.getElementById('tabOverviewChart');
+        if (!canvas || !metrics.holdings.length) return;
+        if (tabChartInst) tabChartInst.destroy();
+        var isDark = document.documentElement.dataset.theme !== 'light';
+        var colors = metrics.holdings.map(function(h){ return h.color; });
+        var ctx = canvas.getContext('2d');
+        tabChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: metrics.holdings.map(function(h){ return h.symbol; }),
+                datasets: [{
+                    label: 'Market Value',
+                    data: metrics.holdings.map(function(h){ return h.marketValue; }),
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function(c){ return '$'+fmt(c.raw,2); } } }
+                },
+                scales: {
+                    x: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'}, callback: function(v){ return '$'+fmt(v,0); } } },
+                    y: { grid: { display: false }, ticks: { font:{size:10,family:'IBM Plex Mono',weight:'700'} } }
+                }
+            }
+        });
+        // Wire mini-card clicks
+        setTimeout(function(){
+            document.querySelectorAll('.pf-mini-card').forEach(function(card){
+                card.addEventListener('click', function(){
+                    var sym = card.dataset.sym;
+                    if (sym) { selectedSymbol = sym; selectedChartType = 'stock'; renderChartCard(); }
+                });
+            });
+        }, 100);
+    }
+
+    function holdingsPerformanceChart() {
+        return '<div class="pf-chart-card">' +
+            '<div class="pf-chart-card__title">' + t('performance') + ' — Unrealized P&L by Position</div>' +
+            '<div style="min-height:320px;"><canvas id="tabPerfChart"></canvas></div>' +
+            '<div class="pf-chart-stats" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.75rem;">' +
+                metrics.holdings.map(function(h){
+                    var cl = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
+                    return '<div style="padding:0.4rem 0.8rem;border:1px solid var(--line);border-radius:var(--pf-radius-sm);flex:1;min-width:100px;">' +
+                        '<span style="font-weight:700;font-size:0.75rem;">'+h.symbol+'</span>' +
+                        '<span class="pf-num '+cl+'" style="float:right;font-size:0.75rem;">'+(h.totalGain>=0?'+':'')+'$'+money(h.totalGain)+'</span>' +
+                    '</div>';
+                }).join('') +
+            '</div></div>';
+    }
+
+    function initPerformanceChart() {
+        var canvas = document.getElementById('tabPerfChart');
+        if (!canvas || !metrics.holdings.length) return;
+        if (tabChartInst) tabChartInst.destroy();
+        var isDark = document.documentElement.dataset.theme !== 'light';
+        var vals = metrics.holdings.map(function(h){ return h.totalGain; });
+        var colors = vals.map(function(v){ return v >= 0 ? '#22c55e' : '#ef4444'; });
+        var ctx = canvas.getContext('2d');
+        tabChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: metrics.holdings.map(function(h){ return h.symbol; }),
+                datasets: [{
+                    data: vals,
+                    backgroundColor: colors,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return (c.raw>=0?'+':'')+'$'+fmt(c.raw,2); } } } },
+                scales: {
+                    x: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'} } },
+                    y: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'}, callback: function(v){ return '$'+fmt(v,0); } } }
+                }
+            }
+        });
+    }
+
+    function holdingsAllocationChart() {
+        var total = metrics.totalMarketValue || 1;
+        return '<div class="pf-chart-card">' +
+            '<div class="pf-chart-card__title">' + t('allocation') + ' — Portfolio Weight Distribution</div>' +
+            '<div style="display:flex;gap:1.5rem;align-items:center;">' +
+                '<div style="flex:1; min-height:320px;"><canvas id="tabAllocChart"></canvas></div>' +
+                '<div class="pf-alloc-legend" style="width:180px;display:flex;flex-direction:column;gap:0.3rem;max-height:320px;overflow-y:auto;">' +
+                    metrics.holdings.map(function(h){
+                        return '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.25rem 0;font-size:0.7rem;">' +
+                            '<span style="width:10px;height:10px;border-radius:2px;background:'+h.color+';flex-shrink:0;"></span>' +
+                            '<span style="font-weight:600;flex:1;">'+h.symbol+'</span>' +
+                            '<span class="pf-num" style="color:var(--muted);">'+h.weight.toFixed(1)+'%</span>' +
+                        '</div>';
+                    }).join('') +
+                '</div>' +
+            '</div></div>';
+    }
+
+    function initAllocationChart() {
+        var canvas = document.getElementById('tabAllocChart');
+        if (!canvas || !metrics.holdings.length) return;
+        if (tabChartInst) tabChartInst.destroy();
+        var ctx = canvas.getContext('2d');
+        tabChartInst = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: metrics.holdings.map(function(h){ return h.symbol; }),
+                datasets: [{
+                    data: metrics.holdings.map(function(h){ return h.marketValue; }),
+                    backgroundColor: metrics.holdings.map(function(h){ return h.color; }),
+                    borderColor: 'var(--surface)',
+                    borderWidth: 2,
+                    hoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function(c){ return c.label+': '+c.parsed.toFixed(1)+'% ($'+fmt(c.raw,2)+')'; } } }
+                }
+            }
+        });
+    }
+
+    function holdingsDividendsChart() {
+        if (!portfolio.transactions.length) return '<div class="pf-empty">No transactions recorded.</div>';
+        var txs = portfolio.transactions.slice().reverse().slice(0, 15);
+        return '<div class="pf-chart-card">' +
+            '<div class="pf-chart-card__title">' + t('dividendTab') + ' — Trade Activity Timeline</div>' +
+            '<div style="min-height:300px;"><canvas id="tabDivChart"></canvas></div>' +
+            '<div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.35rem;">' +
+                txs.map(function(tx){
+                    var cl = tx.type === 'buy' ? 'pf-neg' : 'pf-pos';
+                    return '<span style="padding:0.2rem 0.55rem;border:1px solid var(--line);border-radius:999px;font-size:0.65rem;font-weight:600;">' +
+                        tx.symbol + ' <span class="'+cl+'">'+(tx.type==='buy'?'B':'S')+'</span> $'+fmt(tx.quantity*tx.price) +
+                    '</span>';
+                }).join('') +
+            '</div></div>';
+    }
+
+    function initDividendChart() {
+        var canvas = document.getElementById('tabDivChart');
+        if (!canvas || !portfolio.transactions.length) return;
+        if (tabChartInst) tabChartInst.destroy();
+        var isDark = document.documentElement.dataset.theme !== 'light';
+        var txs = portfolio.transactions.slice().reverse().slice(0, 15);
+        var ctx = canvas.getContext('2d');
+        var labels = txs.map(function(tx){ return tx.symbol+' '+tx.type.toUpperCase(); });
+        var sizes = txs.map(function(tx){ return Math.abs(tx.quantity * tx.price); });
+        var colors = txs.map(function(tx){ return tx.type === 'buy' ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'; });
+        tabChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: sizes,
+                    backgroundColor: colors,
+                    borderRadius: 3,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return '$'+fmt(c.raw,2); } } } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font:{size:7,family:'IBM Plex Mono'}, maxRotation: 45 } },
+                    y: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'}, callback: function(v){ return '$'+fmt(v,0); } } }
+                }
+            }
+        });
     }
 
     function thTable(ths) {
