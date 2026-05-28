@@ -1,5 +1,5 @@
 {
-  "equity": 100259.37,
+  "equity": 100412.77,
   "starting_equity": 100000.0,
   "day_start_equity": 100116.42,
   "week_start_equity": 100000.0,
@@ -7,138 +7,82 @@
     "AAPL": {
       "qty": 25,
       "avg_price": 310.58,
-      "current_price": 310.77,
-      "market_value": 7769.25,
-      "unrealized_pl": 4.75,
-      "unrealized_pl_pct": 0.00061,
-      "bucket": "aggressive_growth",
-      "stop_loss": 296.7,
-      "take_profit": 332.9
+      "bucket": "aggressive_growth"
     },
     "AMZN": {
       "qty": 22,
       "avg_price": 269.78,
-      "current_price": 270.11,
-      "market_value": 5942.42,
-      "unrealized_pl": 7.26,
-      "unrealized_pl_pct": 0.00122,
       "bucket": "aggressive_growth"
     },
     "BIL": {
       "qty": 218,
       "avg_price": 91.62,
-      "current_price": 91.625,
-      "market_value": 19974.25,
-      "unrealized_pl": 1.09,
-      "unrealized_pl_pct": 0.00005,
       "bucket": "defensive"
     },
     "DIA": {
       "qty": 9,
       "avg_price": 508.353333,
-      "current_price": 507.17,
-      "market_value": 4564.53,
-      "unrealized_pl": -10.65,
-      "unrealized_pl_pct": -0.00233,
       "bucket": "core_equity"
     },
     "GOOGL": {
       "qty": 15,
       "avg_price": 391.84,
-      "current_price": 390.335,
-      "market_value": 5855.03,
-      "unrealized_pl": -22.58,
-      "unrealized_pl_pct": -0.00384,
       "bucket": "aggressive_growth"
     },
     "IWM": {
       "qty": 17,
       "avg_price": 290.431176,
-      "current_price": 291.87,
-      "market_value": 4961.79,
-      "unrealized_pl": 24.46,
-      "unrealized_pl_pct": 0.00495,
       "bucket": "core_equity"
     },
     "NVDA": {
       "qty": 37,
       "avg_price": 212.546757,
-      "current_price": 212.2607,
-      "market_value": 7853.65,
-      "unrealized_pl": -10.58,
-      "unrealized_pl_pct": -0.00135,
-      "bucket": "aggressive_growth",
-      "stop_loss": 195.3,
-      "take_profit": 241.1
+      "bucket": "aggressive_growth"
     },
     "QQQ": {
       "qty": 6,
       "avg_price": 726.441667,
-      "current_price": 734.41,
-      "market_value": 4406.46,
-      "unrealized_pl": 47.81,
-      "unrealized_pl_pct": 0.01097,
       "bucket": "core_equity"
     },
     "SPY": {
       "qty": 6,
       "avg_price": 750.05,
-      "current_price": 753.88,
-      "market_value": 4523.28,
-      "unrealized_pl": 22.98,
-      "unrealized_pl_pct": 0.00511,
       "bucket": "core_equity"
     },
     "TSLA": {
       "qty": 13,
       "avg_price": 436.999231,
-      "current_price": 441.36,
-      "market_value": 5737.68,
-      "unrealized_pl": 56.69,
-      "unrealized_pl_pct": 0.00998,
       "bucket": "aggressive_growth"
     },
     "XLI": {
       "qty": 28,
       "avg_price": 174.18,
-      "current_price": 174.48,
-      "market_value": 4885.44,
-      "unrealized_pl": 8.4,
-      "unrealized_pl_pct": 0.00172,
       "bucket": "sector_momentum"
     },
     "XLK": {
       "qty": 27,
       "avg_price": 182.998519,
-      "current_price": 186.9861,
-      "market_value": 5048.62,
-      "unrealized_pl": 107.66,
-      "unrealized_pl_pct": 0.02179,
       "bucket": "sector_momentum"
     },
     "XLY": {
       "qty": 41,
       "avg_price": 121.64561,
-      "current_price": 121.52,
-      "market_value": 4982.32,
-      "unrealized_pl": -5.15,
-      "unrealized_pl_pct": -0.00103,
       "bucket": "sector_momentum"
     }
   },
   "trades_today": 2,
-  "total_exposure": 86503.9,
-  "long_market_value": 86503.9,
+  "total_exposure": 86656.8216,
+  "long_market_value": 86656.8216,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.28,
   "cash": 13755.47,
-  "day_pnl": 142.95,
-  "day_pnl_pct": 0.001428,
-  "week_pnl": 259.37,
-  "week_pnl_pct": 0.002594,
+  "day_pnl": 296.35,
+  "day_pnl_pct": 0.00296,
+  "week_pnl": 412.77,
+  "week_pnl_pct": 0.004128,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-05-28T16:02:07+00:00"
+  "last_updated": "2026-05-28T19:13:46.014458+00:00"
 }
