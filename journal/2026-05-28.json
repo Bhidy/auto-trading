@@ -1,75 +1,220 @@
-{
-  "date": "2026-05-28",
-  "session_type": "CATCH_UP_TRADING",
-  "market_status": "OPEN",
-  "market_regime": "STRONG_BULL",
-  "account": {
-    "starting_equity": 100253.56,
-    "cash_before": 29384.2,
-    "cash_after": 13755.35
-  },
-  "market_context": {
-    "regime": "STRONG_BULL",
-    "key_themes": [
-      "SPY above MA50 & MA200, strong uptrend with 6% 1M momentum",
-      "Dallas Fed PCE 2.50% vs 2.90% prior \u2014 inflation cooling",
-      "Fed Musalem cautious, watching for H2 2026 slowdown",
-      "New home sales miss 622K vs 661K est \u2014 housing weakness",
-      "Apple pushing on-device AI over cloud",
-      "SpaceX IPO speculation fueling TSLA",
-      "JPMorgan shifting AI focus to software beyond NVDA/MSFT",
-      "US-Iran deal pending Trump approval",
-      "Snowflake AI-driven surge 35%",
-      "Meta new subscriptions launch, Zuckerberg +7B richer"
+[
+  {
+    "date": "2026-05-28",
+    "session_type": "CATCH_UP_TRADING",
+    "market_status": "OPEN",
+    "market_regime": "STRONG_BULL",
+    "account": {
+      "starting_equity": 100253.56,
+      "cash_before": 29384.2,
+      "cash_after": 13755.35
+    },
+    "market_context": {
+      "regime": "STRONG_BULL",
+      "key_themes": [
+        "SPY above MA50 & MA200, strong uptrend with 6% 1M momentum",
+        "Dallas Fed PCE 2.50% vs 2.90% prior \u2014 inflation cooling",
+        "Fed Musalem cautious, watching for H2 2026 slowdown",
+        "New home sales miss 622K vs 661K est \u2014 housing weakness",
+        "Apple pushing on-device AI over cloud",
+        "SpaceX IPO speculation fueling TSLA",
+        "JPMorgan shifting AI focus to software beyond NVDA/MSFT",
+        "US-Iran deal pending Trump approval",
+        "Snowflake AI-driven surge 35%",
+        "Meta new subscriptions launch, Zuckerberg +7B richer"
+      ]
+    },
+    "trades_executed": [
+      {
+        "symbol": "NVDA",
+        "side": "buy",
+        "qty": 37,
+        "fill_price": 212.55,
+        "cost": 7864.35,
+        "bucket": "aggressive_growth",
+        "signal_score": 0.756,
+        "stop_loss": 195.3,
+        "take_profit": 241.1,
+        "reason": "STRONG_BULL x1.2, uptrend, RSI neutral 52, aggressive_growth underweight 17.5% vs 25% target"
+      },
+      {
+        "symbol": "AAPL",
+        "side": "buy",
+        "qty": 25,
+        "fill_price": 310.58,
+        "cost": 7764.5,
+        "bucket": "aggressive_growth",
+        "signal_score": 0.735,
+        "stop_loss": 296.7,
+        "take_profit": 332.9,
+        "reason": "STRONG_BULL x1.2, 15% 1M momentum, top 18% RS, on-device AI catalyst, aggressive_growth underweight"
+      }
+    ],
+    "notes": "Catch-up session \u2014 scheduled tasks failed to fire today. Ran morning research + trading session manually. 2 bracket orders placed and filled. Aggressive growth bucket now better weighted.",
+    "intraday_checks": [
+      {
+        "time": "2026-05-28T16:02:07Z",
+        "equity": 100259.37,
+        "day_pnl": 142.95,
+        "day_pnl_pct": 0.1428,
+        "long_market_value": 86503.9,
+        "gross_exposure_pct": 86.28,
+        "risk_checks": {
+          "kill_switch": "PASS",
+          "daily_loss": "PASS",
+          "weekly_loss": "PASS"
+        },
+        "stop_triggers": "NONE",
+        "action": "HOLD \u2014 all 13 positions within safe ATR bands",
+        "top_movers": {
+          "best": "XLK +2.18%",
+          "worst": "DIA -0.23%"
+        },
+        "notes": "All portfolio-level and position-level risk checks passed. No stops triggered. Market closing in ~2 hours."
+      }
     ]
   },
-  "trades_executed": [
-    {
-      "symbol": "NVDA",
-      "side": "buy",
-      "qty": 37,
-      "fill_price": 212.55,
-      "cost": 7864.35,
-      "bucket": "aggressive_growth",
-      "signal_score": 0.756,
-      "stop_loss": 195.3,
-      "take_profit": 241.1,
-      "reason": "STRONG_BULL x1.2, uptrend, RSI neutral 52, aggressive_growth underweight 17.5% vs 25% target"
+  {
+    "date": "2026-05-28",
+    "timestamp": "2026-05-28T20:07:16.415060+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 100486.54,
+      "cash": 13755.47,
+      "portfolio_value": 100486.54,
+      "daily_pnl": 370.11999999999534,
+      "daily_pnl_pct": 0.37
     },
-    {
-      "symbol": "AAPL",
-      "side": "buy",
-      "qty": 25,
-      "fill_price": 310.58,
-      "cost": 7764.5,
-      "bucket": "aggressive_growth",
-      "signal_score": 0.735,
-      "stop_loss": 296.7,
-      "take_profit": 332.9,
-      "reason": "STRONG_BULL x1.2, 15% 1M momentum, top 18% RS, on-device AI catalyst, aggressive_growth underweight"
-    }
-  ],
-  "notes": "Catch-up session \u2014 scheduled tasks failed to fire today. Ran morning research + trading session manually. 2 bracket orders placed and filled. Aggressive growth bucket now better weighted.",
-  "intraday_checks": [
-    {
-      "time": "2026-05-28T16:02:07Z",
-      "equity": 100259.37,
-      "day_pnl": 142.95,
-      "day_pnl_pct": 0.1428,
-      "long_market_value": 86503.9,
-      "gross_exposure_pct": 86.28,
-      "risk_checks": {
-        "kill_switch": "PASS",
-        "daily_loss": "PASS",
-        "weekly_loss": "PASS"
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "qty": "25",
+        "market_value": "7807.5",
+        "unrealized_pl": "43",
+        "unrealized_plpc": "0.00554"
       },
-      "stop_triggers": "NONE",
-      "action": "HOLD \u2014 all 13 positions within safe ATR bands",
-      "top_movers": {
-        "best": "XLK +2.18%",
-        "worst": "DIA -0.23%"
+      {
+        "symbol": "AMZN",
+        "qty": "22",
+        "market_value": "6025.36",
+        "unrealized_pl": "90.2",
+        "unrealized_plpc": "0.0152"
       },
-      "notes": "All portfolio-level and position-level risk checks passed. No stops triggered. Market closing in ~2 hours."
-    }
-  ]
-}
+      {
+        "symbol": "BIL",
+        "qty": "218",
+        "market_value": "19973.16",
+        "unrealized_pl": "0",
+        "unrealized_plpc": "0"
+      },
+      {
+        "symbol": "DIA",
+        "qty": "9",
+        "market_value": "4567.509",
+        "unrealized_pl": "-7.670997",
+        "unrealized_plpc": "-0.00168"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "15",
+        "market_value": "5849.7",
+        "unrealized_pl": "-27.9",
+        "unrealized_plpc": "-0.00475"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "17",
+        "market_value": "4966.38",
+        "unrealized_pl": "29.050008",
+        "unrealized_plpc": "0.00588"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "37",
+        "market_value": "7924.29",
+        "unrealized_pl": "60.059991",
+        "unrealized_plpc": "0.00764"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "6",
+        "market_value": "4415.52",
+        "unrealized_pl": "56.869998",
+        "unrealized_plpc": "0.01305"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "6",
+        "market_value": "4530.9",
+        "unrealized_pl": "30.6",
+        "unrealized_plpc": "0.0068"
+      },
+      {
+        "symbol": "TSLA",
+        "qty": "13",
+        "market_value": "5743.27",
+        "unrealized_pl": "62.279997",
+        "unrealized_plpc": "0.01096"
+      },
+      {
+        "symbol": "XLI",
+        "qty": "28",
+        "market_value": "4867.8",
+        "unrealized_pl": "-9.24",
+        "unrealized_plpc": "-0.00189"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "27",
+        "market_value": "5054.4",
+        "unrealized_pl": "113.439987",
+        "unrealized_plpc": "0.02296"
+      },
+      {
+        "symbol": "XLY",
+        "qty": "41",
+        "market_value": "5005.28",
+        "unrealized_pl": "17.80999",
+        "unrealized_plpc": "0.00357"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate": 1.0,
+        "avg_pnl_pct": 0.42,
+        "avg_win_pct": 0.42,
+        "avg_loss_pct": 0,
+        "win_loss_ratio": 1.0,
+        "max_win_pct": 0.42,
+        "max_loss_pct": 0.42,
+        "total_pnl": 29.04,
+        "profit_factor": 29.04,
+        "sharpe_estimate": 0
+      },
+      "metrics_30d": {
+        "total_trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate": 1.0,
+        "avg_pnl_pct": 0.42,
+        "avg_win_pct": 0.42,
+        "avg_loss_pct": 0,
+        "win_loss_ratio": 1.0,
+        "max_win_pct": 0.42,
+        "max_loss_pct": 0.42,
+        "total_pnl": 29.04,
+        "profit_factor": 29.04,
+        "sharpe_estimate": 0
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": []
+  }
+]
