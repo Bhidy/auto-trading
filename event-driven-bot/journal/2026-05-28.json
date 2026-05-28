@@ -99,5 +99,106 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-05-28",
+    "timestamp": "2026-05-28T22:13:16.998121+00:00",
+    "audit": {
+      "equity": 100457.26,
+      "cash": 23630.44,
+      "daily_pnl": 417.27,
+      "daily_pnl_pct": 0.417,
+      "total_open_exposure": 76826.82,
+      "exposure_pct": 76.5,
+      "position_count": 5,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 31402.49,
+        "Energy": 29720.18,
+        "Financials": 15704.15
+      }
+    },
+    "positions": [
+      {
+        "symbol": "CSCO",
+        "qty": "129",
+        "entry": "119.399922",
+        "current": "118.9495",
+        "market_value": "15344.4855",
+        "unrealized_pl": "-58.104438",
+        "pnl_pct": -0.38,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "250.48",
+        "market_value": "14778.32",
+        "unrealized_pl": "-194.7",
+        "pnl_pct": -1.3,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MS",
+        "qty": "77",
+        "entry": "200.681558",
+        "current": "203.95",
+        "market_value": "15704.15",
+        "unrealized_pl": "251.670034",
+        "pnl_pct": 1.63,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "OXY",
+        "qty": "262",
+        "entry": "57.519046",
+        "current": "57.03",
+        "market_value": "14941.86",
+        "unrealized_pl": "-128.130052",
+        "pnl_pct": -0.85,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "62",
+        "entry": "249.54",
+        "current": "259",
+        "market_value": "16058",
+        "unrealized_pl": "586.52",
+        "pnl_pct": 3.79,
+        "sector": "Tech"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "OXY",
+        "side": "buy",
+        "qty": 262,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "MACD bullish crossover",
+          "MACD crossover below zero (structural reversal)",
+          "Strong RS vs SPY (+21.5%)"
+        ]
+      },
+      {
+        "symbol": "MPC",
+        "side": "buy",
+        "qty": 59,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+18.9%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
