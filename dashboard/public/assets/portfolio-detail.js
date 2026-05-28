@@ -217,7 +217,6 @@
                         return '<option value="' + p.id + '"' + selected + '>' + escHtml(displayName) + '</option>';
                     }).join('') +
                     '</select>' +
-                    (portfolio.isAggregated ? '<span class="pf-badge-neu server-badge-glow" style="font-size:.68rem; font-weight:800; background:var(--teal-soft); border-color:var(--teal); color:var(--teal);">AGGREGATED</span>' : '') +
                 '</div>' +
                 '<div class="pf-kpi-strip">' + kpis.join('') + '</div>' +
                 '<button class="pf-btn pf-btn--primary pf-btn--sm" id="addTxBtn" style="flex-shrink:0;">+ ' + t('addTx') + '</button>' +
@@ -312,26 +311,27 @@
         var toggleButtonHtml = '';
         if (selectedSymbol) {
             var isStock = selectedChartType === 'stock';
-            toggleButtonHtml = `<button class="pf-btn pf-btn--sm ${isStock ? 'pf-btn--primary' : 'pf-btn--outline'}" id="chartTypeToggle" style="border-radius:var(--pf-radius-sm);">
-                ${isStock ? 'PORTFOLIO EQUITY' : 'STOCK CHART: ' + selectedSymbol}
-            </button>`;
+            toggleButtonHtml = '<button class="pf-btn pf-btn--sm ' + (isStock ? '' : 'pf-btn--outline') + '" id="chartTypeToggle" style="border-radius:var(--pf-radius-sm); font-size:0.72rem; font-weight:700; letter-spacing:0.02em;">' +
+                (isStock ? '← Portfolio Equity' : 'Technical Chart: ' + selectedSymbol) +
+            '</button>';
         }
 
         el.innerHTML =
             '<div class="pf-chart-top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">' +
                 '<div class="pf-chart-headline">' +
-                    '<h2 style="font-family:\'DM Serif Display\', serif; font-size:1.4rem; font-weight:400; margin:0; line-height:1;">' + 
-                        (selectedChartType === 'stock' ? 'STOCK CHART: ' + selectedSymbol : t('perfTitle')) + 
+                    '<h2 style="font-family:\'DM Serif Display\', serif; font-size:1.4rem; font-weight:400; margin:0; line-height:1;">' +
+                        (selectedChartType === 'stock' ? 'STOCK TECHNICAL CHART: ' + selectedSymbol : t('perfTitle')) +
                     '</h2>' +
-                    '<span class="pf-num" style="font-size:1.6rem; font-weight:700; display:block; margin-top:0.25rem; font-family:var(--pf-mono);" id="chartHeadlinePrice">' + 
-                        (selectedChartType === 'stock' ? (lang === 'ar' ? 'جاري التحميل...' : 'Loading...') : '$' + fmt(metrics.totalValue)) + 
+                    '<span class="pf-num" style="font-size:1.6rem; font-weight:700; display:block; margin-top:0.25rem; font-family:var(--pf-mono);" id="chartHeadlinePrice">' +
+                        (selectedChartType === 'stock' ? '—' : '$' + fmt(metrics.totalValue)) +
                     '</span>' +
-                    (pfId === 'all' ? '<span style="font-size:0.7rem; color:var(--teal); font-weight:700; margin-top:0.15rem; display:block;">3 Combined Portfolios · $300K Paper Baseline</span>' : '') +
+                    (pfId === 'all' && selectedChartType !== 'stock' ? '<span style="font-size:0.7rem; color:var(--teal); font-weight:700; margin-top:0.15rem; display:block;">3 Combined Portfolios · $300K Paper Baseline</span>' : '') +
+                    (selectedChartType === 'stock' ? '<span style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-top:0.15rem; display:block;">vs S&amp;P 500 · ' + chartPeriod + ' period</span>' : '') +
                 '</div>' +
                 '<div class="pf-chart-controls" style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap;">' +
                     toggleButtonHtml +
                     '<div class="pf-period-strip" style="display:flex; background:var(--page); border:1px solid var(--line); padding:2px; border-radius:var(--pf-radius-sm);">' + periodBtns + '</div>' +
-                    '<div class="pf-mode-strip" style="display:flex; background:var(--page); border:1px solid var(--line); padding:2px; border-radius:var(--pf-radius-sm);">' + modeBtns + '</div>' +
+                    (selectedChartType !== 'stock' ? '<div class="pf-mode-strip" style="display:flex; background:var(--page); border:1px solid var(--line); padding:2px; border-radius:var(--pf-radius-sm);">' + modeBtns + '</div>' : '') +
                     '<div class="pf-benchmark-toggle' + (showBenchmark ? ' active' : '') + '" id="benchToggle" style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.75rem; font-weight:600; color:var(--muted); border:1px solid var(--line); padding:0.35rem 0.65rem; border-radius:var(--pf-radius-sm);">' +
                         '<div class="dot" style="width:6px; height:6px; border-radius:50%; background:' + (showBenchmark?'var(--teal)':'var(--muted)') + '"></div>' + portfolio.benchmark +
                     '</div>' +
@@ -369,14 +369,7 @@
         if (bToggle) {
             bToggle.addEventListener('click', function(){
                 showBenchmark = !showBenchmark;
-                this.classList.toggle('active', showBenchmark);
-                if (perfChart) {
-                    // Benchmark dataset is at index 1 or 2
-                    if (perfChart.data.datasets[1]) {
-                        perfChart.data.datasets[1].hidden = !showBenchmark;
-                        perfChart.update('none');
-                    }
-                }
+                // Redraw fully so benchmark overlay is rebuilt correctly for both modes
                 renderChartCard();
             });
         }
@@ -389,32 +382,53 @@
             '<div class="pf-stat__value' + (cls ? ' ' + cls : '') + '" style="font-family:var(--pf-mono); font-weight:700; font-size:1.15rem; margin-top:0.15rem;">' + val + '</div></div>';
     }
 
-    // Helper to programmatically construct technical overlays
+    // Period → Alpaca bar params mapping
     var _stockBarCache = {};
-    function fetchRealStockHistory(symbol, callback) {
-        if (_stockBarCache[symbol]) { callback(_stockBarCache[symbol]); return; }
-        // Try intraday 5Min bars first
-        fetch('/api/market/bars/' + symbol + '?timeframe=5Min&limit=78')
+    var STOCK_PERIOD_MAP = {
+        '1D':  { timeframe: '5Min',  limit: 78 },
+        '1W':  { timeframe: '1Day',  limit: 8 },
+        '1M':  { timeframe: '1Day',  limit: 31 },
+        '3M':  { timeframe: '1Day',  limit: 92 },
+        '6M':  { timeframe: '1Day',  limit: 185 },
+        'YTD': { timeframe: '1Day',  limit: 260 },
+        'All': { timeframe: '1Day',  limit: 365 }
+    };
+
+    function fetchRealStockHistory(symbol, period, callback) {
+        var cacheKey = symbol + '|' + period;
+        if (_stockBarCache[cacheKey]) { callback(_stockBarCache[cacheKey]); return; }
+        var p = STOCK_PERIOD_MAP[period] || STOCK_PERIOD_MAP['3M'];
+        var isIntraday = (period === '1D');
+
+        function parseHistory(bars, intraday) {
+            return bars.map(function(b) {
+                return { date: (b.t || '').slice(0, intraday ? 16 : 10), price: b.c };
+            });
+        }
+
+        fetch('/api/market/bars/' + symbol + '?timeframe=' + p.timeframe + '&limit=' + p.limit)
             .then(function(r) { return r.ok ? r.json() : []; })
             .then(function(bars) {
                 if (bars && bars.length > 0) {
-                    var history = bars.map(function(b) { return { date: (b.t || '').slice(0, 16), price: b.c }; });
-                    _stockBarCache[symbol] = history;
+                    var history = parseHistory(bars, isIntraday);
+                    _stockBarCache[cacheKey] = history;
                     callback(history);
-                } else {
-                    // Market closed or no intraday data — try daily bars
-                    fetch('/api/market/bars/' + symbol + '?timeframe=1Day&limit=90')
+                } else if (isIntraday) {
+                    // Market closed — fall back to recent daily bars
+                    fetch('/api/market/bars/' + symbol + '?timeframe=1Day&limit=31')
                         .then(function(r2) { return r2.ok ? r2.json() : []; })
                         .then(function(dailyBars) {
                             if (dailyBars && dailyBars.length > 0) {
-                                var history = dailyBars.map(function(b) { return { date: (b.t || '').slice(0, 10), price: b.c }; });
-                                _stockBarCache[symbol] = history;
+                                var history = parseHistory(dailyBars, false);
+                                _stockBarCache[cacheKey] = history;
                                 callback(history);
                             } else {
                                 callback(generateStockHistoryFallback(symbol));
                             }
                         })
                         .catch(function() { callback(generateStockHistoryFallback(symbol)); });
+                } else {
+                    callback(generateStockHistoryFallback(symbol));
                 }
             })
             .catch(function() { callback(generateStockHistoryFallback(symbol)); });
@@ -444,13 +458,36 @@
         var ctx = canvas.getContext('2d');
 
         if (selectedChartType === 'stock') {
-            fetchRealStockHistory(selectedSymbol, function(stockData) {
+            var isIntraday = (chartPeriod === '1D');
+            var spyStockLimit = (STOCK_PERIOD_MAP[chartPeriod] || STOCK_PERIOD_MAP['3M']).limit + 5;
+
+            fetchRealStockHistory(selectedSymbol, chartPeriod, function(stockData) {
+                if (!stockData || stockData.length === 0) {
+                    var headEl = document.getElementById('chartHeadlinePrice');
+                    if (headEl) headEl.textContent = 'No data';
+                    return;
+                }
+
                 var labels = stockData.map(function(d) {
-                    var date = new Date(d.date);
-                    return date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: '2-digit', month: 'short' });
+                    var raw = d.date;
+                    if (isIntraday) {
+                        // Parse ISO-like "YYYY-MM-DDTHH:MM" safely
+                        var parts = raw.replace('T', ' ').split(/[- :]/);
+                        var dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), parseInt(parts[3] || 0), parseInt(parts[4] || 0));
+                        return dt.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        var parts2 = raw.split('-');
+                        var dt2 = new Date(parseInt(parts2[0]), parseInt(parts2[1]) - 1, parseInt(parts2[2]));
+                        var opts = (chartPeriod === 'All' || chartPeriod === 'YTD' || chartPeriod === '6M')
+                            ? { day: '2-digit', month: 'short', year: '2-digit' }
+                            : { day: '2-digit', month: 'short' };
+                        return dt2.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', opts);
+                    }
                 });
+
                 var prices = stockData.map(function(d) { return d.price; });
 
+                // EMA-20
                 var ema20 = [];
                 var k = 2 / (20 + 1);
                 var currEma = prices[0];
@@ -459,93 +496,148 @@
                     ema20.push(currEma);
                 }
 
-                var bbUpper = [];
-                var bbLower = [];
+                // Bollinger Bands (20-period, 2σ)
+                var bbUpper = [], bbLower = [];
                 for (var i = 0; i < prices.length; i++) {
-                    if (i < 19) {
-                        bbUpper.push(prices[i] * 1.04);
-                        bbLower.push(prices[i] * 0.96);
+                    var window20 = prices.slice(Math.max(0, i - 19), i + 1);
+                    var wAvg = window20.reduce(function(s, v) { return s + v; }, 0) / window20.length;
+                    if (window20.length < 5) {
+                        bbUpper.push(prices[i] * 1.03);
+                        bbLower.push(prices[i] * 0.97);
                     } else {
-                        var sum = 0;
-                        for (var j = i - 19; j <= i; j++) sum += prices[j];
-                        var avg = sum / 20;
-                        var variance = 0;
-                        for (var j = i - 19; j <= i; j++) variance += Math.pow(prices[j] - avg, 2);
-                        var stdDev = Math.sqrt(variance / 20);
-                        bbUpper.push(avg + stdDev * 2);
-                        bbLower.push(avg - stdDev * 2);
+                        var variance = window20.reduce(function(s, v) { return s + Math.pow(v - wAvg, 2); }, 0) / window20.length;
+                        var sd = Math.sqrt(variance);
+                        bbUpper.push(wAvg + sd * 2);
+                        bbLower.push(wAvg - sd * 2);
                     }
                 }
 
                 var currentP = prices[prices.length - 1];
-                var firstP = prices[0];
-                var maxP = Math.max.apply(null, prices);
-                var minP = Math.min.apply(null, prices);
+                var firstP   = prices[0];
+                var maxP     = Math.max.apply(null, prices);
+                var minP     = Math.min.apply(null, prices);
+                var trendPct = firstP > 0 ? ((currentP - firstP) / firstP) * 100 : 0;
 
+                // Update headline price immediately
+                var headlineEl = document.getElementById('chartHeadlinePrice');
+                if (headlineEl) headlineEl.textContent = '$' + fmt(currentP);
+
+                var periodLabel = isIntraday ? '1-Day' : chartPeriod;
                 var statsHtml =
-                    stat(lang === 'ar' ? 'سعر الافتتاح' : 'Start price', '$' + fmt(firstP), '') +
-                    stat(lang === 'ar' ? 'أعلى سعر' : 'Peak (60D)', '$' + fmt(maxP), 'pf-pos') +
-                    stat(lang === 'ar' ? 'أقل سعر' : 'Bottom (60D)', '$' + fmt(minP), 'pf-neg') +
-                    stat(lang === 'ar' ? 'العائد الفعلي' : 'Trend Return', pct(((currentP - firstP) / firstP) * 100), (currentP >= firstP ? 'pf-pos' : 'pf-neg'));
+                    stat(lang === 'ar' ? 'سعر الافتتاح' : 'Start Price',   '$' + fmt(firstP), '') +
+                    stat(lang === 'ar' ? 'أعلى سعر' : 'Period High',        '$' + fmt(maxP), 'pf-pos') +
+                    stat(lang === 'ar' ? 'أقل سعر'  : 'Period Low',         '$' + fmt(minP), 'pf-neg') +
+                    stat(lang === 'ar' ? 'العائد الفعلي' : periodLabel + ' Return', pct(trendPct), trendPct >= 0 ? 'pf-pos' : 'pf-neg');
 
                 var statsPanel = document.getElementById('chartStatsPanel');
                 if (statsPanel) statsPanel.innerHTML = statsHtml;
 
-                if (perfChart) perfChart.destroy();
-                perfChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: selectedSymbol + ' Price',
-                                data: prices,
-                                borderColor: '#E55A1F',
-                                backgroundColor: 'transparent',
-                                borderWidth: 2.5,
-                                tension: 0.25, pointRadius: 0, pointHoverRadius: 5
-                            },
-                            {
-                                label: 'EMA 20',
-                                data: ema20,
-                                borderColor: '#B7EBD8',
-                                backgroundColor: 'transparent',
-                                borderWidth: 1.2,
-                                borderDash: [3, 3],
-                                tension: 0.25, pointRadius: 0
-                            },
-                            {
-                                label: 'Bollinger Upper',
-                                data: bbUpper,
-                                borderColor: 'rgba(255,138,61,0.22)',
-                                backgroundColor: 'transparent',
-                                borderWidth: 1,
-                                tension: 0.25, pointRadius: 0
-                            },
-                            {
-                                label: 'Bollinger Lower',
-                                data: bbLower,
-                                borderColor: 'rgba(255,138,61,0.22)',
-                                backgroundColor: 'rgba(255,138,61,0.01)',
-                                borderWidth: 1,
-                                fill: '-1',
-                                tension: 0.25, pointRadius: 0
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        interaction: { intersect: false, mode: 'index' },
-                        scales: {
-                            x: { grid: { color: gridColor }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: 8 } },
-                            y: { position: 'right', grid: { color: gridColor }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, callback: function(v) { return '$' + fmt(v, 1); } } }
+                function renderStockChart(spyPrices) {
+                    var datasets = [
+                        {
+                            label: selectedSymbol + ' Price',
+                            data: prices,
+                            borderColor: '#E55A1F',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2.5,
+                            tension: 0.25, pointRadius: 0, pointHoverRadius: 5,
+                            pointHoverBackgroundColor: '#E55A1F'
                         },
-                        plugins: {
-                            legend: { display: true, position: 'top', labels: { boxWidth: 10, font: { size: 9, family: 'Manrope' }, color: tickColor } },
-                            tooltip: { backgroundColor: isDark ? '#1a0f08' : '#ffffff', borderColor: gridColor, borderWidth: 1, titleFont: { size: 11 }, bodyFont: { size: 10 } }
+                        {
+                            label: 'EMA 20',
+                            data: ema20,
+                            borderColor: isDark ? '#FFC396' : '#C9461A',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1.2,
+                            borderDash: [4, 3],
+                            tension: 0.25, pointRadius: 0
+                        },
+                        {
+                            label: 'BB Upper',
+                            data: bbUpper,
+                            borderColor: 'rgba(229,90,31,0.25)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1,
+                            tension: 0.25, pointRadius: 0
+                        },
+                        {
+                            label: 'BB Lower',
+                            data: bbLower,
+                            borderColor: 'rgba(229,90,31,0.25)',
+                            backgroundColor: 'rgba(229,90,31,0.04)',
+                            borderWidth: 1,
+                            fill: '-1',
+                            tension: 0.25, pointRadius: 0
                         }
+                    ];
+
+                    if (spyPrices && spyPrices.length === prices.length && showBenchmark) {
+                        datasets.push({
+                            label: 'S&P 500 (SPY · normalized)',
+                            data: spyPrices,
+                            borderColor: '#7a6b5e',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1.5,
+                            borderDash: [5, 4],
+                            tension: 0.25, pointRadius: 0, pointHoverRadius: 4
+                        });
                     }
-                });
+
+                    if (perfChart) perfChart.destroy();
+                    perfChart = new Chart(ctx, {
+                        type: 'line',
+                        data: { labels: labels, datasets: datasets },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { intersect: false, mode: 'index' },
+                            scales: {
+                                x: {
+                                    grid: { color: gridColor, drawBorder: false },
+                                    ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: isIntraday ? 10 : 8, maxRotation: 0 }
+                                },
+                                y: {
+                                    position: 'right', grid: { color: gridColor, drawBorder: false },
+                                    ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, callback: function(v) { return '$' + fmt(v, 2); } }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true, position: 'top',
+                                    labels: { boxWidth: 10, font: { size: 9, family: 'Manrope' }, color: tickColor, padding: 12 }
+                                },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#1a0f08' : '#ffffff',
+                                    borderColor: gridColor, borderWidth: 1,
+                                    titleFont: { family: 'Manrope', size: 11, weight: '700' },
+                                    bodyFont: { family: 'IBM Plex Mono', size: 10 },
+                                    titleColor: isDark ? '#fff1e8' : '#1a0f08',
+                                    bodyColor: isDark ? '#a39a92' : '#7a6b5e',
+                                    padding: 10,
+                                    callbacks: {
+                                        label: function(c) {
+                                            return ' ' + c.dataset.label + ': $' + fmt(c.raw, 2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Fetch SPY for same period for benchmark overlay
+                var spyTf = isIntraday ? '5Min' : '1Day';
+                fetch('/api/market/bars/SPY?timeframe=' + spyTf + '&limit=' + spyStockLimit)
+                    .then(function(r) { return r.ok ? r.json() : []; })
+                    .then(function(spyBars) {
+                        if (!spyBars || spyBars.length < 2 || !showBenchmark) { renderStockChart(null); return; }
+                        // Align SPY bars to stock bar count; normalize to stock's start price
+                        var spyRaw = spyBars.slice(-prices.length).map(function(b) { return b.c; });
+                        if (spyRaw.length !== prices.length) { renderStockChart(null); return; }
+                        var spyBase = spyRaw[0];
+                        var spyNorm = spyRaw.map(function(v) { return spyBase > 0 ? firstP * (v / spyBase) : firstP; });
+                        renderStockChart(spyNorm);
+                    })
+                    .catch(function() { renderStockChart(null); });
             });
 
         } else {
@@ -563,9 +655,15 @@
                 }
 
                 var labels = histArr.map(function(h) {
-                    var d = new Date(h.date);
-                    if (isIntraday) return d.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
-                    return d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: '2-digit', month: 'short' });
+                    var raw = h.date || '';
+                    if (isIntraday) {
+                        var dt = new Date(raw.replace('T', ' ').replace('Z', ''));
+                        return dt.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+                    }
+                    var parts = raw.slice(0, 10).split('-');
+                    var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    var longPeriod = (chartPeriod === 'All' || chartPeriod === 'YTD' || chartPeriod === '6M');
+                    return dt2.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', longPeriod ? { day: '2-digit', month: 'short', year: '2-digit' } : { day: '2-digit', month: 'short' });
                 });
                 var pValues = histArr.map(function(h) { return h.equity; });
 
@@ -677,8 +775,10 @@
                     });
                 }
 
-                var spyLimit = Math.max(histArr.length + 5, 30);
-                fetch('/api/market/bars/SPY?timeframe=1Day&limit=' + spyLimit)
+                var spyLimitMap = { '1D': 10, '1W': 12, '1M': 35, '3M': 70, '6M': 190, 'YTD': 265, 'All': 265 };
+                var spyLimit = spyLimitMap[chartPeriod] || Math.max(histArr.length + 10, 35);
+                var spyTf = (chartPeriod === '1D') ? '5Min' : '1Day';
+                fetch('/api/market/bars/SPY?timeframe=' + spyTf + '&limit=' + spyLimit)
                     .then(function(r) { return r.ok ? r.json() : []; })
                     .then(function(spyBars) {
                         if (!spyBars || spyBars.length < 2) throw new Error('no SPY data');
