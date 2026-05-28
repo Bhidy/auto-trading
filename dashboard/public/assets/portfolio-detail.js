@@ -960,7 +960,7 @@
         if (!portfolio.transactions.length) return '<div class="pf-empty">' + (lang==='ar'?'لا توجد معاملات مسجلة.':'No transactions recorded.') + '</div>';
         
         var ths = [t('txDate'), t('symbol'), 'Type', t('txQty'), t('txPrice'), 'Cost Basis', 'Description'];
-        var rows = portfolio.transactions.slice(0, 20).map(function(tx){
+        var rows = portfolio.transactions.slice().reverse().slice(0, 20).map(function(tx){
             var cls = tx.type === 'buy' ? 'pf-neg' : 'pf-pos';
             var activeClass = tx.symbol === selectedSymbol ? 'style="background:rgba(229,90,31,0.06); font-weight:bold;"' : '';
             return '<tr data-symbol="' + tx.symbol + '" ' + activeClass + '>' +
@@ -1109,7 +1109,7 @@
     }
 
     function renderTxPanel() {
-        var txs = portfolio.transactions.slice(0, 5);
+        var txs = portfolio.transactions.slice().reverse().slice(0, 5);
         var rows = txs.map(function(tx){
             var iconCls = tx.type === 'buy' ? 'buy' : 'sell';
             var iconChar = tx.type === 'buy' ? '↑' : '↓';
