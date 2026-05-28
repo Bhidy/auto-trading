@@ -205,48 +205,6 @@
             kpi(t('vsEgx'),       statusLabel, statusSub, statusClass)
         ];
 
-        var healthPanelHtml = '';
-        var isLiveConnected = detailCache ? detailCache.live_connected : false;
-        
-        if (detailCache && detailCache.account && isLiveConnected && !detailCache.account.is_aggregated) {
-            var ac = detailCache.account;
-            var isPdt = ac.pattern_day_trader ? (lang === 'ar' ? 'نعم' : 'YES') : (lang === 'ar' ? 'لا' : 'NO');
-            var pdtColor = ac.pattern_day_trader ? 'pf-neg' : 'pf-pos';
-            
-            healthPanelHtml = `
-            <div class="pf-health-drawer" id="healthDrawer" style="display:none; border-top:1px solid var(--line); padding:1rem 1.5rem; background:rgba(229,90,31,0.02); margin-top:0.5rem; border-radius:var(--pf-radius-sm);">
-                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:1.25rem;">
-                    <div class="pf-health-item">
-                        <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${lang === 'ar' ? 'حالة الحساب' : 'Account Status'}</div>
-                        <div style="font-family:var(--pf-mono); font-size:1.05rem; font-weight:800; color:var(--teal);" class="pf-pos">${escHtml(ac.account_status)}</div>
-                        <div style="font-size:0.64rem; color:var(--muted); margin-top:0.15rem;">${lang === 'ar' ? 'البيع القصير' : 'Short Selling'}: <strong style="color:var(--ink);">${ac.shorting_enabled ? (lang === 'ar' ? 'مفعل' : 'ENABLED') : (lang === 'ar' ? 'معطل' : 'DISABLED')}</strong></div>
-                    </div>
-                    <div class="pf-health-item">
-                        <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${lang === 'ar' ? 'قوة المضاربة اليومية' : 'Day Trading Buying Power'}</div>
-                        <div style="font-family:var(--pf-mono); font-size:1.05rem; font-weight:800;" class="pf-num">$${fmt(ac.daytrading_buying_power)}</div>
-                        <div style="font-size:0.64rem; color:var(--muted); margin-top:0.15rem;">${lang === 'ar' ? 'مضاعف الهامش' : 'Margin Multiplier'}: <strong style="color:var(--ink);">${ac.multiplier}x</strong></div>
-                    </div>
-                    <div class="pf-health-item">
-                        <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${lang === 'ar' ? 'قوة Reg T الشرائية' : 'Reg T Buying Power'}</div>
-                        <div style="font-family:var(--pf-mono); font-size:1.05rem; font-weight:800;" class="pf-num">$${fmt(ac.regt_buying_power)}</div>
-                        <div style="font-size:0.64rem; color:var(--muted); margin-top:0.15rem;">${lang === 'ar' ? 'غير الهامشية' : 'Non-Marginable'}: <strong style="color:var(--ink);">$${fmt(ac.non_marginable_buying_power)}</strong></div>
-                    </div>
-                    <div class="pf-health-item">
-                        <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${lang === 'ar' ? 'عدد الصفقات اليومية' : 'Daytrade Count (5 Days)'}</div>
-                        <div style="font-family:var(--pf-mono); font-size:1.05rem; font-weight:800;" class="pf-num">${ac.daytrade_count} / 3</div>
-                        <div style="font-size:0.64rem; color:var(--muted); margin-top:0.15rem;">${lang === 'ar' ? 'حالة PDT' : 'PDT Status'}: <strong class="${pdtColor}">${isPdt}</strong></div>
-                    </div>
-                    <div class="pf-health-item">
-                        <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; font-weight:700;">${lang === 'ar' ? 'متطلبات الهامش' : 'Margin Requirements'}</div>
-                        <div style="font-family:var(--pf-mono); font-size:0.75rem; color:var(--ink); font-weight:700; margin-top:0.2rem; line-height:1.45;">
-                            ${lang === 'ar' ? 'الأولي' : 'Initial'}: <span class="pf-num">$${fmt(ac.initial_margin)}</span><br>
-                            ${lang === 'ar' ? 'الصيانة' : 'Maint'}: <span class="pf-num">$${fmt(ac.maintenance_margin)}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
         document.getElementById('pfDashHeader').innerHTML =
             '<div class="pf-dash-header-inner">' +
                 '<div class="pf-selector-wrap">' +
@@ -257,36 +215,16 @@
                         return '<option value="' + p.id + '"' + selected + '>' + escHtml(displayName) + '</option>';
                     }).join('') +
                     '</select>' +
-                    (portfolio.isServer && !portfolio.isAggregated ? '<span class="pf-badge-neu server-badge-glow" style="font-size:.68rem; font-weight:800; background:var(--teal-soft); border-color:var(--teal); color:var(--teal);">ALGORITHMIC</span>' : '') +
                     (portfolio.isAggregated ? '<span class="pf-badge-neu server-badge-glow" style="font-size:.68rem; font-weight:800; background:var(--teal-soft); border-color:var(--teal); color:var(--teal);">AGGREGATED</span>' : '') +
-                    (isLiveConnected ? 
-                        `<button class="pf-btn pf-btn--sm pf-btn--outline" id="toggleAccountHealthBtn" style="margin-inline-start:0.55rem; font-size:0.68rem; padding:0.25rem 0.65rem; border-radius:var(--pf-radius-sm); font-weight:800; letter-spacing:0.02em;">
-                            <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#22c55e; animation:pulse-blink 1.5s infinite; margin-inline-end:0.25rem;"></span>
-                            ${lang === 'ar' ? 'صحة الحساب' : 'ACCOUNT HEALTH'}
-                        </button>` : '') +
                 '</div>' +
                 '<div class="pf-kpi-strip">' + kpis.join('') + '</div>' +
                 '<button class="pf-btn pf-btn--primary pf-btn--sm" id="addTxBtn" style="flex-shrink:0;">+ ' + t('addTx') + '</button>' +
-            '</div>' +
-            healthPanelHtml;
+            '</div>';
 
         document.getElementById('pfSelector').addEventListener('change', function() {
             window.location.href = '/portfolio-detail.html?id=' + this.value;
         });
         document.getElementById('addTxBtn').addEventListener('click', openOrderModal);
-        
-        var toggleBtn = document.getElementById('toggleAccountHealthBtn');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                var drawer = document.getElementById('healthDrawer');
-                if (drawer) {
-                    var isHidden = drawer.style.display === 'none';
-                    drawer.style.display = isHidden ? 'block' : 'none';
-                    toggleBtn.style.borderColor = isHidden ? 'var(--teal)' : 'var(--line)';
-                    toggleBtn.style.background = isHidden ? 'var(--teal-soft)' : 'var(--surface)';
-                }
-            });
-        }
     }
 
     function kpi(label, value, sub, cls) {

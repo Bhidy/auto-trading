@@ -7,7 +7,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "data/**,event-driven-bot/data/**,political-copy-bot/data/**,journal/**,config/**",
+      "includeFiles": "{data,event-driven-bot/data,political-copy-bot/data,journal,config}/**",
       "maxDuration": 30
     }
   }
