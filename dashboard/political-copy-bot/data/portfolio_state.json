@@ -1,52 +1,52 @@
 {
-  "timestamp": "2026-05-28T20:32:24.391692",
+  "timestamp": "2026-05-28T19:08:07.561508",
   "account": {
-    "equity": "99956.09",
+    "equity": "99985.82",
     "cash": "91858.64",
-    "buying_power": "191814.73",
-    "portfolio_value": "99956.09",
-    "daily_pnl_pct": -0.01
+    "buying_power": "191844.46",
+    "portfolio_value": "99985.82",
+    "daily_pnl_pct": 0.02
   },
   "positions": [
     {
       "symbol": "HD",
       "qty": "4",
       "avg_entry": "317.0925",
-      "market_value": "1279.88",
-      "unrealized_pl": "11.51",
-      "unrealized_plpc": "0.00907"
+      "market_value": "1279.28",
+      "unrealized_pl": "10.91",
+      "unrealized_plpc": "0.0086"
     },
     {
       "symbol": "INTU",
       "qty": "4",
       "avg_entry": "312.62",
-      "market_value": "1261.28",
-      "unrealized_pl": "10.8",
-      "unrealized_plpc": "0.00864"
+      "market_value": "1258.58",
+      "unrealized_pl": "8.1",
+      "unrealized_plpc": "0.00648"
     },
     {
       "symbol": "PG",
       "qty": "10",
       "avg_entry": "147.36",
-      "market_value": "1464.3",
-      "unrealized_pl": "-9.3",
-      "unrealized_plpc": "-0.00631"
+      "market_value": "1460.55",
+      "unrealized_pl": "-13.05",
+      "unrealized_plpc": "-0.00886"
     },
     {
       "symbol": "TER",
       "qty": "7",
       "avg_entry": "368.88",
-      "market_value": "2670.815",
-      "unrealized_pl": "88.655",
-      "unrealized_plpc": "0.03433"
+      "market_value": "2692.83",
+      "unrealized_pl": "110.67",
+      "unrealized_plpc": "0.04286"
     },
     {
       "symbol": "WDAY",
       "qty": "11",
       "avg_entry": "125.88",
-      "market_value": "1421.255",
-      "unrealized_pl": "36.575",
-      "unrealized_plpc": "0.02641"
+      "market_value": "1435.9389",
+      "unrealized_pl": "51.2589",
+      "unrealized_plpc": "0.03702"
     }
   ],
   "open_orders": 0,
