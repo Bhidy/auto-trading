@@ -13,6 +13,9 @@ on:
         type: choice
         options: [full, morning-research, trading-session, intraday-monitor, end-of-day-journal, weekly-review]
 
+permissions:
+  contents: write
+
 jobs:
   trading:
     runs-on: ubuntu-latest

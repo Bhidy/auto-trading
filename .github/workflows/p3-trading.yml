@@ -13,6 +13,9 @@ on:
         type: choice
         options: [full, weekly-screen, morning-scan, trading-session, news-scan, eod-journal, weekly-review]
 
+permissions:
+  contents: write
+
 jobs:
   trading:
     runs-on: ubuntu-latest
