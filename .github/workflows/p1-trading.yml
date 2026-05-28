@@ -23,7 +23,7 @@ concurrency:
 jobs:
   trading:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -49,9 +49,12 @@ jobs:
         id: market
         run: |
           python3 -c "
-          import requests, json
-          h = {'APCA-API-KEY-ID': '${{ secrets.P1_API_KEY }}', 'APCA-API-SECRET-KEY': '${{ secrets.P1_API_SECRET }}'}
-          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h).json()
+          import json
+          with open('config/alpaca_config.json') as f:
+              cfg = json.load(f)
+          import requests
+          h = {'APCA-API-KEY-ID': cfg['api_key'], 'APCA-API-SECRET-KEY': cfg['api_secret']}
+          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h, timeout=10).json()
           is_open = clock.get('is_open', False)
           print(f'Market open: {is_open}')
           with open('$GITHUB_OUTPUT', 'a') as f:
@@ -59,18 +62,64 @@ jobs:
           "
 
       - name: Run morning research
+        id: research
         if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'morning-research')
         run: |
           cd "$GITHUB_WORKSPACE"
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
           python3 scripts/autonomous_runner.py morning-research
+          echo "Research completed"
 
       - name: Run trading session
-        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
+        id: trading_session
+        if: steps.market.outputs.is_open == 'true' && steps.research.outcome != 'failure' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
         run: |
           cd "$GITHUB_WORKSPACE"
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
           python3 scripts/autonomous_runner.py trading-session
+          echo "Trading session completed"
+
+      - name: Validate trading output
+        if: always()
+        run: |
+          echo "=== P1 TRADING EXECUTION SUMMARY ==="
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Date: $TODAY UTC"
+
+          if [ -f data/signals.json ]; then
+            SIG_TS=$(python3 -c "import json; d=json.load(open('data/signals.json')); print(d.get('timestamp','UNKNOWN'))")
+            SIG_COUNT=$(python3 -c "import json; d=json.load(open('data/signals.json')); s=[x for x in d.get('signals',[]) if x.get('signal')=='BUY']; print(f'{len(s)} BUY signals')")
+            echo "Signals timestamp: $SIG_TS"
+            echo "Signals: $SIG_COUNT"
+          else
+            echo "WARNING: signals.json not found — research may have failed"
+          fi
+
+          if [ -f data/trade_log.json ]; then
+            TODAY_TRADES=$(python3 -c "
+          import json
+          today = '${TODAY}'
+          log = json.load(open('data/trade_log.json'))
+          today_trades = [t for t in log if t.get('timestamp','').startswith(today)]
+          print(len(today_trades))
+          ")
+            echo "Trades logged today: $TODAY_TRADES"
+          else
+            echo "WARNING: trade_log.json not found"
+          fi
+
+          if [ -f data/portfolio_state.json ]; then
+            python3 -c "
+          import json
+          ps = json.load(open('data/portfolio_state.json'))
+          print(f\"Portfolio equity: \${ps.get('equity',0):,.2f}\")
+          print(f\"Positions held: {len(ps.get('positions',{}))}\")
+          print(f\"Trades today: {ps.get('trades_today',0)}\")
+          print(f\"Day P&L: \${ps.get('day_pnl',0):+,.2f}\")
+          print(f\"Halted: {ps.get('halted',False)}\")
+          "
+          fi
+          echo "=== END SUMMARY ==="
 
       - name: Sync data to dashboard for Vercel deploy
         if: always()
@@ -101,8 +150,6 @@ jobs:
                 PUSHED=0
                 break
               fi
-              echo "Push attempt $i failed, retrying in 5s..."
-              sleep 5
             done
             if [ "$PUSHED" -ne 0 ]; then
               echo "WARNING: All push attempts failed — state saved locally but not synced to remote"

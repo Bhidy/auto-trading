@@ -25,7 +25,7 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -53,9 +53,12 @@ jobs:
         id: market
         run: |
           python3 -c "
+          import json
+          with open('political-copy-bot/config/alpaca_config.json') as f:
+              cfg = json.load(f)
           import requests
-          h = {'APCA-API-KEY-ID': '${{ secrets.P2_API_KEY }}', 'APCA-API-SECRET-KEY': '${{ secrets.P2_API_SECRET }}'}
-          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h).json()
+          h = {'APCA-API-KEY-ID': cfg['api_key'], 'APCA-API-SECRET-KEY': cfg['api_secret']}
+          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h, timeout=10).json()
           is_open = clock.get('is_open', False)
           print(f'Market open: {is_open}')
           with open('$GITHUB_OUTPUT', 'a') as f:
@@ -68,6 +71,25 @@ jobs:
           cd "$GITHUB_WORKSPACE/political-copy-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/political-copy-bot/scripts"
           python3 scripts/politician_bot.py ${{ github.event.inputs.mode || 'scan' }}
+
+      - name: Validate P2 output
+        if: always()
+        run: |
+          echo "=== P2 CAPITOL SHADOW EXECUTION SUMMARY ==="
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Date: $TODAY UTC"
+          if [ -f political-copy-bot/data/trade_log.json ]; then
+            python3 -c "
+          import json
+          today = '${TODAY}'
+          log = json.load(open('political-copy-bot/data/trade_log.json'))
+          today_trades = [t for t in log if t.get('timestamp','').startswith(today)]
+          print(f'Trades logged today: {len(today_trades)}')
+          "
+          else
+            echo "WARNING: P2 trade_log.json not found"
+          fi
+          echo "=== END SUMMARY ==="
 
       - name: Sync data to dashboard for Vercel deploy
         if: always()

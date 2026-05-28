@@ -23,7 +23,7 @@ concurrency:
 jobs:
   trading:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -49,9 +49,12 @@ jobs:
         id: market
         run: |
           python3 -c "
+          import json
+          with open('event-driven-bot/config/alpaca_config.json') as f:
+              cfg = json.load(f)
           import requests
-          h = {'APCA-API-KEY-ID': '${{ secrets.P3_API_KEY }}', 'APCA-API-SECRET-KEY': '${{ secrets.P3_API_SECRET }}'}
-          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h).json()
+          h = {'APCA-API-KEY-ID': cfg['api_key'], 'APCA-API-SECRET-KEY': cfg['api_secret']}
+          clock = requests.get('https://paper-api.alpaca.markets/v2/clock', headers=h, timeout=10).json()
           is_open = clock.get('is_open', False)
           print(f'Market open: {is_open}')
           with open('$GITHUB_OUTPUT', 'a') as f:
