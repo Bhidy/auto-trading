@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: trading-pipeline
+  cancel-in-progress: false
+
 jobs:
   monitor:
     runs-on: ubuntu-latest
@@ -68,4 +72,4 @@ jobs:
           git config user.email "bot@autotrading.local"
           git add political-copy-bot/data/ political-copy-bot/journal/ -f 2>/dev/null || true
           git diff --staged --quiet || git commit -m "P2: $(date -u +%Y-%m-%d %H:%M) monitor"
-          git push || true
+          for i in 1 2 3; do git pull --rebase origin main 2>/dev/null; git push && break || sleep 5; done

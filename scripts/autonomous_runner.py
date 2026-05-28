@@ -31,6 +31,7 @@ LOGS_DIR = BASE_DIR / "logs"
 
 LOGS_DIR.mkdir(exist_ok=True)
 JOURNAL_DIR.mkdir(exist_ok=True)
+DATA_DIR.mkdir(exist_ok=True)
 
 sys.path.insert(0, str(SCRIPTS_DIR))
 

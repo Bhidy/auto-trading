@@ -50,7 +50,8 @@ def validate_trade(signal, portfolio, limits):
     sig = signal["signal"]
     instrument_type = signal.get("instrument_type", "stock")
     price = signal["indicators"]["price"]
-    suggested_pct = signal.get("suggested_position_size_pct", 1.0) or 1.0
+    rm = signal.get("risk_management", {})
+    suggested_pct = rm.get("suggested_position_pct") or signal.get("suggested_position_size_pct") or 1.0
 
     if portfolio.get("halted"):
         return {"approved": False, "rejections": [f"SYSTEM HALTED: {portfolio.get('halt_reason', 'Unknown')}"]}
@@ -139,7 +140,7 @@ def run_validation():
 
     for signal in signals.get("signals", []):
         result = validate_trade(signal, portfolio, limits)
-        result["confidence"] = signal.get("confidence", 0)
+        result["confidence"] = signal.get("score", signal.get("confidence", 0))
         result["reasons"] = signal.get("reasons", [])
         if result["approved"]:
             approved_orders.append(result)
