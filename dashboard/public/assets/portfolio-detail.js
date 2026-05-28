@@ -891,21 +891,8 @@
             </div>`;
 
             rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">🌐 News Catalyst & Sentiment Terminal</div>
-                <div class="pf-ml-panel" style="gap:0.65rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--page); border:1px solid var(--line); padding:0.55rem 0.85rem; border-radius:var(--pf-radius-sm);">
-                        <span style="font-weight:700; color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;">Tech Sentiment Indicator</span>
-                        <span class="pf-num pf-pos" style="font-weight:800; font-size:1rem; color:var(--pf-green);">0.85 Positive</span>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.55rem; max-height:130px; overflow-y:auto; font-size:0.72rem; line-height:1.45; color:var(--muted);">
-                        <div style="border-bottom:1px dashed var(--line); padding-bottom:0.45rem;">
-                            <strong style="color:var(--ink);">PANW</strong>: Cybersecurity systems DHS/DOD breakout win contract rumored, driving high options volume.
-                        </div>
-                        <div>
-                            <strong style="color:var(--ink);">CSCO</strong>: Raising guidance after server switches architectural order wins, short squeeze potential.
-                        </div>
-                    </div>
-                </div>
+                <div class="pf-panel__title">News Catalyst & Sentiment Terminal</div>
+                <div style="padding:1rem;color:var(--muted);font-size:0.78rem;">` + (lang === 'ar' ? 'بيانات المحفزات الإخبارية قيد التحميل...' : 'News catalyst data pending refresh...') + `</div>
             </div>`;
         }
 
