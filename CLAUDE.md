@@ -336,11 +336,68 @@ Without these, the dashboard falls back to committed JSON state files only.
 - Git push retries must log failures (no silent `2>/dev/null` suppression)
 
 ## Vercel Deployment
+
+### CRITICAL: includeFiles Format (DO NOT CHANGE)
+The `includeFiles` glob in `vercel.json` uses **brace expansion** syntax — NOT comma-separated:
+```json
+"includeFiles": "{data,event-driven-bot/data,political-copy-bot/data,journal,config}/**"
+```
+- Commas in the string do NOT match multiple patterns on Vercel — they're treated as literal characters.
+- Brace expansion `{a,b,c}/**` is the ONLY supported way to match multiple directory trees.
+- Array format `["data/**", ...]` is NOT accepted — Vercel throws "should be string" error.
+- **NEVER change this format.** Even adding a single comma breaks the deployment silently.
+
+### Build Cache Trap
+Vercel aggressively caches builds. If `vercel.json` changes don't seem to take effect:
+1. The cache is masking the change — ALWAYS use `--force` when modifying `vercel.json`:
+   ```
+   cd dashboard && vercel --prod --force
+   ```
+2. Verify with: `curl https://autotradingportfolios.vercel.app/api/health`
+
+### Deployment Verification (MANDATORY — Run After Every Deploy)
+```
+# Local pre-deploy check
+bash dashboard/validate.sh
+
+# Deploy with force (bypass cache)
+cd dashboard && vercel --prod --force
+
+# Wait 10s for propagation, then verify
+sleep 10
+curl -s https://autotradingportfolios.vercel.app/api/health | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+for k in ['tradeLog','signals','state']:
+    f = d.get('files',{}).get(k,{})
+    assert f.get('exists'), f'FAIL: {k} missing on Vercel'
+    print(f'OK: {k} ({f.get(\"size\",0)} bytes)')
+"
+curl -s https://autotradingportfolios.vercel.app/api/portfolio/portfolio_1/details | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+tl = len(d.get('trade_log',[]))
+assert tl > 0, f'FAIL: trade_log empty ({tl} entries)'
+print(f'OK: trade_log={tl}, positions={len(d.get(\"positions\",{}))}')
+"
+```
+- If `trade_log` returns 0, **roll back immediately** — data files are not deployed.
+- A `smoke-test.yml` GitHub Action runs automatically on every push to `main`.
+
+### Deployment Checklist
+- [ ] `bash dashboard/validate.sh` passes (all data files present, >10 bytes, git-tracked)
+- [ ] `vercel.json` uses brace expansion `{a,b}/**` format
+- [ ] Deploy with `vercel --prod --force` (force bypasses cache)
+- [ ] Post-deploy: `curl /api/health` shows all files `exists: true`
+- [ ] Post-deploy: `curl /api/portfolio/:id/details` shows `trade_log > 0`
+
+### Key Files
+- `dashboard/build.sh` — **validates data files during Vercel build** (fails build if any missing)
+- `dashboard/validate.sh` — pre-deploy check script (run locally before pushing)
+- `dashboard/vercel.json` — `includeFiles` uses brace expansion
+- `.github/workflows/smoke-test.yml` — automatic post-deploy verification
 - Vercel project root = `dashboard/` directory
-- `build.sh` copies parent data files before build
-- `includeFiles` in vercel.json must include `data/**,event-driven-bot/data/**,political-copy-bot/data/**,journal/**,config/**`
-- `buildCommand` must be ≤ 256 chars (use shell script)
-- Deploy from dashboard directory: `cd dashboard && vercel --prod`
+- Deploy: `cd dashboard && vercel --prod --force`
 
 ---
 
@@ -360,8 +417,12 @@ Without these, the dashboard falls back to committed JSON state files only.
 **Fix**: Each workflow has its own group: `p1-trading`, `p1-monitor`, `p2-trading`, etc. Never use `trading-pipeline`.
 
 ## Data files exist locally but not on Vercel
-**Root Cause**: `dashboard/data/` was in `.gitignore` or files weren't committed.
-**Fix**: `dashboard/data/` must NOT be in `.gitignore`. Files synced by GitHub Actions before commit.
+**Root Cause**: One of three things (check in order):
+1. **Build cache**: Vercel cached old build without data files. Fix: `cd dashboard && vercel --prod --force`
+2. **`includeFiles` format broken**: Commas used instead of brace expansion in `vercel.json`. Fix: `"includeFiles": "{data,event-driven-bot/data,political-copy-bot/data,journal,config}/**"`
+3. **Files not committed**: `dashboard/data/` must be in git, not in `.gitignore`. Run `git ls-files dashboard/data/trade_log.json` to verify.
+**Verify**: `curl https://autotradingportfolios.vercel.app/api/health` → all files must show `exists: true`.
+**Prevention**: Run `bash dashboard/validate.sh` before every push. Post-deploy smoke test runs automatically via GitHub Actions.
 
 ## Trade log has entries but P&L is always $0
 **Root Cause**: `close_trade()` was using `current_price` instead of `filled_avg_price` from order response.
