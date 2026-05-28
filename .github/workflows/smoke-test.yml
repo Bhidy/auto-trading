@@ -22,6 +22,14 @@ jobs:
       - name: Deploy to Vercel
         run: |
           cd dashboard
+          # Link to existing project (CI lacks .vercel/project.json since it's gitignored)
+          mkdir -p .vercel
+          cat > .vercel/project.json << 'PROJ'
+          {
+            "projectId": "prj_Ig61I6uR0q614j6xGS07EQCkIyZ3",
+            "orgId": "team_Gqpf3K97tjrOCyIlEnGjWCOE"
+          }
+          PROJ
           npm install --silent
           echo "Deploying dashboard to Vercel production..."
           npx vercel --prod --force --token "${{ secrets.VERCEL_TOKEN }}" --yes 2>&1
