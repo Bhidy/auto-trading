@@ -35,5 +35,6 @@ dashboard/.vercel/
 
 # Dashboard secrets (never commit)
 dashboard/config/portfolios.json
+dashboard/node_modules/
 .vercel
 .env*.local

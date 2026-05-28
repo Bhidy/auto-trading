@@ -205,7 +205,7 @@
         if (!data) return;
         Object.entries(data).forEach(function ([sym, q]) {
             stockPriceDatabase[sym] = {
-                price: q.price || 150,
+                price: q.price || 0,
                 changePct: q.changePct || 0,
                 change: q.change || 0,
                 open: q.open || q.price,
@@ -213,7 +213,11 @@
                 low: q.low || q.price,
                 close: q.close || q.price,
                 volume: q.volume || 0,
-                prev: q.price / (1 + (q.changePct || 0) / 100)
+                prev: q.price / (1 + (q.changePct || 0) / 100),
+                bid: q.bid || 0,
+                ask: q.ask || 0,
+                bidSize: q.bidSize || 0,
+                askSize: q.askSize || 0
             };
         });
     }
@@ -759,64 +763,53 @@
         });
     }
 
-    /* ─── Level 2 Order Book Depth Ladders ───────────────────────────── */
+    /* ─── Level 2 Order Book — Real NBBO from Alpaca ────────────────── */
     function renderOrderBook(price) {
         var container = document.getElementById('l2OrderBookList');
-        if (!container) return;
+        if (!container || !activeSymbol) return;
+
+        var db = stockPriceDatabase[activeSymbol];
+        if (!db) return;
+
         container.innerHTML = '';
+        var bid = db.bid || (price - 0.05);
+        var ask = db.ask || (price + 0.05);
+        var bidSize = db.bidSize || 0;
+        var askSize = db.askSize || 0;
+        var spread = (ask - bid).toFixed(2);
 
-        for (var i = 0; i < 10; i++) {
-            var offset = 0.05 + (i * 0.05);
-            var bidPrice = price - offset;
-            var askPrice = price + offset;
+        var headerRow = document.createElement('div');
+        headerRow.style.cssText = 'display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; text-align:center; padding:0.3rem 0.35rem; font-family:var(--pf-mono); font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--line); margin-bottom:0.25rem;';
+        headerRow.innerHTML = '<span>BID SIZE</span><span>BID</span><span>ASK</span><span>ASK SIZE</span>';
+        container.appendChild(headerRow);
 
-            var bidSize = Math.floor(100 + Math.sin(i * 1.2) * 350 + 350);
-            var bidPct = Math.min(100, (bidSize / 800) * 100);
+        var row = document.createElement('div');
+        row.className = 'mp-l2-row';
+        row.style.cssText = 'display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; align-items:center; text-align:center; padding:0.4rem 0.35rem; border-radius:4px; font-family:var(--pf-mono); font-size:0.78rem; position:relative; overflow:hidden; margin-bottom:0.15rem;';
+        var bidPct = Math.min(100, (bidSize / Math.max(bidSize, askSize, 1)) * 100);
+        var askPct = Math.min(100, (askSize / Math.max(bidSize, askSize, 1)) * 100);
+        row.innerHTML =
+            '<span style="text-align:start; color:var(--muted); z-index:1; padding-inline-start:0.15rem; font-weight:700;">' + bidSize + '</span>' +
+            '<span style="text-align:end; color:#2ecc71; font-weight:700; z-index:1; padding-inline-end:0.45rem;">' + bid.toFixed(2) + '</span>' +
+            '<span style="text-align:start; color:#e74c3c; font-weight:700; z-index:1; padding-inline-start:0.45rem;">' + ask.toFixed(2) + '</span>' +
+            '<span style="text-align:end; color:var(--muted); z-index:1; padding-inline-end:0.15rem; font-weight:700;">' + askSize + '</span>' +
+            '<div style="position:absolute; top:0; bottom:0; left:0; width:' + (bidPct / 2.2) + '%; background:rgba(46,204,113,0.08); z-index:0;"></div>' +
+            '<div style="position:absolute; top:0; bottom:0; right:0; width:' + (askPct / 2.2) + '%; background:rgba(231,76,60,0.08); z-index:0;"></div>';
+        container.appendChild(row);
 
-            var askSize = Math.floor(100 + Math.cos(i * 1.4) * 350 + 350);
-            var askPct = Math.min(100, (askSize / 800) * 100);
-
-            var row = document.createElement('div');
-            row.className = 'mp-l2-row';
-            row.style.cssText = 'display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; align-items:center; text-align:center; padding:0.2rem 0.35rem; border-radius:4px; font-family:var(--pf-mono); font-size:0.72rem; position:relative; overflow:hidden; margin-bottom:0.15rem;';
-            
-            row.innerHTML = `
-                <span style="text-align:start; color:var(--muted); z-index:1; padding-inline-start:0.15rem;">${bidSize}</span>
-                <span style="text-align:end; color:#2ecc71; font-weight:700; z-index:1; padding-inline-end:0.45rem;">${bidPrice.toFixed(2)}</span>
-                <span style="text-align:start; color:#e74c3c; font-weight:700; z-index:1; padding-inline-start:0.45rem;">${askPrice.toFixed(2)}</span>
-                <span style="text-align:end; color:var(--muted); z-index:1; padding-inline-end:0.15rem;">${askSize}</span>
-
-                <div style="position:absolute; top:0; bottom:0; left:0; width:${bidPct / 2.2}%; background:rgba(46, 204, 113, 0.08); z-index:0; transition:width 0.3s ease;"></div>
-                <div style="position:absolute; top:0; bottom:0; right:0; width:${askPct / 2.2}%; background:rgba(231, 76, 60, 0.08); z-index:0; transition:width 0.3s ease;"></div>
-            `;
-            container.appendChild(row);
-        }
+        var spreadRow = document.createElement('div');
+        spreadRow.style.cssText = 'text-align:center; font-family:var(--pf-mono); font-size:0.7rem; color:var(--muted); padding:0.3rem 0; border-top:1px dashed var(--line); margin-top:0.25rem;';
+        spreadRow.textContent = 'SPREAD: $' + spread + ' | NBBO LIVE';
+        container.appendChild(spreadRow);
     }
 
     function getSvgSparkline(sym, isPos) {
-        var seed = 0;
-        for (var i = 0; i < sym.length; i++) { seed += sym.charCodeAt(i); }
-        var points = [];
-        for (var j = 0; j < 7; j++) {
-            var val = Math.sin(seed + (j * 1.35)) * 9 + 17;
-            points.push(val);
-        }
-        if (isPos && points[6] > points[0]) {
-            var tmp = points[0]; points[0] = points[6]; points[6] = tmp;
-        } else if (!isPos && points[6] < points[0]) {
-            var tmp = points[0]; points[0] = points[6]; points[6] = tmp;
-        }
-        
-        var path = `M 0 ${points[0].toFixed(1)}`;
-        for (var k = 1; k < 7; k++) {
-            path += ` L ${(k * 10).toFixed(1)} ${points[k].toFixed(1)}`;
-        }
         var stroke = isPos ? '#2ecc71' : '#FF8A3D';
-        return `
-            <svg width="55" height="24" viewBox="0 0 60 32" style="overflow:visible; display:block;">
-                <path d="${path}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-        `;
+        var startY = isPos ? 26 : 6;
+        var endY = isPos ? 6 : 26;
+        return '<svg width="55" height="24" viewBox="0 0 60 32" style="overflow:visible; display:block;">' +
+            '<path d="M 0 ' + startY + ' L 30 16 L 60 ' + endY + '" fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />' +
+            '</svg>';
     }
 
     /* ─── Watchlist & Tabbed Portfolios List ─────────────────────────── */
@@ -926,13 +919,6 @@
             if (!data || !Array.isArray(data)) return;
             container.innerHTML = '';
 
-            // Clean mock visual asset images mapping to right alignment in screenshot
-            var mockThumbs = [
-                'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=80&q=80',
-                'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=80&q=80',
-                'https://images.unsplash.com/photo-1642790106117-e829e14a795f?auto=format&fit=crop&w=80&q=80'
-            ];
-
             data.slice(0, 6).forEach(function (item, idx) {
                 var headline = item.headline || item.title || '';
                 var source = item.source || 'Market News';
@@ -949,7 +935,7 @@
                     else dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 }
                 var symbols = (item.symbols || []).slice(0, 1).join(', ');
-                var imgUrl = mockThumbs[idx % mockThumbs.length];
+                var imgUrl = (item.images && item.images.length > 0 && item.images[0].url) ? item.images[0].url : '';
 
                 var card = document.createElement('a');
                 card.className = 'mp-news-card';
@@ -968,7 +954,7 @@
                             <span class="pf-num" style="font-size:0.65rem;">${dateStr}</span>
                         </div>
                     </div>
-                    <img src="${imgUrl}" alt="thumb" style="width:68px; height:68px; border-radius:6px; object-fit:cover; border:1px solid var(--line); flex-shrink:0;">
+                    ${imgUrl ? `<img src="${imgUrl}" alt="thumb" style="width:68px; height:68px; border-radius:6px; object-fit:cover; border:1px solid var(--line); flex-shrink:0;">` : ''}
                 `;
                 container.appendChild(card);
             });
@@ -1038,34 +1024,41 @@
         } catch (e) { console.warn('Header widget update failed:', e); }
     }
 
-    /* ─── Soft Real-Time Price Micro-Ticking ────────────────────────── */
+    /* ─── Real-Time Price Polling from Alpaca API ────────────────────── */
     function runMicroTicks() {
         if (priceTickInterval) clearInterval(priceTickInterval);
         priceTickInterval = setInterval(function () {
             var symbols = Object.keys(stockPriceDatabase);
             if (symbols.length === 0) return;
-            for (var i = 0; i < 3; i++) {
-                var sym = symbols[Math.floor(Math.random() * symbols.length)];
-                var db = stockPriceDatabase[sym];
-                if (!db || !db.price) continue;
-                var tick = (Math.random() - 0.5) * db.price * 0.0008;
-                db.price = Math.max(1, db.price + tick);
-                db.changePct = db.prev > 0 ? ((db.price - db.prev) / db.prev) * 100 : 0;
-                if (sym === activeSymbol) {
-                    var hEl = document.getElementById('heroPrice');
-                    var cEl = document.getElementById('heroPriceChg');
-                    if (hEl) hEl.textContent = fmtPrice(db.price);
-                    if (cEl) {
-                        cEl.className = 'mp-hero-price-chg pf-num ' + (db.changePct >= 0 ? 'pf-pos' : 'pf-neg');
-                        cEl.textContent = (db.changePct >= 0 ? '▲ +' : '▼ ') + Math.abs(db.price - db.prev).toFixed(2) + ' (' + Math.abs(db.changePct).toFixed(2) + '%)';
+            fetch('/api/market/quotes?symbols=' + symbols.join(','))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    for (var sym in data) {
+                        var q = data[sym];
+                        if (!q || !q.price) continue;
+                        var db = stockPriceDatabase[sym];
+                        if (!db) continue;
+                        db.price = q.price;
+                        db.changePct = q.changePct || 0;
+                        db.prev = q.price - (q.change || 0);
                     }
-                    var scEl = document.getElementById('statClose');
-                    if (scEl) scEl.textContent = fmtPrice(db.price);
-                    renderOrderBook(db.price);
-                }
-            }
-            tickPriceUpdates();
-        }, 2500);
+                    if (activeSymbol && stockPriceDatabase[activeSymbol]) {
+                        var db = stockPriceDatabase[activeSymbol];
+                        var hEl = document.getElementById('heroPrice');
+                        var cEl = document.getElementById('heroPriceChg');
+                        if (hEl) hEl.textContent = fmtPrice(db.price);
+                        if (cEl) {
+                            cEl.className = 'mp-hero-price-chg pf-num ' + (db.changePct >= 0 ? 'pf-pos' : 'pf-neg');
+                            cEl.textContent = (db.changePct >= 0 ? '▲ +' : '▼ ') + Math.abs(db.price - db.prev).toFixed(2) + ' (' + Math.abs(db.changePct).toFixed(2) + '%)';
+                        }
+                        var scEl = document.getElementById('statClose');
+                        if (scEl) scEl.textContent = fmtPrice(db.price);
+                        renderOrderBook(db.price);
+                    }
+                    tickPriceUpdates();
+                })
+                .catch(function() {});
+        }, 5000);
     }
 
     function tickPriceUpdates() {

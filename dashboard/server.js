@@ -23,11 +23,11 @@ app.get('/Portfolio/:id', (req, res) => {
 
 // Base directories - Support Vercel cloud deployments with zero local dependencies
 const IS_VERCEL = process.env.VERCEL || !fs.existsSync('/Users/home/Documents/Auto Trading');
-// On Vercel with dashboard as root: __dirname = <root>/api/, ROOT_DIR = <root>/ = dashboard/
-// We copy data files into subdirectories during build (see vercel.json buildCommand)
+// On Vercel: api/index.js lives at /var/task/ (project root), not in a subdirectory.
+// Data files are at /var/task/data/, /var/task/event-driven-bot/data/, etc.
 function resolveRootDir() {
     if (!IS_VERCEL) return '/Users/home/Documents/Auto Trading';
-    return path.resolve(__dirname, '..');
+    return __dirname;
 }
 const ROOT_DIR = resolveRootDir();
 
@@ -160,6 +160,25 @@ function readJsonFile(filePath, defaultValue = {}) {
     }
     return defaultValue;
 }
+
+// Health/debug endpoint
+app.get('/api/health', (req, res) => {
+    const pf1 = getPortfolioPaths('portfolio_1');
+    const info = {
+        rootDir: ROOT_DIR,
+        apiDir: __dirname,
+        cwd: process.cwd(),
+        isVercel: IS_VERCEL,
+        pf1: pf1,
+    };
+    if (pf1) {
+        info.files = {};
+        for (const [k, p] of Object.entries(pf1)) {
+            if (typeof p === 'string') info.files[k] = { path: p, exists: fs.existsSync(p), size: fs.existsSync(p) ? fs.statSync(p).size : 0 };
+        }
+    }
+    res.json(info);
+});
 
 // Helper to get local data paths for a portfolio (cloud-safe, uses copied data dirs)
 function getPortfolioPaths(id) {
@@ -439,11 +458,11 @@ app.get('/api/portfolio/all/equity-history', async (req, res) => {
     loadConfig();
     const period = req.query.period || '3M';
     const timeframe = req.query.timeframe || '1D';
-    const periodDaysMap = { '1W': 5, '1M': 21, '3M': 63, '6M': 126, '1A': 252, '1Y': 252, 'All': 252 };
-    const targetDays = periodDaysMap[period] || 63;
+    const portfolioCount = Object.keys(portfoliosConfig).length;
+    const baseCapital = portfolioCount * 100000;
 
     let combinedHistory = {};
-    let maxPoints = 0;
+    let dateContributors = {};
 
     for (const id of Object.keys(portfoliosConfig)) {
         const cfg = portfoliosConfig[id];
@@ -458,57 +477,57 @@ app.get('/api/portfolio/all/equity-history', async (req, res) => {
                         const dateObj = timeframe === '1D' || timeframe === '1Day'
                             ? new Date(ts * 1000).toISOString().slice(0, 10)
                             : new Date(ts * 1000).toISOString();
-                        if (!combinedHistory[dateObj]) combinedHistory[dateObj] = 0;
+                        if (!combinedHistory[dateObj]) { combinedHistory[dateObj] = 0; dateContributors[dateObj] = 0; }
                         combinedHistory[dateObj] += eq;
-                        if (Object.keys(combinedHistory).length > maxPoints) maxPoints = Object.keys(combinedHistory).length;
+                        dateContributors[dateObj] += 1;
                     }
                 }
             }
         } catch (e) {}
     }
 
+    // For dates where fewer portfolios contributed, add $100K per missing portfolio
+    for (const d of Object.keys(combinedHistory)) {
+        const missing = portfolioCount - (dateContributors[d] || 0);
+        if (missing > 0) combinedHistory[d] += missing * 100000;
+    }
+
     if (Object.keys(combinedHistory).length === 0) {
+        const seedDate = new Date(); seedDate.setDate(seedDate.getDate() - 30);
+        combinedHistory[seedDate.toISOString().slice(0, 10)] = baseCapital;
+        let todayEq = 0;
         for (const id of Object.keys(portfoliosConfig)) {
             const paths = getPortfolioPaths(id);
             const localState = readJsonFile(paths.state, {});
-            const seedDate = new Date();
-            seedDate.setDate(seedDate.getDate() - 30);
-            const seedDateStr = seedDate.toISOString().slice(0, 10);
-            combinedHistory[seedDateStr] = (combinedHistory[seedDateStr] || 0) + 100000;
-            const today = new Date().toISOString().slice(0, 10);
-            const eq = parseFloat(localState.equity || 100000);
-            combinedHistory[today] = (combinedHistory[today] || 0) + eq;
+            todayEq += parseFloat(localState.equity || 100000);
         }
+        combinedHistory[new Date().toISOString().slice(0, 10)] = todayEq;
     }
 
     const dates = Object.keys(combinedHistory).sort();
     const history = dates.map(d => ({
         date: d,
         equity: Math.round(combinedHistory[d] * 100) / 100,
-        profit_loss: Math.round((combinedHistory[d] - 300000) * 100) / 100,
-        profit_loss_pct: Math.round(((combinedHistory[d] - 300000) / 300000) * 10000) / 100
+        profit_loss: Math.round((combinedHistory[d] - baseCapital) * 100) / 100,
+        profit_loss_pct: Math.round(((combinedHistory[d] - baseCapital) / baseCapital) * 10000) / 100
     }));
 
-    if (timeframe === '1D' && history.length < 15) {
+    const periodDaysMap = { '1W': 5, '1M': 21, '3M': 63, '6M': 126, '1A': 252, '1Y': 252, 'All': 252 };
+    const targetDays = periodDaysMap[period] || 63;
+    const isDaily = (timeframe === '1D' || timeframe === '1Day');
+
+    if (isDaily && history.length < 15) {
         const firstRealPoint = history[0];
         if (firstRealPoint) {
             const firstDate = new Date(firstRealPoint.date);
-            const backfill = [];
-            const daysBack = Math.max(0, targetDays - history.length);
-            for (let i = daysBack; i > 0; i--) {
-                const d = new Date(firstDate);
-                d.setDate(d.getDate() - i);
-                if (d.getDay() !== 0 && d.getDay() !== 6) {
-                    const progress = (daysBack - i) / daysBack;
-                    const val = 300000 + (combinedHistory[firstRealPoint.date] - 300000) * progress;
-                    backfill.push({ date: d.toISOString().slice(0, 10), equity: Math.round(val * 100) / 100, profit_loss: Math.round((val - 300000) * 100) / 100, profit_loss_pct: Math.round(((val - 300000) / 300000) * 10000) / 100 });
-                }
-            }
-            res.json({ source: 'aggregated_alpaca', base_value: 300000, history: backfill.concat(history) });
+            const backfillCount = Math.max(0, targetDays - history.length);
+            const backfill = generateStrategyBackfill('portfolio_1', firstRealPoint.date, backfillCount, firstRealPoint.equity);
+            backfill.forEach(p => { p.equity = (p.equity / 100000) * baseCapital; p.profit_loss = Math.round((p.equity - baseCapital) * 100) / 100; p.profit_loss_pct = Math.round(((p.equity - baseCapital) / baseCapital) * 10000) / 100; });
+            res.json({ source: 'aggregated_alpaca', base_value: baseCapital, history: backfill.concat(history) });
             return;
         }
     }
-    res.json({ source: 'aggregated_alpaca', base_value: 300000, history });
+    res.json({ source: 'aggregated_alpaca', base_value: baseCapital, history });
 });
 
 // 2. Fetch live and local status for a portfolio card
@@ -1030,41 +1049,35 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
     res.json({ source: 'journal_fallback', base_value: 100000, history: finalHistory });
 });
 
-// 5. Proxy major index feeds (SPY, QQQ, DIA)
+// 5. Proxy major index feeds (SPY, QQQ, DIA) — uses snapshots for reliable prev-close
 app.get('/api/market-indices', async (req, res) => {
-    // Choose the first valid credentials to query Alpaca Market Data
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) {
-        return res.json({ SPY: 520.50, QQQ: 440.20, DIA: 390.10 });
+        return res.json({ SPY: { price: 520.50, change: 0, change_pct: 0 }, QQQ: { price: 440.20, change: 0, change_pct: 0 }, DIA: { price: 390.10, change: 0, change_pct: 0 } });
     }
 
-    const responseData = {};
     const symbols = ['SPY', 'QQQ', 'DIA'];
 
     try {
+        const snapshotUrl = `${cfg.data_url}/v2/stocks/snapshots?symbols=${symbols.join(',')}`;
+        const snaps = await alpacaRequest('GET', snapshotUrl, cfg.api_key, cfg.api_secret);
+        const responseData = {};
         for (const sym of symbols) {
-            const quote = await alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${sym}/quotes/latest`, cfg.api_key, cfg.api_secret);
-            const ask = parseFloat(quote.quote?.ap || 0);
-            const bid = parseFloat(quote.quote?.bp || 0);
-            const lastPrice = ask > 0 ? ask : bid;
-            
-            // Get yesterday's close to calculate change %
-            const bars = await alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${sym}/bars?timeframe=1Day&limit=2`, cfg.api_key, cfg.api_secret);
-            const barsArr = bars.bars || [];
-            const prevClose = barsArr.length >= 2 ? parseFloat(barsArr[barsArr.length - 2].c) : lastPrice;
-            const changePct = prevClose > 0 ? ((lastPrice - prevClose) / prevClose) * 100 : 0;
-
-            responseData[sym] = {
-                price: lastPrice,
-                change: lastPrice - prevClose,
-                change_pct: changePct
-            };
+            const snap = snaps[sym];
+            if (!snap) continue;
+            const latestTrade = snap.latestTrade || {};
+            const dailyBar = snap.dailyBar || {};
+            const prevDailyBar = snap.prevDailyBar || {};
+            const price = parseFloat(latestTrade.p || snap.latestQuote?.ap || dailyBar.c || 0);
+            const prevClose = parseFloat(prevDailyBar.c || price);
+            const change = price - prevClose;
+            const changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
+            responseData[sym] = { price, change, change_pct: changePct };
         }
         res.json(responseData);
     } catch (e) {
         console.warn('Failed to fetch live market indices:', e.message);
-        // Seeded fallbacks
         res.json({
             SPY: { price: 549.61, change: 1.25, change_pct: 0.23 },
             QQQ: { price: 727.98, change: 3.12, change_pct: 0.43 },
@@ -1164,153 +1177,62 @@ app.get('/api/market-news', async (req, res) => {
             console.warn('Alpaca News API query failed, falling back to simulated news:', e.message);
         }
     }
-    res.json([
-        {
-            headline: "NVIDIA announces next-generation Rubin AI platform at Computex, shares surge 4.2%",
-            source: "Financial Times",
-            created_at: new Date().toISOString(),
-            summary: "NVIDIA CEO Jensen Huang unveiled the upcoming Rubin architecture, succeeding the Blackwell platform, emphasizing major efficiency gains for training large-scale transformer models.",
-            sentiment: "bullish",
-            symbols: ["NVDA", "MSFT", "GOOGL"]
-        },
-        {
-            headline: "Federal Reserve hints at high interest rates for longer as inflation remains persistent",
-            source: "Bloomberg News",
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            summary: "Fed minutes reveal cautious sentiment as policy makers require more consistent data showing inflation cooling towards the 2% target before executing interest rate cuts.",
-            sentiment: "neutral",
-            symbols: ["SPY", "QQQ", "DIA"]
-        },
-        {
-            headline: "Apple partners with OpenAI to integrate ChatGPT into iOS 18 Siri interface",
-            source: "TechCrunch",
-            created_at: new Date(Date.now() - 7200000).toISOString(),
-            summary: "Apple announced a deep integration of generative artificial intelligence across its operating systems, powered by advanced private cloud infrastructure and ChatGPT APIs.",
-            sentiment: "bullish",
-            symbols: ["AAPL", "MSFT"]
-        },
-        {
-            headline: "Tesla receives regulatory approval for Full Self-Driving (FSD) testing in key Chinese cities",
-            source: "Reuters",
-            created_at: new Date(Date.now() - 10800000).toISOString(),
-            summary: "Tesla is moving closer to launching its advanced driver-assistance features in China, tapping local mapping data giants to secure structural autonomous driving approvals.",
-            sentiment: "bullish",
-            symbols: ["TSLA"]
-        },
-        {
-            headline: "Amazon Web Services plans $15 billion cloud infrastructure investment in Germany",
-            source: "MarketWatch",
-            created_at: new Date(Date.now() - 14400000).toISOString(),
-            summary: "AWS will expand its sovereign cloud cluster in Europe, meeting strict data residency regulations while powering enterprise machine learning computing grids.",
-            sentiment: "bullish",
-            symbols: ["AMZN"]
-        }
-    ]);
+    res.json([]);
 });
 
-// 9. Stock details (Alpaca live quote proxy + bars + high-fidelity mock fallback)
+// 9. Stock details — live Alpaca data only
 app.get('/api/stock/:symbol/details', async (req, res) => {
     const symbol = req.params.symbol.toUpperCase();
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
+    if (!cfg || !cfg.api_key) return res.json({ symbol, quote: null, bars: [], profile: {} });
+
     let quoteData = null;
     let barData = [];
-    let isLive = false;
+    let profile = { name: symbol };
 
-    if (cfg && cfg.api_key && !cfg.api_key.includes('REDACTED') && cfg.api_key !== 'MOCK_KEY_ID_REDACTED') {
-        try {
-            const q = await alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${symbol}/quotes/latest`, cfg.api_key, cfg.api_secret);
-            const ask = parseFloat(q.quote?.ap || 0);
-            const bid = parseFloat(q.quote?.bp || 0);
-            const price = ask > 0 ? ask : bid;
+    try {
+        const [q, b, snap, asset] = await Promise.all([
+            alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${symbol}/quotes/latest`, cfg.api_key, cfg.api_secret).catch(() => null),
+            alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${symbol}/bars?timeframe=1Day&limit=60`, cfg.api_key, cfg.api_secret).catch(() => null),
+            alpacaRequest('GET', `${cfg.data_url}/v2/stocks/snapshots?symbols=${symbol}`, cfg.api_key, cfg.api_secret).catch(() => null),
+            alpacaRequest('GET', `${cfg.base_url}/v2/assets/${symbol}`, cfg.api_key, cfg.api_secret).catch(() => null)
+        ]);
 
-            const b = await alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${symbol}/bars?timeframe=1Day&limit=60`, cfg.api_key, cfg.api_secret);
-            
+        if (q && q.quote) {
+            const ask = parseFloat(q.quote.ap || 0);
+            const bid = parseFloat(q.quote.bp || 0);
             quoteData = {
-                price: price,
+                price: ask > 0 ? ask : bid,
                 bid: bid,
                 ask: ask,
-                size: parseInt(q.quote?.as || 1),
-                timestamp: q.quote?.t
+                size: parseInt(q.quote.as || 1),
+                timestamp: q.quote.t
             };
-            barData = b.bars || [];
-            isLive = true;
-        } catch (e) {
-            console.warn(`Alpaca live stock details query failed for ${symbol}:`, e.message);
         }
+
+        barData = (b && b.bars) ? b.bars : [];
+
+        const snapData = snap && snap[symbol];
+        const prevClose = snapData?.prevDailyBar?.c || 0;
+        if (snapData && quoteData) {
+            quoteData.prev = prevClose;
+        }
+
+        if (asset) {
+            profile.name = asset.name || symbol;
+            profile.exchange = asset.exchange;
+            profile.asset_class = asset.class;
+            profile.tradable = asset.tradable;
+            profile.fractionable = asset.fractionable;
+            profile.shortable = asset.shortable;
+        }
+        if (prevClose) profile.prev = prevClose;
+    } catch (e) {
+        console.warn(`Stock details fetch failed for ${symbol}:`, e.message);
     }
 
-    if (!isLive) {
-        const mockProfiles = {
-            AAPL: { price: 189.98, prev: 188.42, name: "Apple Inc.", CEO: "Tim Cook", cap: "2.9T", pe: "29.4", yield: "0.51%", beta: "1.12", desc: "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide." },
-            NVDA: { price: 949.50, prev: 911.20, name: "NVIDIA Corporation", CEO: "Jensen Huang", cap: "3.1T", pe: "68.4", yield: "0.02%", beta: "1.95", desc: "NVIDIA Corporation designs graphics processing units (GPUs) for the gaming and professional markets, as well as system on a chip units for the mobile computing and automotive market." },
-            MSFT: { price: 429.15, prev: 431.10, name: "Microsoft Corporation", CEO: "Satya Nadella", cap: "3.2T", pe: "35.8", yield: "0.70%", beta: "0.90", desc: "Microsoft Corporation develops, licenses, and supports software, services, devices, and solutions worldwide, leading the global cloud and productivity ecosystem." },
-            GOOGL: { price: 176.40, prev: 175.20, name: "Alphabet Inc.", CEO: "Sundar Pichai", cap: "2.2T", pe: "26.1", yield: "0.45%", beta: "1.05", desc: "Alphabet Inc. provides search, online advertising, cloud computing, hardware products, maps, software, and other internet services globally through Google." },
-            AMZN: { price: 181.05, prev: 180.12, name: "Amazon.com, Inc.", CEO: "Andy Jassy", cap: "1.9T", pe: "41.2", yield: "0.00%", beta: "1.15", desc: "Amazon.com, Inc. engages in the retail sale of consumer products and subscriptions in North America and internationally, leading e-commerce and cloud grids." },
-            TSLA: { price: 179.20, prev: 176.50, name: "Tesla, Inc.", CEO: "Elon Musk", cap: "570B", pe: "45.1", yield: "0.00%", beta: "1.60", desc: "Tesla, Inc. designs, develops, manufactures, sells, and leases fully electric vehicles, energy generation, and storage systems globally." },
-            META: { price: 474.32, prev: 479.50, name: "Meta Platforms, Inc.", CEO: "Mark Zuckerberg", cap: "1.2T", pe: "24.6", yield: "0.42%", beta: "1.22", desc: "Meta Platforms, Inc. focuses on building products that enable people to connect and share through mobile devices, personal computers, virtual reality headsets, and wearables." }
-        };
-
-        const prof = mockProfiles[symbol] || { price: 150.00, prev: 150.00, name: `${symbol} Corporation`, CEO: "N/A", cap: "100B", pe: "15.0", yield: "1.50%", beta: "1.00", desc: "An institutional-grade US corporation represented in the global trading ecosystem." };
-        const price = prof.price;
-        const prev = prof.prev;
-
-        quoteData = {
-            price: price,
-            bid: price - 0.05,
-            ask: price + 0.05,
-            size: 100,
-            timestamp: new Date().toISOString()
-        };
-
-        barData = [];
-        let curr = prev;
-        const nowMs = Date.now();
-        for (let i = 60; i >= 0; i--) {
-            const time = new Date(nowMs - i * 24 * 3600 * 1000).toISOString();
-            const change = (Math.random() - 0.48) * (curr * 0.03);
-            const open = curr;
-            const close = curr + change;
-            const high = Math.max(open, close) + Math.random() * (curr * 0.01);
-            const low = Math.min(open, close) - Math.random() * (curr * 0.01);
-            barData.push({
-                t: time,
-                o: open,
-                h: high,
-                l: low,
-                c: close,
-                v: Math.floor(1000000 + Math.random() * 5000000)
-            });
-            curr = close;
-        }
-    }
-
-    const mockProfilesDb = {
-        AAPL: { name: "Apple Inc.", CEO: "Tim Cook", cap: "2.9T", pe: "29.4", yield: "0.51%", beta: "1.12", desc: "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide." },
-        NVDA: { name: "NVIDIA Corporation", CEO: "Jensen Huang", cap: "3.1T", pe: "68.4", yield: "0.02%", beta: "1.95", desc: "NVIDIA Corporation designs graphics processing units (GPUs) for the gaming and professional markets, as well as system on a chip units for the mobile computing and automotive market." },
-        MSFT: { name: "Microsoft Corporation", CEO: "Satya Nadella", cap: "3.2T", pe: "35.8", yield: "0.70%", beta: "0.90", desc: "Microsoft Corporation develops, licenses, and supports software, services, devices, and solutions worldwide, leading the global cloud and productivity ecosystem." },
-        GOOGL: { name: "Alphabet Inc.", CEO: "Sundar Pichai", cap: "2.2T", pe: "26.1", yield: "0.45%", beta: "1.05", desc: "Alphabet Inc. provides search, online advertising, cloud computing, hardware products, maps, software, and other internet services globally through Google." },
-        AMZN: { name: "Amazon.com, Inc.", CEO: "Andy Jassy", cap: "1.9T", pe: "41.2", yield: "0.00%", beta: "1.15", desc: "Amazon.com, Inc. engages in the retail sale of consumer products and subscriptions in North America and internationally, leading e-commerce and cloud grids." },
-        TSLA: { name: "Tesla, Inc.", CEO: "Elon Musk", cap: "570B", pe: "45.1", yield: "0.00%", beta: "1.60", desc: "Tesla, Inc. designs, develops, manufactures, sells, and leases fully electric vehicles, energy generation, and storage systems globally." },
-        META: { name: "Meta Platforms, Inc.", CEO: "Mark Zuckerberg", cap: "1.2T", pe: "24.6", yield: "0.42%", beta: "1.22", desc: "Meta Platforms, Inc. focuses on building products that enable people to connect and share through mobile devices, personal computers, virtual reality headsets, and wearables." }
-    };
-
-    const profile = mockProfilesDb[symbol] || {
-        name: `${symbol} Corporation`,
-        CEO: "N/A",
-        cap: "100B",
-        pe: "15.0",
-        yield: "1.50%",
-        beta: "1.00",
-        desc: "An institutional-grade US corporation represented in the global trading ecosystem."
-    };
-
-    res.json({
-        symbol: symbol,
-        quote: quoteData,
-        bars: barData,
-        profile: profile
-    });
+    res.json({ symbol, quote: quoteData, bars: barData, profile });
 });
 
 // 10. Batch stock quotes for multiple symbols (watchlist, movers, sectors)
@@ -1334,6 +1256,7 @@ app.get('/api/market/quotes', async (req, res) => {
                 const prevClose = parseFloat(prevDailyBar.c || price);
                 const change = price - prevClose;
                 const changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
+                const latestQuote = snap.latestQuote || {};
                 result[sym] = {
                     price,
                     change,
@@ -1342,7 +1265,11 @@ app.get('/api/market/quotes', async (req, res) => {
                     high: parseFloat(dailyBar.h || price),
                     low: parseFloat(dailyBar.l || price),
                     close: parseFloat(dailyBar.c || price),
-                    volume: parseInt(dailyBar.v || 0)
+                    volume: parseInt(dailyBar.v || 0),
+                    bid: parseFloat(latestQuote.bp || 0),
+                    ask: parseFloat(latestQuote.ap || 0),
+                    bidSize: parseInt(latestQuote.bs || 0),
+                    askSize: parseInt(latestQuote.as || 0)
                 };
             }
             return res.json(result);
@@ -1351,20 +1278,6 @@ app.get('/api/market/quotes', async (req, res) => {
         }
     }
 
-    // Fallback mock data
-    const mocks = {
-        SPY: { price: 549.61, change: 1.25, changePct: 0.23, open: 548.20, high: 550.80, low: 547.90, close: 549.61, volume: 82000000 },
-        QQQ: { price: 727.98, change: 3.12, changePct: 0.43, open: 725.00, high: 729.50, low: 724.20, close: 727.98, volume: 45000000 },
-        DIA: { price: 507.08, change: -1.14, changePct: -0.22, open: 508.30, high: 509.00, low: 506.50, close: 507.08, volume: 12000000 },
-        NVDA: { price: 1087.31, change: 25.40, changePct: 2.40, open: 1065.00, high: 1092.00, low: 1062.00, close: 1087.31, volume: 42000000 },
-        AAPL: { price: 189.98, change: 1.56, changePct: 0.83, open: 188.50, high: 191.00, low: 188.10, close: 189.98, volume: 58000000 },
-        MSFT: { price: 429.15, change: -1.95, changePct: -0.45, open: 431.00, high: 432.50, low: 428.00, close: 429.15, volume: 22000000 },
-        GOOGL: { price: 176.40, change: 1.20, changePct: 0.69, open: 175.20, high: 177.50, low: 175.00, close: 176.40, volume: 25000000 },
-        AMZN: { price: 181.05, change: 0.93, changePct: 0.52, open: 180.20, high: 182.00, low: 179.80, close: 181.05, volume: 35000000 },
-        TSLA: { price: 179.20, change: 2.70, changePct: 1.53, open: 176.50, high: 180.50, low: 176.00, close: 179.20, volume: 95000000 },
-        META: { price: 474.32, change: -5.18, changePct: -1.08, open: 479.50, high: 480.00, low: 473.00, close: 474.32, volume: 18000000 }
-    };
-    symbols.forEach(sym => { result[sym] = mocks[sym] || { price: 150.00, change: 0.50, changePct: 0.33, open: 149.50, high: 151.00, low: 149.00, close: 150.00, volume: 5000000 }; });
     res.json(result);
 });
 
@@ -1387,48 +1300,7 @@ app.get('/api/market/bars/:symbol', async (req, res) => {
         }
     }
 
-    // Generate realistic fallback OHLCV bars when API unreachable
-    const basePrices = {
-        AAPL: 189.98, NVDA: 1087.31, MSFT: 429.15, GOOGL: 176.40,
-        AMZN: 181.05, TSLA: 179.20, META: 474.32, AMD: 155.40,
-        NFLX: 680.50, INTC: 31.20, SPY: 549.61, QQQ: 727.98, DIA: 507.08,
-        CSCO: 48.20, PANW: 320.10, WDAY: 265.30, MS: 96.50,
-        TER: 140.80, INTU: 620.40, PG: 168.30
-    };
-    const basePrice = basePrices[symbol] || 150;
-    const bars = [];
-    const now = Date.now();
-
-    let intervalMs;
-    if (timeframe === '1Min') intervalMs = 60 * 1000;
-    else if (timeframe === '5Min') intervalMs = 5 * 60 * 1000;
-    else if (timeframe === '15Min') intervalMs = 15 * 60 * 1000;
-    else if (timeframe === '30Min') intervalMs = 30 * 60 * 1000;
-    else if (timeframe === '1Hour') intervalMs = 60 * 60 * 1000;
-    else intervalMs = 24 * 60 * 60 * 1000;
-
-    let currPrice = basePrice * (0.85 + Math.random() * 0.3);
-    for (let i = limit; i >= 0; i--) {
-        const t = new Date(now - i * intervalMs);
-        if ((timeframe === '1Day' || timeframe === '1D') && (t.getDay() === 0 || t.getDay() === 6)) continue;
-        const drift = (Math.sin(i * 0.22) * 0.008 + Math.cos(i * 0.13) * 0.005) * currPrice;
-        const noise = (Math.random() - 0.48) * currPrice * 0.015;
-        const change = drift + noise + (currPrice * 0.00015);
-        currPrice = Math.max(1, currPrice + change);
-        const c = currPrice;
-        const o = c - (Math.random() * currPrice * 0.005);
-        const h = Math.max(o, c) + Math.random() * currPrice * 0.008;
-        const l = Math.min(o, c) - Math.random() * currPrice * 0.008;
-        bars.push({
-            t: t.toISOString(),
-            o: Math.round(o * 100) / 100,
-            h: Math.round(h * 100) / 100,
-            l: Math.round(l * 100) / 100,
-            c: Math.round(c * 100) / 100,
-            v: Math.floor(500000 + Math.random() * 5000000)
-        });
-    }
-    res.json(bars);
+    res.json([]);
 });
 
 // 12. Sector ETF performance snapshot
@@ -1462,20 +1334,7 @@ app.get('/api/market/sectors', async (req, res) => {
         }
     }
 
-    // Fallback mocks
-    const mocks = {
-        XLK: { name: 'Technology', price: 235.80, changePct: 0.82 },
-        XLF: { name: 'Financials', price: 48.20, changePct: -0.31 },
-        XLE: { name: 'Energy', price: 89.45, changePct: 1.24 },
-        XLV: { name: 'Health Care', price: 145.60, changePct: -0.18 },
-        XLY: { name: 'Cons. Disc.', price: 198.30, changePct: 0.55 },
-        XLI: { name: 'Industrials', price: 136.20, changePct: 0.38 },
-        XLC: { name: 'Comm. Svcs', price: 89.10, changePct: 1.02 },
-        XLB: { name: 'Materials', price: 92.40, changePct: -0.45 },
-        XLU: { name: 'Utilities', price: 78.90, changePct: -0.22 },
-        XLRE: { name: 'Real Estate', price: 40.15, changePct: -0.68 }
-    };
-    res.json(mocks);
+    res.json({});
 });
 
 // 13. Full Alpaca account details (all fields exposed)
@@ -1845,13 +1704,7 @@ app.get('/api/assets', async (req, res) => {
         const assets = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(assets);
     } catch (e) {
-        res.json([
-            { id: 'mock-1', class: 'us_equity', exchange: 'NASDAQ', symbol: 'AAPL', name: 'Apple Inc.', status: 'active', tradable: true, marginable: true, shortable: true, easy_to_borrow: true, fractionable: true, maintenance_margin_requirement: 25, min_order_size: null, min_trade_increment: null, price_increment: null },
-            { id: 'mock-2', class: 'us_equity', exchange: 'NASDAQ', symbol: 'MSFT', name: 'Microsoft Corporation', status: 'active', tradable: true, marginable: true, shortable: true, easy_to_borrow: true, fractionable: true, maintenance_margin_requirement: 25, min_order_size: null, min_trade_increment: null, price_increment: null },
-            { id: 'mock-3', class: 'us_equity', exchange: 'NASDAQ', symbol: 'NVDA', name: 'NVIDIA Corporation', status: 'active', tradable: true, marginable: true, shortable: true, easy_to_borrow: true, fractionable: true, maintenance_margin_requirement: 25, min_order_size: null, min_trade_increment: null, price_increment: null },
-            { id: 'mock-4', class: 'us_equity', exchange: 'NYSE', symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust', status: 'active', tradable: true, marginable: true, shortable: true, easy_to_borrow: true, fractionable: true, maintenance_margin_requirement: 25, min_order_size: null, min_trade_increment: null, price_increment: null },
-            { id: 'mock-5', class: 'crypto', exchange: 'CRYPTO', symbol: 'BTC/USD', name: 'Bitcoin', status: 'active', tradable: true, marginable: false, shortable: false, easy_to_borrow: false, fractionable: true, maintenance_margin_requirement: 100, min_order_size: '0.0001', min_trade_increment: '0.0001', price_increment: '0.01' }
-        ]);
+        res.json([]);
     }
 });
 
@@ -1864,7 +1717,7 @@ app.get('/api/asset/:symbol', async (req, res) => {
         const asset = await alpacaRequest('GET', `${cfg.base_url}/v2/assets/${encodeURIComponent(req.params.symbol)}`, cfg.api_key, cfg.api_secret);
         res.json(asset);
     } catch (e) {
-        res.json({ id: 'mock', class: 'us_equity', exchange: 'NASDAQ', symbol: req.params.symbol, name: req.params.symbol, status: 'active', tradable: true, marginable: true, shortable: true, easy_to_borrow: true, fractionable: true, maintenance_margin_requirement: 25 });
+        res.json({ error: 'Asset not found', symbol: req.params.symbol });
     }
 });
 
@@ -1887,9 +1740,7 @@ app.get('/api/crypto/bars/:symbol', async (req, res) => {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        const now = Date.now();
-        const bars = Array.from({ length: 30 }, (_, i) => ({ t: new Date(now - (29 - i) * 86400000).toISOString(), o: 67000 + Math.random() * 2000, h: 68000 + Math.random() * 2000, l: 66000 + Math.random() * 2000, c: 67500 + Math.random() * 2000, v: 1000 + Math.random() * 5000, n: 100 + Math.floor(Math.random() * 500), vw: 67200 + Math.random() * 1000 }));
-        res.json({ bars: { [req.params.symbol]: bars } });
+        res.json({ bars: {} });
     }
 });
 
@@ -1903,7 +1754,7 @@ app.get('/api/crypto/snapshot/:symbol', async (req, res) => {
         const data = await alpacaRequest('GET', `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/snapshots?symbols=${sym}`, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        res.json({ snapshots: { [req.params.symbol]: { latestTrade: { p: 67500, s: 0.5, t: new Date().toISOString() }, latestQuote: { bp: 67490, bs: 1.2, ap: 67510, as: 0.8, t: new Date().toISOString() }, minuteBar: { o: 67450, h: 67600, l: 67400, c: 67500, v: 120, t: new Date().toISOString() }, dailyBar: { o: 66800, h: 68000, l: 66500, c: 67500, v: 25000, t: new Date().toISOString() }, prevDailyBar: { o: 66200, h: 67200, l: 66000, c: 66800, v: 22000, t: new Date().toISOString() } } } });
+        res.json({ snapshots: {} });
     }
 });
 
@@ -1922,7 +1773,7 @@ app.get('/api/crypto/quotes/:symbol', async (req, res) => {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        res.json({ quotes: { [req.params.symbol]: [{ bp: 67490, bs: 1.2, ap: 67510, as: 0.8, t: new Date().toISOString() }] } });
+        res.json({ quotes: {} });
     }
 });
 
@@ -1941,8 +1792,7 @@ app.get('/api/crypto/trades/:symbol', async (req, res) => {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        const trades = Array.from({ length: 20 }, (_, i) => ({ p: 67500 + (Math.random() - 0.5) * 100, s: Math.random() * 2, t: new Date(Date.now() - i * 60000).toISOString(), tks: Math.random() > 0.5 ? 'B' : 'S' }));
-        res.json({ trades: { [req.params.symbol]: trades } });
+        res.json({ trades: {} });
     }
 });
 
@@ -1956,10 +1806,7 @@ app.get('/api/crypto/orderbook/:symbol', async (req, res) => {
         const data = await alpacaRequest('GET', `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/orderbooks/books?symbols=${sym}`, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        const mid = 67500;
-        const bids = Array.from({ length: 10 }, (_, i) => ({ p: mid - (i + 1) * 5, s: Math.random() * 3 }));
-        const asks = Array.from({ length: 10 }, (_, i) => ({ p: mid + (i + 1) * 5, s: Math.random() * 3 }));
-        res.json({ orderbooks: { [req.params.symbol]: { b: bids, a: asks, t: new Date().toISOString() } } });
+        res.json({ orderbooks: {} });
     }
 });
 
@@ -1998,7 +1845,7 @@ app.get('/api/options/contract/:symbol', async (req, res) => {
         const contract = await alpacaRequest('GET', `${cfg.base_url}/v2/options/contracts/${encodeURIComponent(req.params.symbol)}`, cfg.api_key, cfg.api_secret);
         res.json(contract);
     } catch (e) {
-        res.json({ id: 'mock', symbol: req.params.symbol, name: req.params.symbol, status: 'active', tradable: true, expiration_date: '2026-06-20', strike_price: '200', type: 'call', underlying_symbol: 'AAPL', underlying_asset_id: 'mock', size: '100', open_interest: '1500', close_price: '5.50' });
+        res.json({ error: 'Contract not found' });
     }
 });
 
@@ -2083,8 +1930,7 @@ app.get('/api/stock/:symbol/trades', async (req, res) => {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        const trades = Array.from({ length: 20 }, (_, i) => ({ t: new Date(Date.now() - i * 30000).toISOString(), p: 180 + Math.random() * 5, s: Math.floor(Math.random() * 500) + 1, c: ['@', 'T'], i: 100000 + i, x: 'V', z: 'C' }));
-        res.json({ trades, symbol: req.params.symbol });
+        res.json({ trades: [], symbol: req.params.symbol });
     }
 });
 
@@ -2103,8 +1949,7 @@ app.get('/api/stock/:symbol/quotes', async (req, res) => {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
-        const quotes = Array.from({ length: 10 }, (_, i) => ({ t: new Date(Date.now() - i * 30000).toISOString(), bp: 179.5 + Math.random() * 2, bs: Math.floor(Math.random() * 10) + 1, bx: 'Q', ap: 180.5 + Math.random() * 2, as: Math.floor(Math.random() * 10) + 1, ax: 'P', c: ['R'], z: 'C' }));
-        res.json({ quotes, symbol: req.params.symbol });
+        res.json({ quotes: [], symbol: req.params.symbol });
     }
 });
 

@@ -12,7 +12,7 @@
     var serverCache = {};
 
     var SYMBOLS = {
-        // Major US holdings for Alpaca portfolios
+        AAPL: { name: 'Apple Inc.', nameAr: 'أبل', sector: 'Tech', color: '#a3a3a3' },
         AMZN: { name: 'Amazon.com Inc.', nameAr: 'أمازون دوت كوم', sector: 'Tech', color: '#f59e0b' },
         BIL:  { name: 'SPDR Barclays 1-3 Month T-Bill ETF', nameAr: 'سندات الخزانة الأمريكية قصيرة الأجل', sector: 'Defensive', color: '#475569' },
         DIA:  { name: 'SPDR Dow Jones Industrial Average ETF', nameAr: 'مؤشر داو جونز الصناعي', sector: 'Core Equity', color: '#8b5cf6' },
@@ -29,7 +29,10 @@
         TER:  { name: 'Teradyne Inc.', nameAr: 'تيرادين للإلكترونيات', sector: 'Gov Copy', color: '#84cc16' },
         WDAY: { name: 'Workday Inc.', nameAr: 'ورك داي لبرمجيات الموارد', sector: 'Gov Copy', color: '#0ea5e9' },
         CSCO: { name: 'Cisco Systems Inc.', nameAr: 'سيسكو لنظم الشبكات', sector: 'Event Tech', color: '#14b8a6' },
+        META: { name: 'Meta Platforms Inc.', nameAr: 'ميتا بلاتفورمز', sector: 'Tech', color: '#1877f2' },
         MS:   { name: 'Morgan Stanley', nameAr: 'مورجان ستانلي للخدمات المالية', sector: 'Event Tech', color: '#3b82f6' },
+        MSFT: { name: 'Microsoft Corp.', nameAr: 'مايكروسوفت', sector: 'Tech', color: '#00a4ef' },
+        NVDA: { name: 'NVIDIA Corp.', nameAr: 'إنفيديا', sector: 'Tech', color: '#76b900' },
         PANW: { name: 'Palo Alto Networks Inc.', nameAr: 'بالو ألتو لشبكات الأمان', sector: 'Event Tech', color: '#ec4899' }
     };
 
@@ -109,7 +112,7 @@
     // Compiles historical equity list for charts
     function loadEquityHistory(id, period) {
         if (!SERVER_PORTFOLIOS.includes(id)) {
-            return Promise.resolve({ source: 'mock', base_value: 100000, history: generateChartData(90) });
+            return Promise.resolve({ source: 'local', base_value: 100000, history: [] });
         }
 
         var p = period || '3M';
@@ -137,13 +140,7 @@
     function loadMarketIndices() {
         return fetch('/api/market-indices', { cache: 'no-store' })
             .then(function (r) { return r.ok ? r.json() : {}; })
-            .catch(function () {
-                return {
-                    SPY: { price: 549.61, change: 1.25, change_pct: 0.23 },
-                    QQQ: { price: 727.98, change: 3.12, change_pct: 0.43 },
-                    DIA: { price: 507.08, change: -1.14, change_pct: -0.22 }
-                };
-            });
+            .catch(function () { return {}; });
     }
 
     /* ─── Compute Metrics (Express API Cache vs local Average Cost) ───────── */
@@ -256,26 +253,50 @@
         return Object.values(map).filter(function (h) { return h.quantity > 0; });
     }
 
-    // Seeded local EGX prices
-    var PRICES = {
-        COMI: 138.00, CIB: 95.20, HRHO: 17.85, SWDY: 24.80, TMGH: 58.20,
-        EAST: 22.50, VALU: 4.80, ETEL: 38.20, ADIB: 41.50, EGBE: 1.20
-    };
-    var PREV_PRICES = {
-        COMI: 136.55, CIB: 95.61, HRHO: 17.50, SWDY: 24.41, TMGH: 57.50,
-        EAST: 22.00, VALU: 4.92, ETEL: 37.80, ADIB: 42.10, EGBE: 1.18
-    };
+    var _livePriceCache = {};
+
+    function fetchLivePrices(symbols) {
+        if (!symbols || !symbols.length) return Promise.resolve();
+        var unique = symbols.filter(function(s, i, a) { return a.indexOf(s) === i; });
+        return fetch('/api/market/quotes', { cache: 'no-store' })
+            .then(function(r) { return r.ok ? r.json() : {}; })
+            .then(function(data) {
+                Object.keys(data).forEach(function(sym) {
+                    var q = data[sym];
+                    if (q) {
+                        _livePriceCache[sym] = {
+                            price: q.price || 0,
+                            prevClose: q.close || q.price || 0
+                        };
+                    }
+                });
+                unique.forEach(function(sym) {
+                    if (!_livePriceCache[sym] && !data[sym]) {
+                        fetch('/api/stock/' + sym + '/details', { cache: 'no-store' })
+                            .then(function(r) { return r.ok ? r.json() : {}; })
+                            .then(function(d) {
+                                if (d.quote && d.quote.price) {
+                                    _livePriceCache[sym] = { price: d.quote.price, prevClose: d.quote.prevClose || d.quote.price };
+                                }
+                            }).catch(function() {});
+                    }
+                });
+            })
+            .catch(function() {});
+    }
 
     function lastPrice(sym, fallback) {
         if (!sym) return fallback || 0;
         var cleanSym = String(sym).trim().toUpperCase();
-        return PRICES[cleanSym] || fallback || 0;
+        var cached = _livePriceCache[cleanSym];
+        return (cached && cached.price) ? cached.price : (fallback || 0);
     }
 
     function prevClose(sym, fallback) {
         if (!sym) return fallback || 0;
         var cleanSym = String(sym).trim().toUpperCase();
-        return PREV_PRICES[cleanSym] || lastPrice(cleanSym, fallback);
+        var cached = _livePriceCache[cleanSym];
+        return (cached && cached.prevClose) ? cached.prevClose : lastPrice(cleanSym, fallback);
     }
 
     function computeLocalStorageMetrics(portfolio) {
@@ -376,39 +397,20 @@
             id: 'demo',
             name: 'Local Sandbox Portfolio',
             nameAr: 'محفظة التجربة المحلية',
-            currency: 'EGP',
-            benchmark: 'EGX30',
-            riskFreeRate: 25.5,
-            description: 'Local localStorage sandbox portfolio',
+            currency: 'USD',
+            benchmark: 'SPY',
+            riskFreeRate: 4.5,
+            description: 'US market sandbox portfolio',
             createdAt: now.toISOString().slice(0, 10),
             isDefault: true,
-            cashBalance: 25000,
+            cashBalance: 5000,
             transactions: [
-                { id: 'dep-1', type: 'deposit', date: now.toISOString().slice(0, 10), symbol: null, quantity: null, price: null, commission: 0, tax: 0, currency: 'EGP', notes: 'Initial funding', amount: 500000 },
-                { id: 'tx-1', type: 'buy', date: now.toISOString().slice(0, 10), symbol: 'COMI', quantity: 2000, price: 120.50, commission: 240, tax: 0, currency: 'EGP', notes: '' },
-                { id: 'tx-2', type: 'buy', date: now.toISOString().slice(0, 10), symbol: 'SWDY', quantity: 4000, price: 22.10, commission: 88, tax: 0, currency: 'EGP', notes: '' }
+                { id: 'dep-1', type: 'deposit', date: now.toISOString().slice(0, 10), symbol: null, quantity: null, price: null, commission: 0, tax: 0, currency: 'USD', notes: 'Initial funding', amount: 100000 },
+                { id: 'tx-1', type: 'buy', date: now.toISOString().slice(0, 10), symbol: 'AAPL', quantity: 100, price: 190.00, commission: 0, tax: 0, currency: 'USD', notes: '' },
+                { id: 'tx-2', type: 'buy', date: now.toISOString().slice(0, 10), symbol: 'MSFT', quantity: 50, price: 420.00, commission: 0, tax: 0, currency: 'USD', notes: '' },
+                { id: 'tx-3', type: 'buy', date: now.toISOString().slice(0, 10), symbol: 'GOOGL', quantity: 150, price: 175.00, commission: 0, tax: 0, currency: 'USD', notes: '' }
             ]
         };
-    }
-
-    function generateChartData(days) {
-        var now = new Date();
-        var labels = [], pValues = [], bValues = [];
-        var pVal = 100000, bVal = 100000;
-        var pTotal = Math.pow(118500 / pVal, 1 / days) - 1;
-        var bTotal = Math.pow(112400 / bVal, 1 / days) - 1;
-
-        for (var i = 0; i <= days; i++) {
-            var d = new Date(now); d.setDate(d.getDate() - (days - i));
-            if (d.getDay() === 0 || d.getDay() === 6) continue;
-            var sin = Math.sin(i * 0.15 + 1) * 0.015;
-            pVal *= (1 + pTotal + sin);
-            bVal *= (1 + bTotal + Math.cos(i * 0.2) * 0.012);
-            labels.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
-            pValues.push(Math.round(pVal));
-            bValues.push(Math.round(bVal));
-        }
-        return { labels: labels, portfolio: pValues, benchmark: bValues };
     }
 
     function loadAll() {
@@ -525,12 +527,12 @@
         create: create, update: update, remove: remove,
         addTransaction: addTransaction,
         computeMetrics: computeMetrics,
-        generateChartData: generateChartData,
         symMeta: symMeta, lastPrice: lastPrice,
         fmt: fmt,
         loadPortfolio: loadPortfolio,
         loadEquityHistory: loadEquityHistory,
         loadMarketIndices: loadMarketIndices,
+        fetchLivePrices: fetchLivePrices,
         serverCache: serverCache
     };
 

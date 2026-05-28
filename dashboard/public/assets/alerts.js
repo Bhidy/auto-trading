@@ -223,55 +223,49 @@
         symbolInput.value = '';
     }
 
-    /* ─── Neural Signals Feed Simulator ─────────────────────────────────── */
-    var feedLogs = [];
+    /* ─── Neural Signals Feed — Real Signals from Trading System ─────── */
     var feedContainer = null;
+    var realSignalsCache = [];
+    var signalsRendered = false;
 
-    var mockSignals = [
-        { sym: 'NVDA', type: 'RSI Bullish', desc: 'RSI(14) crosses above 30, signaling heavy oversold capitulation recovery.', cls: 'success' },
-        { sym: 'AAPL', type: 'Volume Spike', desc: 'Volume spikes 140% above 20-day moving average on key support level.', cls: 'success' },
-        { sym: 'TSLA', type: 'MACD Bearish', desc: 'MACD line crosses below signal line on 4H chart, warnings of technical correction.', cls: 'danger' },
-        { sym: 'SPY', type: 'S&P 500 Drop', desc: 'Price crossed below 50-day SMA, accelerating short-term liquidations.', cls: 'danger' },
-        { sym: 'MSFT', type: 'AI Buy Signal', desc: 'Neural core triggers BULLISH momentum cross matching institutional flow.', cls: 'success' },
-        { sym: 'META', type: 'Earnings Pre-gap', desc: 'Options pricing reflects 8.2% expected move ahead of earnings disclosure.', cls: 'success' }
-    ];
+    function loadRealSignals() {
+        fetch('/api/portfolio/portfolio_1/details')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var signals = (data.signals && data.signals.signals) || [];
+                if (signals.length === 0) return;
+                realSignalsCache = signals;
+                renderSignalsFeed();
+            })
+            .catch(function() {});
+    }
 
-    var mockSignalsAr = [
-        { sym: 'NVDA', type: 'زخم RSI إيجابي', desc: 'مؤشر القوة النسبية يتجاوز ٣٠ صعوداً، مشيراً إلى خروج من ذروة البيع.', cls: 'success' },
-        { sym: 'AAPL', type: 'ارتفاع في الحجم', desc: 'حجم التداول يرتفع بنسبة ١٤٠٪ فوق متوسط ٢٠ يوماً عند الدعم الفني.', cls: 'success' },
-        { sym: 'TSLA', type: 'MACD سلبي', desc: 'خط الماكد يتقاطع هبوطاً مع خط الإشارة على إطار ٤ ساعات المالي.', cls: 'danger' },
-        { sym: 'SPY', type: 'كسر دعم S&P', desc: 'مؤشر S&P 500 يكسر هبوطاً المتوسط المتحرك البسيط لـ ٥٠ يوماً.', cls: 'danger' },
-        { sym: 'MSFT', type: 'شراء عصبوني', desc: 'الشبكة العصبية ترصد زخم شراء مؤسسي ضخم وتفوق فوري في التدفقات.', cls: 'success' },
-        { sym: 'META', type: 'فجوة الأرباح المتوقعة', desc: 'تسعير عقود الخيارات يشير إلى حركة حادة متوقعة بنسبة ٨.٢٪ قبيل الإعلان.', cls: 'success' }
-    ];
+    function renderSignalsFeed() {
+        if (!feedContainer || realSignalsCache.length === 0) return;
+        feedContainer.innerHTML = '';
+        var shown = realSignalsCache.slice(0, 8);
+        shown.forEach(function(s) {
+            var isBuy = s.signal === 'BUY' || s.signal === 'STRONG_BUY';
+            var cls = isBuy ? 'success' : (s.signal === 'SELL' || s.signal === 'SHORT' ? 'danger' : '');
+            var typeText = s.signal + ' (Score: ' + (s.score || 0).toFixed(2) + ')';
+            var desc = (s.reasons || []).slice(0, 2).join('. ');
+            var priceText = s.indicators && s.indicators.price ? ' — $' + s.indicators.price.toFixed(2) : '';
 
-    function pushSignal() {
-        if (!feedContainer) return;
-        
-        var pool = lang === 'ar' ? mockSignalsAr : mockSignals;
-        var r = pool[Math.floor(Math.random() * pool.length)];
-        var now = new Date();
-        var timeStr = now.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US', { hour12: false });
-
-        var card = document.createElement('div');
-        card.className = 'live-feed-card ' + r.cls;
-        card.innerHTML = `
-            <div>
-                <span style="font-weight:800; color:var(--ink); font-size:0.8rem; margin-inline-end: 0.5rem;">${r.sym}</span>
-                <span style="font-size:0.7rem; font-weight:700; color:var(--teal); text-transform:uppercase;">${r.type}</span>
-                <p style="margin-top:0.35rem; color:var(--muted); font-size:0.72rem;">${r.desc}</p>
-            </div>
-            <div style="font-size:0.65rem; color:var(--muted); white-space:nowrap; text-align:right;">
-                ${timeStr}
-            </div>
-        `;
-
-        feedContainer.insertBefore(card, feedContainer.firstChild);
-
-        // Limit count to 5
-        if (feedContainer.children.length > 5) {
-            feedContainer.removeChild(feedContainer.lastChild);
-        }
+            var card = document.createElement('div');
+            card.className = 'live-feed-card ' + cls;
+            card.innerHTML =
+                '<div>' +
+                    '<span style="font-weight:800; color:var(--ink); font-size:0.8rem; margin-inline-end: 0.5rem;">' + s.symbol + '</span>' +
+                    '<span style="font-size:0.7rem; font-weight:700; color:var(--teal); text-transform:uppercase;">' + typeText + '</span>' +
+                    '<span style="font-size:0.68rem; color:var(--muted);">' + priceText + '</span>' +
+                    '<p style="margin-top:0.35rem; color:var(--muted); font-size:0.72rem;">' + desc + '</p>' +
+                '</div>' +
+                '<div style="font-size:0.65rem; color:var(--muted); white-space:nowrap; text-align:right;">' +
+                    (s.instrument_type || 'equity').toUpperCase() +
+                '</div>';
+            feedContainer.appendChild(card);
+        });
+        signalsRendered = true;
     }
 
     /* ─── Initialization ────────────────────────────────────────────────── */
@@ -288,13 +282,8 @@
 
         applyLang(lang);
 
-        // Push some initial signals
-        for (var i = 0; i < 3; i++) {
-            pushSignal();
-        }
-
-        // Ticking signals feed every 5 seconds
-        setInterval(pushSignal, 5000);
+        loadRealSignals();
+        setInterval(loadRealSignals, 30000);
 
         // Dynamic marquee
         function updateMarquee() {

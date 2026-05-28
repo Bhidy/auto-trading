@@ -224,177 +224,194 @@
 
     function renderSECFilings(symbol) {
         var list = document.getElementById('secFilingsList');
-        var dict = T[lang] || T.en;
-        var dlBtn = dict.sec_download || 'Download PDF';
-
-        var mockFilings = [
-            { form: '10-Q', date: '2026-05-12', desc: 'Quarterly financial performance report Q1' },
-            { form: '10-K', date: '2025-11-20', desc: 'Annual institutional audits & compliance filing' },
-            { form: '8-K', date: '2026-04-05', desc: 'Material event or acquisition disclosures statement' }
-        ];
-
-        list.innerHTML = mockFilings.map(function(f) {
-            return `<tr>
-                <td style="font-weight: 800; font-family: var(--pf-mono);">${f.form}</td>
-                <td style="font-family: var(--pf-mono);">${f.date}</td>
-                <td>${f.desc}</td>
-                <td><button class="btn-download" onclick="alert('Downloading SEC filing for ${symbol}...')">${dlBtn}</button></td>
-            </tr>`;
-        }).join('');
+        list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); font-size:0.75rem; padding:1rem;">SEC filings data requires integration — not available via Alpaca API.</td></tr>';
     }
 
     function renderOptionsChain(price) {
         var list = document.getElementById('optionsChainList');
-        var startStrike = Math.round(price * 0.95);
-        var html = '';
+        list.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:1rem;">Loading options chain...</td></tr>';
 
-        for (var i = 0; i < 5; i++) {
-            var strike = startStrike + (i * 5);
-            var callBid = Math.max(0.1, (price - strike) * 1.05 + Math.random() * 2);
-            var callAsk = callBid + 0.15;
-            var putBid = Math.max(0.1, (strike - price) * 1.05 + Math.random() * 2);
-            var putAsk = putBid + 0.15;
-            var callVol = Math.floor(100 + Math.random() * 900);
-            var putVol = Math.floor(80 + Math.random() * 800);
-
-            html += `<tr>
-                <td style="color: #2ecc71; font-family: var(--pf-mono); font-weight:700;">$${callBid.toFixed(2)}</td>
-                <td style="color: #2ecc71; font-family: var(--pf-mono);">$${callAsk.toFixed(2)}</td>
-                <td style="font-family: var(--pf-mono); text-align:center;">${callVol}</td>
-                <td style="font-family: var(--pf-mono); font-weight: 800; text-align: center; background: var(--teal-soft); color: var(--teal); border-radius: 4px;">$${strike}</td>
-                <td style="color: #e74c3c; font-family: var(--pf-mono); font-weight:700;">$${putBid.toFixed(2)}</td>
-                <td style="color: #e74c3c; font-family: var(--pf-mono);">$${putAsk.toFixed(2)}</td>
-                <td style="font-family: var(--pf-mono); text-align:center;">${putVol}</td>
-            </tr>`;
-        }
-        list.innerHTML = html;
+        fetch('/api/options/chain/' + currentSymbol)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var snapshots = data.snapshots || {};
+                var keys = Object.keys(snapshots).slice(0, 10);
+                if (keys.length === 0) {
+                    list.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); font-size:0.75rem; padding:1rem;">No options data available for ' + currentSymbol + '.</td></tr>';
+                    return;
+                }
+                var html = '';
+                keys.forEach(function(contractId) {
+                    var snap = snapshots[contractId];
+                    var q = snap.latestQuote || {};
+                    var t = snap.latestTrade || {};
+                    var greeks = snap.greeks || {};
+                    var bid = parseFloat(q.bp || 0);
+                    var ask = parseFloat(q.ap || 0);
+                    var vol = parseInt(snap.impliedVolatility || t.s || 0);
+                    var parts = contractId.match(/(\d{6})([CP])(\d+)/);
+                    var strike = parts ? (parseInt(parts[3]) / 1000).toFixed(0) : '—';
+                    var isCall = parts ? parts[2] === 'C' : true;
+                    html += '<tr>';
+                    if (isCall) {
+                        html += '<td style="color:#2ecc71; font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
+                        html += '<td style="color:#2ecc71; font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
+                        html += '<td style="font-family:var(--pf-mono); text-align:center;">' + vol + '</td>';
+                        html += '<td style="font-family:var(--pf-mono); font-weight:800; text-align:center; background:var(--teal-soft); color:var(--teal); border-radius:4px;">$' + strike + '</td>';
+                        html += '<td colspan="3" style="color:var(--muted); text-align:center;">—</td>';
+                    } else {
+                        html += '<td colspan="3" style="color:var(--muted); text-align:center;">—</td>';
+                        html += '<td style="font-family:var(--pf-mono); font-weight:800; text-align:center; background:var(--teal-soft); color:var(--teal); border-radius:4px;">$' + strike + '</td>';
+                        html += '<td style="color:#e74c3c; font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
+                        html += '<td style="color:#e74c3c; font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
+                        html += '<td style="font-family:var(--pf-mono); text-align:center;">' + vol + '</td>';
+                    }
+                    html += '</tr>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() {
+                list.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); font-size:0.75rem; padding:1rem;">Options data unavailable.</td></tr>';
+            });
     }
 
     function renderAIResearchSummary(symbol, changePct) {
-        var score = 7.5;
-        var desc = '';
+        document.getElementById('aiCatalystText').textContent = 'Loading signal data...';
+        document.getElementById('aiCatalystScoreRing').textContent = '—';
 
-        if (symbol === 'AAPL') {
-            score = 8.4;
-            desc = lang === 'ar' 
-                ? 'تحليل الشبكة العصبية: تمتلك أبل مرونة مالية استثنائية مع توسع هوامش قطاع الخدمات. المحفز الأساسي هو التبني الواسع للأجهزة الاستهلاكية الجديدة ونمو الاشتراكات.'
-                : 'Neural engine parsing: Apple remains highly resilient with expanding service margins. Primary catalyst is high-frequency consumer hardware upgrades offset by slight global supply risks.';
-        } else if (symbol === 'NVDA') {
-            score = 9.2;
-            desc = lang === 'ar'
-                ? 'تحليل الشبكة العصبية: طلب غير مسبوق على معالجات الذكاء الاصطناعي ومراكز البيانات. الفجوة السعرية تعكس تفوقاً تنافسياً هائلاً ومخاطر تقييم منخفضة.'
-                : 'Neural engine parsing: Exceptional institutional demand for high-performance AI computational chips. The price gap reflects strong technological leadership offset by valuation metrics.';
-        } else if (symbol === 'TSLA') {
-            score = 6.2;
-            desc = lang === 'ar'
-                ? 'تحليل الشبكة العصبية: تواجه تسلا رياحاً معاكسة بسبب المنافسة العالمية وضغط هوامش الربح. تركز الاستراتيجية الحالية على القيادة الذاتية وبطاريات التخزين.'
-                : 'Neural engine parsing: Tesla faces compressed automotive operating margins and rising global EV competition. Dynamic autonomous driving models remain the chief future catalyst.';
-        } else {
-            score = Math.min(9.9, Math.max(4.0, (7.0 + (changePct / 5)))).toFixed(1);
-            desc = lang === 'ar'
-                ? `تحليل الشبكة العصبية: سهم ${symbol} مستقر في القنوات الفنية. المحفزات الماليّة تدل على تداول عالي وانضباط مؤسسي إيجابي.`
-                : `Neural engine parsing: Symbol ${symbol} exhibits standard operational resilience in technical channels. The catalyst index signals steady institutional accumulation patterns.`;
-        }
+        fetch('/api/portfolio/portfolio_1/details')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var signals = (data.signals && data.signals.signals) || [];
+                var matched = signals.find(function(s) { return s.symbol === symbol; });
 
-        document.getElementById('aiCatalystText').textContent = desc;
-        document.getElementById('aiCatalystScoreRing').textContent = score;
-        document.getElementById('aiCatalystScoreRing').style.setProperty('--score-fill', (score * 10) + '%');
+                if (matched) {
+                    var score = (matched.score * 10).toFixed(1);
+                    var reasons = (matched.reasons || []).join('. ');
+                    var ind = matched.indicators || {};
+                    var extra = '';
+                    if (ind.rsi14) extra += 'RSI: ' + ind.rsi14.toFixed(1);
+                    if (ind.momentum_1m !== undefined) extra += ' | 1M: ' + (ind.momentum_1m >= 0 ? '+' : '') + ind.momentum_1m.toFixed(1) + '%';
+                    if (ind.atr_pct) extra += ' | ATR: ' + ind.atr_pct.toFixed(2) + '%';
+
+                    document.getElementById('aiCatalystText').textContent = matched.signal + ' signal — ' + reasons + (extra ? ' [' + extra + ']' : '');
+                    document.getElementById('aiCatalystScoreRing').textContent = score;
+                    document.getElementById('aiCatalystScoreRing').style.setProperty('--score-fill', (parseFloat(score) * 10) + '%');
+                } else {
+                    document.getElementById('aiCatalystText').textContent = 'No active AI signal for ' + symbol + '. Not in current trading watchlist.';
+                    document.getElementById('aiCatalystScoreRing').textContent = 'N/A';
+                    document.getElementById('aiCatalystScoreRing').style.setProperty('--score-fill', '0%');
+                }
+            })
+            .catch(function() {
+                document.getElementById('aiCatalystText').textContent = 'Signal data unavailable.';
+                document.getElementById('aiCatalystScoreRing').textContent = '—';
+            });
     }
 
     function renderLevel2Depth(price) {
         var list = document.getElementById('l2DepthBookList');
-        var html = '';
 
-        // Add 3 Ask rows (Sell) in descending order of price
-        for (var i = 3; i >= 1; i--) {
-            var askPrice = price + (i * 0.08);
-            var askVol = Math.floor(100 + Math.random() * 2000);
-            var fillPct = Math.min(100, (askVol / 2000) * 100);
-            html += `<div class="l2-row ask">
-                <span class="price">$${askPrice.toFixed(2)}</span>
-                <span class="size">${askVol}</span>
-                <div class="l2-depth-fill" style="width: ${fillPct}%; background: #e74c3c;"></div>
-            </div>`;
-        }
+        fetch('/api/stock/' + currentSymbol + '/quotes?limit=5')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var quotes = data.quotes || [];
+                if (quotes.length === 0) {
+                    list.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem; padding:1rem;">Real-time NBBO depth data loading...</div>';
+                    renderL2FromQuote(list, price);
+                    return;
+                }
+                var latest = quotes[quotes.length - 1] || {};
+                var bid = parseFloat(latest.bp || price - 0.05);
+                var ask = parseFloat(latest.ap || price + 0.05);
+                var bidSize = parseInt(latest.bs || 0);
+                var askSize = parseInt(latest.as || 0);
+                var spread = (ask - bid).toFixed(2);
 
-        // Spread separator
-        html += `<div style="text-align:center; font-family: var(--pf-mono); font-size:0.7rem; color:var(--muted); padding: 0.2rem 0; border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); margin: 0.35rem 0;">
-            SPREAD: $0.16
-        </div>`;
+                var html = '';
+                html += '<div class="l2-row ask"><span class="price">$' + ask.toFixed(2) + '</span><span class="size">' + askSize + '</span><div class="l2-depth-fill" style="width:' + Math.min(100, askSize * 5) + '%; background:#e74c3c;"></div></div>';
+                html += '<div style="text-align:center; font-family:var(--pf-mono); font-size:0.7rem; color:var(--muted); padding:0.2rem 0; border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); margin:0.35rem 0;">SPREAD: $' + spread + '</div>';
+                html += '<div class="l2-row bid"><span class="price">$' + bid.toFixed(2) + '</span><span class="size">' + bidSize + '</span><div class="l2-depth-fill" style="width:' + Math.min(100, bidSize * 5) + '%; background:#2ecc71;"></div></div>';
+                list.innerHTML = html;
+            })
+            .catch(function() {
+                renderL2FromQuote(list, price);
+            });
+    }
 
-        // Add 3 Bid rows (Buy) in descending order of price
-        for (var i = 1; i <= 3; i++) {
-            var bidPrice = price - (i * 0.08);
-            var bidVol = Math.floor(100 + Math.random() * 2000);
-            var fillPct = Math.min(100, (bidVol / 2000) * 100);
-            html += `<div class="l2-row bid">
-                <span class="price">$${bidPrice.toFixed(2)}</span>
-                <span class="size">${bidVol}</span>
-                <div class="l2-depth-fill" style="width: ${fillPct}%; background: #2ecc71;"></div>
-            </div>`;
-        }
-
-        list.innerHTML = html;
+    function renderL2FromQuote(list, price) {
+        list.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem; padding:1rem;">Level 2 depth data not available for this symbol.</div>';
     }
 
     function renderAnalystConsensus(symbol) {
-        var consensus = 'BUY';
-        var buy = 70, hold = 20, sell = 10;
-
-        if (symbol === 'TSLA') { consensus = 'HOLD'; buy = 35; hold = 45; sell = 20; }
-        else if (symbol === 'NVDA') { consensus = 'STRONG BUY'; buy = 88; hold = 10; sell = 2; }
-        else if (symbol === 'AAPL') { consensus = 'BUY'; buy = 74; hold = 20; sell = 6; }
-
-        document.getElementById('consensusRatingText').textContent = consensus;
-        document.getElementById('consensusRatingText').style.color = buy > 60 ? '#2ecc71' : (hold > 40 ? '#FF8A3D' : '#e74c3c');
-
+        var ratingEl = document.getElementById('consensusRatingText');
         var bars = document.getElementById('analystConsensusBars');
-        bars.innerHTML = `
-            <div class="rating-row">
-                <span class="label">${lang === 'ar' ? 'شراء' : 'Buy'}</span>
-                <div class="bar-outer"><div class="bar-inner" style="width: ${buy}%; background: #2ecc71;"></div></div>
-                <span class="num">${buy}%</span>
-            </div>
-            <div class="rating-row">
-                <span class="label">${lang === 'ar' ? 'احتفاظ' : 'Hold'}</span>
-                <div class="bar-outer"><div class="bar-inner" style="width: ${hold}%; background: #FF8A3D;"></div></div>
-                <span class="num">${hold}%</span>
-            </div>
-            <div class="rating-row">
-                <span class="label">${lang === 'ar' ? 'بيع' : 'Sell'}</span>
-                <div class="bar-outer"><div class="bar-inner" style="width: ${sell}%; background: #e74c3c;"></div></div>
-                <span class="num">${sell}%</span>
-            </div>
-        `;
+        ratingEl.textContent = '...';
+
+        fetch('/api/portfolio/portfolio_1/details')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var signals = (data.signals && data.signals.signals) || [];
+                var matched = signals.find(function(s) { return s.symbol === symbol; });
+
+                var consensus, buy, hold, sell;
+                if (matched) {
+                    var score = matched.score || 0;
+                    if (score >= 0.8) { consensus = 'STRONG BUY'; buy = 85; hold = 12; sell = 3; }
+                    else if (score >= 0.6) { consensus = 'BUY'; buy = 70; hold = 22; sell = 8; }
+                    else if (score >= 0.4) { consensus = 'HOLD'; buy = 30; hold = 50; sell = 20; }
+                    else if (score >= 0.2) { consensus = 'SELL'; buy = 15; hold = 25; sell = 60; }
+                    else { consensus = 'STRONG SELL'; buy = 5; hold = 15; sell = 80; }
+                } else {
+                    consensus = 'NO SIGNAL'; buy = 0; hold = 0; sell = 0;
+                }
+
+                ratingEl.textContent = consensus;
+                ratingEl.style.color = buy > 60 ? '#2ecc71' : (hold > 40 ? '#FF8A3D' : '#e74c3c');
+
+                if (buy === 0 && hold === 0 && sell === 0) {
+                    bars.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem; padding:0.5rem;">Not in active watchlist.</div>';
+                } else {
+                    bars.innerHTML =
+                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'شراء' : 'Buy') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + buy + '%; background:#2ecc71;"></div></div><span class="num">' + buy + '%</span></div>' +
+                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'احتفاظ' : 'Hold') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + hold + '%; background:#FF8A3D;"></div></div><span class="num">' + hold + '%</span></div>' +
+                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'بيع' : 'Sell') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + sell + '%; background:#e74c3c;"></div></div><span class="num">' + sell + '%</span></div>';
+                }
+            })
+            .catch(function() {
+                ratingEl.textContent = '—';
+                bars.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem;">Signal data unavailable.</div>';
+            });
     }
 
     function renderPeers(symbol, profile) {
         var list = document.getElementById('peerContrastList');
         var peers = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META'];
-        if (peers.indexOf(symbol) === -1) {
-            peers[4] = symbol;
-        }
+        if (peers.indexOf(symbol) === -1) { peers[4] = symbol; }
+        list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted);">Loading peer data...</td></tr>';
 
-        var peersData = {
-            AAPL: { pe: '29.4', cap: '2.9T', beta: '1.12' },
-            MSFT: { pe: '35.8', cap: '3.2T', beta: '0.90' },
-            NVDA: { pe: '68.4', cap: '3.1T', beta: '1.95' },
-            GOOGL: { pe: '26.1', cap: '2.2T', beta: '1.05' },
-            META: { pe: '24.6', cap: '1.2T', beta: '1.22' }
-        };
-
-        var html = '';
-        peers.forEach(function(pSym) {
-            var data = peersData[pSym] || { pe: profile.pe || '15.0', cap: profile.cap || '100B', beta: profile.beta || '1.00' };
-            var styleHighlight = pSym === symbol ? 'background: var(--teal-soft); font-weight:800;' : '';
-            html += `<tr style="${styleHighlight}">
-                <td style="font-family: var(--pf-mono);">${pSym}</td>
-                <td style="font-family: var(--pf-mono);">${data.pe}</td>
-                <td style="font-family: var(--pf-mono);">${data.cap}</td>
-                <td style="font-family: var(--pf-mono);">${data.beta}</td>
-            </tr>`;
-        });
-        list.innerHTML = html;
+        fetch('/api/market/quotes?symbols=' + peers.join(','))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var html = '';
+                peers.forEach(function(pSym) {
+                    var q = data[pSym] || {};
+                    var styleHighlight = pSym === symbol ? 'background: var(--teal-soft); font-weight:800;' : '';
+                    var price = q.price ? '$' + q.price.toFixed(2) : '—';
+                    var changePct = q.changePct !== undefined ? (q.changePct >= 0 ? '+' : '') + q.changePct.toFixed(2) + '%' : '—';
+                    var vol = q.volume ? (q.volume / 1e6).toFixed(1) + 'M' : '—';
+                    html += '<tr style="' + styleHighlight + '">' +
+                        '<td style="font-family:var(--pf-mono);">' + pSym + '</td>' +
+                        '<td style="font-family:var(--pf-mono);">' + price + '</td>' +
+                        '<td style="font-family:var(--pf-mono); color:' + (q.changePct >= 0 ? '#2ecc71' : '#e74c3c') + ';">' + changePct + '</td>' +
+                        '<td style="font-family:var(--pf-mono);">' + vol + '</td>' +
+                    '</tr>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() {
+                list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted);">Peer data unavailable.</td></tr>';
+            });
     }
 
     function renderTechnicalChart(range) {
@@ -408,14 +425,14 @@
 
         var slice = rawBarsData.length > limit ? rawBarsData.slice(rawBarsData.length - limit) : rawBarsData;
         if (slice.length === 0) {
-            // Generate mock if empty
-            var price = 189.98;
-            for (var i = 0; i < limit; i++) {
-                slice.push({
-                    t: new Date(Date.now() - (limit - i) * 24 * 3600 * 1000).toLocaleDateString(),
-                    c: price + (Math.random() - 0.48) * (price * 0.05)
-                });
+            var ctxCanvas = ctx.getContext ? ctx.getContext('2d') : null;
+            if (ctxCanvas) {
+                ctxCanvas.font = '12px Manrope';
+                ctxCanvas.fillStyle = StartaTheme.current() === 'dark' ? '#a39a92' : '#7a6b5e';
+                ctxCanvas.textAlign = 'center';
+                ctxCanvas.fillText('No chart data available', ctx.width / 2, ctx.height / 2);
             }
+            return;
         }
 
         var labels = slice.map(function(b) {

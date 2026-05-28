@@ -12,13 +12,13 @@
         en: {
             tag: '✦ PORTFOLIO INTELLIGENCE',
             title: 'Everything you need for smarter portfolios',
-            sub: 'Create, track, analyze, and optimize your EGX investments from one premium, intelligent workspace.',
+            sub: 'Create, track, analyze, and optimize your US market investments from one premium, intelligent workspace.',
             
             // Features
             f1_title: 'Create and manage your portfolio',
             f1_desc: 'Create a portfolio, add transactions, and manage holdings in one place.',
             f2_title: 'Track performance against the market',
-            f2_desc: 'Monitor portfolio value, returns, dividends, win rate, and compare performance with EGX30.',
+            f2_desc: 'Monitor portfolio value, returns, dividends, win rate, and compare performance with S&P 500.',
             f3_title: 'Analyze allocation and diversification',
             f3_desc: 'View asset allocation by stock and sector allocation across your portfolio.',
             f4_title: 'Review risk, dividends, and transactions',
@@ -41,7 +41,7 @@
             riskMetrics: 'Risk Metrics',
             sharpe: 'Sharpe Ratio',
             volatility: 'Volatility (Ann.)',
-            beta: 'Beta vs EGX30',
+            beta: 'Beta vs SPY',
             maxDrawdown: 'Max Drawdown',
             divIncome: 'Dividend Income',
             ytdDividends: 'YTD Dividends',
@@ -63,7 +63,7 @@
             deposited: 'deposited',
 
             // Log messages templates
-            log1: 'Price feed updated for {n} EGX holdings',
+            log1: 'Price feed updated for {n} US holdings',
             log2: 'Received dividend {val} from {sym}',
             log3: 'Adjusted {sym} for stock split ratio 1:5',
             log4: 'Executed BUY transaction: {qty} shares {sym}',
@@ -73,13 +73,13 @@
         ar: {
             tag: '✦ ذكاء المحفظة الاستثمارية',
             title: 'كل ما تحتاجه لمحفظة استثمارية أذكى',
-            sub: 'أنشئ، وتتبع، وحلل، وحسّن استثماراتك في البورصة المصرية من مساحة عمل متكاملة وفائقة التطور.',
+            sub: 'أنشئ، وتتبع، وحلل، وحسّن استثماراتك في السوق الأمريكي من مساحة عمل متكاملة وفائقة التطور.',
             
             // Features
             f1_title: 'أنشئ وأدر محفظتك الاستثمارية',
             f1_desc: 'أنشئ محفظة استثمارية، وأضف معاملاتك، وأدر أسهمك وممتلكاتك بالكامل في مكان واحد.',
             f2_title: 'تتبع الأداء مقابل مؤشر السوق',
-            f2_desc: 'راقب قيمة المحفظة، والعوائد، والأرباح، ونسبة النجاح، وقارن الأداء التراكمي بمؤشر EGX30.',
+            f2_desc: 'راقب قيمة المحفظة، والعوائد، والأرباح، ونسبة النجاح، وقارن الأداء التراكمي بمؤشر S&P 500.',
             f3_title: 'حلل توزيع الأصول والتنويع',
             f3_desc: 'اعرض توزيع الأصول حسب الأسهم وتوزيع القطاعات والمخاطر عبر قطاعات محفظتك.',
             f4_title: 'راجع المخاطر، والأرباح، والمعاملات',
@@ -102,7 +102,7 @@
             riskMetrics: 'مقاييس المخاطر',
             sharpe: 'نسبة شارب',
             volatility: 'التقلب (سنوي)',
-            beta: 'بيتا مقابل EGX30',
+            beta: 'بيتا مقابل SPY',
             maxDrawdown: 'أقصى تراجع',
             divIncome: 'دخل الأرباح',
             ytdDividends: 'الأرباح السنوية YTD',
@@ -124,7 +124,7 @@
             deposited: 'تم إيداعه',
 
             // Log messages templates
-            log1: 'تم تحديث الأسعار لـ {n} من أسهم EGX',
+            log1: 'تم تحديث الأسعار لـ {n} من الأسهم الأمريكية',
             log2: 'تم استلام أرباح بقيمة {val} من سهم {sym}',
             log3: 'تعديل سهم {sym} لتجزئة القيمة الاسمية بنسبة 1:5',
             log4: 'تم تنفيذ صفقة شراء: {qty} سهم في {sym}',
@@ -219,7 +219,7 @@
                                         '</div>' +
                                         '<div style="display:flex; gap:0.6rem; font-size:0.68rem; font-weight:700; font-family:var(--pf-mono);">' +
                                             '<span style="color:var(--teal); display:inline-flex; align-items:center; gap:0.25rem;"><span style="width:0.5rem; height:0.5rem; border-radius:50%; background:var(--teal); display:inline-block;"></span>' + (lang === 'ar' ? 'محفظتي' : 'Portfolio') + '</span>' +
-                                            '<span style="color:var(--muted); display:inline-flex; align-items:center; gap:0.25rem;"><span style="width:0.5rem; height:0.5rem; border-radius:50%; border:2px dashed var(--muted); display:inline-block; background:transparent;"></span>' + (lang === 'ar' ? 'مؤشر EGX30' : 'EGX30') + '</span>' +
+                                            '<span style="color:var(--muted); display:inline-flex; align-items:center; gap:0.25rem;"><span style="width:0.5rem; height:0.5rem; border-radius:50%; border:2px dashed var(--muted); display:inline-block; background:transparent;"></span>' + (lang === 'ar' ? 'مؤشر SPY' : 'S&P 500') + '</span>' +
                                         '</div>' +
                                     '</div>' +
                                     '<div class="pf-showcase-chart-wrap" id="perfShowcaseChartWrap">' +
@@ -237,7 +237,7 @@
                                                 '</linearGradient>' +
                                             '</defs>' +
                                             '<path d="M 0 160 L 50 140 L 100 150 L 150 120 L 200 130 L 250 85 L 300 70 L 350 95 L 400 45 L 400 200 L 0 200 Z" fill="url(#chartGlow)"></path>' +
-                                            // EGX30 Benchmark Path
+                                            // S&P 500 Benchmark Path
                                             '<path d="M 0 160 Q 100 145 200 135 T 400 115" fill="none" stroke="var(--muted)" stroke-width="2" class="pf-chart-path-benchmark"></path>' +
                                             // Portfolio Outperformance Path
                                             '<path d="M 0 160 L 50 140 L 100 150 L 150 120 L 200 130 L 250 85 L 300 70 L 350 95 L 400 45" fill="none" stroke="var(--teal)" stroke-width="3" class="pf-chart-path-portfolio" id="showcaseChartPath"></path>' +
@@ -271,15 +271,15 @@
                                         '<div class="pf-donut-container" id="mockDonutContainer">' +
                                             '<svg class="pf-donut-svg" viewBox="0 0 100 100">' +
                                                 '<circle class="pf-donut-circle-bg" cx="50" cy="50" r="38"></circle>' +
-                                                // Segment CIB: 28% -> dasharray 49.2 176
+                                                // Segment AAPL: 28%
                                                 '<circle class="pf-donut-segment" cx="50" cy="50" r="38" stroke="#10b981" stroke-dasharray="66.8 171.9" stroke-dashoffset="0" id="donutSeg1"></circle>' +
-                                                // Segment COMI: 25.4% -> dashoffset = -66.8 -> dasharray 60.6 178
+                                                // Segment MSFT: 25.4%
                                                 '<circle class="pf-donut-segment" cx="50" cy="50" r="38" stroke="#3b82f6" stroke-dasharray="60.6 178" stroke-dashoffset="-66.8" id="donutSeg2"></circle>' +
-                                                // Segment SWDY: 23% -> dashoffset = -127.4 -> dasharray 54.9 183
+                                                // Segment GOOGL: 23%
                                                 '<circle class="pf-donut-segment" cx="50" cy="50" r="38" stroke="#f59e0b" stroke-dasharray="54.9 183.8" stroke-dashoffset="-127.4" id="donutSeg3"></circle>' +
-                                                // Segment TMGH: 15.3% -> dashoffset = -182.3 -> dasharray 36.5 202
+                                                // Segment AMZN: 15.3%
                                                 '<circle class="pf-donut-segment" cx="50" cy="50" r="38" stroke="#ec4899" stroke-dasharray="36.5 202.2" stroke-dashoffset="-182.3" id="donutSeg4"></circle>' +
-                                                // Segment HRHO: 8.3% -> dashoffset = -218.8 -> dasharray 19.8 218
+                                                // Segment NVDA: 8.3%
                                                 '<circle class="pf-donut-segment" cx="50" cy="50" r="38" stroke="#8b5cf6" stroke-dasharray="19.8 218.9" stroke-dashoffset="-218.8" id="donutSeg5"></circle>' +
                                             '</svg>' +
                                             '<div class="pf-donut-text">' +
@@ -289,19 +289,19 @@
                                         '</div>' +
                                         // Legend list
                                         '<div class="pf-showcase-legend-grid">' +
-                                            legendRowHtml('#10b981', 'CIB', '28.0%') +
-                                            legendRowHtml('#3b82f6', 'COMI', '25.4%') +
-                                            legendRowHtml('#f59e0b', 'SWDY', '23.0%') +
-                                            legendRowHtml('#ec4899', 'TMGH', '15.3%') +
-                                            legendRowHtml('#8b5cf6', 'HRHO', '8.3%') +
+                                            legendRowHtml('#10b981', 'AAPL', '28.0%') +
+                                            legendRowHtml('#3b82f6', 'MSFT', '25.4%') +
+                                            legendRowHtml('#f59e0b', 'GOOGL', '23.0%') +
+                                            legendRowHtml('#ec4899', 'AMZN', '15.3%') +
+                                            legendRowHtml('#8b5cf6', 'NVDA', '8.3%') +
                                         '</div>' +
                                     '</div>' +
                                     // Sector allocation progress bars
                                     '<div class="pf-showcase-sectors">' +
                                         '<div class="pf-mock-kpi-label" style="margin-bottom:0.1rem;">' + t('sectorAlloc') + '</div>' +
-                                        sectorRowHtml(lang === 'ar' ? 'البنوك والخدمات المالية' : 'Banks & Financial Services', '53.4%', 'sectorBar1') +
-                                        sectorRowHtml(lang === 'ar' ? 'العقارات والإنشاءات' : 'Real Estate & Development', '23.6%', 'sectorBar2') +
-                                        sectorRowHtml(lang === 'ar' ? 'الطاقة والصناعة' : 'Energy & Industrials', '23.0%', 'sectorBar3') +
+                                        sectorRowHtml(lang === 'ar' ? 'التكنولوجيا' : 'Technology', '53.4%', 'sectorBar1') +
+                                        sectorRowHtml(lang === 'ar' ? 'الاستهلاك الكمالي' : 'Consumer Discretionary', '23.6%', 'sectorBar2') +
+                                        sectorRowHtml(lang === 'ar' ? 'أشباه الموصلات' : 'Semiconductors', '23.0%', 'sectorBar3') +
                                     '</div>' +
                                 '</div>' +
                             '</div>' +
@@ -312,7 +312,7 @@
                                 '<div class="pf-risk-grid-showcase">' +
                                     riskCardHtml(t('sharpe'), '1.45', lang === 'ar' ? 'عائد خالي من المخاطر: 25.5%' : 'Risk-Free: 25.5%') +
                                     riskCardHtml(t('volatility'), '14.32%', lang === 'ar' ? 'تذبذب سنوي مقدر' : 'Annual Volatility') +
-                                    riskCardHtml(t('beta'), '0.92', lang === 'ar' ? 'مستقر مقابل مؤشر السوق' : 'Stable vs EGX30') +
+                                    riskCardHtml(t('beta'), '0.92', lang === 'ar' ? 'مستقر مقابل مؤشر السوق' : 'Stable vs S&P 500') +
                                     riskCardHtml(t('conRisk'), t('low'), lang === 'ar' ? 'تنويع أصول ممتاز' : 'Highly Diversified', 'var(--pf-green)') +
                                 '</div>' +
                                 '<div style="display:grid; grid-template-columns: 1.65fr 1.35fr; gap:0.75rem; flex:1; margin-top:0.15rem; min-height:0;">' +
@@ -321,7 +321,7 @@
                                         '<div style="display:flex; justify-content:space-between; align-items:center;">' +
                                             '<div class="pf-mock-kpi-label">' + t('divIncome') + '</div>' +
                                             '<div style="font-family:var(--pf-mono); font-size:0.82rem; font-weight:700; color:var(--ink);">' +
-                                                '<span id="showcaseDivTotal">EGP 26,580.75</span>' +
+                                                '<span id="showcaseDivTotal">$26,580.75</span>' +
                                             '</div>' +
                                         '</div>' +
                                         '<div class="pf-div-chart-showcase" id="showcaseDivChart">' +
@@ -413,7 +413,7 @@
         return '<div class="pf-mock-kpi-wrap">' +
             '<div class="pf-mock-kpi-main">' +
                 '<div class="pf-mock-kpi-label">' + t('portfolio') + ' ' + t('totalValue') + '</div>' +
-                '<div class="pf-mock-kpi-value pf-num" id="showcaseLiveTotalVal">EGP ' + fmt(mockTotalVal) + '</div>' +
+                '<div class="pf-mock-kpi-value pf-num" id="showcaseLiveTotalVal">$' + fmt(mockTotalVal) + '</div>' +
                 '<div style="margin-top:0.25rem;">' +
                     '<span class="pf-mock-kpi-sub pf-pos pf-num" id="showcaseLiveTotalRet">' + pct(mockReturnPct) + '</span>' +
                 '</div>' +
@@ -665,7 +665,7 @@
             var retEl = document.getElementById('showcaseLiveTotalRet');
 
             if (valEl && retEl) {
-                valEl.textContent = 'EGP ' + fmt(mockTotalVal);
+                valEl.textContent = '$' + fmt(mockTotalVal);
                 retEl.textContent = pct(mockReturnPct);
 
                 // Add flash class
@@ -683,13 +683,13 @@
 
         // Predefined pool of tickers for Slide 1 transactions
         var tickerPool = [
-            { sym: 'COMI', name: 'Commercial International Bank', p: 85.50 },
-            { sym: 'SWDY', name: 'Elsewedy Electric', p: 58.20 },
-            { sym: 'TMGH', name: 'Talaat Moustafa Group', p: 68.40 },
-            { sym: 'HRHO', name: 'EFG Holding', p: 19.80 },
-            { sym: 'ABUK', name: 'Abu Qir Fertilizers', p: 72.50 },
-            { sym: 'EAST', name: 'Eastern Company', p: 26.30 },
-            { sym: 'CIB',  name: 'CIB Bank Egypt', p: 85.50 }
+            { sym: 'AAPL', name: 'Apple Inc.', p: 190.50 },
+            { sym: 'MSFT', name: 'Microsoft Corp.', p: 420.30 },
+            { sym: 'GOOGL', name: 'Alphabet Inc.', p: 175.80 },
+            { sym: 'AMZN', name: 'Amazon.com Inc.', p: 185.40 },
+            { sym: 'NVDA', name: 'NVIDIA Corp.', p: 950.60 },
+            { sym: 'TSLA', name: 'Tesla Inc.', p: 178.20 },
+            { sym: 'META', name: 'Meta Platforms Inc.', p: 510.50 }
         ];
 
         // 2. Transaction and Live Activity Logger Simulation (Slide 1)
@@ -721,7 +721,7 @@
                 '</td>' +
                 '<td><span class="pf-mock-badge-chip ' + badgeCls + '">' + typeText + '</span></td>' +
                 '<td class="num">' + fmt(qty, 0) + '</td>' +
-                '<td class="num ' + (type === 'SELL' ? 'pf-neg' : 'pf-pos') + '">EGP ' + fmt(val) + '</td>';
+                '<td class="num ' + (type === 'SELL' ? 'pf-neg' : 'pf-pos') + '">$' + fmt(val) + '</td>';
 
             tbody.insertBefore(newTr, tbody.firstChild);
             if (tbody.children.length > 3) tbody.removeChild(tbody.lastChild);
@@ -738,7 +738,7 @@
                     : 'Executed SELL transaction: ' + fmt(qty, 0) + ' shares ' + ticker.sym;
                 logIcon = '💸';
             } else {
-                logText = t('log2').replace('{val}', 'EGP ' + fmt(val)).replace('{sym}', ticker.sym);
+                logText = t('log2').replace('{val}', '$' + fmt(val)).replace('{sym}', ticker.sym);
                 logIcon = '💰';
             }
 
@@ -834,7 +834,7 @@
                 if (totalEl) {
                     var cur = parseFloat(totalEl.textContent.replace(/[^\d.]/g, '')) || 26580.75;
                     var nextTotal = cur + payout;
-                    totalEl.textContent = 'EGP ' + fmt(nextTotal);
+                    totalEl.textContent = '$' + fmt(nextTotal);
                     
                     // Flash green
                     totalEl.style.color = 'var(--pf-green)';
@@ -850,15 +850,15 @@
                                 '<div style="font-weight:700; font-family:var(--pf-mono);">' + ticker.sym + '</div>' +
                                 '<div style="font-size:0.58rem; color:var(--muted);">' + ticker.name + '</div>' +
                             '</td>' +
-                            '<td class="num pf-pos">EGP ' + fmt(payout) + '</td>';
+                            '<td class="num pf-pos">$' + fmt(payout) + '</td>';
                         feedBody.insertBefore(newTr, feedBody.firstChild);
                         if (feedBody.children.length > 3) feedBody.removeChild(feedBody.lastChild);
                     }
 
                     // Push a simulated activity log
                     var logMsg = lang === 'ar' 
-                        ? 'تم إضافة توزيع أرباح EGP ' + fmt(payout) + ' لمحفظة الاستثمار بنجاح.'
-                        : 'Accrued dividend EGP ' + fmt(payout) + ' to cash account successfully.';
+                        ? 'تم إضافة توزيع أرباح $' + fmt(payout) + ' لمحفظة الاستثمار بنجاح.'
+                        : 'Accrued dividend $' + fmt(payout) + ' to cash account successfully.';
                     appendLog('💰', logMsg);
                 }
             }
@@ -873,7 +873,7 @@
             // Fluctuate weights slightly
             var totalFluct = 0;
             var newWeights = allocationWeights.map(function (w, idx) {
-                if (idx === 4) return w; // HRHO absorbs balance
+                if (idx === 4) return w; // NVDA absorbs balance
                 var change = (Math.random() - 0.5) * 0.4; // +/- 0.2%
                 var nextW = Math.max(w + change, 3.0); // minimum 3%
                 totalFluct += (nextW - w);
@@ -938,44 +938,44 @@
         // Init Transactions
         tbody.innerHTML = 
             '<tr>' +
-                '<td><div style="font-weight:700; font-family:var(--pf-mono);">CIB</div><div style="font-size:0.62rem; color:var(--muted);">CIB Bank Egypt</div></td>' +
+                '<td><div style="font-weight:700; font-family:var(--pf-mono);">AAPL</div><div style="font-size:0.62rem; color:var(--muted);">Apple Inc.</div></td>' +
                 '<td><span class="pf-mock-badge-chip pf-badge-pos">' + t('txBuy') + '</span></td>' +
-                '<td class="num">1,200</td>' +
-                '<td class="num pf-pos">EGP 102,600.00</td>' +
+                '<td class="num">120</td>' +
+                '<td class="num pf-pos">$22,860.00</td>' +
             '</tr>' +
             '<tr>' +
-                '<td><div style="font-weight:700; font-family:var(--pf-mono);">COMI</div><div style="font-size:0.62rem; color:var(--muted);">Commercial Int Bank</div></td>' +
+                '<td><div style="font-weight:700; font-family:var(--pf-mono);">MSFT</div><div style="font-size:0.62rem; color:var(--muted);">Microsoft Corp.</div></td>' +
                 '<td><span class="pf-mock-badge-chip pf-badge-neu">' + t('txDiv') + '</span></td>' +
-                '<td class="num">500</td>' +
-                '<td class="num pf-pos">EGP 14,800.00</td>' +
+                '<td class="num">50</td>' +
+                '<td class="num pf-pos">$1,480.00</td>' +
             '</tr>' +
             '<tr>' +
-                '<td><div style="font-weight:700; font-family:var(--pf-mono);">TMGH</div><div style="font-size:0.62rem; color:var(--muted);">Talaat Moustafa Group</div></td>' +
+                '<td><div style="font-weight:700; font-family:var(--pf-mono);">GOOGL</div><div style="font-size:0.62rem; color:var(--muted);">Alphabet Inc.</div></td>' +
                 '<td><span class="pf-mock-badge-chip pf-badge-neg">' + t('txSell') + '</span></td>' +
-                '<td class="num">1,000</td>' +
-                '<td class="num pf-neg">EGP 68,400.00</td>' +
+                '<td class="num">100</td>' +
+                '<td class="num pf-neg">$17,580.00</td>' +
             '</tr>';
 
         // Init Logs
         listEl.innerHTML = 
             '<div class="pf-mock-log-item">🔄 ' + t('log1').replace('{n}', '12') + '</div>' +
-            '<div class="pf-mock-log-item">⚙️ ' + t('log3').replace('{sym}', 'COMI') + '</div>' +
+            '<div class="pf-mock-log-item">⚙️ ' + t('log3').replace('{sym}', 'AAPL') + '</div>' +
             '<div class="pf-mock-log-item">☁️ ' + t('log6') + '</div>';
 
         // Init Dividend Feed (Slide 4)
         if (divFeed) {
             divFeed.innerHTML =
                 '<tr>' +
-                    '<td><div style="font-weight:700; font-family:var(--pf-mono);">COMI</div><div style="font-size:0.58rem; color:var(--muted);">Commercial Int Bank</div></td>' +
-                    '<td class="num pf-pos">EGP 14,800.00</td>' +
+                    '<td><div style="font-weight:700; font-family:var(--pf-mono);">AAPL</div><div style="font-size:0.58rem; color:var(--muted);">Apple Inc.</div></td>' +
+                    '<td class="num pf-pos">$1,480.00</td>' +
                 '</tr>' +
                 '<tr>' +
-                    '<td><div style="font-weight:700; font-family:var(--pf-mono);">HRHO</div><div style="font-size:0.58rem; color:var(--muted);">EFG Holding</div></td>' +
-                    '<td class="num pf-pos">EGP 6,450.00</td>' +
+                    '<td><div style="font-weight:700; font-family:var(--pf-mono);">MSFT</div><div style="font-size:0.58rem; color:var(--muted);">Microsoft Corp.</div></td>' +
+                    '<td class="num pf-pos">$645.00</td>' +
                 '</tr>' +
                 '<tr>' +
-                    '<td><div style="font-weight:700; font-family:var(--pf-mono);">SWDY</div><div style="font-size:0.58rem; color:var(--muted);">Elsewedy Electric</div></td>' +
-                    '<td class="num pf-pos">EGP 5,330.75</td>' +
+                    '<td><div style="font-weight:700; font-family:var(--pf-mono);">NVDA</div><div style="font-size:0.58rem; color:var(--muted);">NVIDIA Corp.</div></td>' +
+                    '<td class="num pf-pos">$533.75</td>' +
                 '</tr>';
         }
     }

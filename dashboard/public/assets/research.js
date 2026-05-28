@@ -119,76 +119,75 @@
         }
     }
 
-    var mockDatabase = {
-        NVDA: {
-            score: '9.2',
-            en: {
-                name: 'NVIDIA Corporation',
-                catalysts: '1. Massive hyper-scaler demand for H200 and Blackwell architecture computation clusters.<br>2. Incredible gross margins expanding past 78% due to software integrations and CUDA development licensing lock-ins.',
-                risks: '1. Supply-chain delivery bottlenecks at TSMC packaging facilities.<br>2. High valuation expansion multiples potentially priced to immediate perfection.'
-            },
-            ar: {
-                name: 'إنفيديا كوربوريشن',
-                catalysts: '١. طلب هائل ومستمر من عمالقة السحاب على معالجات Blackwell و H200 المتطورة.<br>٢. توسع قياسي لهوامش الربح الإجمالية لتتجاوز ٧٨٪ بفضل تكامل البرمجيات واشتراكات CUDA.',
-                risks: '١. اختناقات سلاسل التوريد والتعبئة المعقدة في مرافق TSMC التايوانية.<br>٢. مكررات تقييم مرتفعة جداً قد تعكس توقعات نمو غير واقعية على المدى القصير.'
-            }
-        },
-        AAPL: {
-            score: '8.4',
-            en: {
-                name: 'Apple Inc.',
-                catalysts: '1. Fast expanding service ecosystem margins (iCloud, Apple Pay, Music) driving recurring cashflows.<br>2. Huge institutional share buyback programs providing strong price floors.',
-                risks: '1. Saturated global smartphone unit delivery rates offset by high replacements cycle curves.<br>2. Regulatory antitrust pressure inside the EU and domestic app store systems.'
-            },
-            ar: {
-                name: 'أبل إنك',
-                catalysts: '١. توسع قوي وهوامش عالية في قطاع الخدمات والاشتراكات (iCloud, Apple Pay) مما يوفر تدفقات نقدية متكررة وثابتة.<br>٢. برامج إعادة شراء أسهم عملاقة تدعم سعر السهم في السوق كصمام أمان.',
-                risks: '١. تباطؤ وتشبع معدلات نمو مبيعات الهواتف عالمياً بانتظار دورة التحديثات الكبرى.<br>٢. ضغوط مكافحة الاحتكار التنظيمية المتزايدة داخل الاتحاد الأوروبي والولايات المتحدة.'
-            }
-        },
-        TSLA: {
-            score: '6.5',
-            en: {
-                name: 'Tesla, Inc.',
-                catalysts: '1. Continued long-term investments in autonomous FSD software suite licensing.<br>2. Steady expansion of energy generation and storage business segment contributing to bottom-line.',
-                risks: '1. Squeezed automotive average selling prices (ASP) due to heavy price competitions in Asian markets.<br>2. Heavy capital intensive factories expansions requiring massive free cash outflows.'
-            },
-            ar: {
-                name: 'تسلا إنك',
-                catalysts: '١. استثمارات مستمرة في برمجيات القيادة الذاتية الكاملة (FSD) وترخيصها مستقبلاً لرواد الصناعة الآخرين.<br>٢. نمو قوي ومتسارع في مبيعات بطاريات التخزين وتوليد الطاقة النظيفة.',
-                risks: '١. تراجع هوامش السيارات بسبب حرب الأسعار الشرسة في الأسواق الآسيوية والأوروبية.<br>٢. كثافة رأس المال المطلوب لبناء المصانع العملاقة يضغط على التدفقات الحرة.'
-            }
-        }
-    };
-
     function triggerAnalysis() {
         var input = document.getElementById('researchSymbolInput');
         var sym = input.value.trim().toUpperCase() || 'NVDA';
-        
+
         var outputBox = document.getElementById('analysisOutputBox');
         outputBox.style.display = 'block';
-
-        var item = mockDatabase[sym] || {
-            score: '7.2',
-            en: {
-                name: sym + ' Corporation',
-                catalysts: '1. Steady global market expansion within standard sector peer channels.<br>2. Sound liquidity profile showing healthy cash-flow matching patterns.',
-                risks: '1. Exposed to macro interest rates changes and sector regime rotations.<br>2. Average volatility index bounds.'
-            },
-            ar: {
-                name: sym + ' كوربوريشن',
-                catalysts: '١. توسع سوقي مستقر ومستمر داخل قطاع الشركة الأساسي مقارنة بالنظراء.<br>٢. ملف سيولة قوي يعكس تدفقات نقدية تشغيلية منتظمة وصحية.',
-                risks: '١. التعرض لتقلبات أسعار الفائدة الكلية وتدوير الاستثمارات بين القطاعات.<br>٢. تحركات السعر في نطاق التذبذب المعتاد.'
-            }
-        };
-
-        var resolvedData = item[lang] || item.en;
-
         document.getElementById('outSymbolName').textContent = sym;
-        document.getElementById('outCompName').textContent = resolvedData.name;
-        document.getElementById('outScore').textContent = item.score + ' / 10';
-        document.getElementById('outCatalystsText').innerHTML = resolvedData.catalysts;
-        document.getElementById('outRisksText').innerHTML = resolvedData.risks;
+        document.getElementById('outCompName').textContent = 'Loading...';
+        document.getElementById('outScore').textContent = '—';
+        document.getElementById('outCatalystsText').innerHTML = '';
+        document.getElementById('outRisksText').innerHTML = '';
+
+        Promise.all([
+            fetch('/api/portfolio/portfolio_1/details').then(function(r) { return r.json(); }),
+            fetch('/api/stock/' + sym + '/details').then(function(r) { return r.json(); }),
+            fetch('/api/market/bars/' + sym + '?timeframe=1Day&limit=30').then(function(r) { return r.json(); })
+        ]).then(function(results) {
+            var portfolioData = results[0];
+            var stockData = results[1];
+            var bars = results[2] || [];
+
+            var signals = (portfolioData.signals && portfolioData.signals.signals) || [];
+            var matched = signals.find(function(s) { return s.symbol === sym; });
+            var profile = stockData.profile || {};
+
+            document.getElementById('outCompName').textContent = profile.name || sym;
+
+            if (matched) {
+                var scoreVal = ((matched.score || 0) * 10).toFixed(1);
+                document.getElementById('outScore').textContent = scoreVal + ' / 10';
+                var catalysts = (matched.reasons || []).filter(function(r) {
+                    return r.toLowerCase().indexOf('bullish') !== -1 || r.toLowerCase().indexOf('uptrend') !== -1 || r.toLowerCase().indexOf('positive') !== -1 || r.toLowerCase().indexOf('above') !== -1;
+                });
+                var risks = (matched.reasons || []).filter(function(r) {
+                    return r.toLowerCase().indexOf('bearish') !== -1 || r.toLowerCase().indexOf('overbought') !== -1 || r.toLowerCase().indexOf('negative') !== -1 || r.toLowerCase().indexOf('below') !== -1;
+                });
+                if (catalysts.length === 0 && risks.length === 0) {
+                    catalysts = matched.reasons.slice(0, Math.ceil(matched.reasons.length / 2));
+                    risks = matched.reasons.slice(Math.ceil(matched.reasons.length / 2));
+                }
+                document.getElementById('outCatalystsText').innerHTML = catalysts.map(function(c, i) { return (i + 1) + '. ' + c; }).join('<br>') || 'No bullish catalysts detected.';
+                document.getElementById('outRisksText').innerHTML = risks.map(function(r, i) { return (i + 1) + '. ' + r; }).join('<br>') || 'No bearish risks detected.';
+
+                var ind = matched.indicators || {};
+                var extra = '';
+                if (ind.rsi14) extra += 'RSI(14): ' + ind.rsi14.toFixed(1) + ' | ';
+                if (ind.atr_pct) extra += 'ATR%: ' + ind.atr_pct.toFixed(2) + '% | ';
+                if (ind.momentum_1m !== undefined) extra += '1M: ' + (ind.momentum_1m >= 0 ? '+' : '') + ind.momentum_1m.toFixed(1) + '%';
+                if (extra) {
+                    document.getElementById('outRisksText').innerHTML += '<br><br><span style="color:var(--teal); font-family:var(--pf-mono); font-size:0.72rem;">' + extra + '</span>';
+                }
+            } else {
+                var priceInfo = '';
+                if (bars.length > 1) {
+                    var first = bars[0].c;
+                    var last = bars[bars.length - 1].c;
+                    var ret = ((last - first) / first * 100).toFixed(2);
+                    priceInfo = 'Price: $' + last.toFixed(2) + ' | 30D Return: ' + (ret >= 0 ? '+' : '') + ret + '%';
+                }
+                document.getElementById('outScore').textContent = 'N/A';
+                document.getElementById('outCatalystsText').innerHTML = 'No active trading signal for ' + sym + '. Symbol not in current watchlist.' + (priceInfo ? '<br><br><span style="color:var(--teal); font-family:var(--pf-mono); font-size:0.72rem;">' + priceInfo + '</span>' : '');
+                document.getElementById('outRisksText').innerHTML = 'Add ' + sym + ' to the watchlist to generate AI analysis signals.';
+            }
+        }).catch(function() {
+            document.getElementById('outCompName').textContent = sym;
+            document.getElementById('outScore').textContent = 'Error';
+            document.getElementById('outCatalystsText').innerHTML = 'Unable to fetch analysis data. Check API connection.';
+            document.getElementById('outRisksText').innerHTML = '';
+        });
     }
 
     /* ─── Initialization ────────────────────────────────────────────────── */

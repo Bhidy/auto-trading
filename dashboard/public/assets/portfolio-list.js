@@ -246,7 +246,7 @@
                     // Update layout
                     valEl.textContent = '$' + fmt(data.equity, 2);
                     
-                    var initialCapital = 100000;
+                    var initialCapital = id === 'all' ? 300000 : 100000;
                     var totalReturn = ((data.equity - initialCapital) / initialCapital) * 100;
                     
                     retEl.textContent = pct(totalReturn);
@@ -269,13 +269,16 @@
                     statusEl.textContent = 'Offline';
                 });
         } else {
-            // Local Storage calculation
-            var m = PFStore.computeMetrics(portfolio);
-            valEl.textContent = portfolio.currency + ' ' + fmt(m.totalValue, 2);
-            retEl.textContent = pct(m.totalReturn);
-            retEl.className = m.totalReturn >= 0 ? 'pf-pos pf-num' : 'pf-neg pf-num';
-            qtyEl.textContent = m.holdingsCount;
-            statusEl.innerHTML = `<span class="pf-status-badge">${lang === 'ar' ? 'تجريبي' : 'Sandbox'}</span>`;
+            var holdings = (portfolio.transactions || []).filter(function(t) { return t.type === 'buy' || t.type === 'sell'; });
+            var syms = holdings.map(function(t) { return t.symbol; }).filter(Boolean);
+            PFStore.fetchLivePrices(syms).then(function() {
+                var m = PFStore.computeMetrics(portfolio);
+                valEl.textContent = '$' + fmt(m.totalValue, 2);
+                retEl.textContent = pct(m.totalReturn);
+                retEl.className = m.totalReturn >= 0 ? 'pf-pos pf-num' : 'pf-neg pf-num';
+                qtyEl.textContent = m.holdingsCount;
+                statusEl.innerHTML = `<span class="pf-status-badge">${lang === 'ar' ? 'تجريبي' : 'Sandbox'}</span>`;
+            });
         }
     }
 
@@ -346,10 +349,10 @@
             '<div class="pf-form" id="createForm">'+
                 '<div class="pf-form-row">'+
                     field('portfolioName', t('portfolioName'), '<input type="text" id="pfName" placeholder="e.g. My Sandbox" required>') +
-                    field('currency', t('portfolioCurrency'), '<select id="pfCurrency"><option value="EGP">EGP \u2014 Egyptian Pound</option><option value="USD" selected>USD \u2014 US Dollar</option><option value="SAR">SAR \u2014 Saudi Riyal</option></select>') +
+                    field('currency', t('portfolioCurrency'), '<select id="pfCurrency"><option value="USD" selected>USD \u2014 US Dollar</option></select>') +
                 '</div>'+
                 '<div class="pf-form-row">'+
-                    field('benchmark', t('benchmarkLabel'), '<select id="pfBenchmark"><option value="SP500" selected>S&amp;P 500</option><option value="EGX30">EGX30</option></select>') +
+                    field('benchmark', t('benchmarkLabel'), '<select id="pfBenchmark"><option value="SPY" selected>S&amp;P 500 (SPY)</option><option value="QQQ">NASDAQ 100 (QQQ)</option><option value="DIA">Dow Jones (DIA)</option></select>') +
                     field('riskFree', t('riskFreeRate'), '<input type="number" id="pfRiskFree" value="4.5" step="0.1" min="0" max="100">') +
                 '</div>'+
                 field('desc', t('description'), '<input type="text" id="pfDesc" placeholder="Optional description">') +
