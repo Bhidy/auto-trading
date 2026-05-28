@@ -246,7 +246,7 @@
         var haltBanner = '';
         if (portfolio.halted) {
             haltBanner = `<div class="pf-halt-banner-premium" style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:var(--pf-radius); padding:1rem 1.5rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem; color:#ef4444;">
-                <div style="font-size:1.8rem; line-height:1;">⚠️</div>
+                <div style="font-size:1.8rem; line-height:1; font-weight:900;">!</div>
                 <div>
                     <h4 style="margin:0 0 0.2rem; font-weight:800; text-transform:uppercase;">SYSTEM LOCKDOWN & HALTED</h4>
                     <p style="margin:0; font-size:0.85rem; opacity:0.85;">Emergency Stop Safety Guardrail Breached: ${escHtml(portfolio.haltReason || 'Safety threshold breached.')}</p>
@@ -313,7 +313,7 @@
         if (selectedSymbol) {
             var isStock = selectedChartType === 'stock';
             toggleButtonHtml = `<button class="pf-btn pf-btn--sm ${isStock ? 'pf-btn--primary' : 'pf-btn--outline'}" id="chartTypeToggle" style="border-radius:var(--pf-radius-sm);">
-                ${isStock ? '📈 PORTFOLIO EQUITY' : '📊 STOCK TECHNICAL CHART: ' + selectedSymbol}
+                ${isStock ? 'PORTFOLIO EQUITY' : 'STOCK CHART: ' + selectedSymbol}
             </button>`;
         }
 
@@ -393,6 +393,7 @@
     var _stockBarCache = {};
     function fetchRealStockHistory(symbol, callback) {
         if (_stockBarCache[symbol]) { callback(_stockBarCache[symbol]); return; }
+        // Try intraday 5Min bars first
         fetch('/api/market/bars/' + symbol + '?timeframe=5Min&limit=78')
             .then(function(r) { return r.ok ? r.json() : []; })
             .then(function(bars) {
@@ -401,7 +402,19 @@
                     _stockBarCache[symbol] = history;
                     callback(history);
                 } else {
-                    callback(generateStockHistoryFallback(symbol));
+                    // Market closed or no intraday data — try daily bars
+                    fetch('/api/market/bars/' + symbol + '?timeframe=1Day&limit=90')
+                        .then(function(r2) { return r2.ok ? r2.json() : []; })
+                        .then(function(dailyBars) {
+                            if (dailyBars && dailyBars.length > 0) {
+                                var history = dailyBars.map(function(b) { return { date: (b.t || '').slice(0, 10), price: b.c }; });
+                                _stockBarCache[symbol] = history;
+                                callback(history);
+                            } else {
+                                callback(generateStockHistoryFallback(symbol));
+                            }
+                        })
+                        .catch(function() { callback(generateStockHistoryFallback(symbol)); });
                 }
             })
             .catch(function() { callback(generateStockHistoryFallback(symbol)); });
@@ -733,7 +746,7 @@
             var sourceLabels = detailCache ? (detailCache.source_labels || ['Self Improving Brain', 'Capitol Shadow', 'Cautious Sniper']) : ['Self Improving Brain', 'Capitol Shadow', 'Cautious Sniper'];
             var sourceCount = detailCache ? (detailCache.source_count || 3) : 3;
             leftPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">📊 Aggregated Portfolio Overview</div>
+                <div class="pf-panel__title">Aggregated Portfolio Overview</div>
                 <div style="display:flex; flex-direction:column; gap:0.75rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; background:var(--page); border:1px solid var(--line); padding:0.65rem 0.85rem; border-radius:var(--pf-radius-sm);">
                         <span style="font-weight:700; color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;">Portfolios Included</span>
@@ -770,7 +783,7 @@
             // QUANT MULTI-FACTOR SPECIFIC PANELS (Adaptive Tuners + Heatmap Scorecard)
             var params = detailCache.strategy_params || {};
             leftPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">⚙️ Adaptive Parameters (Self-Learning)</div>
+                <div class="pf-panel__title">Adaptive Parameters (Self-Learning)</div>
                 <div class="pf-params-grid">
                     <div class="pf-param-item"><label>Buy Score Threshold</label><span class="pf-num">${params.confidence_buy_threshold || 0.50}</span></div>
                     <div class="pf-param-item"><label>Short Score Threshold</label><span class="pf-num">-${params.confidence_short_threshold || 0.50}</span></div>
@@ -799,7 +812,7 @@
             }).join('');
 
             rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">📊 Multi-Factor Technical Scorecard Matrix</div>
+                <div class="pf-panel__title">Multi-Factor Technical Scorecard Matrix</div>
                 <div class="pf-heatmap-grid">${heatMapRows}</div>
             </div>`;
 
@@ -858,7 +871,7 @@
             `).join('');
 
             leftPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">🎯 sniper Breakout Catalyst Scorecard</div>
+                <div class="pf-panel__title">Sniper Breakout Catalyst Scorecard</div>
                 <div style="display:flex; flex-direction:column; gap:0.45rem;">${signalRows || '<div class="pf-empty-inline">No signals loaded</div>'}</div>
             </div>`;
 
