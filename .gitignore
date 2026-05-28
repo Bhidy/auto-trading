@@ -30,4 +30,10 @@ skills-lock.json
 .idea/
 .agents/
 docs/branding/
-dashboard/
+# Vercel deployment artifacts
+dashboard/.vercel/
+
+# Dashboard secrets (never commit)
+dashboard/config/portfolios.json
+.vercel
+.env*.local

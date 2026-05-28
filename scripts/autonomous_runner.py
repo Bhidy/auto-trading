@@ -258,6 +258,10 @@ def run_trading_session(alpaca: AlpacaClient):
     log.info("TRADING SESSION — Validating signals, executing orders")
     log.info("=" * 60)
 
+    if not alpaca.is_market_open():
+        log.warning("Market closed — skipping trading session")
+        return
+
     account = alpaca.get_account()
     equity = float(account["equity"])
     cash = float(account["cash"])
@@ -276,8 +280,9 @@ def run_trading_session(alpaca: AlpacaClient):
         save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
         return
 
-    # Daily loss check
-    daily_pnl_pct = (equity - last_equity) / last_equity * 100 if last_equity > 0 else 0
+    # Daily loss check — use day_start_equity from state for consistency with risk_officer
+    day_start = portfolio_state.get("day_start_equity", last_equity)
+    daily_pnl_pct = (equity - day_start) / day_start * 100 if day_start > 0 else 0
     if daily_pnl_pct <= -limits["max_daily_loss_pct"]:
         log.warning(f"Daily loss limit: {daily_pnl_pct:.2f}% — no new trades today")
         return
@@ -380,6 +385,8 @@ def run_trading_session(alpaca: AlpacaClient):
                 symbol=symbol, side=side, qty=qty, entry_price=limit_price,
                 bucket=bucket, signal_score=order.get("confidence", 0),
                 reasons=order.get("reasons", []),
+                stop_loss=order.get("stop_loss"),
+                take_profit=order.get("take_profit"),
             )
             trades_executed += 1
             cash -= qty * limit_price
@@ -405,6 +412,10 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     log.info("INTRADAY MONITOR — Checking P&L, stops, kill switch")
     log.info("=" * 60)
 
+    if not alpaca.is_market_open():
+        log.info("Market closed — skipping intraday monitor")
+        return
+
     account = alpaca.get_account()
     equity = float(account["equity"])
     last_equity = float(account["last_equity"])
@@ -428,8 +439,9 @@ def run_intraday_monitor(alpaca: AlpacaClient):
         save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
         return
 
-    # Daily loss
-    daily_pnl_pct = (equity - last_equity) / last_equity * 100 if last_equity > 0 else 0
+    # Daily loss — use day_start_equity from state for consistency
+    day_start = portfolio_state.get("day_start_equity", last_equity)
+    daily_pnl_pct = (equity - day_start) / day_start * 100 if day_start > 0 else 0
     if daily_pnl_pct <= -limits["max_daily_loss_pct"]:
         log.warning(f"Daily loss limit breached: {daily_pnl_pct:.2f}% — halting for 24h")
         portfolio_state["halted"] = True
@@ -464,25 +476,35 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             qty = int(float(pos["qty"]))
 
             if action == "STOP_LOSS_SELL":
-                alpaca.place_order(symbol=sym, qty=qty, side="sell",
+                order_result = alpaca.place_order(symbol=sym, qty=qty, side="sell",
                                    order_type="market", time_in_force="day")
                 log.warning(f"  STOP LOSS executed: sold {qty} x {sym}")
                 from performance_tracker import find_open_trade, close_trade
                 trade = find_open_trade(sym)
                 if trade:
-                    close_trade(trade["id"], float(pos.get("current_price", trigger["current_price"])))
+                    fill_price = float(order_result.get("filled_avg_price", 0) or trigger["current_price"])
+                    if fill_price <= 0:
+                        fill_price = trigger["current_price"]
+                    close_trade(trade["id"], fill_price)
 
             elif action == "TAKE_PROFIT_SELL":
                 sell_qty = max(1, qty // 2)
                 quote = alpaca.get_latest_quote(sym)
                 bid = float(quote.get("quote", {}).get("bp", 0))
                 limit_price = round(bid * 0.999, 2) if bid > 0 else None
-                alpaca.place_order(
+                order_result = alpaca.place_order(
                     symbol=sym, qty=sell_qty, side="sell",
                     order_type="limit" if limit_price else "market",
                     limit_price=limit_price,
                 )
                 log.info(f"  TAKE PROFIT: sold {sell_qty} of {qty} x {sym}")
+                from performance_tracker import find_open_trade, close_trade
+                trade = find_open_trade(sym)
+                if trade:
+                    fill_price = float(order_result.get("filled_avg_price", 0) or trigger["current_price"])
+                    if fill_price <= 0:
+                        fill_price = trigger["current_price"]
+                    close_trade(trade["id"], fill_price)
 
         except Exception as e:
             log.error(f"  Stop/TP order failed for {sym}: {e}")
@@ -537,8 +559,10 @@ def run_end_of_day(alpaca: AlpacaClient):
 
     log.info("Running self-learning adaptation...")
     adaptation = adapt_parameters()
-    log.info(f"  7d win rate: {adaptation['metrics_7d']['win_rate']:.1%}")
-    log.info(f"  30d win rate: {adaptation['metrics_30d']['win_rate']:.1%}")
+    wr_7d = adaptation['metrics_7d'].get('win_rate')
+    wr_30d = adaptation['metrics_30d'].get('win_rate')
+    log.info(f"  7d win rate: {wr_7d:.1%}" if wr_7d is not None else "  7d win rate: N/A (no trades)")
+    log.info(f"  30d win rate: {wr_30d:.1%}" if wr_30d is not None else "  30d win rate: N/A (no trades)")
     log.info(f"  Position size mult: {adaptation['updated_params'].get('position_size_multiplier', 1.0):.2f}")
 
     report = generate_learning_report()
@@ -547,6 +571,8 @@ def run_end_of_day(alpaca: AlpacaClient):
 
     # Write journal
     today = datetime.now().strftime("%Y-%m-%d")
+    portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
+    day_start = portfolio_state.get("day_start_equity", float(account["last_equity"]))
     journal_entry = {
         "date": today,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -555,8 +581,8 @@ def run_end_of_day(alpaca: AlpacaClient):
             "equity": equity,
             "cash": float(account["cash"]),
             "portfolio_value": float(account["portfolio_value"]),
-            "daily_pnl": equity - float(account["last_equity"]),
-            "daily_pnl_pct": round((equity - float(account["last_equity"])) / float(account["last_equity"]) * 100, 3),
+            "daily_pnl": equity - day_start,
+            "daily_pnl_pct": round((equity - day_start) / day_start * 100, 3) if day_start > 0 else 0,
         },
         "positions": [
             {
@@ -592,7 +618,6 @@ def run_end_of_day(alpaca: AlpacaClient):
         save_json(journal_path, [journal_entry])
 
     # Update portfolio state for next day
-    portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
     portfolio_state["day_start_equity"] = equity
     portfolio_state["trades_today"] = 0
     if datetime.now().weekday() == 0:
@@ -624,8 +649,14 @@ def run_weekly_review(alpaca: AlpacaClient):
     by_bucket = compute_metrics_by_bucket()
     by_symbol = compute_metrics_by_symbol()
 
-    log.info(f"Overall: {metrics_all['total_trades']} trades, {metrics_all['win_rate']:.1%} win rate, PF={metrics_all['profit_factor']:.2f}")
-    log.info(f"30d: {metrics_30d['total_trades']} trades, {metrics_30d['win_rate']:.1%} win rate")
+    log.info(f"Overall: {metrics_all['total_trades']} trades, "
+             f"{metrics_all['win_rate']:.1%} win rate, PF={metrics_all['profit_factor']:.2f}" 
+             if metrics_all['win_rate'] is not None else 
+             f"Overall: {metrics_all['total_trades']} trades, N/A win rate (no closed trades)")
+    if metrics_30d['total_trades'] > 0:
+        log.info(f"30d: {metrics_30d['total_trades']} trades, "
+                 f"{metrics_30d['win_rate']:.1%} win rate" if metrics_30d['win_rate'] is not None else
+                 f"30d: {metrics_30d['total_trades']} trades")
 
     for bucket, data in by_bucket.items():
         log.info(f"  {bucket}: {data['trades']} trades, {data['win_rate']:.1%} WR, ${data['total_pnl']:+,.2f}")

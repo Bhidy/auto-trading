@@ -13,7 +13,7 @@ def load_json(path, default=None):
     if os.path.exists(path):
         with open(path) as f:
             return json.load(f)
-    return default or {}
+    return default if default is not None else {}
 
 def save_json(path, data):
     with open(path, "w") as f:

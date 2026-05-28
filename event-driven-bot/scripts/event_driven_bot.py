@@ -406,6 +406,10 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     log.info("INTRADAY MONITOR — P&L, stops, kill switch")
     log.info("=" * 60)
 
+    if not alpaca.is_market_open():
+        log.info("Market closed — skipping intraday monitor")
+        return
+
     account = alpaca.get_account()
     equity = float(account["equity"])
     last_equity = float(account["last_equity"])
@@ -707,6 +711,9 @@ def main():
         log.info("=" * 60)
         log.info("TRADING SESSION — Executing signals")
         log.info("=" * 60)
+        if not alpaca.is_market_open():
+            log.warning("Market closed — skipping trading session")
+            return
         signals_data = load_json(DATA_DIR / "signals.json")
         signals = signals_data.get("signals", [])
         if not signals:
@@ -727,6 +734,8 @@ def main():
         log.info("=" * 60)
         log.info("NEWS CATALYST SCAN")
         log.info("=" * 60)
+        if not alpaca.is_market_open():
+            log.warning("Market closed — scanning news but skipping execution")
         watchlist = load_json(DATA_DIR / "watchlist.json")
         watchlist_symbols = [s["symbol"] for s in watchlist.get("universe", [])]
 
@@ -740,9 +749,12 @@ def main():
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "signals": news_signals,
             })
-            log.info(f"Executing {len(news_signals)} news-driven signals...")
-            executed = execute_signals(alpaca, news_signals, "event_driven")
-            log.info(f"Executed {len(executed)} event-driven trades")
+            if alpaca.is_market_open():
+                log.info(f"Executing {len(news_signals)} news-driven signals...")
+                executed = execute_signals(alpaca, news_signals, "event_driven")
+                log.info(f"Executed {len(executed)} event-driven trades")
+            else:
+                log.info(f"Skipping execution — market closed")
         else:
             log.info("No actionable news catalysts found")
 

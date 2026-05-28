@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management | Auto Trading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        .ord-page { padding-top: 5rem; min-height: 100dvh; max-width: 1650px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; padding-bottom: 3rem; }
+        .ord-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .ord-head h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; margin: 0; }
+        .ord-head p { color: var(--muted); font-size: .82rem; margin: .2rem 0 0; }
+        .ord-toolbar { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .ord-filter-select { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .4rem .85rem; color: var(--ink); font-size: .78rem; font-weight: 600; cursor: pointer; }
+        .ord-filter-select:focus { outline: none; border-color: var(--teal); }
+        .ord-search { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .4rem 1rem; color: var(--ink); font-size: .78rem; min-width: 180px; }
+        .ord-search:focus { outline: none; border-color: var(--teal); }
+        .ord-table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; box-shadow: var(--shadow); }
+        .ord-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        .ord-table th { background: rgba(26,15,8,0.03); font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; padding: .65rem .85rem; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+        [data-theme="dark"] .ord-table th { background: rgba(255,255,255,0.03); }
+        .ord-table td { padding: .55rem .85rem; border-bottom: 1px solid var(--line); font-family: var(--pf-mono); white-space: nowrap; vertical-align: middle; }
+        .ord-table tr:last-child td { border-bottom: none; }
+        .ord-table tr:hover td { background: var(--teal-soft); }
+        .ord-status { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .55rem; border-radius: 999px; font-size: .68rem; font-weight: 700; text-transform: uppercase; }
+        .ord-status--new, .ord-status--accepted { background: rgba(59,130,246,.12); color: #3b82f6; }
+        .ord-status--filled { background: var(--pf-green-soft); color: var(--pf-green); }
+        .ord-status--partially_filled { background: rgba(245,158,11,.12); color: #f59e0b; }
+        .ord-status--canceled, .ord-status--expired, .ord-status--rejected { background: var(--pf-red-soft); color: var(--pf-red); }
+        .ord-status--pending_new, .ord-status--pending_cancel, .ord-status--pending_replace { background: rgba(148,163,184,.12); color: var(--muted); }
+        .ord-side--buy { color: var(--pf-green); font-weight: 700; }
+        .ord-side--sell { color: var(--pf-red); font-weight: 700; }
+        .ord-actions-cell { display: flex; gap: .35rem; }
+        .ord-empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+        .ord-empty svg { width: 48px; height: 48px; margin-bottom: .75rem; opacity: .3; }
+        .ord-kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .85rem; margin-bottom: 1.25rem; }
+        .ord-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: .85rem 1rem; }
+        .ord-kpi-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+        .ord-kpi-val { font-family: var(--pf-mono); font-size: 1.15rem; font-weight: 700; margin-top: .2rem; }
+
+        /* Create Order Modal */
+        .ord-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .ord-modal-bg.active { display: flex; }
+        .ord-modal { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1.75rem; width: 95%; max-width: 540px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+        .ord-modal h3 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; font-weight: 400; margin: 0 0 1.25rem; }
+        .ord-form-row { margin-bottom: .85rem; }
+        .ord-form-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-bottom: .3rem; display: block; }
+        .ord-form-input { width: 100%; background: var(--page); border: 1px solid var(--line); border-radius: .5rem; padding: .55rem .85rem; color: var(--ink); font-size: .85rem; font-family: var(--pf-mono); }
+        .ord-form-input:focus { outline: none; border-color: var(--teal); }
+        .ord-form-row-flex { display: flex; gap: .65rem; }
+        .ord-form-row-flex > div { flex: 1; }
+        .ord-side-toggle { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+        .ord-side-toggle button { flex: 1; padding: .45rem; border: none; background: transparent; color: var(--muted); font-weight: 700; font-size: .8rem; cursor: pointer; transition: all 150ms; }
+        .ord-side-toggle button.active-buy { background: var(--pf-green); color: #fff; }
+        .ord-side-toggle button.active-sell { background: var(--pf-red); color: #fff; }
+
+        /* Detail Drawer */
+        .ord-drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; display: none; backdrop-filter: blur(3px); }
+        .ord-drawer-bg.active { display: block; }
+        .ord-drawer { position: fixed; top: 0; right: 0; width: 440px; max-width: 95vw; height: 100vh; background: var(--surface); border-left: 1px solid var(--line); z-index: 91; transform: translateX(100%); transition: transform 300ms ease; overflow-y: auto; padding: 1.5rem; }
+        html[dir="rtl"] .ord-drawer { right: auto; left: 0; border-left: none; border-right: 1px solid var(--line); transform: translateX(-100%); }
+        .ord-drawer.active { transform: translateX(0); }
+        .ord-drawer h3 { font-family: 'DM Serif Display', serif; font-size: 1.2rem; font-weight: 400; margin: 0 0 1rem; }
+        .ord-drawer-field { display: flex; justify-content: space-between; padding: .45rem 0; border-bottom: 1px solid var(--line); font-size: .78rem; }
+        .ord-drawer-field-label { color: var(--muted); }
+        .ord-drawer-field-val { font-family: var(--pf-mono); font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
+
+        .ord-table-scroll { max-height: 65vh; overflow-y: auto; }
+        @media (max-width: 900px) {
+            .ord-table-scroll { max-height: none; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse">Market Pulse</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger active" style="display: flex; align-items: center; gap: 0.35rem; color: var(--teal); font-weight: 700; border: 1px solid rgba(229,90,31,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft);">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="ord-page" style="padding-top: 5rem;">
+        <div class="ord-head">
+            <div>
+                <h1 data-key="orders_title">Order Management</h1>
+                <p data-key="orders_subtitle">Full order lifecycle — create, monitor, replace, and cancel orders across all portfolios</p>
+            </div>
+            <div style="display:flex;gap:.65rem;align-items:center;">
+                <select id="ordPortfolioSelect" class="ord-filter-select" style="min-width:200px;"></select>
+                <button class="pf-btn pf-btn--primary" id="btnNewOrder" data-key="btn_new_order">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Order
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Strip -->
+        <div class="ord-kpi-strip" id="ordKpiStrip">
+            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_total">Total Orders</div><div class="ord-kpi-val" id="kpiTotal">—</div></div>
+            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_open">Open</div><div class="ord-kpi-val" id="kpiOpen">—</div></div>
+            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_filled">Filled</div><div class="ord-kpi-val" id="kpiFilled">—</div></div>
+            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_canceled">Canceled</div><div class="ord-kpi-val" id="kpiCanceled">—</div></div>
+            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_value">Est. Fill Value</div><div class="ord-kpi-val" id="kpiValue">—</div></div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="ord-toolbar">
+            <select id="filterStatus" class="ord-filter-select">
+                <option value="all" data-key="filter_all_status">All Status</option>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+                <option value="all" selected>All</option>
+            </select>
+            <select id="filterSide" class="ord-filter-select">
+                <option value="" data-key="filter_all_side">All Sides</option>
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+            </select>
+            <input type="text" id="filterSymbol" class="ord-search" placeholder="Search symbol..." data-key-placeholder="search_symbol">
+            <div style="flex:1;"></div>
+            <button class="pf-btn pf-btn--sm" id="btnRefresh" data-key="btn_refresh">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh
+            </button>
+            <button class="pf-btn pf-btn--danger pf-btn--sm" id="btnCancelAll" data-key="btn_cancel_all">Cancel All</button>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="ord-table-wrap">
+            <div class="ord-table-scroll">
+                <table class="ord-table">
+                    <thead>
+                        <tr>
+                            <th data-key="th_symbol">Symbol</th>
+                            <th data-key="th_side">Side</th>
+                            <th data-key="th_type">Type</th>
+                            <th data-key="th_qty">Qty</th>
+                            <th data-key="th_filled">Filled</th>
+                            <th data-key="th_price">Price</th>
+                            <th data-key="th_stop">Stop</th>
+                            <th data-key="th_avg_fill">Avg Fill</th>
+                            <th data-key="th_status">Status</th>
+                            <th data-key="th_tif">TIF</th>
+                            <th data-key="th_submitted">Submitted</th>
+                            <th data-key="th_actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordTableBody">
+                        <tr><td colspan="12" class="ord-empty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
+                            <div data-key="no_orders">Select a portfolio to view orders</div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Order Modal -->
+    <div class="ord-modal-bg" id="orderModal">
+        <div class="ord-modal">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 data-key="modal_new_order">New Order</h3>
+                <button class="pf-btn pf-btn--icon pf-btn--ghost" id="btnCloseModal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_side">Side</label>
+                <div class="ord-side-toggle">
+                    <button id="sideToggleBuy" class="active-buy" data-key="btn_buy">BUY</button>
+                    <button id="sideToggleSell" data-key="btn_sell">SELL</button>
+                </div>
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_symbol">Symbol</label>
+                <input type="text" id="modalSymbol" class="ord-form-input" placeholder="e.g. AAPL" style="text-transform:uppercase;">
+            </div>
+            <div class="ord-form-row-flex">
+                <div>
+                    <label class="ord-form-label" data-key="lbl_order_type">Order Type</label>
+                    <select id="modalType" class="ord-form-input">
+                        <option value="market">Market</option>
+                        <option value="limit" selected>Limit</option>
+                        <option value="stop">Stop</option>
+                        <option value="stop_limit">Stop Limit</option>
+                        <option value="trailing_stop">Trailing Stop</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="ord-form-label" data-key="lbl_tif">Time in Force</label>
+                    <select id="modalTif" class="ord-form-input">
+                        <option value="day">Day</option>
+                        <option value="gtc">GTC</option>
+                        <option value="opg">OPG (At Open)</option>
+                        <option value="cls">CLS (At Close)</option>
+                        <option value="ioc">IOC</option>
+                        <option value="fok">FOK</option>
+                    </select>
+                </div>
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_quantity">Quantity</label>
+                <input type="number" id="modalQty" class="ord-form-input" placeholder="1" min="0.0001" step="any">
+            </div>
+            <div class="ord-form-row" id="rowLimitPrice">
+                <label class="ord-form-label" data-key="lbl_limit_price">Limit Price</label>
+                <input type="number" id="modalLimitPrice" class="ord-form-input" placeholder="0.00" step="0.01">
+            </div>
+            <div class="ord-form-row" id="rowStopPrice" style="display:none;">
+                <label class="ord-form-label" data-key="lbl_stop_price">Stop Price</label>
+                <input type="number" id="modalStopPrice" class="ord-form-input" placeholder="0.00" step="0.01">
+            </div>
+            <div class="ord-form-row" id="rowTrailPercent" style="display:none;">
+                <label class="ord-form-label" data-key="lbl_trail">Trail Percent</label>
+                <input type="number" id="modalTrailPercent" class="ord-form-input" placeholder="1.0" step="0.1">
+            </div>
+            <div class="ord-form-row-flex">
+                <div>
+                    <label class="ord-form-label" data-key="lbl_extended">Extended Hours</label>
+                    <select id="modalExtended" class="ord-form-input">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="ord-form-label" data-key="lbl_order_class">Order Class</label>
+                    <select id="modalOrderClass" class="ord-form-input">
+                        <option value="simple">Simple</option>
+                        <option value="bracket">Bracket</option>
+                        <option value="oco">OCO</option>
+                        <option value="oto">OTO</option>
+                    </select>
+                </div>
+            </div>
+            <div class="ord-form-row" id="rowClientId">
+                <label class="ord-form-label" data-key="lbl_client_id">Client Order ID (optional)</label>
+                <input type="text" id="modalClientId" class="ord-form-input" placeholder="">
+            </div>
+            <div style="margin-top:1.25rem;display:flex;gap:.65rem;justify-content:flex-end;">
+                <button class="pf-btn" id="btnCancelModal" data-key="btn_cancel">Cancel</button>
+                <button class="pf-btn pf-btn--primary" id="btnSubmitOrder" data-key="btn_submit_order">Submit Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Detail Drawer -->
+    <div class="ord-drawer-bg" id="drawerBg"></div>
+    <div class="ord-drawer" id="orderDrawer">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3 data-key="drawer_detail">Order Detail</h3>
+            <button class="pf-btn pf-btn--icon pf-btn--ghost" id="btnCloseDrawer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div id="drawerContent"></div>
+        <div style="margin-top:1.25rem;display:flex;gap:.65rem;" id="drawerActions"></div>
+    </div>
+
+    <!-- Replace Order Modal -->
+    <div class="ord-modal-bg" id="replaceModal">
+        <div class="ord-modal">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 data-key="modal_replace">Replace Order</h3>
+                <button class="pf-btn pf-btn--icon pf-btn--ghost" id="btnCloseReplace">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_new_qty">New Quantity</label>
+                <input type="number" id="replaceQty" class="ord-form-input" step="any">
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_new_limit">New Limit Price</label>
+                <input type="number" id="replaceLimitPrice" class="ord-form-input" step="0.01">
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_new_stop">New Stop Price</label>
+                <input type="number" id="replaceStopPrice" class="ord-form-input" step="0.01">
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_new_trail">New Trail</label>
+                <input type="number" id="replaceTrail" class="ord-form-input" step="0.1">
+            </div>
+            <div class="ord-form-row">
+                <label class="ord-form-label" data-key="lbl_new_tif">New TIF</label>
+                <select id="replaceTif" class="ord-form-input">
+                    <option value="">Keep Current</option>
+                    <option value="day">Day</option>
+                    <option value="gtc">GTC</option>
+                    <option value="ioc">IOC</option>
+                    <option value="fok">FOK</option>
+                </select>
+            </div>
+            <input type="hidden" id="replaceOrderId">
+            <div style="margin-top:1.25rem;display:flex;gap:.65rem;justify-content:flex-end;">
+                <button class="pf-btn" id="btnCancelReplace" data-key="btn_cancel">Cancel</button>
+                <button class="pf-btn pf-btn--primary" id="btnSubmitReplace" data-key="btn_replace">Replace Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/portfolio-store.js"></script>
+    <script src="/assets/orders.js"></script>
+</body>
+</html>

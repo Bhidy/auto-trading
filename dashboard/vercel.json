@@ -1,0 +1,14 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/Portfolio", "destination": "/api" },
+    { "source": "/Portfolio/(.*)", "destination": "/api" }
+  ],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "data/**,event-driven-bot/data/**,political-copy-bot/data/**,journal/**,config/**",
+      "maxDuration": 30
+    }
+  }
+}

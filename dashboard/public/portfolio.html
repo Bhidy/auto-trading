@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Intelligence | Starta Markets</title>
+    <meta name="description" content="Track your EGX portfolio with institutional-grade analytics, performance charts, and AI insights.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <link rel="stylesheet" href="/assets/portfolio-showcase.css?v=1.1.12">
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger active" style="display: flex; align-items: center; gap: 0.35rem; color: var(--teal); font-weight: 700; border: 1px solid rgba(229,90,31,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft);">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;"></span>
+                    Market Pulse
+                </a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="pf-page">
+        <div id="pfShowcaseRoot" style="display: none;"></div>
+        <div id="pfListRoot"></div>
+    </div>
+
+    <!-- Create Portfolio Modal -->
+    <div id="createModal" class="pf-modal-overlay">
+        <div class="pf-modal">
+            <div class="pf-modal-head">
+                <h3 id="createModalTitle">Create Portfolio</h3>
+                <button class="pf-modal-close" id="closeCreateModal" aria-label="Close">&times;</button>
+            </div>
+            <div id="createModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Real-Time Scrolling Ticker Ribbon -->
+    <div class="pf-ticker-container">
+        <div class="pf-ticker-wrap" id="marketTickerMarquee">
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="/assets/portfolio-store.js"></script>
+    <script src="/assets/portfolio-showcase.js?v=1.1.12"></script>
+    <script src="/assets/portfolio-list.js"></script>
+</body>
+</html>

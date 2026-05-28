@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Fidelity Market Pulse Terminal | Starta Markets</title>
+    <meta name="description" content="US Market Pulse financial terminal — real-time watchlists, interactive charts, stock profiles, sentiment news, and top lists.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        /* US Market Pulse Custom Styles (World-Class Terminal density) */
+        .mp-grid {
+            display: grid;
+            grid-template-columns: 310px 1fr 340px;
+            gap: 1.25rem;
+            max-width: 1650px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        @media (max-width: 1200px) {
+            .mp-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* High density overview header */
+        .mp-header-widget {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--pf-radius-lg);
+            padding: 1rem 1.5rem;
+            max-width: 1600px;
+            margin: 1rem auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+        }
+        .mp-header-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+        .mp-header-label {
+            font-size: 0.68rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+        }
+        .mp-header-val {
+            font-family: var(--pf-mono);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .mp-header-meta {
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Search input bar */
+        .mp-search-bar {
+            position: relative;
+            flex: 1;
+            max-width: 420px;
+        }
+        .mp-search-input {
+            width: 100%;
+            background: var(--page);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 0.55rem 1.25rem 0.55rem 2.5rem;
+            color: var(--ink);
+            font-size: 0.85rem;
+            transition: all 180ms ease;
+        }
+        .mp-search-input:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 10px rgba(229,90,31,0.15);
+        }
+        .mp-search-icon {
+            position: absolute;
+            left: 0.95rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Tabs styling */
+        .mp-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--line);
+            gap: 0.25rem;
+            margin-bottom: 0.85rem;
+        }
+        .mp-tab {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--muted);
+            padding: 0.45rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+        .mp-tab.active {
+            color: var(--teal);
+            border-bottom-color: var(--teal);
+        }
+
+        /* Watchlist list items */
+        .mp-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.65rem 0.75rem;
+            border-radius: var(--pf-radius-sm);
+            cursor: pointer;
+            transition: background 120ms;
+        }
+        .mp-list-item:hover {
+            background: var(--teal-soft);
+        }
+        .mp-list-item.selected {
+            background: rgba(229, 90, 31, 0.12);
+            border: 1px solid rgba(229, 90, 31, 0.25);
+        }
+        .mp-list-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            min-width: 0;
+        }
+        .mp-list-symbol {
+            font-family: var(--pf-mono);
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--ink);
+        }
+        .mp-list-name {
+            font-size: 0.7rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+        }
+        html[dir="rtl"] .mp-list-name {
+            text-align: right;
+        }
+
+        /* Center Details Workspace */
+        .mp-workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+        }
+        .mp-detail-hero {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .mp-hero-main {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .mp-hero-symbol-badge {
+            background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%);
+            color: white;
+            font-family: var(--pf-mono);
+            font-size: 1.25rem;
+            font-weight: 800;
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--pf-radius-sm);
+            box-shadow: 0 4px 12px rgba(229,90,31,0.25);
+        }
+        .mp-hero-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.75rem;
+            margin: 0;
+            font-weight: 400;
+            text-align: left;
+        }
+        html[dir="rtl"] .mp-hero-title {
+            text-align: right;
+        }
+        .mp-hero-sub {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin: 0.15rem 0 0;
+            text-align: left;
+        }
+        html[dir="rtl"] .mp-hero-sub {
+            text-align: right;
+        }
+        .mp-hero-price {
+            text-align: right;
+        }
+        html[dir="rtl"] .mp-hero-price {
+            text-align: left;
+        }
+        .mp-hero-price-val {
+            font-family: var(--pf-mono);
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+        .mp-hero-price-chg {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        /* Stats Grid */
+        .mp-stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 0.75rem;
+            background: var(--teal-soft);
+            border: 1px solid rgba(229, 90, 31, 0.12);
+            border-radius: var(--pf-radius-sm);
+            padding: 0.65rem 1rem;
+        }
+        .mp-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+        .mp-stat-label {
+            font-size: 0.64rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            text-align: left;
+        }
+        html[dir="rtl"] .mp-stat-label {
+            text-align: right;
+        }
+        .mp-stat-val {
+            font-family: var(--pf-mono);
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--ink);
+            text-align: left;
+        }
+        html[dir="rtl"] .mp-stat-val {
+            text-align: right;
+        }
+
+        /* News item styling */
+        .mp-news-card {
+            border-bottom: 1px solid var(--line);
+            padding: 0.85rem 0.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.85rem;
+            transition: opacity 150ms;
+            text-decoration: none;
+        }
+        .mp-news-card:hover {
+            opacity: 0.9;
+        }
+        .mp-news-headline {
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.4;
+            color: var(--ink);
+            text-align: left;
+        }
+        html[dir="rtl"] .mp-news-headline {
+            text-align: right;
+        }
+        .mp-news-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.68rem;
+            color: var(--muted);
+            margin-top: 0.4rem;
+        }
+        .mp-news-source {
+            font-weight: 700;
+        }
+        .mp-news-sentiment {
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.58rem;
+        }
+        .sentiment-bullish { background: rgba(34,197,94,0.12); color: var(--pf-green); border: 1px solid rgba(34,197,94,0.2); }
+        .sentiment-bearish { background: rgba(239,68,68,0.12); color: var(--pf-red); border: 1px solid rgba(239,68,68,0.2); }
+        .sentiment-neutral { background: rgba(148,163,184,0.1); color: var(--muted); border: 1px solid var(--line); }
+
+        /* Scope progress bar */
+        .mp-progress-track {
+            height: 6px;
+            background: rgba(239,68,68,0.25);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+            margin: 0.55rem 0 0.35rem;
+        }
+        .mp-progress-fill {
+            height: 100%;
+            background: var(--pf-green);
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        /* Sparkline canvas */
+        .mp-sparkline-box {
+            height: 90px;
+            position: relative;
+            width: 100%;
+        }
+
+        /* US Market Status badge */
+        .mp-clock-badge {
+            font-family: var(--pf-mono);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            border: 1px solid var(--line);
+        }
+        .mp-clock-open {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--pf-green);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+        .mp-clock-closed {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--pf-amber);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        /* Technical Radial Gauge */
+        .mp-gauge-circle {
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Level 2 order book */
+        .mp-l2-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--pf-mono);
+            font-size: 0.72rem;
+            padding: 0.25rem 0.45rem;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            margin-bottom: 0.2rem;
+        }
+        .mp-l2-bg {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            opacity: 0.08;
+            z-index: 0;
+        }
+        html[dir="rtl"] .mp-l2-bg {
+            right: auto;
+            left: 0;
+        }
+        .mp-l2-row.bid {
+            color: #2ecc71;
+            background: rgba(46, 204, 113, 0.02);
+        }
+        .mp-l2-row.ask {
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.02);
+        }
+
+        /* Tactical Order Form */
+        .order-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 0.75rem;
+        }
+        .order-form-group label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-family: var(--pf-mono);
+            font-weight: 700;
+        }
+        .order-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .qty-adjust-btn {
+            background: var(--page);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            width: 32px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: background 150ms;
+        }
+        .qty-adjust-btn:hover {
+            background: var(--teal-soft);
+        }
+        .order-control {
+            flex: 1;
+            background: var(--page);
+            border: 1px solid var(--line);
+            padding: 0.55rem 0.75rem;
+            color: var(--ink);
+            font-family: var(--pf-mono);
+            font-size: 0.85rem;
+            text-align: center;
+            border-radius: var(--pf-radius-sm);
+        }
+        .order-control:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(229,90,31,0.12);
+        }
+
+        /* Custom alert notification toast */
+        .order-toast {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--teal);
+            border-radius: var(--pf-radius-sm);
+            padding: 1rem 1.5rem;
+            z-index: 2000;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+            display: none;
+            animation: slide-in-top 250ms ease;
+        }
+        html[dir="rtl"] .order-toast {
+            right: auto;
+            left: 2rem;
+        }
+        @keyframes slide-in-top {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Positions table styling */
+        .pos-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .pos-table th {
+            text-align: left;
+            padding: 0.55rem 0.75rem;
+            border-bottom: 1px solid var(--line);
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            font-family: var(--pf-mono);
+            letter-spacing: 0.05em;
+        }
+        html[dir="rtl"] .pos-table th {
+            text-align: right;
+        }
+        .pos-table td {
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid var(--line);
+            color: var(--ink);
+        }
+
+        /* AI Signal Card */
+        .ai-signal-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            transition: border-color 150ms;
+        }
+        .ai-signal-card:hover {
+            border-color: rgba(229,90,31,0.2);
+        }
+        .ai-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-family: var(--pf-mono);
+        }
+        .ai-badge.high { background: rgba(34,197,94,0.12); color: #2ecc71; border: 1px solid rgba(34,197,94,0.2); }
+        .ai-badge.med  { background: rgba(245,158,11,0.12); color: #FF8A3D; border: 1px solid rgba(245,158,11,0.2); }
+        .ai-badge.low  { background: rgba(148,163,184,0.12); color: var(--muted); border: 1px solid var(--line); }
+
+        /* Ranges UI element */
+        .range-slider-bar {
+            height: 6px;
+            background: var(--line);
+            border-radius: 99px;
+            position: relative;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .range-slider-fill {
+            position: absolute;
+            top: 0; bottom: 0;
+            background: linear-gradient(90deg, #E55A1F 0%, #FF8A3D 100%);
+            border-radius: 99px;
+        }
+        .range-slider-handle {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 14px;
+            height: 14px;
+            background: var(--ink);
+            border: 3px solid var(--teal);
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Sidebar scrolls container */
+        .scrollable-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            overflow-y: auto;
+            padding-inline-end: 0.25rem;
+            scrollbar-gutter: stable;
+            overscroll-behavior: contain;
+        }
+        .scrollable-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scrollable-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollable-sidebar::-webkit-scrollbar-thumb {
+            background: var(--line);
+            border-radius: 99px;
+        }
+
+        /* Anti-flicker: prevent layout shifts while data loads */
+        .mp-loading-container {
+            min-height: 120px;
+            contain: layout style;
+        }
+        #myPositionsBody, #watchlistContainer, #topListContainer, #newsContainer, #sectorContainer {
+            contain: layout style;
+        }
+        #myPositionsBody tr, #topListContainer .mp-list-item, #watchlistContainer .mp-list-item {
+            transition: none;
+        }
+        .mp-tick-target {
+            transition: color 0.15s ease;
+        }
+        .pos-table { table-layout: fixed; }
+
+        /* Light-mode overrides for Market Insights */
+        [data-theme="light"] .mp-insights-card { background: var(--surface) !important; border-color: var(--line) !important; }
+        [data-theme="light"] .mp-search-input { background: var(--surface); }
+        [data-theme="light"] .order-control { background: var(--surface); }
+        [data-theme="light"] .qty-adjust-btn { background: var(--surface); }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+
+    <!-- Alert toast notification popup -->
+    <div class="order-toast" id="orderConfirmToast">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <div>
+                <strong style="font-size:0.88rem;color:var(--ink);" id="toastTitle">Tactical Order Deployed</strong>
+                <p style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem;" id="toastBody">Limit buy order for 100 shares of NVDA was executed successfully.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navbar -->
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" class="active" data-key="nav_market_pulse" style="color: var(--teal); font-weight: 700; border: 1px solid rgba(229,90,31,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft); display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;"></span>
+                    Market Pulse
+                </a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sub-Header Pulse Metrics Ribbon (Matches attached page top header widgets) -->
+    <div style="padding-top: 5rem;">
+        <div class="mp-header-widget">
+            <div class="mp-header-item" style="flex-direction:row;align-items:center;gap:0.75rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 7 10 5-5 6 7"/><path d="M17 18h4v-4"/></svg>
+                <div>
+                    <div style="display:flex;align-items:center;gap:0.45rem;">
+                        <h2 style="font-family:'DM Serif Display',serif;font-size:1.4rem;margin:0;font-weight:400;" data-key="title_pulse">US Market Pulse</h2>
+                        <div id="marketClockBadge" class="mp-clock-badge mp-clock-closed">NYSE/NASDAQ: CLOSED</div>
+                    </div>
+                    <p style="font-size:0.68rem;color:var(--muted);margin:0.1rem 0 0;" data-key="title_desc">Institutional Terminal Dashboard</p>
+                </div>
+            </div>
+            
+            <div class="mp-header-item" style="flex-direction:row; align-items:center; gap:0.75rem;">
+                <div>
+                    <span class="mp-header-label" data-key="lbl_sp500">S&P 500 (SPY)</span>
+                    <span class="mp-header-val" id="headerSpyPrice" style="display:block; margin-top:0.15rem;">$549.61</span>
+                    <span class="mp-header-meta pf-pos pf-num" id="headerSpyChg" style="margin-top:0.1rem;">+0.23%</span>
+                </div>
+                <div style="width:75px; height:32px; position:relative; opacity:0.85; margin-inline-start:0.35rem;">
+                    <canvas id="spySparklineCanvas"></canvas>
+                </div>
+            </div>
+
+            <div class="mp-header-item">
+                <span class="mp-header-label" data-key="lbl_adv_dec">Advancers / Decliners</span>
+                <span class="mp-header-val">3,124 / 1,980</span>
+                <span class="mp-header-meta pf-pos" style="font-size:0.68rem;"><span data-key="lbl_bullish_bias">Bullish Bias</span></span>
+            </div>
+
+            <div class="mp-header-item">
+                <span class="mp-header-label">Market Status</span>
+                <span class="mp-header-val" style="font-size:0.9rem;">NYSE/NASDAQ</span>
+                <span class="mp-header-meta" style="font-size:0.65rem;color:var(--muted);">Next Open: <strong id="nextOpenTime">—</strong></span>
+            </div>
+
+            <div class="mp-header-item">
+                <span class="mp-header-label" data-key="lbl_vol">Trading Volume</span>
+                <span class="mp-header-val">8.82B</span>
+                <span class="mp-header-meta" style="color:var(--muted);font-size:0.68rem;" data-key="lbl_shares">shares</span>
+            </div>
+
+            <div class="mp-search-bar">
+                <svg class="mp-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" class="mp-search-input" id="stockSearch" placeholder="Search US Symbol (e.g. AAPL, NVDA, TSLA)" data-key="search_placeholder">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dynamic High-Fidelity Workspace Grid -->
+    <div class="mp-grid">
+        
+        <!-- ==================== LEFT COLUMN: WATCHLIST, SECTORS, MOVERS ==================== -->
+        <div style="display:flex; flex-direction:column; gap:1.25rem; align-self: start;">
+            <!-- Watchlist / Portfolios Card -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); margin-bottom:0.75rem; padding-bottom:0.15rem;">
+                    <div class="mp-tabs" style="border:none; margin:0;">
+                        <button class="mp-tab active" id="tabWatchlist" data-key="tab_wl" style="padding-bottom:0.45rem;">Watchlist</button>
+                        <button class="mp-tab" id="tabPortfolios" data-key="tab_portfolios" style="padding-bottom:0.45rem;">My Portfolios</button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.55rem; color:var(--muted); margin-bottom:0.25rem;">
+                        <svg class="pf-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;" id="btnAddStock" title="Add symbol to watchlist"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg class="pf-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;" id="btnWatchlistSettings" title="Watchlist settings"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </div>
+                </div>
+                <div id="watchlistContainer" class="scrollable-sidebar mp-loading-container" style="max-height:280px;min-height:200px;">
+                    <!-- Managed via market-pulse.js -->
+                </div>
+            </div>
+
+            <!-- US Sector ETF Performance -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;border-bottom:1px solid var(--line);padding-bottom:0.45rem;">
+                    <span style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--ink);letter-spacing:0.04em;" data-key="lbl_sectors">US Sector Performance</span>
+                    <span style="font-size:0.6rem;color:var(--teal);font-family:var(--pf-mono);font-weight:700;">via XL ETFs</span>
+                </div>
+                <div id="sectorContainer" class="mp-loading-container" style="display:flex;flex-direction:column;gap:0.15rem;min-height:180px;">
+                    <!-- Dynamic sectors heatmap -->
+                </div>
+            </div>
+
+            <!-- Market Movers Tabbed Widgets -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div class="mp-tabs" style="margin-bottom:0.75rem;">
+                    <button class="mp-tab active" id="tabActive" style="padding:0.45rem 0.5rem;" data-key="tab_active">Most Active</button>
+                    <button class="mp-tab" id="tabGainers" style="padding:0.45rem 0.5rem;" data-key="tab_gainers">Top Gainers</button>
+                    <button class="mp-tab" id="tabLosers" style="padding:0.45rem 0.5rem;" data-key="tab_losers">Top Losers</button>
+                </div>
+                <div id="topListContainer" class="scrollable-sidebar mp-loading-container" style="max-height:200px;min-height:140px;">
+                    <!-- Managed dynamically -->
+                </div>
+                <a href="/screener.html" class="pf-btn pf-btn--ghost" style="width:100%;margin-top:0.75rem;font-size:0.72rem;padding:0.45rem;text-decoration:none;display:block;text-align:center;">
+                    <span data-key="lbl_viewall">View All Movers</span>
+                </a>
+            </div>
+
+            <!-- Market Insights Card -->
+            <div class="pf-panel mp-insights-card" style="padding:1.25rem;">
+                <div style="display:flex;align-items:center;gap:0.65rem;margin-bottom:0.75rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    <h4 style="font-weight:800;color:var(--teal);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;">Market Insights</h4>
+                </div>
+                <p style="font-size:0.72rem;line-height:1.5;color:var(--ink);margin-bottom:0.85rem;">
+                    Market breadth remains positive with 61% of S&P 500 stocks trading above their 50-day moving average. AI catalysts represent the highest concentration flows in technical buy triggers.
+                </p>
+                <a href="/research.html" class="pf-btn pf-btn--primary" style="width:100%;font-size:0.7rem;padding:0.45rem;text-decoration:none;display:block;text-align:center;">Open Insights</a>
+            </div>
+        </div>
+
+        <!-- ==================== CENTER COLUMN: WORKSPACE CORE ==================== -->
+        <div class="mp-workspace">
+            <!-- Selected Stock Detailed Hero -->
+            <div class="pf-panel" style="padding:1.5rem;">
+                <div class="mp-detail-hero">
+                    <div class="mp-hero-main">
+                        <span class="mp-hero-symbol-badge" id="heroSymbol">NVDA</span>
+                        <div>
+                            <div style="display:flex;align-items:center;gap:0.55rem;">
+                                <h3 class="mp-hero-title" id="heroName">NVIDIA Corporation</h3>
+                                <span style="font-size:0.58rem;font-weight:700;background:rgba(255,255,255,0.06);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);">NASDAQ</span>
+                                <span style="font-size:0.58rem;font-weight:700;background:var(--teal-soft);color:var(--teal);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);" data-key="lbl_largecap">Large Cap</span>
+                            </div>
+                            <p class="mp-hero-sub" id="heroSub">Technology | Semiconductors</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex;align-items:flex-start;gap:1.5rem;">
+                        <div class="mp-hero-price">
+                            <div class="mp-hero-price-val pf-num" id="heroPrice">$1,087.31</div>
+                            <div class="mp-hero-price-chg pf-pos pf-num" id="heroPriceChg">▲ +2.40% (25.53)</div>
+                        </div>
+                        <div style="display:flex;gap:0.35rem;">
+                            <button class="control-btn" style="width:2.2rem;height:2.2rem;" id="btnToggleFavorite" title="Toggle watchlist favorite">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </button>
+                            <div style="position:relative;">
+                                <button class="control-btn" style="width:2.2rem;height:2.2rem;" id="btnStockOptions" title="More actions">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live stats bar (Key Info parameters) -->
+                <div class="mp-stats-row" style="margin-top:1.25rem;">
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label" data-key="stat_open">Open</span>
+                        <span class="mp-stat-val pf-num" id="statOpen">$1,063.25</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label" data-key="stat_high">High</span>
+                        <span class="mp-stat-val pf-num" id="statHigh">$1,097.48</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label" data-key="stat_low">Low</span>
+                        <span class="mp-stat-val pf-num" id="statLow">$1,058.11</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label" data-key="stat_close">Prev Close</span>
+                        <span class="mp-stat-val pf-num" id="statClose">$1,061.78</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label">Volume</span>
+                        <span class="mp-stat-val pf-num" id="statVolume">41.6M</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label">Avg Volume</span>
+                        <span class="mp-stat-val pf-num" id="statAvgVolume">48.2M</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label">Market Cap</span>
+                        <span class="mp-stat-val pf-num" id="statMarketCap">2.70T</span>
+                    </div>
+                    <div class="mp-stat-item">
+                        <span class="mp-stat-label">P/E (TTM)</span>
+                        <span class="mp-stat-val pf-num" id="statPE">72.45</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Candlestick Technical Chart -->
+            <div class="pf-panel" style="padding:1.5rem;">
+                <div class="chart-toggle-row" style="margin-bottom:1rem;">
+                    <div class="mp-tabs" style="border:none; margin:0;">
+                        <button class="mp-tab active" id="tabOverview" data-key="pane_overview">Chart</button>
+                        <button class="mp-tab" id="tabOptions" data-key="pane_options">Options</button>
+                        <button class="mp-tab" id="tabNews" data-key="pane_news">News</button>
+                        <button class="mp-tab" id="tabFinancialsTab" data-key="pane_financials_tab">Financials</button>
+                        <button class="mp-tab" id="tabProfileTab" data-key="pane_profile_tab">Profile</button>
+                    </div>
+                    
+                    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                        <div class="pf-chart-toggles" style="display:flex;gap:0.2rem;background:rgba(255,255,255,0.02);padding:0.15rem;border-radius:4px;border:1px solid var(--line);" id="chartPeriodToggles">
+                            <button class="pf-btn pf-btn--sm" data-range="1D" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1D</button>
+                            <button class="pf-btn pf-btn--sm" data-range="5D" style="padding:0.25rem 0.5rem;font-size:0.65rem;">5D</button>
+                            <button class="pf-btn pf-btn--sm active" data-range="1M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1M</button>
+                            <button class="pf-btn pf-btn--sm" data-range="3M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">3M</button>
+                            <button class="pf-btn pf-btn--sm" data-range="6M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">6M</button>
+                            <button class="pf-btn pf-btn--sm" data-range="YTD" style="padding:0.25rem 0.5rem;font-size:0.65rem;">YTD</button>
+                            <button class="pf-btn pf-btn--sm" data-range="1Y" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1Y</button>
+                        </div>
+                        <button class="pf-btn pf-btn--sm" style="font-size:0.68rem;padding:0.35rem 0.65rem;" id="btnCompare">Comparisons ▾</button>
+                    </div>
+                </div>
+
+                <div style="height:320px;position:relative;width:100%;">
+                    <canvas id="stockDetailsChart"></canvas>
+                </div>
+
+                <!-- Sliders Panel -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:2rem; margin-top:1.5rem; border-top:1px solid var(--line); padding-top:1.25rem;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                            <span style="color:var(--muted);">52 Week Range</span>
+                            <span style="color:var(--muted); font-weight:700;">$392.30 - $1,153.13</span>
+                        </div>
+                        <div class="range-slider-bar">
+                            <div class="range-slider-fill" style="left:15%; right:20%;"></div>
+                            <div class="range-slider-handle" style="left:72%;"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                            <span style="color:var(--muted);">Day Range</span>
+                            <span style="color:var(--muted); font-weight:700;" id="dayRangeLabel">$1,058.11 - $1,097.48</span>
+                        </div>
+                        <div class="range-slider-bar">
+                            <div class="range-slider-fill" style="left:20%; right:10%;"></div>
+                            <div class="range-slider-handle" style="left:78%;" id="dayRangeHandle"></div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; text-align:center;">
+                        <div>
+                            <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Beta (5Y)</span>
+                            <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">1.05</div>
+                        </div>
+                        <div>
+                            <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Yield</span>
+                            <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">0.03%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="detailsContentPane" style="display:none;"></div>
+            </div>
+
+            <!-- Positions & Holdings Card (Populated with real loaded configurations) -->
+            <div class="pf-panel" style="padding:1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.75rem; margin-bottom:1rem;">
+                    <div>
+                        <h3 style="font-family:'DM Serif Display',serif; font-size:1.25rem; color:var(--ink); margin:0;">My Positions</h3>
+                        <p style="font-size:0.75rem; color:var(--muted); margin-top:0.15rem;">Total Value: <strong style="color:var(--ink);" id="mktValSummary">$2,442,258.50</strong> <span class="pf-pos" id="mktValChg" style="font-weight:700;">▲ 1.28% (+30,742.01)</span></p>
+                    </div>
+                    <a href="/portfolio.html" style="font-size:0.72rem; color:var(--teal); font-weight:700; text-decoration:none;">View All</a>
+                </div>
+
+                <div style="overflow-x:auto; min-height:120px;" class="mp-loading-container">
+                    <table class="pos-table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Qty</th>
+                                <th>Avg Price</th>
+                                <th>Market Price</th>
+                                <th>Mkt Value</th>
+                                <th>P&L</th>
+                                <th>P&L %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myPositionsBody">
+                            <!-- Populated dynamically based on loaded Alpaca card details -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--muted); margin-top:1rem; border-top:1px solid var(--line); padding-top:0.85rem;">
+                    <span>Cash Balance: <strong style="color:var(--ink);" id="cashBalText">$125,430.20</strong></span>
+                    <span>Day Change: <strong class="pf-pos" id="dayChgText">▲ +$4,553.20 (0.19%)</strong></span>
+                </div>
+            </div>
+
+            <!-- Fundamentals Key Metrics & YoY Revenue Bar Chart -->
+            <div class="pf-panel" style="padding:1.5rem;">
+                <h3 style="font-family:'DM Serif Display',serif; font-size:1.25rem; color:var(--ink); margin-bottom:1.25rem;">Fundamentals</h3>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+                    <!-- Key financials table -->
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.55rem;">
+                            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);" data-key="lbl_key_fin">Key Financials</span>
+                            <span style="font-size:0.65rem; color:var(--teal); font-weight:700; cursor:pointer;" id="btnExpandFinancials">View Full Financials</span>
+                        </div>
+                        <table class="peer-table" style="font-size:0.78rem;">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>TTM</th>
+                                    <th>YoY Change</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keyFinancialsBody">
+                                <!-- Dynamic standard parameters -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- YoY Revenue growth chart -->
+                    <div>
+                        <div style="border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.55rem;">
+                            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);">Revenue Growth (TTM vs YoY%)</span>
+                        </div>
+                        <div style="height:170px; position:relative;">
+                            <canvas id="revenueGrowthChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== RIGHT COLUMN: L2 ORDER BOOK, AI SIGNALS, NEWS ==================== -->
+        <div style="display:flex; flex-direction:column; gap:1.25rem; align-self: start;">
+            <!-- Order Book & Level 2 Depth Card -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div class="mp-tabs" style="margin-bottom:0.75rem;">
+                    <button class="mp-tab" id="tabOrderBookView" data-key="lbl_orderbook">Order Book</button>
+                    <button class="mp-tab active" id="tabL2View" data-key="lbl_l2_title">Level 2</button>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);font-family:var(--pf-mono);margin-bottom:0.4rem;">
+                    <span data-key="lbl_l2_headers">Size · Bid / Ask · Size</span>
+                    <span id="l2TickerName">NVDA</span>
+                </div>
+                <div id="l2OrderBookList" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-inline-end:0.25rem;">
+                    <!-- Managed via market-pulse.js -->
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--muted); font-family:var(--pf-mono); border-top:1px solid var(--line); padding-top:0.45rem; margin-top:0.45rem;">
+                    <span>Spread</span>
+                    <span style="color:var(--ink); font-weight:700;">0.20 (0.02%)</span>
+                </div>
+            </div>
+
+            <!-- Tactical Order Entry Form -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div class="mp-tabs" style="margin-bottom:0.85rem;">
+                    <button class="mp-tab active" style="flex:1;" id="orderTabBuy" onclick="toggleOrderMode('Buy')">Buy</button>
+                    <button class="mp-tab" style="flex:1;" id="orderTabSell" onclick="toggleOrderMode('Sell')">Sell</button>
+                    <a href="/options-lab.html" class="mp-tab" style="flex:1;text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center;">Options</a>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="order-form-group">
+                        <label>Order Type</label>
+                        <select class="order-control" id="orderTypeInput" style="border-radius:4px;">
+                            <option value="Limit">Limit</option>
+                            <option value="Market">Market</option>
+                            <option value="Stop">Stop</option>
+                        </select>
+                    </div>
+                    <div class="order-form-group">
+                        <label>Quantity</label>
+                        <div class="order-input-wrapper">
+                            <button class="qty-adjust-btn" style="border-radius:4px 0 0 4px;" onclick="adjustQty(-10)">-</button>
+                            <input type="number" class="order-control" id="orderQtyInput" value="100">
+                            <button class="qty-adjust-btn" style="border-radius:0 4px 4px 0;" onclick="adjustQty(10)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="order-form-group">
+                        <label>Limit Price ($)</label>
+                        <div style="position:relative; display:flex; align-items:center;">
+                            <input type="number" class="order-control" id="orderLimitPriceInput" style="border-radius:4px; padding-inline-end:1.85rem; width:100%; text-align:center;" value="1087.40">
+                            <span style="position:absolute; right:0.55rem; color:var(--muted); cursor:pointer; font-size:0.85rem; font-weight:700; user-select:none; line-height:1;" id="btnClearLimit" title="Clear">×</span>
+                        </div>
+                    </div>
+                    <div class="order-form-group">
+                        <label>Time In Force</label>
+                        <select class="order-control" id="orderTifInput" style="border-radius:4px;">
+                            <option value="Day">Day</option>
+                            <option value="GTC">GTC</option>
+                            <option value="IOC">IOC</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="cta-btn" style="width:100%; border:none; border-radius:8px; margin-top:0.75rem; justify-content:center;" id="placeTacticalOrderBtn" onclick="placeTacticalOrder()">
+                    <span id="placeOrderBtnText">Place Buy Order</span>
+                </button>
+
+                <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--muted); margin-top:0.75rem;">
+                    <span>Buying Power</span>
+                    <strong style="color:var(--ink); font-family:var(--pf-mono);" id="buyingPowerVal">$125,430.20</strong>
+                </div>
+            </div>
+
+            <!-- Portfolio AI Signals -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.75rem;">
+                    <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);" data-key="lbl_signals">Portfolio Signals</span>
+                    <a href="/research.html" style="font-size:0.62rem; color:var(--teal); font-weight:700; text-decoration:none;">View All</a>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:0.55rem;">
+                    <div class="ai-signal-card">
+                        <div>
+                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">NVDA</span>
+                            <span style="font-size:0.65rem; color:var(--muted); margin-inline-start:0.35rem;">Bullish Momentum</span>
+                            <p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">Strong uptrend with high volume support and positive earnings revision trend.</p>
+                        </div>
+                        <span class="ai-badge high">High Conviction</span>
+                    </div>
+
+                    <div class="ai-signal-card">
+                        <div>
+                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">MSFT</span>
+                            <span style="font-size:0.65rem; color:var(--muted); margin-inline-start:0.35rem;">Breakout Watch</span>
+                            <p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">Approaching resistance level with increasing volume. Watch for breakout confirmation.</p>
+                        </div>
+                        <span class="ai-badge med">Medium Conviction</span>
+                    </div>
+
+                    <div class="ai-signal-card">
+                        <div>
+                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">AAPL</span>
+                            <span style="font-size:0.65rem; color:var(--muted); margin-inline-start:0.35rem;">Support Zone</span>
+                            <p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">Holding key support level. Monitor for bounce or breakdown confirmation.</p>
+                        </div>
+                        <span class="ai-badge low">Low Conviction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market News Feed with Thumbnails -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:0.45rem;">
+                    <h4 style="font-family:'DM Serif Display',serif;font-size:1.05rem;margin:0;font-weight:400;" data-key="title_news">Market News Feed</h4>
+                    <a href="/research.html" style="font-size:0.68rem;color:var(--teal);font-weight:700;text-decoration:none;" data-key="lbl_viewall">View All</a>
+                </div>
+                <div id="newsContainer" class="scrollable-sidebar mp-loading-container" style="max-height:280px;min-height:180px; margin-top:0.5rem;">
+                    <!-- Managed dynamically -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Real-Time Scrolling Ticker Ribbon -->
+    <div class="pf-ticker-container">
+        <div class="pf-ticker-wrap" id="marketTickerMarquee">
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/assets/market-pulse.js"></script>
+</body>
+</html>

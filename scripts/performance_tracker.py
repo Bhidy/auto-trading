@@ -24,9 +24,10 @@ def save_json(filename, data):
 # TRADE LOGGING
 # ---------------------------------------------------------------------------
 
-def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons):
+def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons,
+              stop_loss=None, take_profit=None):
     log = load_json("trade_log.json", [])
-    log.append({
+    entry = {
         "id": len(log) + 1,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "symbol": symbol,
@@ -42,7 +43,12 @@ def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons):
         "pnl_pct": None,
         "hold_days": None,
         "status": "open",
-    })
+    }
+    if stop_loss is not None:
+        entry["stop_loss"] = stop_loss
+    if take_profit is not None:
+        entry["take_profit"] = take_profit
+    log.append(entry)
     save_json("trade_log.json", log)
     return log[-1]["id"]
 
@@ -87,16 +93,16 @@ def compute_metrics(lookback_days=None):
     if not closed:
         return {
             "total_trades": 0,
-            "win_rate": 0.5,
-            "avg_pnl_pct": 0,
-            "avg_win": 0,
-            "avg_loss": 0,
-            "win_loss_ratio": 1.0,
-            "max_win_pct": 0,
-            "max_loss_pct": 0,
+            "win_rate": None,
+            "avg_pnl_pct": None,
+            "avg_win": None,
+            "avg_loss": None,
+            "win_loss_ratio": None,
+            "max_win_pct": None,
+            "max_loss_pct": None,
             "total_pnl": 0,
-            "profit_factor": 1.0,
-            "sharpe_estimate": 0,
+            "profit_factor": None,
+            "sharpe_estimate": None,
         }
 
     wins = [t for t in closed if (t.get("pnl") or 0) > 0]
@@ -188,20 +194,21 @@ def adapt_parameters():
     metrics_30d = compute_metrics(30)
     metrics_all = compute_metrics()
 
-    params["win_rate_7d"] = metrics_7d["win_rate"]
-    params["win_rate_30d"] = metrics_30d["win_rate"]
-    params["avg_win_loss_ratio"] = metrics_all["win_loss_ratio"]
+    params["win_rate_7d"] = metrics_7d["win_rate"] if metrics_7d["win_rate"] is not None else 0.5
+    params["win_rate_30d"] = metrics_30d["win_rate"] if metrics_30d["win_rate"] is not None else 0.5
+    params["avg_win_loss_ratio"] = metrics_all["win_loss_ratio"] if metrics_all["win_loss_ratio"] is not None else 1.0
 
-    # Adaptive position sizing
+    wr_30d = params["win_rate_30d"]
+    pf_30d = metrics_30d["profit_factor"] or 1.0
+
     if metrics_30d["total_trades"] >= 5:
-        if metrics_30d["win_rate"] > 0.60 and metrics_30d["profit_factor"] > 1.5:
+        if wr_30d > 0.60 and pf_30d > 1.5:
             params["position_size_multiplier"] = min(params["position_size_multiplier"] * 1.05, 1.5)
-        elif metrics_30d["win_rate"] < 0.40 or metrics_30d["profit_factor"] < 0.8:
+        elif wr_30d < 0.40 or pf_30d < 0.8:
             params["position_size_multiplier"] = max(params["position_size_multiplier"] * 0.90, 0.5)
         else:
             params["position_size_multiplier"] = params["position_size_multiplier"] * 0.99 + 1.0 * 0.01
 
-    # Adaptive RSI thresholds
     if metrics_30d["total_trades"] >= 10:
         log = load_json("trade_log.json", [])
         overbought_trades = [t for t in log if t["status"] == "closed" and "overbought" in str(t.get("reasons", "")).lower()]
@@ -212,18 +219,19 @@ def adapt_parameters():
             elif ob_win_rate < 0.3:
                 params["rsi_overbought"] = max(params["rsi_overbought"] - 1, 65)
 
-    # Adaptive stop-loss (tighten if losing big, loosen if getting stopped out too often)
     if metrics_30d["total_trades"] >= 5:
-        if metrics_30d["max_loss_pct"] < -8:
+        max_loss = metrics_30d["max_loss_pct"]
+        if max_loss is not None and max_loss < -8:
             params["trailing_stop_atr_mult"] = max(params["trailing_stop_atr_mult"] - 0.1, 1.5)
-        elif metrics_30d["win_rate"] < 0.45 and metrics_30d["avg_loss_pct"] > -2:
-            params["trailing_stop_atr_mult"] = min(params["trailing_stop_atr_mult"] + 0.1, 4.0)
+        if wr_30d < 0.45:
+            avg_loss = metrics_30d["avg_loss_pct"]
+            if avg_loss is not None and avg_loss > -2:
+                params["trailing_stop_atr_mult"] = min(params["trailing_stop_atr_mult"] + 0.1, 4.0)
 
-    # Adaptive confidence thresholds
     if metrics_30d["total_trades"] >= 10:
-        if metrics_30d["win_rate"] > 0.55:
+        if wr_30d > 0.55:
             params["confidence_buy_threshold"] = max(params["confidence_buy_threshold"] - 0.02, 0.30)
-        elif metrics_30d["win_rate"] < 0.40:
+        elif wr_30d < 0.40:
             params["confidence_buy_threshold"] = min(params["confidence_buy_threshold"] + 0.02, 0.70)
 
     save_json("strategy_params.json", params)
@@ -258,13 +266,15 @@ def generate_learning_report():
 
     # Generate insights
     if metrics_30d["total_trades"] >= 5:
-        if metrics_30d["win_rate"] > 0.55:
+        wr = metrics_30d["win_rate"]
+        if wr is not None and wr > 0.55:
             report["insights"].append("System performing well — consider gradual position size increase")
-        if metrics_30d["win_rate"] < 0.40:
+        if wr is not None and wr < 0.40:
             report["insights"].append("Win rate declining — tighten entry criteria")
-        if metrics_30d["profit_factor"] > 2.0:
+        pf = metrics_30d["profit_factor"]
+        if pf is not None and pf > 2.0:
             report["insights"].append("Excellent risk/reward — strategy well-calibrated")
-        if metrics_30d["profit_factor"] < 1.0:
+        if pf is not None and pf < 1.0:
             report["insights"].append("Losing money — reduce exposure and review strategy")
 
     for bucket, data in by_bucket.items():

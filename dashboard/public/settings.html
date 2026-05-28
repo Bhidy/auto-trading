@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings & User Profile | Starta Markets</title>
+    <meta name="description" content="Manage your Alpaca API credentials, configure alert preferences, update security details, and adjust themes.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem 5rem;
+        }
+        @media(max-width: 900px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .settings-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--pf-radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+        .profile-avatar-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .avatar-circle {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #FFF7EE;
+            box-shadow: 0 8px 20px rgba(229,90,31,0.2);
+            border: 3px solid var(--line);
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-family: var(--pf-mono);
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        .form-control {
+            width: 100%;
+            background: rgba(26, 15, 8, 0.4);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            color: var(--ink);
+            font-size: 0.9rem;
+            transition: border-color 200ms ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-top: 1rem;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.88rem;
+            color: var(--ink);
+            cursor: pointer;
+        }
+        .checkbox-item input {
+            accent-color: var(--teal);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .btn-settings-save {
+            background: var(--teal);
+            color: #FFF7EE;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 99px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: box-shadow 200ms ease, transform 200ms ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-settings-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(229, 90, 31, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+    
+    <!-- Navbar -->
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;"></span>
+                    Market Pulse
+                </a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" class="active" data-key="nav_settings" style="color: var(--teal); font-weight: 700; border: 1px solid rgba(229, 90, 31, 0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft); display: inline-flex; align-items: center; gap: 0.35rem;">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Title -->
+    <div style="padding-top: 6rem; text-align: center; margin-bottom: 2.5rem;">
+        <span class="section-tag" data-key="set_tag">System Preferences</span>
+        <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.25rem; color: var(--ink);" data-key="set_title">Profile & Settings</h2>
+    </div>
+
+    <!-- Main Section -->
+    <div class="settings-grid">
+        <!-- Left: Profile & Quick switches -->
+        <div>
+            <!-- Profile Card -->
+            <div class="settings-card">
+                <div class="profile-avatar-wrap">
+                    <div class="avatar-circle">QD</div>
+                    <div>
+                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--ink);" id="profileDisplayName">Quant Director</h3>
+                        <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem;" id="profileEmail">director@startamarkets.com</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-key="set_lbl_lang">Interface Language</label>
+                    <select class="form-control" id="settingsLangSelect">
+                        <option value="en">English</option>
+                        <option value="ar">العربية (Arabic)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label data-key="set_lbl_theme">Visual Palette Theme</label>
+                    <select class="form-control" id="settingsThemeSelect">
+                        <option value="dark" data-key="opt_theme_dark">Institutional Dark solar</option>
+                        <option value="light" data-key="opt_theme_light">Institutional Light paper</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Alpaca API key integrations & notification preferences -->
+        <div>
+            <!-- Alpaca credentials -->
+            <div class="settings-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 0.35rem;" data-key="alpaca_title">Alpaca API Integrations</h3>
+                <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem;" data-key="alpaca_sub">Configure your live paper trading keys. Transactions are pushed directly using these secure parameters.</p>
+                
+                <div class="form-group">
+                    <label data-key="set_lbl_key">Alpaca Key ID</label>
+                    <input type="text" class="form-control" style="font-family:var(--pf-mono);" id="alpacaKeyInput" value="PKAUIEDLGNSIFULHTPYHOVPQ7Y">
+                </div>
+
+                <div class="form-group">
+                    <label data-key="set_lbl_secret">Alpaca Secret Key</label>
+                    <input type="password" class="form-control" style="font-family:var(--pf-mono);" id="alpacaSecretInput" value="••••••••••••••••••••••••••••••••••••••••">
+                </div>
+
+                <button class="btn-settings-save" onclick="alert('API credentials updated locally!')">
+                    <span data-key="btn_save_cred">Update Credentials</span>
+                </button>
+            </div>
+
+            <!-- Notifications preferences -->
+            <div class="settings-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 0.5rem;" data-key="notif_title">Alert & Push Preferences</h3>
+                <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.25rem;" data-key="notif_sub">Configure how and when the neural system warning flags get dispatched to your device.</p>
+                
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked>
+                        <span data-key="chk_email">Dispatch email digest for daily portfolio allocation changes</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked>
+                        <span data-key="chk_push">Enable high-density desktop push warning alerts for price limits</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox">
+                        <span data-key="chk_sound">Play alert buzzer audio on high-frequency Level 2 orders crossings</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" checked>
+                        <span data-key="chk_earnings">Pre-warn options delta risk 48 hours prior to corporate earnings reports</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Security change password -->
+            <div class="settings-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 1.25rem;" data-key="sec_pass_title">Change Access Password</h3>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label data-key="lbl_new_pass">New Password</label>
+                        <input type="password" class="form-control" placeholder="••••••••">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label data-key="lbl_confirm_pass">Confirm Password</label>
+                        <input type="password" class="form-control" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <button class="btn-settings-save" style="margin-top: 1.5rem;" onclick="alert('Security credentials updated!')">
+                    <span data-key="btn_change_pass">Change Password</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrolling Index Ticker Ribbon -->
+    <div class="pf-ticker-container">
+        <div class="pf-ticker-wrap" id="marketTickerMarquee">
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            var lang = localStorage.getItem('starta-lang') || localStorage.getItem('lang') || 'en';
+            
+            var T = {
+                en: {
+                    nav_home: 'Home',
+                    nav_portfolios: 'Portfolios',
+                    nav_pf_list: 'Portfolio List',
+                    nav_pf1: 'Self Improving Brain',
+                    nav_pf2: 'Capitol Shadow',
+                    nav_pf3: 'Cautious Sniper',
+                    nav_market_pulse: 'Market Pulse',
+                    nav_alerts: 'Alerts',
+                    nav_research: 'Research & AI',
+                    nav_settings: 'Settings',
+                    nav_trading: 'Trading',
+                    nav_orders: 'Orders',
+                    nav_crypto: 'Crypto Terminal',
+                    nav_options: 'Options Lab',
+                    nav_screener: 'Screener',
+                    nav_history: 'Account History',
+                    set_tag: 'System Preferences',
+                    set_title: 'Profile & Settings',
+                    set_lbl_lang: 'Interface Language',
+                    set_lbl_theme: 'Visual Palette Theme',
+                    opt_theme_dark: 'Institutional Dark solar',
+                    opt_theme_light: 'Institutional Light paper',
+                    alpaca_title: 'Alpaca API Integrations',
+                    alpaca_sub: 'Configure your live paper trading keys. Transactions are pushed directly using these secure parameters.',
+                    set_lbl_key: 'Alpaca Key ID',
+                    set_lbl_secret: 'Alpaca Secret Key',
+                    btn_save_cred: 'Update Credentials',
+                    notif_title: 'Alert & Push Preferences',
+                    notif_sub: 'Configure how and when the neural system warning flags get dispatched to your device.',
+                    chk_email: 'Dispatch email digest for daily portfolio allocation changes',
+                    chk_push: 'Enable high-density desktop push warning alerts for price limits',
+                    chk_sound: 'Play alert buzzer audio on high-frequency Level 2 orders crossings',
+                    chk_earnings: 'Pre-warn options delta risk 48 hours prior to corporate earnings reports',
+                    sec_pass_title: 'Change Access Password',
+                    lbl_new_pass: 'New Password',
+                    lbl_confirm_pass: 'Confirm Password',
+                    btn_change_pass: 'Change Password'
+                },
+                ar: {
+                    nav_home: 'الرئيسية',
+                    nav_portfolios: 'المحافظ',
+                    nav_pf_list: 'قائمة المحافظ',
+                    nav_pf1: 'الدماغ ذاتي التحسين',
+                    nav_pf2: 'ظل الكابيتول',
+                    nav_pf3: 'القناص الحذر',
+                    nav_market_pulse: 'نبض السوق',
+                    nav_alerts: 'التنبيهات',
+                    nav_research: 'الأبحاث والذكاء',
+                    nav_settings: 'الإعدادات',
+                    nav_trading: 'التداول',
+                    nav_orders: 'الأوامر',
+                    nav_crypto: 'محطة العملات الرقمية',
+                    nav_options: 'مختبر الخيارات',
+                    nav_screener: 'فلتر الأسهم',
+                    nav_history: 'سجل الحساب',
+                    set_tag: 'تفضيلات المنظومة',
+                    set_title: 'الملف الشخصي والإعدادات',
+                    set_lbl_lang: 'لغة الواجهة الرسومية',
+                    set_lbl_theme: 'سمة المظهر والألوان',
+                    opt_theme_dark: 'السمة الداكنة (Dark Solar)',
+                    opt_theme_light: 'السمة المضيئة (Light Paper)',
+                    alpaca_title: 'ربط مفاتيح Alpaca API',
+                    alpaca_sub: 'قم بتهيئة مفاتيح حساب Alpaca Paper التابع لك لتوجيه وإدارة صفقات التداول الفعلي.',
+                    set_lbl_key: 'معرف المفتاح (Key ID)',
+                    set_lbl_secret: 'المفتاح السري (Secret Key)',
+                    btn_save_cred: 'تحديث بيانات الربط',
+                    notif_title: 'تفضيلات التنبيهات والإشعارات',
+                    notif_sub: 'اضبط كيفية وتوقيت إرسال إشعارات وتنبيهات النظام العصبي الفورية لهاتفك أو حاسوبك.',
+                    chk_email: 'إرسال ملخص بالبريد الإلكتروني لتغييرات وتدوير المحافظ اليومية',
+                    chk_push: 'تفعيل إشعارات سطح المكتب الفورية لتحركات الأسعار الهامة',
+                    chk_sound: 'تشغيل نغمة تنبيه صوتية عند تنفيذ صفقات المستوى الثاني الكبرى',
+                    chk_earnings: 'تنبيه بمخاطر عقود الخيارات ٤٨ ساعة قبل تقارير أرباح الشركات المودعة',
+                    sec_pass_title: 'تغيير كلمة المرور الشخصية',
+                    lbl_new_pass: 'كلمة المرور الجديدة',
+                    lbl_confirm_pass: 'تأكيد كلمة المرور',
+                    btn_change_pass: 'تعديل كلمة المرور'
+                }
+            };
+
+            function apply(l) {
+                lang = l;
+                localStorage.setItem('starta-lang', l);
+                document.documentElement.lang = l;
+                document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+                
+                var toggle = document.getElementById('langToggle');
+                if (toggle) toggle.textContent = l === 'ar' ? 'EN' : 'AR';
+                
+                // Set dropdown selections
+                document.getElementById('settingsLangSelect').value = l;
+                
+                var dict = T[l] || T.en;
+                document.querySelectorAll('[data-key]').forEach(function(el) {
+                    var k = el.getAttribute('data-key');
+                    if (dict[k]) {
+                        el.innerHTML = dict[k];
+                    }
+                });
+
+                if (l === 'ar') {
+                    document.getElementById('profileDisplayName').textContent = 'مدير الكميات الرقمي';
+                    document.getElementById('profileEmail').textContent = 'director@startamarkets.com';
+                } else {
+                    document.getElementById('profileDisplayName').textContent = 'Quant Director';
+                    document.getElementById('profileEmail').textContent = 'director@startamarkets.com';
+                }
+            }
+
+            // Sync with settingsLangSelect
+            document.getElementById('settingsLangSelect').addEventListener('change', function() {
+                apply(this.value);
+            });
+
+            // Sync theme select dropdown
+            var themeSelect = document.getElementById('settingsThemeSelect');
+            themeSelect.value = StartaTheme.current();
+            themeSelect.addEventListener('change', function() {
+                StartaTheme.apply(this.value);
+            });
+
+            // Sync theme changes from nav theme toggle
+            document.addEventListener('starta:themechange', function(e) {
+                themeSelect.value = e.detail.theme;
+            });
+
+            document.getElementById('langToggle').addEventListener('click', function() {
+                apply(lang === 'ar' ? 'en' : 'ar');
+            });
+
+            apply(lang);
+
+            // Scrolling marquee
+            function updateMarquee() {
+                fetch('/api/market/quotes')
+                    .then(r => r.json())
+                    .then(data => {
+                        var el = document.getElementById('marketTickerMarquee');
+                        if (!el) return;
+                        var html = '';
+                        var symbols = ['SPY', 'QQQ', 'DIA', 'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META'];
+                        symbols.forEach(function(sym) {
+                            var q = data[sym];
+                            if (q) {
+                                var sign = q.change >= 0 ? '▲' : '▼';
+                                var cls = q.change >= 0 ? 'pf-pos' : 'pf-neg';
+                                html += `<div class="pf-ticker-item">
+                                    <span class="sym">${sym}</span>
+                                    <span class="price pf-num">$${q.price.toFixed(2)}</span>
+                                    <span class="chg ${cls} pf-num">${sign} ${q.changePct.toFixed(2)}%</span>
+                                </div>`;
+                            }
+                        });
+                        if (html) el.innerHTML = html + html;
+                    })
+                    .catch(err => console.warn('Ticker error:', err));
+            }
+            updateMarquee();
+            setInterval(updateMarquee, 12000);
+        })();
+    </script>
+</body>
+</html>

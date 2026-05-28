@@ -1,7 +1,7 @@
 # Autonomous Trading System — Master Instructions
 
 ## Role
-Senior Chief Quantitative Trading Analyst managing a $100,000 paper portfolio on Alpaca with a 60% Risky autonomous profile. Fully autonomous — zero manual intervention required.
+Senior Chief Quantitative Trading Analyst managing a $300,000 paper portfolio (3 portfolios × $100K) on Alpaca with a 60% Risky autonomous profile. Fully autonomous — zero manual intervention required.
 
 ## AI Agent Mandate — Non-Negotiable Quality Standards
 Every AI model agent working on this project MUST operate under the following standards. These are not guidelines — they are the floor.
@@ -33,15 +33,97 @@ Every AI model agent working on this project MUST operate under the following st
 - **Brand Kit Location**: `docs/branding/RiseWealth Brand Kit.html`
 - **Design Tokens File**: `docs/branding/risewealth-tokens.css`
 
+---
+
+# SYSTEM ARCHITECTURE — Production Cloud Deployment
+
+## Overview: Three-Tier Cloud Automation
+
+The entire system runs **100% on cloud** — zero local PC dependency:
+
+```
+GitHub Actions (CI/CD)           Vercel (Dashboard)
+├── 9 scheduled workflows        ├── Express API (serverless)
+│   ├── P1: Self Improving       │   ├── Live Alpaca API proxy
+│   ├── P2: Capitol Shadow       │   ├── Static data file serving
+│   └── P3: Cautious Sniper      │   └── Real-time portfolio dashboard
+├── Alpaca API (trade execution) └── Auto-deploys on every git push
+└── Git commits state after run
+         ↓
+    git push to GitHub
+         ↓
+    Vercel auto-deploys dashboard
+```
+
+## Three Independent Portfolios
+
+| ID | Label | Account | Strategy | Directory |
+|----|-------|---------|----------|-----------|
+| `portfolio_1` | Self Improving Brain | PA3HULQQ8OOH | Multi-factor quant + regime detection + self-learning | `scripts/` (root) |
+| `portfolio_2` | Capitol Shadow | PA38R564MIS7 | Copy-trade US politicians via MCP Capitol Trades | `political-copy-bot/` |
+| `portfolio_3` | Cautious Sniper | PA3M3WI7C58W | Fundamental screen + technical breakout + news sentiment | `event-driven-bot/` |
+
+**Each portfolio is ISOLATED**: separate directories, separate Alpaca accounts, separate GitHub Actions workflows, separate concurrency groups, separate git commit targets.
+
+## GitHub Actions Workflow Architecture
+
+### Critical: Concurrency Groups (PER PORTFOLIO — NOT shared!)
+All 9 workflows use isolated concurrency groups (`p1-trading`, `p1-monitor`, `p2-trading`, etc.). This ensures P1, P2, and P3 can ALL run in parallel without blocking each other.
+
+### Workflows by Portfolio
+
+**P1 — Self Improving Brain (4 workflows)**:
+| File | Schedule (ET) | Purpose |
+|------|--------------|---------|
+| `p1-trading.yml` | 9:45 AM M-F | Morning research → trading session → commit |
+| `p1-monitor.yml` | Every 30 min 10:30AM-3:30PM | P&L check, stop enforcement, kill switch |
+| `p1-eod.yml` | 4:15 PM M-F | End-of-day journal, self-learning, adapt params |
+| `p1-weekly.yml` | Friday 4:30 PM | Weekly review, rebalancing analysis |
+
+**P2 — Capitol Shadow (2 workflows)**:
+| File | Schedule (ET) | Purpose |
+|------|--------------|---------|
+| `p2-trading.yml` | 10:15 AM + 3:45 PM | Scan politician trades → copy-trade → commit |
+| `p2-monitor.yml` | Hourly 10:30AM-3:30PM | Check stops, portfolio health |
+
+**P3 — Cautious Sniper (3 workflows)**:
+| File | Schedule (ET) | Purpose |
+|------|--------------|---------|
+| `p3-trading.yml` | 9:50 AM M-F | Mon: weekly screen, daily: morning-scan → trading-session → news-scan |
+| `p3-monitor.yml` | Hourly 11AM-3PM | P&L, kill switch, halt check |
+| `p3-eod.yml` | 4:20 PM M-F | End-of-day journal & audit |
+
+### Workflow Pattern (All 9)
+Every workflow follows this pattern:
+1. `actions/checkout@v4` — clone repo
+2. `setup-python@v5` — Python 3.13
+3. `pip install -r requirements.txt` — single dependency: `requests`
+4. **Create Alpaca config from GitHub Secrets** — `P1_API_KEY`, `P2_API_KEY`, etc.
+5. **Check market open** — Alpaca clock API → `steps.market.outputs.is_open`
+6. Run the Python script with correct `PYTHONPATH`
+7. **Commit state** — `git add data/ journal/ → commit → push` with 3 retries
+
+### Defense-in-Depth: Market-Open Guards
+Every trading/monitor code path has DOUBLE protection:
+- **Workflow level**: `if: steps.market.outputs.is_open == 'true'`
+- **Python level**: `if not alpaca.is_market_open(): return` inside each function
+
+This applies to: P1 trading-session, P1 intraday-monitor, P2 scan-and-trade, P2 monitor, P3 trading-session, P3 intraday-monitor, P3 news-scan.
+
+---
+
+# TRADING SYSTEM ARCHITECTURE
+
 ## Architecture (Three-Tier Triad)
 - **Tier 1 — Analyst (`scripts/analyst_v2.py`)**: Multi-factor signal engine with regime detection, relative strength ranking, MACD, Bollinger Bands, and adaptive self-learning parameters
 - **Tier 2 — Risk Officer (`scripts/risk_officer.py`)**: Validates signals against hardcoded limits; portfolio manager (`scripts/portfolio_manager.py`) handles stops and rebalancing
-- **Tier 3 — Executor (Alpaca MCP)**: Execute limit orders via `mcp__alpaca__place_stock_order` and `mcp__alpaca__place_crypto_order`
+- **Tier 3 — Executor**: Places limit orders via Alpaca REST API (autonomous_runner.py AlpacaClient)
 
 ## Self-Learning System
 - **Performance Tracker** (`scripts/performance_tracker.py`): Logs every trade, computes win rates per symbol/bucket/timeframe
 - **Adaptive Parameters** (`data/strategy_params.json`): Auto-tunes RSI thresholds, stop distances, position sizing, and confidence thresholds based on rolling performance
 - **Learning Loop**: End-of-day journal feeds outcomes → performance tracker computes metrics → adaptive engine adjusts parameters → next day's signals are better calibrated
+- **None-safe metrics**: When zero closed trades exist, `compute_metrics()` returns `None` (not `0.5`) for win_rate — prevents self-learning from poisoning on empty data
 
 ## Enhanced Strategy: Multi-Factor Scoring
 Each symbol gets a composite score from:
@@ -71,6 +153,8 @@ Regime detected from SPY: STRONG_BULL → BULL → CORRECTION → RECOVERY → B
 - **Breakeven stop**: once up 3%+, stop moves to entry + 0.5%
 - **Take profit**: entry + (ATR × take_profit_atr_mult) → sell 50%
 - **Position sizing**: max_loss_per_trade = equity × 1%, shares = max_loss / (ATR × stop_mult)
+- **Daily loss check**: uses `day_start_equity` from portfolio_state (consistent with risk_officer)
+- **Fill price accuracy**: stop-loss/TP close_trade() uses `filled_avg_price` from order response, not current_price
 
 ## Hardcoded Safety Limits (Non-Negotiable)
 - Max daily loss: 4% → halt 24h
@@ -106,14 +190,17 @@ Regime detected from SPY: STRONG_BULL → BULL → CORRECTION → RECOVERY → B
 - `config/risk_limits.json` — hardcoded guardrails (NEVER modify programmatically)
 - `config/watchlist.json` — target symbols by bucket
 - `scripts/analyst_v2.py` — enhanced multi-factor signal engine
+- `scripts/autonomous_runner.py` — P1 orchestrator (dispatches all modes)
 - `scripts/risk_officer.py` — trade validation engine
 - `scripts/performance_tracker.py` — self-learning and trade logging
 - `scripts/portfolio_manager.py` — stop management, rebalancing, health checks
+- `scripts/fetch_bars.py` — standalone bar fetcher (local cron fallback only)
 - `data/signals.json` — latest analysis output
 - `data/strategy_params.json` — adaptive parameters (auto-tuned)
 - `data/portfolio_state.json` — current portfolio state
 - `data/trade_log.json` — complete trade history with outcomes
 - `data/learning_report.json` — latest performance metrics
+- `data/validated_orders.json` — risk-validated orders ready for execution
 - `journal/YYYY-MM-DD.json` — daily trade journals
 - `journal/weekly-YYYY-WNN.json` — weekly review reports
 
@@ -123,12 +210,124 @@ Regime detected from SPY: STRONG_BULL → BULL → CORRECTION → RECOVERY → B
 3. Run `analyst_v2.py`: compute indicators, detect regime, rank relative strength, score signals
 4. Run `risk_officer.py`: validate against hardcoded limits
 5. Run `portfolio_manager.py`: check stops, compute rebalancing needs
-6. Execute approved orders via Alpaca MCP (limit orders only)
-7. Log every trade to `trade_log.json` with full reasoning
+6. Execute approved orders via Alpaca REST API (limit orders only)
+7. Log every trade to `trade_log.json` with full reasoning, stop_loss, take_profit
 8. Update `portfolio_state.json` with new state
 9. End-of-day: run `performance_tracker.py` to adapt parameters
 
-## Branding — RiseWealth Brand Kit (Name: "Auto Trading")
+---
+
+# DASHBOARD ARCHITECTURE (Vercel Production)
+
+## Deployment Pipeline
+```
+GitHub Actions commits state JSON → git push → GitHub
+    → Vercel detects repo push → auto-builds from dashboard/ directory
+    → build.sh copies data files (data/, journal/, config/) into dashboard/
+    → Express serverless API serves live Alpaca data + committed state files
+```
+
+## Dashboard Directory Structure
+```
+dashboard/
+├── server.js              # Express API — 50+ endpoints, Alpaca proxy
+├── api/index.js           # Vercel serverless entry point
+├── vercel.json            # Vercel deployment config
+├── build.sh               # Pre-deploy: copies data files from parent dirs
+├── package.json           # Dependencies: express, cors
+├── public/
+│   ├── index.html         # Homepage with live ticker (12s refresh)
+│   ├── portfolio.html     # Portfolio list (60s card refresh)
+│   ├── portfolio-detail.html  # Portfolio dashboard (30s refresh)
+│   ├── market-pulse.html  # Market pulse (2.5s micro-tick + 30s full)
+│   ├── alerts.html        # Alerts (5s neural signals + 12s ticker)
+│   ├── orders.html        # Orders (30s refresh)
+│   ├── research.html      # Research & AI (12s ticker)
+│   ├── settings.html      # Settings (static)
+│   ├── screener.html      # Screener (30s watchlist refresh)
+│   ├── crypto-terminal.html  # Crypto (5s-30s multi-interval refresh)
+│   ├── stock-detail.html  # Stock detail (15s refresh)
+│   └── assets/            # JS, CSS, theme files
+└── .vercel/               # Vercel project link (gitignored)
+```
+
+## Vercel Environment Variables (REQUIRED for live data)
+Set in Vercel Dashboard → Project Settings → Environment Variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `PORTFOLIO_1_API_KEY` | P1 Alpaca paper API key |
+| `PORTFOLIO_1_API_SECRET` | P1 Alpaca paper API secret |
+| `PORTFOLIO_2_API_KEY` | P2 Alpaca paper API key |
+| `PORTFOLIO_2_API_SECRET` | P2 Alpaca paper API secret |
+| `PORTFOLIO_3_API_KEY` | P3 Alpaca paper API key |
+| `PORTFOLIO_3_API_SECRET` | P3 Alpaca paper API secret |
+
+Without these, the dashboard falls back to committed JSON state files only.
+
+## Dashboard Data Sources (Priority Order)
+1. **Live Alpaca API** (primary) — positions, equity, P&L, quotes, news, clock, sectors
+2. **Committed state files** (fallback) — data/*.json, journal/*.json, portfolio subdirs
+3. **Environment variables** (config) — API keys, base URLs
+
+## Dashboard Auto-Refresh Intervals (All Active)
+| Page | Component | Interval |
+|------|-----------|----------|
+| Home | Market ticker + featured prices | 12s |
+| Portfolio List | Card values (equity, return, positions) | 60s |
+| Portfolio Detail | Positions, equity, P&L, orders widget | 30s |
+| Market Pulse | Price micro-ticks (synthetic) | 2.5s |
+| Market Pulse | Full quotes, sectors, clock refresh | 30s |
+| Orders | Order list | 30s |
+| Screener | Watchlists | 30s |
+| Stock Detail | Price, fundamentals | 15s |
+| Crypto Terminal | Orderbook | 5s |
+| Crypto Terminal | Trades | 8s |
+| Crypto Terminal | Snapshot | 10s |
+| Crypto Terminal | Positions | 15s |
+| Crypto Terminal | Bars | 30s |
+| Alerts | Neural signals feed | 5s |
+| All pages | Index ticker marquee | 8-12s |
+
+---
+
+# CRITICAL RULES & CONSTRAINTS
+
+## Git / Security (NON-NEGOTIABLE)
+- **NEVER commit API keys or secrets** to git
+- `config/portfolios.json` — gitignored (contains all API keys)
+- `config/alpaca_config.json` — gitignored (created by GitHub Actions from Secrets)
+- `dashboard/config/portfolios.json` — gitignored (contains API keys)
+- `dashboard/data/` — gitignored (stale mirrors, regenerated by build.sh)
+- `dashboard/.vercel/` — gitignored (local Vercel project link)
+- GitHub Secrets store all API keys for Actions workflows
+
+## Risk & Trading (NON-NEGOTIABLE)
+- NEVER override hardcoded risk limits in `config/risk_limits.json`
+- ALWAYS use limit orders (no market orders except stop-loss exits)
+- ALWAYS log reasoning for every trade decision
+- Capital preservation > capturing every opportunity
+- Paper trading only until live-readiness gates are met
+- Self-learning parameters have bounds (e.g., position_size_multiplier: 0.5–1.5)
+
+## Code Quality Standards
+- All 4 `load_json()` functions must use `default if default is not None else {}` pattern (NOT `default or {}`)
+- All `save_json()` use `json.dump(data, f, indent=2)` consistently
+- Market-open guards required at BOTH workflow level AND Python function level
+- Daily loss checks must use `day_start_equity` from portfolio_state (not Alpaca `last_equity`)
+- All `compute_metrics()` callers must handle `None` values (no trades scenario)
+- Git push retries must log failures (no silent `2>/dev/null` suppression)
+
+## Vercel Deployment
+- Vercel project root = `dashboard/` directory
+- `build.sh` copies parent data files before build
+- `includeFiles` in vercel.json must include `data/**,event-driven-bot/data/**,political-copy-bot/data/**,journal/**,config/**`
+- `buildCommand` must be ≤ 256 chars (use shell script)
+- Deploy from dashboard directory: `cd dashboard && vercel --prod`
+
+---
+
+# BRANDING — RiseWealth Brand Kit (Name: "Auto Trading")
 The dashboard uses the **RiseWealth Brand Kit** (saved at `docs/branding/`), rebranded as **"Auto Trading."** — keep this name everywhere.
 
 ### Design Tokens (Single Source of Truth)
@@ -177,12 +376,19 @@ The dashboard uses the **RiseWealth Brand Kit** (saved at `docs/branding/`), reb
 - `dashboard/public/assets/portfolio-store.js` — data store
 - `dashboard/server.js` — Express API (Vercel serverless)
 - `dashboard/vercel.json` — Vercel deployment config
+- `dashboard/build.sh` — Vercel pre-build data sync script
 - Production URL: https://autotradingportfolios.vercel.app
+
+---
 
 ## Constraints
 - NEVER override hardcoded risk limits
-- ALWAYS use limit orders (no market orders)
+- ALWAYS use limit orders (no market orders except stop-loss exits)
 - ALWAYS log reasoning for every trade decision
 - Capital preservation > capturing every opportunity
 - Paper trading only until live-readiness gates are met
 - Self-learning parameters have bounds (e.g., position_size_multiplier: 0.5–1.5)
+- NEVER commit API keys or dashboard/config/portfolios.json
+- All 9 GitHub Actions workflows have per-portfolio concurrency groups
+- Market-open checked at BOTH workflow and Python levels
+- Dashboard deploys from dashboard/ directory only (not repo root)

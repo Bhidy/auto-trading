@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stocks Research & Insights Center | Starta Markets</title>
+    <meta name="description" content="Access deep neural sentiment analysis, portfolio strategies breakdowns, and methodology disclaimers.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        .research-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+        }
+        @media(max-width: 1024px) {
+            .research-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .research-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--pf-radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+        .ai-input-wrap {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 500px;
+            margin: 1.5rem 0 2rem;
+        }
+        .ai-btn-analyze {
+            background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%);
+            color: #FFF7EE !important;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 99px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(229, 90, 31, 0.25);
+            transition: all 150ms ease;
+        }
+        .ai-btn-analyze:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(229, 90, 31, 0.35);
+        }
+        .radial-sentiment-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .radial-sentiment-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .circular-chart {
+            width: 110px;
+            height: 110px;
+        }
+        .circle-bg {
+            fill: none;
+            stroke: var(--line);
+            stroke-width: 2.8;
+        }
+        .circle-fill-green {
+            fill: none;
+            stroke: #2ecc71;
+            stroke-width: 2.8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.35s ease;
+        }
+        .circle-fill-orange {
+            fill: none;
+            stroke: #FF8A3D;
+            stroke-width: 2.8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.35s ease;
+        }
+        .circle-fill-red {
+            fill: none;
+            stroke: #e74c3c;
+            stroke-width: 2.8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.35s ease;
+        }
+        .percentage-text {
+            font-family: var(--pf-mono);
+            font-size: 8px;
+            font-weight: 800;
+            text-anchor: middle;
+            fill: var(--ink);
+        }
+        .strategy-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .strategy-card {
+            background: rgba(255,255,255,0.015);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .compliance-footer {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 5rem;
+            text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .compliance-box {
+            background: rgba(26, 15, 8, 0.4);
+            border: 1px solid var(--line);
+            border-radius: var(--pf-radius-sm);
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.6;
+            backdrop-filter: blur(10px);
+        }
+        .analysis-output-box {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: none;
+            animation: fade-in-up 350ms ease;
+        }
+        @keyframes fade-in-up {
+            0% { transform: translateY(15px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+    
+    <!-- Navbar -->
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;"></span>
+                    Market Pulse
+                </a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" class="active" data-key="nav_research" style="color: var(--teal); font-weight: 700; border: 1px solid rgba(229, 90, 31, 0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft); display: inline-flex; align-items: center; gap: 0.35rem;">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Title -->
+    <div style="padding-top: 6rem; text-align: center; margin-bottom: 2.5rem;">
+        <span class="section-tag" data-key="research_tag">Neural Quant Intelligence</span>
+        <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.25rem; color: var(--ink);" data-key="research_title">AI Research & Insights</h2>
+    </div>
+
+    <!-- Main Section -->
+    <div class="research-grid">
+        <!-- Left: Neural Stock analysis & Strategy Explanation -->
+        <div>
+            <!-- AI Stock Analysis -->
+            <div class="research-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink);" data-key="box_title">Neural Stock Analyst</h3>
+                <p style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;" data-key="box_sub">Input asset symbol and run deep neural analysis for detailed catalysts splits, risk gauges, and target score.</p>
+                
+                <div class="ai-input-wrap">
+                    <input type="text" class="search-input" id="researchSymbolInput" style="margin:0;" placeholder="e.g. NVDA, AAPL, MSFT" value="NVDA">
+                    <button class="ai-btn-analyze" id="researchAnalyzeBtn" data-key="btn_analyze">Analyze</button>
+                </div>
+
+                <!-- Analysis Dynamic Output -->
+                <div class="analysis-output-box" id="analysisOutputBox">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+                        <div>
+                            <h4 style="font-size: 1.35rem; font-weight:800; color:var(--ink);" id="outSymbolName">NVDA</h4>
+                            <span style="font-size: 0.75rem; color:var(--muted);" id="outCompName">NVIDIA Corporation</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:0.65rem; color:var(--muted); display:block;" data-key="out_confidence">NEURAL CONFIDENCE</span>
+                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:1.5rem; color:var(--teal);" id="outScore">9.2 / 10</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <h5 style="font-size:0.75rem; text-transform:uppercase; font-family:var(--pf-mono); color:var(--teal); margin-bottom:0.4rem;" data-key="out_catalysts">Growth Catalysts</h5>
+                        <p style="font-size:0.85rem; line-height:1.6; color:var(--ink);" id="outCatalystsText"></p>
+                    </div>
+
+                    <div>
+                        <h5 style="font-size:0.75rem; text-transform:uppercase; font-family:var(--pf-mono); color:#e74c3c; margin-bottom:0.4rem;" data-key="out_risks">Identified Risk Indexes</h5>
+                        <p style="font-size:0.85rem; line-height:1.6; color:var(--ink);" id="outRisksText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Holding explanation panel -->
+            <div class="research-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 1.5rem;" data-key="strat_title">Active Bot Allocations Explanation</h3>
+                
+                <div class="strategy-list">
+                    <div class="strategy-card">
+                        <div class="strategy-header">
+                            <h4 style="font-weight: 800; color: var(--ink); font-size: 1rem;" data-key="strat1_name">Self Improving Brain (Quant Neural)</h4>
+                            <span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--teal); font-weight:700;" data-key="strat1_style">CONVEX GROWTH</span>
+                        </div>
+                        <p style="font-size:0.82rem; line-height:1.6; color:var(--muted);" data-key="strat1_desc">Holds high-liquidity indexes and dominant tech shares (SPY, NVDA, AAPL). Automatically rotates allocations into cash or safe-havens upon detecting high-frequency market volume drop patterns.</p>
+                    </div>
+
+                    <div class="strategy-card">
+                        <div class="strategy-header">
+                            <h4 style="font-weight: 800; color: var(--ink); font-size: 1rem;" data-key="strat2_name">Capitol Shadow (Legislative Copy)</h4>
+                            <span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--teal); font-weight:700;" data-key="strat2_style">SECTORIAL FLOW</span>
+                        </div>
+                        <p style="font-size:0.82rem; line-height:1.6; color:var(--muted);" data-key="strat2_desc">Emulates public congressional purchase filings. Focuses tightly on government contracts pipelines, infrastructure spending beneficiaries, and technological semiconductor leaders (MSFT, NVDA).</p>
+                    </div>
+
+                    <div class="strategy-card">
+                        <div class="strategy-header">
+                            <h4 style="font-weight: 800; color: var(--ink); font-size: 1rem;" data-key="strat3_name">Cautious Sniper (Momentum Swing)</h4>
+                            <span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--teal); font-weight:700;" data-key="strat3_style">SCALPING PROFILE</span>
+                        </div>
+                        <p style="font-size:0.82rem; line-height:1.6; color:var(--muted);" data-key="strat3_desc">Uses precision indicators to catch short momentum curves. It deploys quick entry thresholds and algorithmic trailing-stops (tight 2%) to scalp quick price deviations on liquid indices.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Consensus News Sentiment Gauges -->
+        <div>
+            <div class="research-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--ink); margin-bottom: 0.5rem;" data-key="sentiment_title">Consensus News Sentiment</h3>
+                <p style="font-size:0.72rem; color:var(--muted); margin-bottom: 1.5rem;" data-key="sentiment_sub">Aggregated global sentiment ratio parsed from over 2,000 news articles daily.</p>
+                
+                <div class="radial-sentiment-wrap">
+                    <!-- Positive Gauge -->
+                    <div class="radial-sentiment-item">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle-fill-green" stroke-dasharray="68, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="20.35" class="percentage-text">68%</text>
+                        </svg>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #2ecc71;" data-key="sent_bullish">Bullish Sentiment</span>
+                    </div>
+
+                    <!-- Neutral Gauge -->
+                    <div class="radial-sentiment-item">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle-fill-orange" stroke-dasharray="20, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="20.35" class="percentage-text">20%</text>
+                        </svg>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #FF8A3D;" data-key="sent_neutral">Neutral Sentiment</span>
+                    </div>
+
+                    <!-- Negative Gauge -->
+                    <div class="radial-sentiment-item">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle-fill-red" stroke-dasharray="12, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="20.35" class="percentage-text">12%</text>
+                        </svg>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #e74c3c;" data-key="sent_bearish">Bearish Sentiment</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Legal Footer -->
+    <footer class="compliance-footer">
+        <div class="compliance-box" data-key="disclaimer_box">
+            <strong>NOT FINANCIAL ADVICE & METHODOLOGY DISCLOSURE</strong><br><br>
+            All information and automated research alerts published on Auto Trading are provided strictly for educational and data logging purposes. Auto Trading is a software utility and not a registered broker-dealer, financial advisor, or asset manager. Real-time connections are directed to Alpaca Paper Trading accounts. Investing in capital instruments involves high risk and possible loss. Neural AI scores represent mathematical evaluations derived from historical prices and simulated sentiment, and should not be used as investment advice.
+        </div>
+    </footer>
+
+    <!-- Scrolling Index Ticker Ribbon -->
+    <div class="pf-ticker-container">
+        <div class="pf-ticker-wrap" id="marketTickerMarquee">
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+        </div>
+    </div>
+
+    <script src="/assets/research.js"></script>
+</body>
+</html>

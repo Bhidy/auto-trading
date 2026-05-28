@@ -1,0 +1,24 @@
+# Vercel deployment — include dashboard + root data files + portfolio data subdirs
+# Exclude Python trading code, docs, and local files
+
+scripts/
+event-driven-bot/scripts/
+event-driven-bot/config/
+event-driven-bot/logs/
+event-driven-bot/journal/
+political-copy-bot/scripts/
+political-copy-bot/config/
+political-copy-bot/logs/
+political-copy-bot/journal/
+docs/
+logs/
+.agents/
+.claude/
+skills-lock.json
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.DS_Store
+*.plist
+isolated-portfolio/

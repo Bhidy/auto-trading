@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Terminal | Auto Trading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        /* ──── Crypto Terminal Layout ──── */
+        .ct-page { padding-top: 5rem; min-height: 100dvh; max-width: 1680px; margin: 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; padding-bottom: 2rem; }
+        .ct-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .ct-head h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.4rem, 2.8vw, 1.85rem); font-weight: 400; margin: 0; }
+        .ct-head p { color: var(--muted); font-size: .78rem; margin: .15rem 0 0; }
+
+        /* ──── Symbol Bar ──── */
+        .ct-sym-bar { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .ct-sym-pill { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .3rem .75rem; font-size: .72rem; font-weight: 700; font-family: var(--pf-mono); cursor: pointer; color: var(--muted); transition: all 150ms; white-space: nowrap; }
+        .ct-sym-pill:hover { border-color: var(--teal); color: var(--teal); }
+        .ct-sym-pill.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+        /* ──── KPI Strip ──── */
+        .ct-kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: .65rem; margin-bottom: 1rem; }
+        .ct-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: .65rem .85rem; }
+        .ct-kpi-label { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+        .ct-kpi-val { font-family: var(--pf-mono); font-size: 1.05rem; font-weight: 700; margin-top: .15rem; }
+        .ct-kpi-val.green { color: var(--pf-green); }
+        .ct-kpi-val.red { color: var(--pf-red); }
+
+        /* ──── Main Grid ──── */
+        .ct-grid { display: grid; grid-template-columns: 1fr 380px; gap: .85rem; align-items: start; }
+
+        /* ──── Chart Panel ──── */
+        .ct-chart-panel { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; }
+        .ct-chart-toolbar { display: flex; align-items: center; gap: .4rem; padding: .65rem .85rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+        .ct-tf-btn { background: transparent; border: 1px solid transparent; border-radius: 999px; padding: .2rem .55rem; font-size: .68rem; font-weight: 700; font-family: var(--pf-mono); cursor: pointer; color: var(--muted); transition: all 120ms; }
+        .ct-tf-btn:hover { color: var(--teal); border-color: var(--teal); }
+        .ct-tf-btn.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+        .ct-chart-wrap { height: 420px; position: relative; padding: .5rem; }
+        .ct-chart-canvas { width: 100%; height: 100%; }
+
+        /* ──── Right Column ──── */
+        .ct-right { display: flex; flex-direction: column; gap: .85rem; }
+
+        /* ──── Orderbook ──── */
+        .ct-orderbook { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; }
+        .ct-ob-header { padding: .55rem .85rem; border-bottom: 1px solid var(--line); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+        .ct-ob-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: .25rem .65rem; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; border-bottom: 1px solid var(--line); }
+        .ct-ob-cols span:last-child { text-align: right; }
+        .ct-ob-cols span:nth-child(2) { text-align: center; }
+        .ct-ob-body { max-height: 220px; overflow-y: auto; }
+        .ct-ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: .2rem .65rem; font-size: .72rem; font-family: var(--pf-mono); position: relative; align-items: center; }
+        .ct-ob-row span:last-child { text-align: right; }
+        .ct-ob-row span:nth-child(2) { text-align: center; font-weight: 700; }
+        .ct-ob-row--ask { color: var(--pf-red); }
+        .ct-ob-row--bid { color: var(--pf-green); }
+        .ct-ob-row .ct-ob-depth { position: absolute; top: 0; bottom: 0; opacity: .08; z-index: 0; }
+        .ct-ob-row--ask .ct-ob-depth { right: 0; background: var(--pf-red); }
+        .ct-ob-row--bid .ct-ob-depth { left: 0; background: var(--pf-green); }
+        html[dir="rtl"] .ct-ob-row--ask .ct-ob-depth { right: auto; left: 0; }
+        html[dir="rtl"] .ct-ob-row--bid .ct-ob-depth { left: auto; right: 0; }
+        .ct-ob-spread { text-align: center; padding: .35rem; font-size: .72rem; font-weight: 700; color: var(--muted); font-family: var(--pf-mono); background: rgba(255,255,255,.02); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+        /* ──── Trade Tape ──── */
+        .ct-tape { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; }
+        .ct-tape-header { padding: .55rem .85rem; border-bottom: 1px solid var(--line); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+        .ct-tape-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: .25rem .65rem; font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; border-bottom: 1px solid var(--line); }
+        .ct-tape-cols span:last-child { text-align: right; }
+        .ct-tape-body { max-height: 160px; overflow-y: auto; }
+        .ct-tape-row { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: .2rem .65rem; font-size: .72rem; font-family: var(--pf-mono); border-bottom: 1px solid rgba(255,255,255,.02); }
+        .ct-tape-row span:last-child { text-align: right; color: var(--muted); font-size: .65rem; }
+        .ct-tape-row.buy span:first-child { color: var(--pf-green); }
+        .ct-tape-row.sell span:first-child { color: var(--pf-red); }
+
+        /* ──── Order Entry ──── */
+        .ct-order { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; }
+        .ct-order-header { padding: .55rem .85rem; border-bottom: 1px solid var(--line); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+        .ct-order-body { padding: .85rem; }
+        .ct-side-toggle { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-bottom: .75rem; }
+        .ct-side-toggle button { flex: 1; padding: .4rem; border: none; background: transparent; color: var(--muted); font-weight: 700; font-size: .78rem; cursor: pointer; transition: all 150ms; font-family: 'Manrope', sans-serif; }
+        .ct-side-toggle button.active-buy { background: var(--pf-green); color: #fff; }
+        .ct-side-toggle button.active-sell { background: var(--pf-red); color: #fff; }
+        .ct-form-row { margin-bottom: .65rem; }
+        .ct-form-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-bottom: .2rem; display: block; }
+        .ct-form-input { width: 100%; background: var(--page); border: 1px solid var(--line); border-radius: .5rem; padding: .45rem .65rem; color: var(--ink); font-size: .82rem; font-family: var(--pf-mono); box-sizing: border-box; }
+        .ct-form-input:focus { outline: none; border-color: var(--teal); }
+        .ct-form-flex { display: flex; gap: .5rem; }
+        .ct-form-flex > div { flex: 1; }
+        .ct-submit-btn { width: 100%; padding: .55rem; border: none; border-radius: 999px; font-weight: 700; font-size: .82rem; cursor: pointer; color: #fff; margin-top: .35rem; transition: all 150ms; font-family: 'Manrope', sans-serif; }
+        .ct-submit-btn.buy { background: var(--pf-green); box-shadow: 0 6px 16px rgba(34,197,94,.25); }
+        .ct-submit-btn.buy:hover { filter: brightness(1.1); }
+        .ct-submit-btn.sell { background: var(--pf-red); box-shadow: 0 6px 16px rgba(239,68,68,.25); }
+        .ct-submit-btn.sell:hover { filter: brightness(1.1); }
+
+        /* ──── Positions Table ──── */
+        .ct-positions { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; margin-top: .85rem; }
+        .ct-pos-header { padding: .55rem .85rem; border-bottom: 1px solid var(--line); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+        .ct-pos-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+        .ct-pos-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; padding: .4rem .65rem; text-align: left; border-bottom: 1px solid var(--line); background: rgba(26,15,8,.02); }
+        [data-theme="dark"] .ct-pos-table th { background: rgba(255,255,255,.02); }
+        .ct-pos-table td { padding: .35rem .65rem; border-bottom: 1px solid var(--line); font-family: var(--pf-mono); white-space: nowrap; }
+        .ct-pos-table tr:last-child td { border-bottom: none; }
+        .ct-pos-table tr:hover td { background: var(--teal-soft); }
+        .ct-pos-empty { text-align: center; padding: 1.5rem; color: var(--muted); font-size: .75rem; }
+
+        /* ──── Loading Spinner ──── */
+        .ct-spinner { display: flex; align-items: center; justify-content: center; padding: 3rem; }
+        .ct-spinner::after { content: ''; width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--teal); border-radius: 50%; animation: ct-spin .7s linear infinite; }
+        @keyframes ct-spin { to { transform: rotate(360deg); } }
+
+        /* ──── Toast ──── */
+        @keyframes ct-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ──── Responsive ──── */
+        @media (max-width: 1100px) {
+            .ct-grid { grid-template-columns: 1fr; }
+            .ct-chart-wrap { height: 320px; }
+        }
+        @media (max-width: 640px) {
+            .ct-page { padding-left: .75rem; padding-right: .75rem; }
+            .ct-chart-wrap { height: 260px; }
+            .ct-kpi-strip { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse">Market Pulse</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger active" style="display: flex; align-items: center; gap: 0.35rem; color: var(--teal); font-weight: 700; border: 1px solid rgba(229,90,31,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft);">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="ct-page">
+        <!-- Header -->
+        <div class="ct-head">
+            <div>
+                <h1 data-key="ct_title">Crypto Terminal</h1>
+                <p data-key="ct_subtitle">Real-time cryptocurrency trading — orderbook, trade tape, and order entry</p>
+            </div>
+            <div style="display:flex;gap:.65rem;align-items:center;">
+                <select id="ctPortfolioSelect" class="ord-filter-select" style="min-width:200px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.4rem .85rem;color:var(--ink);font-size:.78rem;font-weight:600;cursor:pointer;"></select>
+            </div>
+        </div>
+
+        <!-- Symbol Bar -->
+        <div class="ct-sym-bar" id="ctSymBar"></div>
+
+        <!-- KPI Strip -->
+        <div class="ct-kpi-strip">
+            <div class="ct-kpi"><div class="ct-kpi-label" data-key="ct_last_price">Last Price</div><div class="ct-kpi-val" id="kpiLast">—</div></div>
+            <div class="ct-kpi"><div class="ct-kpi-label" data-key="ct_24h_change">24h Change</div><div class="ct-kpi-val" id="kpi24hChange">—</div></div>
+            <div class="ct-kpi"><div class="ct-kpi-label" data-key="ct_24h_high">24h High</div><div class="ct-kpi-val" id="kpi24hHigh">—</div></div>
+            <div class="ct-kpi"><div class="ct-kpi-label" data-key="ct_24h_low">24h Low</div><div class="ct-kpi-val" id="kpi24hLow">—</div></div>
+            <div class="ct-kpi"><div class="ct-kpi-label" data-key="ct_24h_vol">24h Volume</div><div class="ct-kpi-val" id="kpi24hVol">—</div></div>
+            <div class="ct-kpi"><div class="ct-kpi-label" data-key="ct_spread">Spread</div><div class="ct-kpi-val" id="kpiSpread">—</div></div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="ct-grid">
+            <!-- Left: Chart -->
+            <div>
+                <div class="ct-chart-panel">
+                    <div class="ct-chart-toolbar">
+                        <button class="ct-tf-btn active" data-tf="1Min">1M</button>
+                        <button class="ct-tf-btn" data-tf="5Min">5M</button>
+                        <button class="ct-tf-btn" data-tf="15Min">15M</button>
+                        <button class="ct-tf-btn" data-tf="1Hour">1H</button>
+                        <button class="ct-tf-btn" data-tf="4Hour">4H</button>
+                        <button class="ct-tf-btn" data-tf="1Day">1D</button>
+                    </div>
+                    <div class="ct-chart-wrap">
+                        <canvas id="ctChart" class="ct-chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Positions -->
+                <div class="ct-positions">
+                    <div class="ct-pos-header" data-key="ct_positions">Crypto Positions</div>
+                    <div id="ctPositions"><div class="ct-pos-empty" data-key="ct_no_positions">Select a portfolio to view positions</div></div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="ct-right">
+                <!-- Orderbook -->
+                <div class="ct-orderbook">
+                    <div class="ct-ob-header">
+                        <span data-key="ct_orderbook">Orderbook</span>
+                        <span id="obLastUpdate" style="font-size:.6rem;font-family:var(--pf-mono);font-weight:500;"></span>
+                    </div>
+                    <div class="ct-ob-cols"><span data-key="ct_size">Size</span><span data-key="ct_price">Price</span><span data-key="ct_total">Total</span></div>
+                    <div class="ct-ob-body" id="ctOrderbook"><div class="ct-spinner"></div></div>
+                </div>
+
+                <!-- Trade Tape -->
+                <div class="ct-tape">
+                    <div class="ct-tape-header" data-key="ct_trades">Recent Trades</div>
+                    <div class="ct-tape-cols"><span data-key="ct_price">Price</span><span data-key="ct_size">Size</span><span data-key="ct_time">Time</span></div>
+                    <div class="ct-tape-body" id="ctTrades"><div class="ct-spinner"></div></div>
+                </div>
+
+                <!-- Order Entry -->
+                <div class="ct-order">
+                    <div class="ct-order-header">
+                        <span data-key="ct_new_order">New Crypto Order</span>
+                        <span id="ctOrderSymbol" style="font-family:var(--pf-mono);font-weight:700;color:var(--ink);font-size:.78rem;">BTC/USD</span>
+                    </div>
+                    <div class="ct-order-body">
+                        <div class="ct-side-toggle">
+                            <button id="ctBuyBtn" class="active-buy" data-key="ct_buy">BUY</button>
+                            <button id="ctSellBtn" data-key="ct_sell">SELL</button>
+                        </div>
+                        <div class="ct-form-flex">
+                            <div class="ct-form-row">
+                                <label class="ct-form-label" data-key="ct_order_type">Order Type</label>
+                                <select id="ctOrderType" class="ct-form-input" style="cursor:pointer;">
+                                    <option value="market">Market</option>
+                                    <option value="limit" selected>Limit</option>
+                                    <option value="stop">Stop</option>
+                                    <option value="stop_limit">Stop Limit</option>
+                                </select>
+                            </div>
+                            <div class="ct-form-row">
+                                <label class="ct-form-label" data-key="ct_tif">Time in Force</label>
+                                <select id="ctTif" class="ct-form-input" style="cursor:pointer;">
+                                    <option value="gtc" selected>GTC</option>
+                                    <option value="day">DAY</option>
+                                    <option value="ioc">IOC</option>
+                                    <option value="fok">FOK</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="ct-form-flex">
+                            <div class="ct-form-row">
+                                <label class="ct-form-label" data-key="ct_qty">Quantity</label>
+                                <input type="number" id="ctQty" class="ct-form-input" placeholder="0.00" step="any" min="0">
+                            </div>
+                            <div class="ct-form-row">
+                                <label class="ct-form-label" data-key="ct_notional">Notional ($)</label>
+                                <input type="number" id="ctNotional" class="ct-form-input" placeholder="0.00" step="any" min="0">
+                            </div>
+                        </div>
+                        <div class="ct-form-row" id="ctLimitRow">
+                            <label class="ct-form-label" data-key="ct_limit_price">Limit Price</label>
+                            <input type="number" id="ctLimitPrice" class="ct-form-input" placeholder="0.00" step="any" min="0">
+                        </div>
+                        <div class="ct-form-row" id="ctStopRow" style="display:none;">
+                            <label class="ct-form-label" data-key="ct_stop_price">Stop Price</label>
+                            <input type="number" id="ctStopPrice" class="ct-form-input" placeholder="0.00" step="any" min="0">
+                        </div>
+                        <button id="ctSubmitOrder" class="ct-submit-btn buy" data-key="ct_place_order">Place Buy Order</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/crypto-terminal.js"></script>
+</body>
+</html>

@@ -17,7 +17,10 @@ def load_config():
         return json.load(f)
 
 def load_signals():
-    with open(os.path.join(DATA_DIR, "signals.json")) as f:
+    signal_file = os.path.join(DATA_DIR, "signals.json")
+    if not os.path.exists(signal_file):
+        return {"signals": []}
+    with open(signal_file) as f:
         return json.load(f)
 
 def load_portfolio_state():
@@ -52,6 +55,8 @@ def validate_trade(signal, portfolio, limits):
     price = signal["indicators"]["price"]
     rm = signal.get("risk_management", {})
     suggested_pct = rm.get("suggested_position_pct") or signal.get("suggested_position_size_pct") or 1.0
+    stop_loss = rm.get("stop_loss")
+    take_profit = rm.get("take_profit")
 
     if portfolio.get("halted"):
         return {"approved": False, "rejections": [f"SYSTEM HALTED: {portfolio.get('halt_reason', 'Unknown')}"]}
@@ -80,11 +85,10 @@ def validate_trade(signal, portfolio, limits):
     if portfolio["trades_today"] >= limits["max_trades_per_day"]:
         rejections.append(f"Max trades per day ({limits['max_trades_per_day']}) reached")
 
-    # Position size limits
+    # Position size limits — cap to institutional max but approve at capped size
     max_pct = limits["max_single_position_pct"].get(instrument_type, limits["max_single_position_pct"]["stock"])
     if suggested_pct > max_pct:
         suggested_pct = max_pct
-        rejections.append(f"Position size capped at {max_pct}% for {instrument_type}")
 
     # Crypto exposure
     if instrument_type == "crypto":
@@ -119,7 +123,7 @@ def validate_trade(signal, portfolio, limits):
     dollar_amount = round(equity * suggested_pct / 100, 2)
     qty = int(dollar_amount / price) if price > 0 else 0
 
-    return {
+    result = {
         "approved": approved,
         "symbol": symbol,
         "signal": sig,
@@ -129,6 +133,11 @@ def validate_trade(signal, portfolio, limits):
         "approved_qty": qty,
         "price": price,
     }
+    if stop_loss is not None:
+        result["stop_loss"] = stop_loss
+    if take_profit is not None:
+        result["take_profit"] = take_profit
+    return result
 
 def run_validation():
     limits = load_config()

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & Market Alerts Manager | Starta Markets</title>
+    <meta name="description" content="Set real-time price thresholds, volume triggers, moving average crossovers, and neural AI signal alerts.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        .alerts-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem 5rem;
+        }
+        @media(max-width: 900px) {
+            .alerts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .alerts-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--pf-radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-family: var(--pf-mono);
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        .form-control {
+            width: 100%;
+            background: rgba(26, 15, 8, 0.4);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            color: var(--ink);
+            font-size: 0.9rem;
+            transition: border-color 200ms ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+        .alert-btn {
+            background: var(--teal);
+            color: #FFF7EE;
+            border: none;
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 99px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: box-shadow 200ms ease, transform 200ms ease;
+            margin-top: 1rem;
+        }
+        .alert-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(229, 90, 31, 0.25);
+        }
+        /* Table Layout */
+        .alerts-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .alerts-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--line);
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            font-family: var(--pf-mono);
+            letter-spacing: 0.05em;
+        }
+        html[dir="rtl"] .alerts-table th {
+            text-align: right;
+        }
+        .alerts-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--line);
+            color: var(--ink);
+        }
+        .alerts-table tr:hover {
+            background: rgba(255,255,255,0.01);
+        }
+        /* Switch styling */
+        .switch-toggle {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 20px;
+        }
+        .switch-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--line);
+            transition: .3s;
+            border-radius: 34px;
+        }
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: var(--ink);
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-round {
+            background-color: var(--teal);
+        }
+        input:checked + .slider-round:before {
+            transform: translateX(18px);
+        }
+        .btn-delete {
+            background: transparent;
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            padding: 0.25rem 0.55rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            transition: all 150ms ease;
+        }
+        .btn-delete:hover {
+            background: #e74c3c;
+            color: #FFF7EE;
+        }
+        /* Live feed warning logs */
+        .live-feed-box {
+            background: rgba(26, 15, 8, 0.4);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            height: 380px;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            font-family: var(--pf-mono);
+        }
+        .live-feed-card {
+            border-left: 3px solid var(--teal);
+            background: var(--surface);
+            padding: 0.85rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            animation: slide-in-right 250ms ease;
+        }
+        html[dir="rtl"] .live-feed-card {
+            border-left: none;
+            border-right: 3px solid var(--teal);
+        }
+        .live-feed-card.danger {
+            border-color: #e74c3c;
+        }
+        .live-feed-card.success {
+            border-color: #2ecc71;
+        }
+        @keyframes slide-in-right {
+            0% { transform: translateX(20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+    
+    <!-- Navbar -->
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_portfolios">Portfolios</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;"></span>
+                    Market Pulse
+                </a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_trading">Trading</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" class="active" data-key="nav_alerts" style="color: var(--teal); font-weight: 700; border: 1px solid rgba(229,90,31,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft); display: inline-flex; align-items: center; gap: 0.35rem;">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Title -->
+    <div style="padding-top: 6rem; text-align: center; margin-bottom: 2.5rem;">
+        <span class="section-tag" data-key="alerts_tag">Signal Control Center</span>
+        <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.25rem; color: var(--ink);" data-key="alerts_title">AI & Market Alerts</h2>
+    </div>
+
+    <!-- Main Alerts Section -->
+    <div class="alerts-grid">
+        <!-- Left: Create Alerts Form -->
+        <div>
+            <div class="alerts-card">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--ink); margin-bottom: 1.5rem;" data-key="form_title">Deploy Smart Alert</h3>
+                
+                <div class="form-group">
+                    <label data-key="label_symbol">Asset Symbol</label>
+                    <input type="text" class="form-control" id="alertSymbolInput" placeholder="e.g. AAPL, NVDA, SPY" value="AAPL">
+                </div>
+
+                <div class="form-group">
+                    <label data-key="label_type">Alert Type</label>
+                    <select class="form-control" id="alertTypeSelect">
+                        <option value="price_gt" data-key="opt_p_gt">Price crosses above ($)</option>
+                        <option value="price_lt" data-key="opt_p_lt">Price crosses below ($)</option>
+                        <option value="volume_gt" data-key="opt_v_gt">Volume spike above (Shares)</option>
+                        <option value="news_sentiment" data-key="opt_sentiment">AI news sentiment negative</option>
+                        <option value="earnings" data-key="opt_earnings">Earnings release announcement</option>
+                        <option value="technical_ma" data-key="opt_ma">Technical MA(20/50) crossover</option>
+                        <option value="ai_signal" data-key="opt_ai_signal">AI Neural Buy/Sell Signal</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label id="triggerValLabel" data-key="label_val">Threshold Value</label>
+                    <input type="number" class="form-control" id="alertThresholdInput" value="195.00">
+                </div>
+
+                <button class="alert-btn" id="createAlertBtn" data-key="btn_deploy">Deploy Alert</button>
+            </div>
+            
+            <!-- AI Real-Time Signals Feed -->
+            <div class="alerts-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--teal);" data-key="feed_title">Neural Signals Feed</h3>
+                    <span style="font-size:0.65rem; padding: 0.15rem 0.5rem; border-radius:99px; background:var(--teal-soft); color:var(--teal); font-family:var(--pf-mono);" data-key="live_label">LIVE STREAM</span>
+                </div>
+                <div class="live-feed-box" id="neuralSignalsFeed">
+                    <!-- Dynamic feeds -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Active Alerts Grid -->
+        <div>
+            <div class="alerts-card" style="overflow-x: auto;">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--ink); margin-bottom: 1.5rem;" data-key="active_title">Active Tactical Alerts</h3>
+                
+                <table class="alerts-table">
+                    <thead>
+                        <tr>
+                            <th data-key="col_sym">Symbol</th>
+                            <th data-key="col_type">Condition Type</th>
+                            <th data-key="col_val">Threshold</th>
+                            <th data-key="col_status">Status</th>
+                            <th data-key="col_action">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeAlertsBody">
+                        <!-- Dynamic active alerts -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrolling Index Ticker Ribbon -->
+    <div class="pf-ticker-container">
+        <div class="pf-ticker-wrap" id="marketTickerMarquee">
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+            <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">$549.61</span> <span class="chg pf-pos pf-num">▲ +0.23%</span></div>
+            <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">$727.98</span> <span class="chg pf-pos pf-num">▲ +0.43%</span></div>
+            <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">$507.08</span> <span class="chg pf-neg pf-num">▼ -0.22%</span></div>
+        </div>
+    </div>
+
+    <script src="/assets/alerts.js"></script>
+</body>
+</html>

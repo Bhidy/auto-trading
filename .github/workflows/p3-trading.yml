@@ -17,7 +17,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: trading-pipeline
+  group: p3-trading
   cancel-in-progress: false
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install -r requirements.txt
 
       - name: Create Alpaca config
         run: |
@@ -59,7 +59,7 @@ jobs:
           "
 
       - name: Weekly screen (Mondays only)
-        if: steps.market.outputs.is_open == 'true' && (github.event.inputs.mode == 'full' || github.event.inputs.mode == 'weekly-screen')
+        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'weekly-screen')
         run: |
           DAY=$(date -u +%u)
           if [ "$DAY" = "1" ] || [ "${{ github.event.inputs.mode }}" = "weekly-screen" ]; then
@@ -89,11 +89,39 @@ jobs:
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
           python3 scripts/event_driven_bot.py news-scan || true
 
+      - name: Sync data to dashboard for Vercel deploy
+        if: always()
+        run: |
+          mkdir -p dashboard/data dashboard/event-driven-bot/data dashboard/political-copy-bot/data dashboard/journal dashboard/config
+          cp data/*.json dashboard/data/ 2>/dev/null || true
+          cp event-driven-bot/data/*.json dashboard/event-driven-bot/data/ 2>/dev/null || true
+          cp political-copy-bot/data/*.json dashboard/political-copy-bot/data/ 2>/dev/null || true
+          cp journal/*.json dashboard/journal/ 2>/dev/null || true
+          cp config/risk_limits.json config/watchlist.json dashboard/config/ 2>/dev/null || true
+          echo "Dashboard data synced"
+
       - name: Commit state
         if: always()
         run: |
           git config user.name "Auto Trading Bot"
           git config user.email "bot@autotrading.local"
           git add event-driven-bot/data/ event-driven-bot/journal/ -f 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "P3: $(date -u +%Y-%m-%d) trading pipeline"
-          for i in 1 2 3; do git pull --rebase origin main 2>/dev/null; git push && break || sleep 5; done
+          git add dashboard/data/ dashboard/event-driven-bot/data/ dashboard/political-copy-bot/data/ dashboard/journal/ dashboard/config/ -f 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "P3: $(date -u +%Y-%m-%d) trading pipeline"
+            PUSHED=1
+            for i in 1 2 3; do
+              if git pull --rebase origin main && git push; then
+                echo "Push succeeded on attempt $i"
+                PUSHED=0
+                break
+              fi
+              echo "Push attempt $i failed, retrying in 5s..."
+              sleep 5
+            done
+            if [ "$PUSHED" -ne 0 ]; then
+              echo "WARNING: All push attempts failed — state saved locally but not synced to remote"
+            fi
+          fi

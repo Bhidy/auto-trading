@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Screener | Auto Trading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        .scr-page { padding-top: 5rem; min-height: 100dvh; max-width: 1650px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; padding-bottom: 3rem; }
+        .scr-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .scr-head h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; margin: 0; }
+        .scr-head p { color: var(--muted); font-size: .82rem; margin: .2rem 0 0; }
+        .scr-toolbar { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .scr-filter { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .4rem .85rem; color: var(--ink); font-size: .78rem; font-weight: 600; cursor: pointer; }
+        .scr-filter:focus { outline: none; border-color: var(--teal); }
+        .scr-search { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .4rem 1rem; color: var(--ink); font-size: .78rem; min-width: 250px; }
+        .scr-search:focus { outline: none; border-color: var(--teal); }
+        .scr-stats { display: flex; gap: 1.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .scr-stat { font-size: .78rem; color: var(--muted); }
+        .scr-stat strong { color: var(--ink); font-family: var(--pf-mono); }
+        .scr-table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; overflow: hidden; box-shadow: var(--shadow); }
+        .scr-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        .scr-table th { background: rgba(26,15,8,0.03); font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; padding: .65rem .85rem; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; cursor: pointer; }
+        [data-theme="dark"] .scr-table th { background: rgba(255,255,255,0.03); }
+        .scr-table th:hover { color: var(--teal); }
+        .scr-table td { padding: .5rem .85rem; border-bottom: 1px solid var(--line); font-family: var(--pf-mono); white-space: nowrap; }
+        .scr-table tr:last-child td { border-bottom: none; }
+        .scr-table tr:hover td { background: var(--teal-soft); }
+        .scr-badge { display: inline-flex; padding: .1rem .45rem; border-radius: 999px; font-size: .65rem; font-weight: 700; text-transform: uppercase; }
+        .scr-badge--yes { background: var(--pf-green-soft); color: var(--pf-green); }
+        .scr-badge--no { background: var(--pf-red-soft); color: var(--pf-red); }
+        .scr-badge--active { background: rgba(59,130,246,.12); color: #3b82f6; }
+        .scr-badge--inactive { background: rgba(148,163,184,.12); color: var(--muted); }
+        .scr-table-scroll { max-height: 70vh; overflow-y: auto; }
+        .scr-empty { text-align: center; padding: 3rem; color: var(--muted); }
+        .scr-load { text-align: center; padding: 2rem; color: var(--muted); font-size: .85rem; }
+
+        /* Watchlist Panel */
+        .scr-wl-section { margin-top: 2rem; }
+        .scr-wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .scr-wl-card { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: 1rem; transition: border-color 200ms; }
+        .scr-wl-card:hover { border-color: rgba(229,90,31,.25); }
+        .scr-wl-name { font-weight: 700; font-size: .92rem; margin-bottom: .5rem; }
+        .scr-wl-symbols { font-family: var(--pf-mono); font-size: .75rem; color: var(--muted); }
+        .scr-wl-actions { display: flex; gap: .45rem; margin-top: .65rem; }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/><rect x="300" y="666" width="320" height="64" fill="#FFC396"/><ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/><rect x="335" y="552" width="280" height="54" fill="#FFC396"/><ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/><rect x="375" y="454" width="240" height="46" fill="#FFC396"/><ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+                </svg>
+                <span style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span><span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/" data-key="nav_home">Home</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/portfolio.html" class="nav-dropdown-trigger" style="display:flex;align-items:center;gap:.35rem;"><span data-key="nav_portfolios">Portfolios</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/portfolio.html" data-key="nav_pf_list">Portfolio List</a>
+                        <a href="/portfolio-detail.html?id=portfolio_1" data-key="nav_pf1">Self Improving Brain</a>
+                        <a href="/portfolio-detail.html?id=portfolio_2" data-key="nav_pf2">Capitol Shadow</a>
+                        <a href="/portfolio-detail.html?id=portfolio_3" data-key="nav_pf3">Cautious Sniper</a>
+                    </div>
+                </div>
+                <a href="/market-pulse.html" data-key="nav_market_pulse">Market Pulse</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/orders.html" class="nav-dropdown-trigger active" style="display:flex;align-items:center;gap:.35rem;color:var(--teal);font-weight:700;border:1px solid rgba(229,90,31,0.2);padding:.25rem .75rem;border-radius:999px;background:var(--teal-soft);"><span data-key="nav_trading">Trading</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
+                        <a href="/options-lab.html" data-key="nav_options">Options Lab</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
+                <a href="/research.html" data-key="nav_research">Research & AI</a>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
+            </div>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="scr-page">
+        <div class="scr-head">
+            <div>
+                <h1 data-key="scr_title">Asset Screener</h1>
+                <p data-key="scr_subtitle">Browse and filter all tradable assets — stocks, ETFs, crypto, and options</p>
+            </div>
+        </div>
+
+        <div class="scr-toolbar">
+            <select id="filterClass" class="scr-filter">
+                <option value="us_equity" data-key="class_equity">US Equity</option>
+                <option value="crypto" data-key="class_crypto">Crypto</option>
+            </select>
+            <select id="filterStatus" class="scr-filter">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+            <select id="filterExchange" class="scr-filter">
+                <option value="">All Exchanges</option>
+                <option value="NASDAQ">NASDAQ</option>
+                <option value="NYSE">NYSE</option>
+                <option value="ARCA">ARCA</option>
+                <option value="AMEX">AMEX</option>
+                <option value="BATS">BATS</option>
+                <option value="OTC">OTC</option>
+            </select>
+            <input type="text" id="searchInput" class="scr-search" placeholder="Search by symbol or name...">
+            <div style="flex:1;"></div>
+            <button class="pf-btn pf-btn--sm" id="btnLoad" data-key="btn_search">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Search
+            </button>
+        </div>
+
+        <div class="scr-stats" id="scrStats"></div>
+
+        <div class="scr-table-wrap">
+            <div class="scr-table-scroll">
+                <table class="scr-table">
+                    <thead>
+                        <tr>
+                            <th data-key="th_symbol">Symbol</th>
+                            <th data-key="th_name">Name</th>
+                            <th data-key="th_class">Class</th>
+                            <th data-key="th_exchange">Exchange</th>
+                            <th data-key="th_status">Status</th>
+                            <th data-key="th_tradable">Tradable</th>
+                            <th data-key="th_fractionable">Fractional</th>
+                            <th data-key="th_shortable">Shortable</th>
+                            <th data-key="th_etb">Easy Borrow</th>
+                            <th data-key="th_marginable">Marginable</th>
+                            <th data-key="th_margin_req">Margin Req</th>
+                            <th data-key="th_min_order">Min Order</th>
+                            <th data-key="th_min_increment">Min Increment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scrTableBody">
+                        <tr><td colspan="13" class="scr-empty" data-key="scr_click_search">Click Search to load assets</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Watchlists Section -->
+        <div class="scr-wl-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+                <h2 style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;margin:0;" data-key="wl_title">Alpaca Watchlists</h2>
+                <div style="display:flex;gap:.5rem;align-items:center;">
+                    <select id="wlPortfolio" class="scr-filter" style="min-width:180px;"></select>
+                    <button class="pf-btn pf-btn--sm pf-btn--primary" id="btnNewWl" data-key="btn_new_wl">+ New Watchlist</button>
+                </div>
+            </div>
+            <div class="scr-wl-grid" id="wlGrid">
+                <div class="scr-empty" data-key="wl_empty">Select a portfolio to view watchlists</div>
+            </div>
+        </div>
+
+        <!-- New Watchlist Modal -->
+        <div class="ord-modal-bg" id="wlModal">
+            <div class="ord-modal" style="max-width:420px;">
+                <h3 style="font-family:'DM Serif Display',serif;font-weight:400;margin:0 0 1rem;" data-key="wl_create">Create Watchlist</h3>
+                <div class="ord-form-row">
+                    <label class="ord-form-label" data-key="wl_name">Name</label>
+                    <input type="text" id="wlName" class="ord-form-input" placeholder="My Watchlist">
+                </div>
+                <div class="ord-form-row">
+                    <label class="ord-form-label" data-key="wl_symbols">Symbols (comma separated)</label>
+                    <input type="text" id="wlSymbols" class="ord-form-input" placeholder="AAPL, MSFT, NVDA" style="text-transform:uppercase;">
+                </div>
+                <div style="display:flex;gap:.65rem;justify-content:flex-end;margin-top:1rem;">
+                    <button class="pf-btn" id="btnCancelWl" data-key="btn_cancel">Cancel</button>
+                    <button class="pf-btn pf-btn--primary" id="btnCreateWl" data-key="btn_create">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/portfolio-store.js"></script>
+    <script src="/assets/screener.js"></script>
+</body>
+</html>

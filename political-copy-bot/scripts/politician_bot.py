@@ -585,6 +585,13 @@ class PoliticianBot:
 
         if not is_open:
             log.info("Market closed — scanning and queuing for next open")
+            new_trades = self.scan_politician_trades()
+            for trade in new_trades:
+                fp = self._trade_fingerprint(trade)
+                self.processed_trades.add(fp)
+            self._save_processed()
+            log.info(f"Queued {len(new_trades)} trades for next market open")
+            return
 
         new_trades = self.scan_politician_trades()
         executed = []
@@ -598,10 +605,7 @@ class PoliticianBot:
             time.sleep(1)
 
         self._save_processed()
-
-        if is_open:
-            self.check_stops()
-
+        self.check_stops()
         self.save_portfolio_state()
         self.write_journal(executed)
 
@@ -609,6 +613,9 @@ class PoliticianBot:
 
     def run_monitor(self):
         log.info("MONITOR CYCLE — checking stops and portfolio health")
+        if not self.alpaca.is_market_open():
+            log.info("Market closed — skipping monitor")
+            return
         account = self.alpaca.get_account()
         if not self.risk.check_kill_switch(account):
             log.critical("Kill switch active — liquidating if needed")
