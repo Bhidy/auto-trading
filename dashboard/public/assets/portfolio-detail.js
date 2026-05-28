@@ -453,11 +453,11 @@
     var _stockBarCache = {};
     function fetchRealStockHistory(symbol, callback) {
         if (_stockBarCache[symbol]) { callback(_stockBarCache[symbol]); return; }
-        fetch('/api/market/bars/' + symbol + '?timeframe=1Day&limit=60')
+        fetch('/api/market/bars/' + symbol + '?timeframe=5Min&limit=78')
             .then(function(r) { return r.ok ? r.json() : []; })
             .then(function(bars) {
                 if (bars && bars.length > 0) {
-                    var history = bars.map(function(b) { return { date: (b.t || '').slice(0, 10), price: b.c }; });
+                    var history = bars.map(function(b) { return { date: (b.t || '').slice(0, 16), price: b.c }; });
                     _stockBarCache[symbol] = history;
                     callback(history);
                 } else {
@@ -854,46 +854,20 @@
             </div>`;
 
         } else if (pfId === 'portfolio_2') {
-            // GOVERNMENT COPY BOT PANELS (Leaderboard standings + senator trade logs timeline)
-            var politicians = [
-                { name: 'Michael McCaul', total: 200, buys: 144, sells: 56, ratio: '2.57 buys/sell' },
-                { name: 'John Curtis', total: 199, buys: 108, sells: 91, ratio: '1.19 buys/sell' },
-                { name: 'Marjorie Greene', total: 158, buys: 87, sells: 71, ratio: '1.23 buys/sell' },
-                { name: 'Nancy Pelosi', total: 21, buys: 11, sells: 9, ratio: '1.22 buys/sell' }
-            ];
-            var polRows = politicians.map(p => `
-                <div class="pf-pol-row">
-                    <span class="pf-pol-name">🇺🇸 ${escHtml(p.name)}</span>
-                    <span class="pf-pol-val pf-num">${p.total} Trades</span>
-                    <span class="pf-pol-pct pf-num pf-pos">${p.ratio}</span>
-                </div>
-            `).join('');
+            // GOVERNMENT COPY BOT PANELS
+            var polRows = (lang === 'ar' ? 'بيانات تداولات السياسيين قيد التحميل من Capitol Trades API...' : 'Politician trade data loading from Capitol Trades API...');
+            
+            leftPanel = '<div class="pf-card pf-panel" style="max-height:260px; overflow-y:auto;">' +
+                '<div class="pf-panel__title">Copy-Trade Leaderboard</div>' +
+                '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + polRows + '</div>' +
+            '</div>';
 
-            leftPanel = `<div class="pf-card pf-panel" style="max-height:260px; overflow-y:auto;">
-                <div class="pf-panel__title">👨‍💼 Copied Politician Standing Leaderboard</div>
-                <div style="display:flex; flex-direction:column; gap:0.45rem;">${polRows}</div>
-            </div>`;
+            var signalRows = '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang === 'ar' ? 'بيانات Capitol Trades قيد التحميل...' : 'Capitol Trades data pending refresh...') + '</div>';
 
-            var signalsList = (detailCache.signals || {}).processed_trades || [
-                { date: '2026-05-27', symbol: 'INTU', politician: 'Michael McCaul', size: '1K-15K', type: 'buy' },
-                { date: '2026-05-26', symbol: 'TER', politician: 'Marjorie Greene', size: '15K-50K', type: 'buy' },
-                { date: '2026-05-26', symbol: 'WDAY', politician: 'Nancy Pelosi', size: '100K-250K', type: 'buy' }
-            ];
-            var signalRows = signalsList.slice(0, 3).map(s => `
-                <div class="pf-pol-row" style="padding:0.5rem 0.85rem; background:transparent; border:none; border-bottom:1px dashed var(--line); border-radius:0;">
-                    <span class="pf-mock-badge-chip ${s.type === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg'}" style="font-size:0.6rem; padding:0.12rem 0.45rem;">${s.type.toUpperCase()}</span>
-                    <strong class="pf-num" style="font-size:0.85rem; color:var(--ink);">${s.symbol}</strong>
-                    <div style="text-align:end;">
-                        <span style="font-size:0.75rem; font-weight:700; display:block; color:var(--ink);">${escHtml(s.politician)}</span>
-                        <span style="font-size:0.65rem; color:var(--muted);">${s.size} · ${s.date}</span>
-                    </div>
-                </div>
-            `).join('');
-
-            rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">⚡ Capitol Trades Watchlist Timeline</div>
-                <div style="display:flex; flex-direction:column;">${signalRows || '<div class="pf-empty-inline">No pending trade catalysts</div>'}</div>
-            </div>`;
+            rightPanel = '<div class="pf-card pf-panel">' +
+                '<div class="pf-panel__title">Capitol Trades Watchlist</div>' +
+                '<div style="display:flex; flex-direction:column;">' + signalRows + '</div>' +
+            '</div>';
 
         } else {
             // EVENT DRIVEN BOT PANELS (Signal scorecard + news catalyst terminal scanner)

@@ -707,21 +707,27 @@
             </div>
 
             <div class="mp-header-item">
-                <span class="mp-header-label" data-key="lbl_adv_dec">Advancers / Decliners</span>
-                <span class="mp-header-val">3,124 / 1,980</span>
-                <span class="mp-header-meta pf-pos" style="font-size:0.68rem;"><span data-key="lbl_bullish_bias">Bullish Bias</span></span>
+                <span class="mp-header-label" id="spyHeaderLabel">S&P 500 (SPY)</span>
+                <span class="mp-header-val pf-num" id="spyHeaderPrice">—</span>
+                <span class="mp-header-meta pf-num" id="spyHeaderChg" style="font-size:0.68rem;">—</span>
+            </div>
+
+            <div class="mp-header-item">
+                <span class="mp-header-label">Nasdaq 100 (QQQ)</span>
+                <span class="mp-header-val pf-num" id="qqqHeaderPrice">—</span>
+                <span class="mp-header-meta pf-num" id="qqqHeaderChg" style="font-size:0.68rem;">—</span>
             </div>
 
             <div class="mp-header-item">
                 <span class="mp-header-label">Market Status</span>
-                <span class="mp-header-val" style="font-size:0.9rem;">NYSE/NASDAQ</span>
+                <span class="mp-header-val" style="font-size:0.9rem;" id="marketStatusLabel">—</span>
                 <span class="mp-header-meta" style="font-size:0.65rem;color:var(--muted);">Next Open: <strong id="nextOpenTime">—</strong></span>
             </div>
 
             <div class="mp-header-item">
-                <span class="mp-header-label" data-key="lbl_vol">Trading Volume</span>
-                <span class="mp-header-val">8.82B</span>
-                <span class="mp-header-meta" style="color:var(--muted);font-size:0.68rem;" data-key="lbl_shares">shares</span>
+                <span class="mp-header-label" data-key="lbl_vol">Market Clock</span>
+                <span class="mp-header-val" style="font-size:0.85rem;" id="marketClockTime">—</span>
+                <span class="mp-header-meta" style="color:var(--muted);font-size:0.68rem;" id="marketClockZone">Eastern Time</span>
             </div>
 
             <div class="mp-search-bar">
@@ -877,13 +883,8 @@
                     
                     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
                         <div class="pf-chart-toggles" style="display:flex;gap:0.2rem;background:rgba(255,255,255,0.02);padding:0.15rem;border-radius:4px;border:1px solid var(--line);" id="chartPeriodToggles">
-                            <button class="pf-btn pf-btn--sm" data-range="1D" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1D</button>
+                            <button class="pf-btn pf-btn--sm active" data-range="1D" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1D</button>
                             <button class="pf-btn pf-btn--sm" data-range="5D" style="padding:0.25rem 0.5rem;font-size:0.65rem;">5D</button>
-                            <button class="pf-btn pf-btn--sm active" data-range="1M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1M</button>
-                            <button class="pf-btn pf-btn--sm" data-range="3M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">3M</button>
-                            <button class="pf-btn pf-btn--sm" data-range="6M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">6M</button>
-                            <button class="pf-btn pf-btn--sm" data-range="YTD" style="padding:0.25rem 0.5rem;font-size:0.65rem;">YTD</button>
-                            <button class="pf-btn pf-btn--sm" data-range="1Y" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1Y</button>
                         </div>
                         <button class="pf-btn pf-btn--sm" style="font-size:0.68rem;padding:0.35rem 0.65rem;" id="btnCompare">Comparisons ▾</button>
                     </div>
@@ -992,13 +993,13 @@
                         </table>
                     </div>
 
-                    <!-- YoY Revenue growth chart -->
+                    <!-- Live Crypto Ticker -->
                     <div>
                         <div style="border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.55rem;">
-                            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);">Revenue Growth (TTM vs YoY%)</span>
+                            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);">Crypto Markets (Live)</span>
                         </div>
-                        <div style="height:170px; position:relative;">
-                            <canvas id="revenueGrowthChart"></canvas>
+                        <div id="cryptoTickerPanel" style="display:flex;flex-direction:column;gap:0.4rem;">
+                            <div style="color:var(--muted);font-size:0.7rem;padding:0.5rem;">Loading crypto prices...</div>
                         </div>
                     </div>
                 </div>

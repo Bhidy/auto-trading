@@ -515,63 +515,50 @@
     }
 
     function renderRevenueGrowthChart() {
-        var canvas = document.getElementById('revenueGrowthChart');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        if (revenueChartInstance) revenueChartInstance.destroy();
+        // Revenue growth chart replaced with live crypto ticker
+        loadCryptoTicker();
+    }
 
-        var isDark = getTheme() === 'dark';
-        var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(26,15,8,0.06)';
-        var inkColor = isDark ? '#FFF1E8' : '#1A0F08';
+    async function loadCryptoTicker() {
+        var panel = document.getElementById('cryptoTickerPanel');
+        if (!panel) return;
 
-        revenueChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Q2\'23', 'Q3\'23', 'Q4\'23', 'Q1\'24', 'Q2\'24'],
-                datasets: [
-                    {
-                        label: 'TTM Revenue ($B)',
-                        data: [42, 48, 54, 58, 60.9],
-                        backgroundColor: '#FF8A3D',
-                        borderRadius: 4,
-                        order: 2
-                    },
-                    {
-                        label: 'YoY Growth (%)',
-                        data: [60, 80, 110, 130, 122.1],
-                        type: 'line',
-                        borderColor: '#E55A1F',
-                        borderWidth: 2,
-                        backgroundColor: 'transparent',
-                        yAxisID: 'y1',
-                        order: 1,
-                        tension: 0.2
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: inkColor, font: { size: 9 } }
-                    },
-                    y: {
-                        grid: { color: gridColor },
-                        ticks: { color: inkColor, font: { size: 9 } }
-                    },
-                    y1: {
-                        position: 'right',
-                        grid: { display: false },
-                        ticks: { color: inkColor, font: { size: 9 }, callback: function(value) { return value + '%'; } }
-                    }
-                }
+        try {
+            var btc = await apiFetch('/api/crypto/snapshot/BTC%2FUSD');
+            var eth = await apiFetch('/api/crypto/snapshot/ETH%2FUSD');
+
+            var items = [];
+            if (btc && btc.snapshots && btc.snapshots['BTC/USD']) {
+                var snap = btc.snapshots['BTC/USD'];
+                var price = snap.latestTrade ? snap.latestTrade.p : (snap.latestQuote ? snap.latestQuote.ap : 0);
+                var prev = snap.prevDailyBar ? snap.prevDailyBar.c : price;
+                var chg = ((price - prev) / prev) * 100;
+                items.push({ sym: 'BTC/USD', price: price, chg: chg });
             }
-        });
+            if (eth && eth.snapshots && eth.snapshots['ETH/USD']) {
+                var snap2 = eth.snapshots['ETH/USD'];
+                var price2 = snap2.latestTrade ? snap2.latestTrade.p : (snap2.latestQuote ? snap2.latestQuote.ap : 0);
+                var prev2 = snap2.prevDailyBar ? snap2.prevDailyBar.c : price2;
+                var chg2 = ((price2 - prev2) / prev2) * 100;
+                items.push({ sym: 'ETH/USD', price: price2, chg: chg2 });
+            }
+
+            if (items.length > 0) {
+                panel.innerHTML = items.map(function(item) {
+                    var cls = item.chg >= 0 ? 'pf-pos' : 'pf-neg';
+                    var arrow = item.chg >= 0 ? '▲' : '▼';
+                    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--line);">' +
+                        '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.75rem;color:var(--ink);">' + item.sym + '</span>' +
+                        '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.8rem;color:var(--ink);">$' + Number(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>' +
+                        '<span class="pf-num ' + cls + '" style="font-size:0.7rem;font-weight:700;">' + arrow + ' ' + Math.abs(item.chg).toFixed(2) + '%</span>' +
+                    '</div>';
+                }).join('');
+            } else {
+                panel.innerHTML = '<div style="color:var(--muted);font-size:0.7rem;padding:0.5rem;">Crypto data unavailable.</div>';
+            }
+        } catch (e) {
+            panel.innerHTML = '<div style="color:var(--muted);font-size:0.7rem;padding:0.5rem;">Crypto data unavailable.</div>';
+        }
     }
 
     function renderDetailTabs(tab) {
@@ -984,16 +971,27 @@
     /* ─── Market Clock ───────────────────────────────────────────────── */
     async function loadMarketClock() {
         try {
-            var data = await apiFetch('/api/market-clock');
+            var data = await apiFetch('/api/market/clock');
             if (!data) return;
             var badge = document.getElementById('marketClockBadge');
-            if (!badge) return;
-            if (data.is_open) {
-                badge.className = 'mp-clock-badge mp-clock-open';
-                badge.innerHTML = '<span style="display:inline-block;width:5px;height:5px;background:#22c55e;border-radius:50%;animation:pulse-blink 1.2s infinite;"></span> NYSE/NASDAQ: OPEN';
-            } else {
-                badge.className = 'mp-clock-badge mp-clock-closed';
-                badge.textContent = 'NYSE/NASDAQ: CLOSED';
+            var statusLabel = document.getElementById('marketStatusLabel');
+            var clockTime = document.getElementById('marketClockTime');
+            var clockZone = document.getElementById('marketClockZone');
+
+            if (badge) {
+                if (data.is_open) {
+                    badge.className = 'mp-clock-badge mp-clock-open';
+                    badge.innerHTML = '<span style="display:inline-block;width:5px;height:5px;background:#22c55e;border-radius:50%;animation:pulse-blink 1.2s infinite;"></span> MARKET OPEN';
+                } else {
+                    badge.className = 'mp-clock-badge mp-clock-closed';
+                    badge.textContent = 'MARKET CLOSED';
+                }
+            }
+            if (statusLabel) statusLabel.textContent = data.is_open ? 'OPEN' : 'CLOSED';
+            if (data.timestamp && clockTime) {
+                var ts = new Date(data.timestamp);
+                clockTime.textContent = ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                if (clockZone) clockZone.textContent = 'US Eastern Time';
             }
             if (!data.is_open && data.next_open) {
                 var nextOpen = new Date(data.next_open);
@@ -1033,13 +1031,34 @@
             var data = await apiFetch('/api/market-indices');
             if (!data) return;
             var spy = data.SPY || {};
-            var spyPriceEl = document.getElementById('headerSpyPrice');
-            var spyChgEl = document.getElementById('headerSpyChg');
+            var qqq = data.QQQ || {};
+
+            var spyPriceEl = document.getElementById('spyHeaderPrice');
+            var spyChgEl = document.getElementById('spyHeaderChg');
+            var qqqPriceEl = document.getElementById('qqqHeaderPrice');
+            var qqqChgEl = document.getElementById('qqqHeaderChg');
+
             if (spyPriceEl && spy.price) spyPriceEl.textContent = '$' + (spy.price || 0).toFixed(2);
             if (spyChgEl && spy.change_pct !== undefined) {
                 var pct = spy.change_pct || 0;
                 spyChgEl.textContent = (pct >= 0 ? '▲ +' : '▼ ') + Math.abs(pct).toFixed(2) + '%';
                 spyChgEl.className = 'mp-header-meta pf-num ' + (pct >= 0 ? 'pf-pos' : 'pf-neg');
+            }
+            if (qqqPriceEl && qqq.price) qqqPriceEl.textContent = '$' + (qqq.price || 0).toFixed(2);
+            if (qqqChgEl && qqq.change_pct !== undefined) {
+                var qPct = qqq.change_pct || 0;
+                qqqChgEl.textContent = (qPct >= 0 ? '▲ +' : '▼ ') + Math.abs(qPct).toFixed(2) + '%';
+                qqqChgEl.className = 'mp-header-meta pf-num ' + (qPct >= 0 ? 'pf-pos' : 'pf-neg');
+            }
+
+            // Also update legacy S&P 500 header (for backward compat)
+            var legacySpyPrice = document.getElementById('headerSpyPrice');
+            var legacySpyChg = document.getElementById('headerSpyChg');
+            if (legacySpyPrice && spy.price) legacySpyPrice.textContent = '$' + (spy.price || 0).toFixed(2);
+            if (legacySpyChg && spy.change_pct !== undefined) {
+                var lpct = spy.change_pct || 0;
+                legacySpyChg.textContent = (lpct >= 0 ? '▲ +' : '▼ ') + Math.abs(lpct).toFixed(2) + '%';
+                legacySpyChg.className = 'mp-header-meta pf-num ' + (lpct >= 0 ? 'pf-pos' : 'pf-neg');
             }
         } catch (e) { console.warn('Header widget update failed:', e); }
     }
@@ -1401,11 +1420,6 @@
                     var timeframe = '1Day', limit = 30;
                     if (range === '1D') { timeframe = '5Min'; limit = 78; }
                     else if (range === '5D') { timeframe = '30Min'; limit = 65; }
-                    else if (range === '1M') { limit = 22; }
-                    else if (range === '3M') { limit = 66; }
-                    else if (range === '6M') { limit = 132; }
-                    else if (range === 'YTD') { limit = 100; }
-                    else if (range === '1Y') { limit = 252; }
 
                     apiFetch('/api/market/bars/' + activeSymbol + '?limit=' + limit + '&timeframe=' + timeframe).then(function(bars) {
                         if (bars && Array.isArray(bars) && bars.length > 0) {
