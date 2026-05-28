@@ -1,0 +1,282 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2026-05-27T14:29:28Z",
+    "symbol": "BIL",
+    "side": "buy",
+    "qty": 218,
+    "entry_price": 91.62,
+    "bucket": "defensive",
+    "signal_score": 0.6,
+    "reasons": [
+      "Cash-equivalent defensive anchor"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 2,
+    "timestamp": "2026-05-27T14:29:28Z",
+    "symbol": "NVDA",
+    "side": "buy",
+    "qty": 33,
+    "entry_price": 209.96,
+    "bucket": "aggressive_growth",
+    "signal_score": 0.85,
+    "reasons": [
+      "RSI in buy zone",
+      "Above both MAs",
+      "Strong momentum"
+    ],
+    "exit_price": 210.84,
+    "exit_timestamp": "2026-05-27T16:21:17.354438+00:00",
+    "pnl": 29.04,
+    "pnl_pct": 0.42,
+    "hold_days": 0,
+    "status": "closed"
+  },
+  {
+    "id": 3,
+    "timestamp": "2026-05-27T14:29:28Z",
+    "symbol": "SPY",
+    "side": "buy",
+    "qty": 6,
+    "entry_price": 750.05,
+    "bucket": "core_equity",
+    "signal_score": 0.75,
+    "reasons": [
+      "Uptrend confirmed",
+      "Positive momentum"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 4,
+    "timestamp": "2026-05-27T14:29:30Z",
+    "symbol": "QQQ",
+    "side": "buy",
+    "qty": 6,
+    "entry_price": 726.44,
+    "bucket": "core_equity",
+    "signal_score": 0.75,
+    "reasons": [
+      "Tech index strong momentum"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 5,
+    "timestamp": "2026-05-27T14:29:36Z",
+    "symbol": "IWM",
+    "side": "buy",
+    "qty": 17,
+    "entry_price": 290.43,
+    "bucket": "core_equity",
+    "signal_score": 0.75,
+    "reasons": [
+      "Small-cap uptrend"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 6,
+    "timestamp": "2026-05-27T14:29:36Z",
+    "symbol": "DIA",
+    "side": "buy",
+    "qty": 9,
+    "entry_price": 508.35,
+    "bucket": "core_equity",
+    "signal_score": 0.75,
+    "reasons": [
+      "Dow diversification"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 7,
+    "timestamp": "2026-05-27T14:29:36Z",
+    "symbol": "AMZN",
+    "side": "buy",
+    "qty": 22,
+    "entry_price": 269.78,
+    "bucket": "aggressive_growth",
+    "signal_score": 0.75,
+    "reasons": [
+      "Strongest 3M momentum 29.5%"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 8,
+    "timestamp": "2026-05-27T14:29:36Z",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": 15,
+    "entry_price": 391.84,
+    "bucket": "aggressive_growth",
+    "signal_score": 0.75,
+    "reasons": [
+      "Strong momentum, AI winner"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 9,
+    "timestamp": "2026-05-27T14:29:38Z",
+    "symbol": "TSLA",
+    "side": "buy",
+    "qty": 13,
+    "entry_price": 437.0,
+    "bucket": "aggressive_growth",
+    "signal_score": 0.75,
+    "reasons": [
+      "Above both MAs, SpaceX catalyst"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 10,
+    "timestamp": "2026-05-27T14:29:38Z",
+    "symbol": "XLK",
+    "side": "buy",
+    "qty": 27,
+    "entry_price": 183.0,
+    "bucket": "sector_momentum",
+    "signal_score": 0.75,
+    "reasons": [
+      "Strongest sector momentum 30.2%"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 11,
+    "timestamp": "2026-05-27T14:29:39Z",
+    "symbol": "XLY",
+    "side": "buy",
+    "qty": 41,
+    "entry_price": 121.65,
+    "bucket": "sector_momentum",
+    "signal_score": 0.75,
+    "reasons": [
+      "Consumer discretionary uptrend"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 12,
+    "timestamp": "2026-05-27T14:29:38Z",
+    "symbol": "XLI",
+    "side": "buy",
+    "qty": 28,
+    "entry_price": 174.18,
+    "bucket": "sector_momentum",
+    "signal_score": 0.55,
+    "reasons": [
+      "Industrials, Richmond Mfg beat"
+    ],
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 13,
+    "timestamp": "2026-05-28T15:55:14Z",
+    "symbol": "NVDA",
+    "side": "buy",
+    "qty": 37,
+    "entry_price": 212.55,
+    "bucket": "aggressive_growth",
+    "signal_score": 0.756,
+    "reasons": [
+      "STRONG_BULL regime x1.2",
+      "Uptrend above MA50 & MA200",
+      "RSI neutral 52 \u2014 not overbought",
+      "Top 23% relative strength"
+    ],
+    "stop_loss": 195.3,
+    "take_profit": 241.1,
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 14,
+    "timestamp": "2026-05-28T15:55:17Z",
+    "symbol": "AAPL",
+    "side": "buy",
+    "qty": 25,
+    "entry_price": 310.58,
+    "bucket": "aggressive_growth",
+    "signal_score": 0.735,
+    "reasons": [
+      "STRONG_BULL regime x1.2",
+      "Uptrend above MA50 & MA200",
+      "Strong momentum +15% 1M",
+      "Top 18% relative strength",
+      "Apple pushing on-device AI"
+    ],
+    "stop_loss": 296.7,
+    "take_profit": 332.9,
+    "exit_price": null,
+    "exit_timestamp": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "open"
+  }
+]
