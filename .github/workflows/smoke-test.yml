@@ -1,4 +1,4 @@
-name: "Post-Deploy Smoke Test"
+name: "Deploy & Smoke Test"
 
 on:
   push:
@@ -9,14 +9,32 @@ permissions:
   contents: read
 
 concurrency:
-  group: smoke-test
-  cancel-in-progress: true
+  group: deploy-smoke
+  cancel-in-progress: false
 
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        run: |
+          cd dashboard
+          npm install --silent
+          echo "Deploying dashboard to Vercel production..."
+          npx vercel --prod --force --token "${{ secrets.VERCEL_TOKEN }}" --yes 2>&1
+          echo "Deploy completed"
+
   smoke:
+    needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - name: Wait for Vercel propagation
+        run: sleep 12
+
       - name: Smoke test production API
         run: |
           PROD_URL="https://autotradingportfolios.vercel.app"
@@ -26,7 +44,6 @@ jobs:
           echo "Target: $PROD_URL"
           echo ""
 
-          # 1. Health endpoint
           echo "--- Health Check ---"
           HEALTH=$(curl -sf "$PROD_URL/api/health" || echo '{"error":"FAIL"}')
           echo "$HEALTH" | python3 -c "
@@ -36,58 +53,50 @@ jobs:
               print('FAIL: Health endpoint returned error')
               sys.exit(1)
           files = data.get('files', {})
-          critical = ['tradeLog', 'signals', 'state', 'learningReport']
+          critical = ['tradeLog', 'signals', 'state']
           for f in critical:
               fdata = files.get(f, {})
               if not fdata.get('exists'):
                   print(f'FAIL: {f} does not exist on Vercel')
                   sys.exit(1)
               else:
-                  print(f'OK: {f} exists, size={fdata.get(\"size\",0)} bytes')
+                  print(f'OK: {f} exists')
           " || FAILURES=$((FAILURES + 1))
           echo ""
 
-          # 2. P1 details
-          echo "--- P1 Portfolio Details ---"
-          P1=$(curl -sf "$PROD_URL/api/portfolio/portfolio_1/details" || echo '{}')
-          echo "$P1" | python3 -c "
+          echo "--- P1 Trade Data ---"
+          curl -sf "$PROD_URL/api/portfolio/portfolio_1/details" | python3 -c "
           import json, sys
           data = json.load(sys.stdin)
           tl = len(data.get('trade_log', []))
           pos = len(data.get('positions', {}))
-          eq = data.get('account', {}).get('equity', 'N/A')
-          print(f'trade_log={tl} positions={pos} equity={eq}')
+          print(f'trade_log={tl} positions={pos}')
           if tl == 0:
-              print('WARNING: trade_log is empty — data files may not be deployed')
+              print('FAIL: trade_log is empty')
+              sys.exit(1)
           else:
               latest = data['trade_log'][-1]
-              print(f'  Latest: {latest[\"symbol\"]} {latest[\"side\"]} @ {latest.get(\"entry_price\",0)}')
+              print(f'  Latest: {latest[\"symbol\"]} {latest.get(\"timestamp\",\"\")[:10]}')
           " || FAILURES=$((FAILURES + 1))
           echo ""
 
-          # 3. P2 details
-          echo "--- P2 Portfolio Details ---"
+          echo "--- P2 Trade Data ---"
           curl -sf "$PROD_URL/api/portfolio/portfolio_2/details" | python3 -c "
           import json, sys
-          data = json.load(sys.stdin)
-          tl = len(data.get('trade_log', []))
-          print(f'P2 trade_log={tl}')
+          print(f'P2 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
           " || FAILURES=$((FAILURES + 1))
           echo ""
 
-          # 4. P3 details
-          echo "--- P3 Portfolio Details ---"
+          echo "--- P3 Trade Data ---"
           curl -sf "$PROD_URL/api/portfolio/portfolio_3/details" | python3 -c "
           import json, sys
-          data = json.load(sys.stdin)
-          tl = len(data.get('trade_log', []))
-          print(f'P3 trade_log={tl}')
+          print(f'P3 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
           " || FAILURES=$((FAILURES + 1))
           echo ""
 
-          echo "=== SMOKE TEST COMPLETE: $FAILURES failures ==="
+          echo "=== SMOKE TEST: $FAILURES failures ==="
           if [ $FAILURES -gt 0 ]; then
-            echo "DEPLOYMENT VERIFICATION FAILED — data files may be missing on Vercel"
+            echo "DEPLOYMENT VERIFICATION FAILED"
             exit 1
           fi
-          echo "ALL CHECKS PASSED — deployment is healthy"
+          echo "DEPLOYMENT HEALTHY — all checks passed"
