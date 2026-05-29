@@ -37,8 +37,12 @@ SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 DATA_URL     = 'https://data.alpaca.markets'
 TODAY        = datetime.date.today().isoformat()
 
-# Benchmarks + common holdings to track daily
-MARKET_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'IWM', 'GLD', 'TLT', 'BIL']
+# Benchmarks + common holdings + market-pulse watchlist to track daily
+MARKET_SYMBOLS = [
+    'SPY', 'QQQ', 'DIA', 'IWM', 'GLD', 'TLT', 'BIL',
+    'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META',
+    'AMD', 'NFLX', 'INTC'
+]
 
 # ── SSL context (permissive for GitHub Actions) ──────────────────────────────
 SSL_CTX = ssl.create_default_context()

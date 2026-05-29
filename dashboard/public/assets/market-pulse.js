@@ -680,25 +680,33 @@
         });
     }
 
-    function renderWorkspaceChart(bars) {
+    function renderWorkspaceChart(bars, chartType) {
+        chartType = chartType || 'daily';
         var canvas = document.getElementById('stockDetailsChart');
         if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        if (detailChart) detailChart.destroy();
 
+        var container = canvas.parentElement;
+        if (container) {
+            canvas.width = container.clientWidth || 600;
+            canvas.height = 320;
+            canvas.style.width = '100%';
+            canvas.style.height = '320px';
+        }
+        var ctx = canvas.getContext('2d');
+        if (detailChart) { detailChart.destroy(); detailChart = null; }
+
+        var isIntraday = (chartType === 'intraday' && bars.length < 100);
         var labels = bars.map(function (b) {
             var date = new Date(b.t);
-            if (bars.length < 100 && b.t && b.t.includes('T')) {
+            if (isIntraday && b.t && b.t.includes('T')) {
                 return b.t.slice(11, 16);
             }
-            return isNaN(date.getTime()) ? b.t : date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+            return isNaN(date.getTime()) ? (b.t ? b.t.slice(0, 10) : '') : date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
         });
         var points = bars.map(function (b) { return parseFloat(b.c); });
-        var volumes = bars.map(function (b) { return parseFloat(b.v || 0); });
 
         var isDark = getTheme() === 'dark';
         var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(26,15,8,0.06)';
-        var inkColor = isDark ? '#FFF1E8' : '#1A0F08';
 
         var gradient = ctx.createLinearGradient(0, 0, 0, 300);
         gradient.addColorStop(0, 'rgba(229,90,31,0.22)');
@@ -709,13 +717,13 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: activeSymbol + ' Price',
+                    label: activeSymbol,
                     data: points,
                     borderColor: '#E55A1F',
                     backgroundColor: gradient,
                     borderWidth: 2.2,
                     fill: true,
-                    tension: 0.25,
+                    tension: isIntraday ? 0.15 : 0.25,
                     pointRadius: points.length > 80 ? 0 : 1.5,
                     pointHoverRadius: 6,
                     pointHoverBackgroundColor: '#E55A1F',
@@ -726,6 +734,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: points.length > 200 ? 100 : 400 },
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: { display: false },
@@ -744,12 +753,12 @@
                 scales: {
                     x: {
                         grid: { color: gridColor },
-                        ticks: { color: '#7A6B5E', font: { size: 9 }, maxTicksLimit: 8, maxRotation: 0 }
+                        ticks: { color: '#7A6B5E', font: { size: 9 }, maxTicksLimit: isIntraday ? 6 : 8, maxRotation: 0 }
                     },
                     y: {
                         position: lang === 'ar' ? 'right' : 'left',
                         grid: { color: gridColor },
-                        ticks: { color: '#7A6B5E', font: { size: 9 }, callback: function(v) { return '$' + v.toFixed(1); } }
+                        ticks: { color: '#7A6B5E', font: { size: 9 }, callback: function(v) { return '$' + v.toFixed(isIntraday ? 2 : 1); } }
                     }
                 }
             }
@@ -1432,72 +1441,88 @@
             });
         });
 
-        // Shared chart loader — called by period buttons and auto-init
-        window.loadChartForPeriod = function(range) {
-            var chartToggleEl = document.getElementById('chartPeriodToggles');
-            if (chartToggleEl) {
-                var periodBtns = chartToggleEl.querySelectorAll('[data-range]');
-                periodBtns.forEach(function(b) { b.classList.remove('active'); });
-                var activeBtn = chartToggleEl.querySelector('[data-range="' + range + '"]');
-                if (activeBtn) activeBtn.classList.add('active');
-            }
+    var activePeriod = '1D';
+    var intradayRefreshTimer = null;
 
-            if (range === '1D') {
-                apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(bars) {
-                    if (bars && Array.isArray(bars) && bars.length > 0) {
-                        renderWorkspaceChart(bars);
-                    }
-                }).catch(function() {
-                    fallbackLoadDailyBars(activeSymbol, 1);
-                });
-            } else if (range === '5D') {
-                apiFetch('/api/market/bars/' + activeSymbol + '?limit=65&timeframe=30Min&feed=iex').then(function(bars) {
-                    if (bars && Array.isArray(bars) && bars.length > 0) {
-                        renderWorkspaceChart(bars);
-                    }
-                }).catch(function() {
-                    fallbackLoadDailyBars(activeSymbol, 5);
-                });
-            } else if (range === '1W') {
-                var d = new Date();
-                d.setDate(d.getDate() - 7);
-                var startDate = d.toISOString().slice(0, 10);
-                apiFetch('/api/supabase/market?symbol=' + activeSymbol + '&start=' + startDate).then(function(rows) {
-                    if (rows && rows.length > 0) {
-                        var bars = rows.map(function(r) {
-                            return { t: r.date, c: parseFloat(r.close_price), o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), v: parseInt(r.volume || 0) };
-                        });
-                        renderWorkspaceChart(bars);
-                    } else {
-                        fallbackLoadDailyBars(activeSymbol, 7);
-                    }
-                }).catch(function() {
-                    fallbackLoadDailyBars(activeSymbol, 7);
-                });
-            }
-        };
+    function loadChartForPeriod(range) {
+        activePeriod = range;
+        if (intradayRefreshTimer) { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; }
 
-        function fallbackLoadDailyBars(symbol, days) {
-            apiFetch('/api/market/bars/' + symbol + '?limit=' + days + '&timeframe=1Day&feed=iex').then(function(bars) {
-                if (bars && Array.isArray(bars) && bars.length > 0) {
-                    renderWorkspaceChart(bars);
-                }
-            });
-        }
-
-        // Period buttons
         var chartToggleEl = document.getElementById('chartPeriodToggles');
         if (chartToggleEl) {
             var periodBtns = chartToggleEl.querySelectorAll('[data-range]');
-            periodBtns.forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var range = this.getAttribute('data-range');
-                    loadChartForPeriod(range);
-                });
-            });
+            periodBtns.forEach(function(b) { b.classList.remove('active'); });
+            var activeBtn = chartToggleEl.querySelector('[data-range="' + range + '"]');
+            if (activeBtn) activeBtn.classList.add('active');
         }
+
+        if (range === '1D') {
+            apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(bars) {
+                if (bars && Array.isArray(bars) && bars.length > 0) {
+                    renderWorkspaceChart(bars, 'intraday');
+                    intradayRefreshTimer = setInterval(function() {
+                        if (activePeriod !== '1D') { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; return; }
+                        apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(b) {
+                            if (b && b.length > 0) renderWorkspaceChart(b, 'intraday');
+                        });
+                    }, 30000);
+                } else {
+                    fallbackLoadDailyBars(activeSymbol, 1);
+                }
+            }).catch(function() { fallbackLoadDailyBars(activeSymbol, 1); });
+        } else if (range === '5D') {
+            apiFetch('/api/market/bars/' + activeSymbol + '?limit=65&timeframe=30Min&feed=iex').then(function(bars) {
+                if (bars && Array.isArray(bars) && bars.length > 0) {
+                    renderWorkspaceChart(bars, 'intraday');
+                } else {
+                    fallbackLoadDailyBars(activeSymbol, 5);
+                }
+            }).catch(function() { fallbackLoadDailyBars(activeSymbol, 5); });
+        } else {
+            var periodDays = { '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365 };
+            var days = periodDays[range] || 30;
+            var d = new Date();
+            d.setDate(d.getDate() - days);
+            var startDate = d.toISOString().slice(0, 10);
+            var limit = Math.min(days + 10, 1000);
+
+            apiFetch('/api/supabase/market?symbol=' + activeSymbol + '&start=' + startDate + '&limit=' + limit).then(function(rows) {
+                if (rows && rows.length > 0) {
+                    var bars = rows.map(function(r) {
+                        return { t: r.date, c: parseFloat(r.close_price), o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), v: parseInt(r.volume || 0) };
+                    });
+                    renderWorkspaceChart(bars, 'daily');
+                } else {
+                    fallbackLoadDailyBars(activeSymbol, days);
+                }
+            }).catch(function() { fallbackLoadDailyBars(activeSymbol, days); });
+        }
+    }
+
+    function fallbackLoadDailyBars(symbol, days) {
+        apiFetch('/api/market/bars/' + symbol + '?limit=' + days + '&timeframe=1Day&feed=iex').then(function(bars) {
+            if (bars && Array.isArray(bars) && bars.length > 0) {
+                renderWorkspaceChart(bars, 'daily');
+            }
+        });
+    }
+
+    // Period buttons
+    var chartToggleEl = document.getElementById('chartPeriodToggles');
+    if (chartToggleEl) {
+        var periodBtns = chartToggleEl.querySelectorAll('[data-range]');
+        periodBtns.forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var range = this.getAttribute('data-range');
+                loadChartForPeriod(range);
+            });
+        });
+    }
+
+    // Expose for stock-switch reloads
+    window.loadChartForPeriod = loadChartForPeriod;
 
         // Compare button
         var cmpBtn = document.getElementById('btnCompare');

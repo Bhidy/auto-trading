@@ -1464,16 +1464,17 @@ app.get('/api/supabase/equity', async (req, res) => {
     res.json(rows || []);
 });
 
-// 11c. Supabase market history — /api/supabase/market?symbol=SPY&start=2025-06-01
+// 11c. Supabase market history — /api/supabase/market?symbol=SPY&start=2025-06-01&limit=30
 app.get('/api/supabase/market', async (req, res) => {
     const symbol = (req.query.symbol || 'SPY').toUpperCase();
     const start  = req.query.start || '2025-01-01';
+    const limit  = parseInt(req.query.limit || '1000');
     const rows   = await supabaseGet('market_daily_history', {
         symbol: `eq.${symbol}`,
         date:   `gte.${start}`,
         select: 'date,close_price,open_price,high_price,low_price,volume',
         order:  'date.asc',
-        limit:  1000,
+        limit:  Math.min(limit, 1000),
     });
     res.json(rows || []);
 });
