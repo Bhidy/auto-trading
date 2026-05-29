@@ -1,16 +1,29 @@
 name: "Deploy & Smoke Test"
 
-# Vercel deploys the dashboard automatically via its native Git integration on
-# every push to main, so this workflow does NOT need to invoke the Vercel CLI
-# (which previously failed on an expired VERCEL_TOKEN and silently disabled the
-# whole smoke check). It now polls production until the new deploy propagates,
-# then verifies the data path is intact — the post-deploy safety net mandated
-# by CLAUDE.md.
+# Robust production deploy for the dashboard.
+#
+# Vercel's native Git integration was NOT actually wired to this repo (every
+# historical production deploy in `vercel ls` was a manual CLI deploy by the
+# owner), so pushes did NOT auto-deploy and the old smoke job gave a false
+# green by polling the PREVIOUS deployment. This workflow now performs a real
+# deploy via the Vercel CLI (using the existing VERCEL_TOKEN secret), then
+# verifies the freshly-deployed build — the post-deploy safety net mandated by
+# CLAUDE.md.
+#
+# Triggers on CODE changes only (not data-file commits from the trading bots,
+# which would otherwise cause dozens of redundant deploys per day; live data is
+# served from Alpaca at request time, the committed JSON is only a fallback).
 on:
   push:
     branches: [main]
     paths:
-      - "dashboard/**"
+      - "dashboard/public/**"
+      - "dashboard/server.js"
+      - "dashboard/api/**"
+      - "dashboard/vercel.json"
+      - "dashboard/package.json"
+      - "dashboard/package-lock.json"
+      - "dashboard/build.sh"
       - ".github/workflows/smoke-test.yml"
   workflow_dispatch:
 
@@ -21,21 +34,54 @@ concurrency:
   group: deploy-smoke
   cancel-in-progress: false
 
+env:
+  # Non-sensitive project identifiers (from dashboard/.vercel/project.json).
+  VERCEL_ORG_ID: team_Gqpf3K97tjrOCyIlEnGjWCOE
+  VERCEL_PROJECT_ID: prj_Ig61I6uR0q614j6xGS07EQCkIyZ3
+
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel production environment
+        working-directory: dashboard
+        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Build (production)
+        working-directory: dashboard
+        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+
+      - name: Deploy prebuilt to production
+        working-directory: dashboard
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}")
+          echo "Deployed: $URL"
+          echo "DEPLOY_URL=$URL" >> "$GITHUB_ENV"
+
   smoke:
+    needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Smoke test production API (poll for Vercel git-deploy propagation)
+      - name: Smoke test production API (verify freshly-deployed build)
         run: |
           PROD_URL="https://autotradingportfolios.vercel.app"
           echo "=== POST-DEPLOY SMOKE TEST ==="
           echo "Target: $PROD_URL"
 
-          # Poll health for up to ~5 min while Vercel's git-integration deploy
-          # builds and propagates.
+          # The deploy job already aliased production; poll briefly for edge propagation.
           HEALTH_OK=0
-          for attempt in $(seq 1 20); do
+          for attempt in $(seq 1 12); do
             HEALTH=$(curl -sf "$PROD_URL/api/health" 2>/dev/null || echo '{"error":"FAIL"}')
             if echo "$HEALTH" | python3 -c "
           import json, sys
@@ -54,12 +100,12 @@ jobs:
               HEALTH_OK=1
               break
             fi
-            echo "  attempt $attempt/20 — not ready yet, waiting 15s..."
-            sleep 15
+            echo "  attempt $attempt/12 — not ready yet, waiting 10s..."
+            sleep 10
           done
 
           if [ "$HEALTH_OK" -ne 1 ]; then
-            echo "FAIL: health endpoint never became healthy after ~5min"
+            echo "FAIL: health endpoint never became healthy after ~2min"
             exit 1
           fi
 

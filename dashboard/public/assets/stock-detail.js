@@ -7,7 +7,14 @@
     'use strict';
 
     var lang = localStorage.getItem('starta-lang') || localStorage.getItem('lang') || 'en';
-    var currentSymbol = 'AAPL';
+    // Deep-link support: /stock-detail.html?symbol=NVDA (e.g. from holding clicks).
+    // Sanitize to a safe ticker (letters/digits, plus . / - for crypto/class shares).
+    function sanitizeSymbol(raw) {
+        if (!raw) return '';
+        var s = String(raw).trim().toUpperCase().replace(/[^A-Z0-9./-]/g, '');
+        return s.slice(0, 12);
+    }
+    var currentSymbol = sanitizeSymbol(new URLSearchParams(window.location.search).get('symbol')) || 'AAPL';
     var stockChartInstance = null;
     var rawBarsData = [];
 

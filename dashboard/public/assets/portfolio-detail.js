@@ -636,6 +636,8 @@
     function bmSetText(id, text, cls) {
         var node = document.getElementById(id);
         if (!node) return;
+        // Robustness: never surface a NaN/Infinity artifact to the user.
+        if (/NaN|Infinity/.test(String(text))) text = '—';
         node.textContent = text;
         if (cls !== undefined) { node.classList.remove('pf-pos', 'pf-neg'); if (cls) node.classList.add(cls); }
     }
