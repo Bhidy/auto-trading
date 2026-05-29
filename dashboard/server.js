@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
@@ -7,8 +9,57 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Behind the Vercel proxy — needed so rate-limiting sees the real client IP.
+app.set('trust proxy', 1);
+
+// Security headers. CSP/COEP are disabled because the dashboard intentionally
+// uses inline scripts/styles and external font/quote resources; the rest of
+// helmet's protections (HSTS, noSniff, frameguard, referrer policy) still apply.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
+// CORS locked to configured origins (default: production + localhost). Same-origin
+// requests and tools without an Origin header (curl/health checks) are allowed.
+const ALLOWED_ORIGINS = (process.env.DASHBOARD_ALLOWED_ORIGINS
+    || 'https://autotradingportfolios.vercel.app,http://localhost:3000')
+    .split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+    origin(origin, cb) {
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+        return cb(null, false);
+    },
+}));
+
 app.use(express.json());
+
+// Rate-limit the API surface (per IP). Tunable via DASHBOARD_RATE_LIMIT.
+app.use('/api', rateLimit({
+    windowMs: 60 * 1000,
+    max: Number(process.env.DASHBOARD_RATE_LIMIT || 120),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests — slow down.' },
+}));
+
+// FAIL-CLOSED auth for state-mutating endpoints (order placement, closing
+// positions). Anonymous trade execution against live brokerage accounts must
+// never be possible. When DASHBOARD_ACCESS_TOKEN is unset, mutations are
+// disabled entirely; when set, callers must present it as a Bearer token or
+// x-access-token header. Read endpoints remain public (showcase).
+const ACCESS_TOKEN = process.env.DASHBOARD_ACCESS_TOKEN || '';
+app.use((req, res, next) => {
+    if (req.method !== 'POST' || !req.path.startsWith('/api/')) return next();
+    if (!ACCESS_TOKEN) {
+        return res.status(503).json({
+            error: 'Trade actions are disabled. Set DASHBOARD_ACCESS_TOKEN to enable.',
+        });
+    }
+    const bearer = (req.get('authorization') || '').replace(/^Bearer\s+/i, '');
+    const provided = bearer || req.get('x-access-token') || '';
+    if (provided !== ACCESS_TOKEN) {
+        return res.status(401).json({ error: 'Unauthorized.' });
+    }
+    return next();
+});
 
 // Serve static dashboard files
 app.use(express.static(path.join(__dirname, 'public')));
