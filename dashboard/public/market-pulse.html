@@ -873,6 +873,7 @@
                         <button class="mp-tab" id="tabNews" data-key="pane_news">News</button>
                         <button class="mp-tab" id="tabFinancialsTab" data-key="pane_financials_tab">Financials</button>
                         <button class="mp-tab" id="tabProfileTab" data-key="pane_profile_tab">Profile</button>
+                        <button class="mp-tab" id="tabFundamentals" data-key="pane_fundamentals">Fundamentals</button>
                     </div>
                     
                     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
@@ -884,46 +885,47 @@
                     </div>
                 </div>
 
-                <div style="height:320px;position:relative;width:100%;">
-                    <canvas id="stockDetailsChart"></canvas>
-                </div>
-
-                <!-- Sliders Panel -->
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:2rem; margin-top:1.5rem; border-top:1px solid var(--line); padding-top:1.25rem;">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                            <span style="color:var(--muted);">52 Week Range</span>
-                            <span style="color:var(--muted); font-weight:700;">$392.30 - $1,153.13</span>
-                        </div>
-                        <div class="range-slider-bar">
-                            <div class="range-slider-fill" style="left:15%; right:20%;"></div>
-                            <div class="range-slider-handle" style="left:72%;"></div>
-                        </div>
+                <div id="chartOverviewPane">
+                    <div style="height:320px;position:relative;width:100%;">
+                        <canvas id="stockDetailsChart"></canvas>
                     </div>
 
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                            <span style="color:var(--muted);">Day Range</span>
-                            <span style="color:var(--muted); font-weight:700;" id="dayRangeLabel">$1,058.11 - $1,097.48</span>
-                        </div>
-                        <div class="range-slider-bar">
-                            <div class="range-slider-fill" style="left:20%; right:10%;"></div>
-                            <div class="range-slider-handle" style="left:78%;" id="dayRangeHandle"></div>
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns:1fr 1fr; text-align:center;">
+                    <!-- Sliders Panel -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:2rem; margin-top:1.5rem; border-top:1px solid var(--line); padding-top:1.25rem;">
                         <div>
-                            <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Beta (5Y)</span>
-                            <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">1.05</div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                                <span style="color:var(--muted);">52 Week Range</span>
+                                <span style="color:var(--muted); font-weight:700;">$392.30 - $1,153.13</span>
+                            </div>
+                            <div class="range-slider-bar">
+                                <div class="range-slider-fill" style="left:15%; right:20%;"></div>
+                                <div class="range-slider-handle" style="left:72%;"></div>
+                            </div>
                         </div>
+
                         <div>
-                            <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Yield</span>
-                            <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">0.03%</div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                                <span style="color:var(--muted);">Day Range</span>
+                                <span style="color:var(--muted); font-weight:700;" id="dayRangeLabel">$1,058.11 - $1,097.48</span>
+                            </div>
+                            <div class="range-slider-bar">
+                                <div class="range-slider-fill" style="left:20%; right:10%;"></div>
+                                <div class="range-slider-handle" style="left:78%;" id="dayRangeHandle"></div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; text-align:center;">
+                            <div>
+                                <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Beta (5Y)</span>
+                                <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">1.05</div>
+                            </div>
+                            <div>
+                                <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Yield</span>
+                                <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">0.03%</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
                 <div id="detailsContentPane" style="display:none;"></div>
             </div>
 
@@ -962,40 +964,13 @@
                 </div>
             </div>
 
-            <!-- Fundamentals Key Metrics & YoY Revenue Bar Chart -->
-            <div class="pf-panel" style="padding:1.5rem;">
-                <h3 style="font-family:'DM Serif Display',serif; font-size:1.25rem; color:var(--ink); margin-bottom:1.25rem;">Fundamentals</h3>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
-                    <!-- Key financials table -->
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.55rem;">
-                            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);" data-key="lbl_key_fin">Key Financials</span>
-                            <span style="font-size:0.65rem; color:var(--teal); font-weight:700; cursor:pointer;" id="btnExpandFinancials">View Full Financials</span>
-                        </div>
-                        <table class="peer-table" style="font-size:0.78rem;">
-                            <thead>
-                                <tr>
-                                    <th>Metric</th>
-                                    <th>TTM</th>
-                                    <th>YoY Change</th>
-                                </tr>
-                            </thead>
-                            <tbody id="keyFinancialsBody">
-                                <!-- Dynamic standard parameters -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Live Crypto Ticker -->
-                    <div>
-                        <div style="border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.55rem;">
-                            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);">Crypto Markets (Live)</span>
-                        </div>
-                        <div id="cryptoTickerPanel" style="display:flex;flex-direction:column;gap:0.4rem;">
-                            <div style="color:var(--muted);font-size:0.7rem;padding:0.5rem;">Loading crypto prices...</div>
-                        </div>
-                    </div>
+            <!-- Live Crypto Markets -->
+            <div class="pf-panel" style="padding:1.25rem;">
+                <div style="border-bottom:1px solid var(--line); padding-bottom:0.45rem; margin-bottom:0.65rem;">
+                    <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);">Crypto Markets (Live)</span>
+                </div>
+                <div id="cryptoTickerPanel" style="display:flex;flex-direction:column;gap:0.4rem;min-height:60px;">
+                    <div style="color:var(--muted);font-size:0.7rem;padding:0.5rem;">Loading crypto prices...</div>
                 </div>
             </div>
         </div>

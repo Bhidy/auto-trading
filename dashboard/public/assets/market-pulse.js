@@ -573,7 +573,7 @@
 
         // Fetch stock details if we have a profile cached from loadStockDetails
         var symbol = activeSymbol;
-        if (tab === 'Financials' || tab === 'Profile') {
+        if (tab === 'Financials' || tab === 'Profile' || tab === 'Fundamentals') {
             apiFetch('/api/stock/' + symbol + '/details').then(function(data) {
                 if (!data) { contentPane.innerHTML = '<div style="color:var(--muted);padding:1rem;">Unable to load data.</div>'; return; }
                 var profile = data.profile || {};
@@ -586,6 +586,24 @@
                             <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Dividend Yield:</span> <strong style="color:var(--ink);">${profile.yield || '—'}</strong></div>
                             <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">EPS (TTM):</span> <strong style="color:var(--ink);">${profile.eps || '—'}</strong></div>
                             <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Revenue:</span> <strong style="color:var(--ink);">${profile.rev || '—'}</strong></div>
+                        </div>
+                    `;
+                } else if (tab === 'Fundamentals') {
+                    contentPane.innerHTML = `
+                        <div style="display:flex;flex-direction:column;gap:1rem;">
+                            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--ink);letter-spacing:0.04em;padding-bottom:0.45rem;border-bottom:1px solid var(--line);">Key Financials — ${symbol}</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem 2rem;padding:0.5rem 0;">
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Market Cap:</span> <strong style="color:var(--ink);">${profile.cap || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">P/E (TTM):</span> <strong style="color:var(--ink);">${profile.pe || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">EPS (TTM):</span> <strong style="color:var(--ink);">${profile.eps || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Beta (5Y):</span> <strong style="color:var(--ink);">${profile.beta || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Revenue:</span> <strong style="color:var(--ink);">${profile.rev || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Dividend Yield:</span> <strong style="color:var(--ink);">${profile.yield || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Exchange:</span> <strong style="color:var(--ink);">${profile.exchange || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Asset Class:</span> <strong style="color:var(--ink);">${profile.asset_class || '—'}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Tradable:</span> <strong style="color:var(--ink);">${profile.tradable === undefined ? '—' : (profile.tradable ? 'Yes' : 'No')}</strong></div>
+                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Shortable:</span> <strong style="color:var(--ink);">${profile.shortable === undefined ? '—' : (profile.shortable ? 'Yes' : 'No')}</strong></div>
+                            </div>
                         </div>
                     `;
                 } else if (tab === 'Profile') {
@@ -1374,7 +1392,7 @@
         });
 
         // Chart pane tabs
-        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabFinancialsTab', 'tabProfileTab'];
+        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabFinancialsTab', 'tabProfileTab', 'tabFundamentals'];
         detailTabIds.forEach(function(tabId) {
             var btn = document.getElementById(tabId);
             if (!btn) return;
@@ -1385,23 +1403,32 @@
                 this.classList.add('active');
 
                 var pane = document.getElementById('detailsContentPane');
+                var chartPane = document.getElementById('chartOverviewPane');
                 if (!pane) return;
 
                 if (tabId === 'tabOverview') {
                     pane.style.display = 'none';
+                    if (chartPane) chartPane.style.display = 'block';
                     activeDetailTab = 'Chart';
-                } else if (tabId === 'tabOptions') {
-                    activeDetailTab = 'Options';
-                    loadOptionsChain(activeSymbol);
-                } else if (tabId === 'tabNews') {
-                    activeDetailTab = 'News';
-                    showNewsForSymbol(activeSymbol);
-                } else if (tabId === 'tabFinancialsTab') {
-                    activeDetailTab = 'Financials';
-                    renderDetailTabs('Financials');
-                } else if (tabId === 'tabProfileTab') {
-                    activeDetailTab = 'Profile';
-                    renderDetailTabs('Profile');
+                } else {
+                    if (chartPane) chartPane.style.display = 'none';
+                    pane.style.display = 'block';
+                    if (tabId === 'tabOptions') {
+                        activeDetailTab = 'Options';
+                        loadOptionsChain(activeSymbol);
+                    } else if (tabId === 'tabNews') {
+                        activeDetailTab = 'News';
+                        showNewsForSymbol(activeSymbol);
+                    } else if (tabId === 'tabFinancialsTab') {
+                        activeDetailTab = 'Financials';
+                        renderDetailTabs('Financials');
+                    } else if (tabId === 'tabProfileTab') {
+                        activeDetailTab = 'Profile';
+                        renderDetailTabs('Profile');
+                    } else if (tabId === 'tabFundamentals') {
+                        activeDetailTab = 'Fundamentals';
+                        renderDetailTabs('Fundamentals');
+                    }
                 }
             });
         });
