@@ -595,7 +595,25 @@ def run_end_of_day(alpaca: AlpacaClient):
     from performance_tracker import adapt_parameters, generate_learning_report
 
     log.info("Running self-learning adaptation...")
-    adaptation = adapt_parameters()
+    # Gate parameter changes on out-of-sample (walk-forward) validation using the
+    # bars morning-research cached today — never tune on live noise.
+    validate_with_bars = None
+    try:
+        from backtest.walk_forward import load_aligned_bars
+        symbol_bars, spy_bars = load_aligned_bars(str(DATA_DIR))
+        if symbol_bars and spy_bars:
+            validate_with_bars = (symbol_bars, spy_bars)
+            log.info(f"  Walk-forward gate active: {len(symbol_bars)} symbols, "
+                     f"{len(spy_bars)} aligned bars")
+        else:
+            log.info("  Walk-forward gate inactive (insufficient cached bars)")
+    except Exception as e:
+        log.warning(f"  Walk-forward gate unavailable: {e}")
+
+    adaptation = adapt_parameters(validate_with_bars=validate_with_bars)
+    gate = adaptation.get("walk_forward_gate")
+    if gate:
+        log.info(f"  Walk-forward gate result: {gate}")
     wr_7d = adaptation['metrics_7d'].get('win_rate')
     wr_30d = adaptation['metrics_30d'].get('win_rate')
     log.info(f"  7d win rate: {wr_7d:.1%}" if wr_7d is not None else "  7d win rate: N/A (no trades)")

@@ -184,11 +184,34 @@ def compute_metrics_by_symbol():
 # ADAPTIVE PARAMETER TUNING (SELF-LEARNING)
 # ---------------------------------------------------------------------------
 
-def adapt_parameters():
+# Strategy knobs subject to out-of-sample (walk-forward) gating. Observability
+# fields (win_rate_*, avg_win_loss_ratio) are NOT gated — they always refresh.
+_GATED_KNOBS = (
+    "position_size_multiplier",
+    "rsi_overbought",
+    "trailing_stop_atr_mult",
+    "confidence_buy_threshold",
+)
+
+
+def adapt_parameters(validate_with_bars=None):
+    """Adapt strategy parameters from rolling performance.
+
+    If `validate_with_bars=(symbol_bars, spy_bars)` is supplied, any change to
+    the strategy knobs must pass walk-forward out-of-sample validation against
+    the prior knobs; otherwise the knobs are reverted (fail-closed). This stops
+    the self-learning loop from tuning on live noise. Without bars, the existing
+    bounded + min-sample-size logic applies (knobs still move, but only within
+    hard bounds and after >=5/10 closed trades).
+    """
+    import copy
+
     params = load_json("strategy_params.json", None)
     if params is None:
         from analyst_v2 import load_adaptive_params
         params = load_adaptive_params()
+
+    original = copy.deepcopy(params)
 
     metrics_7d = compute_metrics(7)
     metrics_30d = compute_metrics(30)
@@ -234,6 +257,25 @@ def adapt_parameters():
         elif wr_30d < 0.40:
             params["confidence_buy_threshold"] = min(params["confidence_buy_threshold"] + 0.02, 0.70)
 
+    gate_detail = None
+    knobs_changed = any(original.get(k) != params.get(k) for k in _GATED_KNOBS)
+    if validate_with_bars is not None and knobs_changed:
+        try:
+            from backtest.walk_forward import gate_param_change
+            symbol_bars, spy_bars = validate_with_bars
+            approved, gate_detail = gate_param_change(original, params, symbol_bars, spy_bars)
+            if not approved:
+                # Revert ONLY the strategy knobs; keep refreshed metric fields.
+                for k in _GATED_KNOBS:
+                    if k in original:
+                        params[k] = original[k]
+        except Exception as e:
+            # Fail closed: an un-validatable change is not applied.
+            gate_detail = {"error": str(e)}
+            for k in _GATED_KNOBS:
+                if k in original:
+                    params[k] = original[k]
+
     save_json("strategy_params.json", params)
 
     return {
@@ -241,6 +283,7 @@ def adapt_parameters():
         "metrics_30d": metrics_30d,
         "metrics_all": metrics_all,
         "updated_params": params,
+        "walk_forward_gate": gate_detail,
     }
 
 # ---------------------------------------------------------------------------
