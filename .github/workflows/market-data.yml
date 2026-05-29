@@ -1,0 +1,46 @@
+name: "Market Data — Daily History Collector"
+
+# Mirrors Alpaca free-tier (IEX) daily bars for the full chart universe into
+# Supabase so the dashboard charts have a durable, self-updating store. Runs
+# after market close on weekdays; never blocks anything (continue-on-error).
+# A manual dispatch with a large `days` performs a one-time multi-year backfill.
+on:
+  schedule:
+    - cron: "30 21 * * 1-5"   # 5:30pm ET EDT (after close)
+    - cron: "30 22 * * 1-5"   # 5:30pm ET EST backup
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Lookback days to collect (use 730 for a full backfill)"
+        required: false
+        default: "12"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: market-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Collect daily history into Supabase
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python3 scripts/collect_market_history.py \
+            --api-key "${{ secrets.P1_API_KEY }}" \
+            --api-secret "${{ secrets.P1_API_SECRET }}" \
+            --days "${{ github.event.inputs.days || '12' }}" \
+          || echo "Collector failed (non-fatal)"
