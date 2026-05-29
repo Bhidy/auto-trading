@@ -24,15 +24,14 @@
 
     var portfolio, metrics, detailCache = null;
     var perfChart = null, allocChart = null;
-    var chartPeriod = 'All', chartMode = 'value', showBenchmark = true;
+    var chartPeriod = 'All', chartMode = 'index';
     var holdingsTab = 'overview';
     var contribTab  = 'gainers';
     var holdingsViewMode = 'table'; // 'table' or 'chart'
     var tabChartInst = null; // Chart.js instance for holdings tab
 
     // Selected stock chart and sidebar states
-    var selectedSymbol = null;
-    var selectedChartType = 'portfolio'; // 'portfolio' or 'stock'
+    var selectedSymbol = null; // first holding — used to highlight the active row
 
     // Premium stock metadata fetched live from Alpaca API
     var STOCK_PROFILES = {};
@@ -147,15 +146,7 @@
                 renderHeader();
                 renderBody();
 
-                // Auto-refresh portfolio data every 30 seconds
-                setInterval(function() {
-                    PFStore.loadPortfolio(pfId).then(function(p) {
-                        portfolio = p;
-                        metrics = PFStore.computeMetrics(portfolio);
-                        detailCache = PFStore.serverCache[pfId] || null;
-                        refreshLiveData();
-                    }).catch(function() { /* silent retry on next interval */ });
-                }, 30000);
+                startLiveEngine();
             })
             .catch(function (err) {
                 console.error('Error rendering details:', err);
@@ -163,13 +154,88 @@
             });
     }
 
+    /* ─── Ultra-resilient live engine (whole page + chart) ─────────────────
+       One overlap-guarded scheduler. Each segment is isolated so a single
+       failure can never cascade or kill the loop. Last-good data is kept on
+       error (no blanking). Visibility- and connectivity-aware. */
+    var LIVE_INTERVAL = 30000;
+    var _liveTimer = null, _tickInFlight = false, _liveFailures = 0;
+
+    function safeSegment(name, fn) {
+        try { fn(); }
+        catch (e) { console.warn('[live] segment "' + name + '" failed:', e && e.message); }
+    }
+
+    function liveTick() {
+        if (_tickInFlight) return;            // overlap guard
+        if (document.hidden) return;          // pause when tab hidden
+        _tickInFlight = true;
+        PFStore.loadPortfolio(pfId)
+            .then(function (p) {
+                // loadPortfolio never rejects — it returns a degraded localStorage
+                // fallback on server failure. Only adopt data that computes a valid
+                // metrics object; otherwise keep last-good (never-fail).
+                var m = p ? PFStore.computeMetrics(p) : null;
+                if (m && typeof m.totalValue === 'number') {
+                    portfolio = p;
+                    metrics = m;
+                    detailCache = PFStore.serverCache[pfId] || null;
+                    _liveFailures = 0;
+                    setLiveState(true);
+                } else {
+                    _liveFailures++;
+                    console.warn('[live] data refresh degraded (keeping last-good)');
+                    if (_liveFailures >= 2) setLiveState(false);
+                }
+            })
+            .catch(function (e) {
+                _liveFailures++;
+                console.warn('[live] data refresh failed (keeping last-good):', e && e.message);
+                if (_liveFailures >= 2) setLiveState(false);
+            })
+            .then(function () {
+                // Segment-isolated UI patches (run with whatever data we have)
+                safeSegment('header', renderHeader);
+                safeSegment('chart', initChart);
+                safeSegment('holdings', function () {
+                    var hRoot = document.getElementById('pf-detail-holdings-root');
+                    if (hRoot) renderHoldingsTable(hRoot);
+                });
+                safeSegment('orders', function () {
+                    var ordersEl = document.getElementById('pfDetailOrders');
+                    if (ordersEl) renderOrdersWidget(ordersEl);
+                });
+                _tickInFlight = false;
+            });
+    }
+
+    function setLiveState(ok) {
+        var pill = document.getElementById('benchLivePill');
+        if (!pill) return;
+        pill.classList.toggle('is-reconnecting', !ok);
+        if (!ok) {
+            var ts = document.getElementById('benchLiveTs');
+            if (ts) ts.textContent = lang === 'ar' ? 'إعادة الاتصال…' : 'Reconnecting…';
+        }
+    }
+
+    function startLiveEngine() {
+        if (_liveTimer) clearInterval(_liveTimer);
+        _liveTimer = setInterval(liveTick, LIVE_INTERVAL);
+        // Immediate refresh when the user returns to the tab
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) liveTick(); });
+        // Immediate refresh on reconnect
+        window.addEventListener('online', function () { setLiveState(true); liveTick(); });
+        window.addEventListener('offline', function () { setLiveState(false); });
+    }
+
+    // Kept for compatibility (manual partial refresh of header/holdings/orders)
     function refreshLiveData() {
-        renderHeader();
-        // Re-render holdings without full body rebuild
+        safeSegment('header', renderHeader);
         var hRoot = document.getElementById('pf-detail-holdings-root');
-        if (hRoot) { renderHoldingsTable(hRoot); }
+        if (hRoot) safeSegment('holdings', function () { renderHoldingsTable(hRoot); });
         var ordersEl = document.getElementById('pfDetailOrders');
-        if (ordersEl) { renderOrdersWidget(ordersEl); }
+        if (ordersEl) safeSegment('orders', function () { renderOrdersWidget(ordersEl); });
     }
 
     function renderNotFound() {
@@ -180,6 +246,7 @@
 
     /* ─── Header Strip ────────────────────────────────────────────────── */
     function renderHeader() {
+        if (!metrics) return; // never render with degraded/null state
         var todayClass  = metrics.todayGain  >= 0 ? 'pf-pos' : 'pf-neg';
         var gainClass   = metrics.totalGain  >= 0 ? 'pf-pos' : 'pf-neg';
         var retClass    = metrics.totalReturn >= 0 ? 'pf-pos' : 'pf-neg';
@@ -295,531 +362,479 @@
         });
     }
 
-    /* ─── Dual Charting Canvas ────────────────────────────────────────── */
+    /* ─── Benchmark Comparison Module — "Portfolio vs S&P 500" ─────────────
+       Normalized (rebased-to-100) performance comparison. Replaces the old
+       raw-dollar NAV chart. Real data only: Supabase system-of-record first,
+       Alpaca fallback. Race-safe + last-good caching → never blanks. */
+
+    var BENCH_PERIODS = ['1D', '1W', '1M', '3M', '6M', 'YTD', 'All'];
+    var BENCH_MODES = [
+        { id: 'index',    en: 'Growth Index', ar: 'مؤشر النمو' },
+        { id: 'return',   en: 'Return %',     ar: 'العائد %' },
+        { id: 'drawdown', en: 'Drawdown',     ar: 'التراجع' }
+    ];
+
+    function bl(en, ar) { return lang === 'ar' ? ar : en; }
+
+    /* ── Pure math (no DOM, reusable, null-safe) ─────────────────────────── */
+    function bmNormalize(values, base) {
+        if (!base || base <= 0) return values.map(function () { return 100; });
+        return values.map(function (v) { return (v / base) * 100; });
+    }
+    function bmDailyReturns(values) {
+        var out = [];
+        for (var i = 1; i < values.length; i++) {
+            var prev = values[i - 1];
+            out.push(prev > 0 ? (values[i] / prev - 1) : 0);
+        }
+        return out;
+    }
+    function bmMean(a) { return a.length ? a.reduce(function (s, v) { return s + v; }, 0) / a.length : 0; }
+    function bmStd(a) {
+        if (a.length < 2) return 0;
+        var m = bmMean(a);
+        var variance = a.reduce(function (s, x) { return s + Math.pow(x - m, 2); }, 0) / (a.length - 1);
+        return Math.sqrt(variance);
+    }
+    // Minimum daily observations before annualized risk ratios are meaningful
+    // (a shorter window produces small-sample artifacts, e.g. an inflated Sharpe).
+    var BM_MIN_RISK_OBS = 20;
+    function bmSharpe(equityVals, intraday) {
+        if (intraday || !equityVals || equityVals.length < BM_MIN_RISK_OBS + 1) return null;
+        var r = bmDailyReturns(equityVals);
+        var sd = bmStd(r);
+        if (!sd) return null;
+        return (bmMean(r) / sd) * Math.sqrt(252);
+    }
+    function bmBeta(pDaily, spyDaily) {
+        var n = Math.min(pDaily.length, spyDaily.length);
+        if (n < BM_MIN_RISK_OBS) return null;
+        var pm = bmMean(pDaily.slice(0, n)), sm = bmMean(spyDaily.slice(0, n));
+        var cov = 0, varS = 0;
+        for (var i = 0; i < n; i++) {
+            cov  += (pDaily[i] - pm) * (spyDaily[i] - sm);
+            varS += Math.pow(spyDaily[i] - sm, 2);
+        }
+        if (!varS) return null;
+        return cov / varS;
+    }
+    function bmMaxDrawdown(indexSeries) {
+        if (!indexSeries || !indexSeries.length) return 0;
+        var peak = indexSeries[0], mdd = 0;
+        indexSeries.forEach(function (v) {
+            if (v > peak) peak = v;
+            var dd = peak > 0 ? (v / peak - 1) * 100 : 0;
+            if (dd < mdd) mdd = dd;
+        });
+        return mdd;
+    }
+    function bmBestWorst(equityRows) {
+        var best = null, worst = null;
+        equityRows.forEach(function (r) {
+            var e = parseFloat(r.equity);
+            if (!isFinite(e)) return;
+            if (!best  || e > best.value)  best  = { value: e, date: (r.date || '').slice(0, 10) };
+            if (!worst || e < worst.value) worst = { value: e, date: (r.date || '').slice(0, 10) };
+        });
+        return { best: best, worst: worst };
+    }
+    function bmPeriodToStartDate(p) {
+        var d = new Date();
+        if (p === '1W') d.setDate(d.getDate() - 7);
+        else if (p === '1M') d.setMonth(d.getMonth() - 1);
+        else if (p === '3M') d.setMonth(d.getMonth() - 3);
+        else if (p === '6M') d.setMonth(d.getMonth() - 6);
+        else if (p === 'YTD') { d.setMonth(0); d.setDate(1); }
+        else d.setFullYear(d.getFullYear() - 2);
+        return d.toISOString().slice(0, 10);
+    }
+    function bmLabel(raw, intraday) {
+        if (intraday) {
+            var dt = new Date(raw.replace('T', ' ').replace('Z', ''));
+            return dt.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+        var parts = raw.slice(0, 10).split('-');
+        var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        var longP = (chartPeriod === 'All' || chartPeriod === 'YTD' || chartPeriod === '6M');
+        return dt2.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', longP ? { day: '2-digit', month: 'short', year: '2-digit' } : { day: '2-digit', month: 'short' });
+    }
+    function bmSummaryDate(raw) {
+        if (!raw) return '';
+        var parts = raw.slice(0, 10).split('-');
+        var dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        return dt.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    /* ── Data fetchers (self-catching → never reject) ────────────────────── */
+    function bmFetchEquity(period) {
+        var intraday = period === '1D';
+        function viaAlpaca() {
+            return PFStore.loadEquityHistory(pfId, period)
+                .then(function (d) { return (d && d.history) ? d.history : []; })
+                .catch(function () { return []; });
+        }
+        if (intraday) return viaAlpaca();
+        var start = bmPeriodToStartDate(period);
+        return fetch('/api/supabase/equity?portfolio_id=' + pfId + '&start=' + start, { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (rows) { return (rows && rows.length >= 3) ? rows : viaAlpaca(); })
+            .catch(viaAlpaca);
+    }
+    function bmSpyMapFromSupabase(rows) {
+        var m = {};
+        (rows || []).forEach(function (b) { if (b.date) m[b.date.slice(0, 10)] = parseFloat(b.close_price); });
+        return m;
+    }
+    function bmSpyMapFromAlpaca(bars, intraday) {
+        var m = {};
+        (bars || []).forEach(function (b) {
+            var k = intraday ? (b.t || '').slice(0, 16) : (b.t || '').slice(0, 10);
+            if (k) m[k] = b.c;
+        });
+        return m;
+    }
+    function bmFetchSpy(period, startDate, endDate, intraday) {
+        if (intraday) {
+            var iurl = '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(startDate + 'T13:30:00Z') + '&end=' + encodeURIComponent(startDate + 'T21:00:00Z');
+            return fetch(iurl).then(function (r) { return r.ok ? r.json() : []; })
+                .then(function (bars) { return bmSpyMapFromAlpaca(bars, true); })
+                .catch(function () { return {}; });
+        }
+        function viaAlpaca() {
+            var aurl = '/api/market/bars/SPY?timeframe=1Day&limit=400&start=' + encodeURIComponent(startDate) + '&end=' + encodeURIComponent(endDate);
+            return fetch(aurl).then(function (r) { return r.ok ? r.json() : []; })
+                .then(function (bars) { return bmSpyMapFromAlpaca(bars, false); })
+                .catch(function () { return {}; });
+        }
+        return fetch('/api/supabase/market?symbol=SPY&start=' + startDate, { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .then(function (rows) { return (rows && rows.length >= 3) ? bmSpyMapFromSupabase(rows) : viaAlpaca(); })
+            .catch(viaAlpaca);
+    }
+    function bmAlignSpyIndex(equityRows, spyMap, intraday) {
+        var spyFirst = null, last = null;
+        var aligned = equityRows.map(function (h) {
+            var raw = h.date || '';
+            var k = intraday ? raw.slice(0, 16) : raw.slice(0, 10);
+            var c = spyMap[k];
+            if (c && spyFirst === null) spyFirst = c;
+            if (c) last = c;
+            return last;
+        });
+        if (spyFirst === null) return null;
+        return aligned.map(function (c) { var v = (c === null ? spyFirst : c); return (v / spyFirst) * 100; });
+    }
+
+    /* ── Reusable component builders (HTML-string components) ─────────────── */
+    function ChartControls() {
+        var periods = BENCH_PERIODS.map(function (p) {
+            var lbl = p === 'All' ? 'ALL' : p;
+            return '<button class="pf-period-btn' + (p === chartPeriod ? ' active' : '') + '" data-period="' + p + '">' + lbl + '</button>';
+        }).join('');
+        var modes = BENCH_MODES.map(function (m) {
+            return '<button class="pf-mode-btn' + (m.id === chartMode ? ' active' : '') + '" data-mode="' + m.id + '">' + bl(m.en, m.ar) + '</button>';
+        }).join('');
+        return '<div class="pf-bench-controls">' +
+            '<div class="pf-period-strip">' + periods + '</div>' +
+            '<div class="pf-mode-strip">' + modes + '</div>' +
+        '</div>';
+    }
+    function PerformanceKpiCard(label, valueId, accentTone) {
+        return '<div class="pf-bench-kpi' + (accentTone ? ' is-' + accentTone : '') + '">' +
+            '<div class="pf-bench-kpi__label">' + label + '</div>' +
+            '<div class="pf-bench-kpi__value pf-num" id="' + valueId + '">—</div>' +
+        '</div>';
+    }
+    function ChartLegend() {
+        return '<div class="pf-bench-legend">' +
+            '<span class="pf-bench-leg"><span class="pf-bench-swatch pf-bench-swatch--pf"></span>' + bl('Portfolio', 'المحفظة') + '</span>' +
+            '<span class="pf-bench-leg"><span class="pf-bench-swatch pf-bench-swatch--spy"></span>S&amp;P 500</span>' +
+        '</div>';
+    }
+    function InsightBadge() {
+        return '<div class="pf-bench-insight" id="benchInsight">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
+            '<span id="benchInsightText">' + bl('Computing benchmark comparison…', 'جارٍ حساب المقارنة المعيارية…') + '</span>' +
+        '</div>';
+    }
+    function MetricSummaryItem(label, valueId, sub) {
+        return '<div class="pf-bench-sumitem">' +
+            '<div class="pf-bench-sumitem__label">' + label + '</div>' +
+            '<div class="pf-bench-sumitem__value pf-num" id="' + valueId + '">—</div>' +
+            '<div class="pf-bench-sumitem__sub" id="' + valueId + 'Sub">' + (sub || '') + '</div>' +
+        '</div>';
+    }
+    function MetricSummaryRow() {
+        return '<div class="pf-bench-summary">' +
+            MetricSummaryItem(bl('Starting Capital', 'رأس المال المبدئي'), 'sumStart') +
+            MetricSummaryItem(bl('Current NAV', 'صافي القيمة الحالية'), 'sumNav') +
+            MetricSummaryItem(bl('Best Value', 'أعلى قيمة'), 'sumBest') +
+            MetricSummaryItem(bl('Worst Value', 'أدنى قيمة'), 'sumWorst') +
+            MetricSummaryItem(bl('Risk / Return Snapshot', 'لقطة المخاطر / العائد'), 'sumRisk') +
+        '</div>';
+    }
+    function LivePill() {
+        return '<div class="pf-live-pill" id="benchLivePill" title="' + bl('Auto-updating live', 'تحديث تلقائي مباشر') + '">' +
+            '<span class="pf-live-dot"></span><span id="benchLiveTs">' + bl('LIVE', 'مباشر') + '</span>' +
+        '</div>';
+    }
+
+    /* ── Card shell (built once; live ticks patch values, not the DOM) ───── */
     function renderChartCard() {
         var el = document.getElementById('chartCard');
         if (!el) return;
 
-        var periodBtns = ['1D', '1W', '1M', '3M', '6M', 'YTD', 'All'].map(function(p){
-            return '<button class="pf-period-btn' + (p === chartPeriod ? ' active' : '') + '" data-period="' + p + '">' + p + '</button>';
-        }).join('');
-        var modeBtns = ['value','return','drawdown'].map(function(m){
-            var label = m === 'value' ? 'Value' : m === 'return' ? 'Return' : 'Drawdown';
-            return '<button class="pf-mode-btn' + (m === chartMode ? ' active' : '') + '" data-mode="' + m + '">' + label + '</button>';
-        }).join('');
-
-        var toggleButtonHtml = '';
-        if (selectedSymbol) {
-            var isStock = selectedChartType === 'stock';
-            toggleButtonHtml = '<button class="pf-btn pf-btn--sm ' + (isStock ? '' : 'pf-btn--outline') + '" id="chartTypeToggle" style="border-radius:var(--pf-radius-sm); font-size:0.72rem; font-weight:700; letter-spacing:0.02em;">' +
-                (isStock ? '← Portfolio Equity' : 'Technical Chart: ' + selectedSymbol) +
-            '</button>';
-        }
-
         el.innerHTML =
-            '<div class="pf-chart-top" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">' +
-                '<div class="pf-chart-headline">' +
-                    '<h2 style="font-family:\'DM Serif Display\', serif; font-size:1.4rem; font-weight:400; margin:0; line-height:1;">' +
-                        (selectedChartType === 'stock' ? 'STOCK TECHNICAL CHART: ' + selectedSymbol : t('perfTitle')) +
-                    '</h2>' +
-                    '<span class="pf-num" style="font-size:1.6rem; font-weight:700; display:block; margin-top:0.25rem; font-family:var(--pf-mono);" id="chartHeadlinePrice">' +
-                        (selectedChartType === 'stock' ? '—' : '$' + fmt(metrics.totalValue)) +
-                    '</span>' +
-                    (pfId === 'all' && selectedChartType !== 'stock' ? '<span style="font-size:0.7rem; color:var(--teal); font-weight:700; margin-top:0.15rem; display:block;">3 Combined Portfolios · $300K Paper Baseline</span>' : '') +
-                    (selectedChartType === 'stock' ? '<span style="font-size:0.7rem; color:var(--muted); font-weight:600; margin-top:0.15rem; display:block;">vs S&amp;P 500 · ' + chartPeriod + ' period</span>' : '') +
+            '<div class="pf-bench-top">' +
+                '<div class="pf-bench-head">' +
+                    '<h2 class="pf-bench-title">' + bl('Portfolio vs S&P 500', 'المحفظة مقابل S&P 500').replace('&', '&amp;') + '</h2>' +
+                    '<p class="pf-bench-sub">' + bl('Normalized performance, indexed to 100 at start date', 'أداء مُطبَّع، مُرتكز على 100 من تاريخ البداية') + '</p>' +
                 '</div>' +
-                '<div class="pf-chart-controls" style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap;">' +
-                    toggleButtonHtml +
-                    '<div class="pf-period-strip" style="display:flex; background:var(--page); border:1px solid var(--line); padding:2px; border-radius:var(--pf-radius-sm);">' + periodBtns + '</div>' +
-                    (selectedChartType !== 'stock' ? '<div class="pf-mode-strip" style="display:flex; background:var(--page); border:1px solid var(--line); padding:2px; border-radius:var(--pf-radius-sm);">' + modeBtns + '</div>' : '') +
-                    '<div class="pf-benchmark-toggle' + (showBenchmark ? ' active' : '') + '" id="benchToggle" style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.75rem; font-weight:600; color:var(--muted); border:1px solid var(--line); padding:0.35rem 0.65rem; border-radius:var(--pf-radius-sm);">' +
-                        '<div class="dot" style="width:6px; height:6px; border-radius:50%; background:' + (showBenchmark?'var(--teal)':'var(--muted)') + '"></div>' + portfolio.benchmark +
-                    '</div>' +
-                '</div>' +
+                ChartControls() +
+                LivePill() +
             '</div>' +
-            '<div class="pf-chart-wrap" style="height:320px; position:relative;"><canvas id="perfChart"></canvas></div>' +
-            '<div class="pf-chart-stats" id="chartStatsPanel" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; border-top:1px solid var(--line); padding-top:1rem; margin-top:1rem;"></div>';
+            '<div class="pf-bench-kpis">' +
+                PerformanceKpiCard(bl('Portfolio Return', 'عائد المحفظة'), 'kpiPReturn') +
+                PerformanceKpiCard(bl('S&P 500 Return', 'عائد S&P 500').replace('&', '&amp;'), 'kpiSpyReturn') +
+                PerformanceKpiCard(bl('Relative Performance', 'الأداء النسبي'), 'kpiRelative') +
+                PerformanceKpiCard(bl('Max Drawdown', 'أقصى تراجع'), 'kpiMaxDD') +
+            '</div>' +
+            '<div class="pf-bench-midrow">' +
+                ChartLegend() +
+                InsightBadge() +
+            '</div>' +
+            '<div class="pf-bench-note">' +
+                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+                bl('Both lines start at 100 so you can compare performance fairly.', 'يبدأ كلا الخطين من 100 لتتمكن من مقارنة الأداء بإنصاف.') +
+            '</div>' +
+            '<div class="pf-chart-wrap" style="height:340px;position:relative;"><canvas id="perfChart"></canvas></div>' +
+            MetricSummaryRow();
 
-        el.querySelectorAll('.pf-period-btn').forEach(function(btn){
-            btn.addEventListener('click', function(){
-                el.querySelectorAll('.pf-period-btn').forEach(function(b){ b.classList.remove('active'); });
+        el.querySelectorAll('.pf-period-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (btn.dataset.period === chartPeriod) return;
+                el.querySelectorAll('.pf-period-btn').forEach(function (b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 chartPeriod = btn.dataset.period;
                 initChart();
             });
         });
-        el.querySelectorAll('.pf-mode-btn').forEach(function(btn){
-            btn.addEventListener('click', function(){
-                el.querySelectorAll('.pf-mode-btn').forEach(function(b){ b.classList.remove('active'); });
+        el.querySelectorAll('.pf-mode-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (btn.dataset.mode === chartMode) return;
+                el.querySelectorAll('.pf-mode-btn').forEach(function (b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 chartMode = btn.dataset.mode;
                 initChart();
             });
         });
-        
-        var toggler = el.querySelector('#chartTypeToggle');
-        if (toggler) {
-            toggler.addEventListener('click', function() {
-                selectedChartType = selectedChartType === 'portfolio' ? 'stock' : 'portfolio';
-                renderChartCard();
-            });
-        }
-
-        var bToggle = el.querySelector('#benchToggle');
-        if (bToggle) {
-            bToggle.addEventListener('click', function(){
-                showBenchmark = !showBenchmark;
-                // Redraw fully so benchmark overlay is rebuilt correctly for both modes
-                renderChartCard();
-            });
-        }
 
         initChart();
     }
 
-    function stat(label, val, cls) {
-        return '<div class="pf-stat"><div class="pf-stat__label" style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em;">' + label + '</div>' +
-            '<div class="pf-stat__value' + (cls ? ' ' + cls : '') + '" style="font-family:var(--pf-mono); font-weight:700; font-size:1.15rem; margin-top:0.15rem;">' + val + '</div></div>';
+    /* ── Empty / patch helpers ───────────────────────────────────────────── */
+    function bmSetText(id, text, cls) {
+        var node = document.getElementById(id);
+        if (!node) return;
+        node.textContent = text;
+        if (cls !== undefined) { node.classList.remove('pf-pos', 'pf-neg'); if (cls) node.classList.add(cls); }
+    }
+    function bmDrawEmpty(canvas, isDark) {
+        if (perfChart) { perfChart.destroy(); perfChart = null; }
+        var cx = canvas.getContext('2d');
+        cx.clearRect(0, 0, canvas.width, canvas.height);
+        cx.font = '13px Manrope';
+        cx.fillStyle = isDark ? '#a39a92' : '#7a6b5e';
+        cx.textAlign = 'center';
+        cx.fillText(bl('Benchmark history syncing…', 'جارٍ مزامنة بيانات المقارنة…'), canvas.width / 2, canvas.height / 2);
     }
 
-    // Period → Alpaca bar params mapping
-    var _stockBarCache = {};
-    var STOCK_PERIOD_MAP = {
-        '1D':  { timeframe: '5Min',  limit: 78 },
-        '1W':  { timeframe: '1Day',  limit: 8 },
-        '1M':  { timeframe: '1Day',  limit: 31 },
-        '3M':  { timeframe: '1Day',  limit: 92 },
-        '6M':  { timeframe: '1Day',  limit: 185 },
-        'YTD': { timeframe: '1Day',  limit: 260 },
-        'All': { timeframe: '1Day',  limit: 365 }
-    };
-
-    function fetchRealStockHistory(symbol, period, callback) {
-        var cacheKey = symbol + '|' + period;
-        if (_stockBarCache[cacheKey]) { callback(_stockBarCache[cacheKey]); return; }
-        var p = STOCK_PERIOD_MAP[period] || STOCK_PERIOD_MAP['3M'];
-        var isIntraday = (period === '1D');
-
-        function parseHistory(bars, intraday) {
-            return bars.map(function(b) {
-                return { date: (b.t || '').slice(0, intraday ? 16 : 10), price: b.c };
-            });
-        }
-
-        fetch('/api/market/bars/' + symbol + '?timeframe=' + p.timeframe + '&limit=' + p.limit)
-            .then(function(r) { return r.ok ? r.json() : []; })
-            .then(function(bars) {
-                if (bars && bars.length > 0) {
-                    var history = parseHistory(bars, isIntraday);
-                    _stockBarCache[cacheKey] = history;
-                    callback(history);
-                } else if (isIntraday) {
-                    // Market closed — fall back to recent daily bars
-                    fetch('/api/market/bars/' + symbol + '?timeframe=1Day&limit=31')
-                        .then(function(r2) { return r2.ok ? r2.json() : []; })
-                        .then(function(dailyBars) {
-                            if (dailyBars && dailyBars.length > 0) {
-                                var history = parseHistory(dailyBars, false);
-                                _stockBarCache[cacheKey] = history;
-                                callback(history);
-                            } else {
-                                callback(generateStockHistoryFallback(symbol));
-                            }
-                        })
-                        .catch(function() { callback(generateStockHistoryFallback(symbol)); });
-                } else {
-                    callback(generateStockHistoryFallback(symbol));
-                }
-            })
-            .catch(function() { callback(generateStockHistoryFallback(symbol)); });
-    }
-
-    function generateStockHistoryFallback(symbol) {
-        var h = metrics.holdings.find(function(x){ return x.symbol === symbol; });
-        var basePrice = h ? h.lastPrice : 100;
-        var points = [];
-        var now = new Date();
-        for (var i = 78; i >= 0; i--) {
-            var d = new Date(now - i * 5 * 60000);
-            var noise = (Math.random() - 0.48) * basePrice * 0.01;
-            basePrice = basePrice + noise;
-            points.push({ date: d.toISOString().slice(0,16), price: Math.max(basePrice, 0.1) });
-        }
-        return points;
-    }
+    /* ── Drawer: fetch → compute → draw → patch (race-safe, last-good) ────── */
+    var _benchToken = 0;
+    var _benchLastGood = null;
 
     function initChart() {
-        var isDark = document.documentElement.dataset.theme !== 'light';
-        var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-        var tickColor = isDark ? '#a39a92' : '#7a6b5e';
-        
         var canvas = document.getElementById('perfChart');
         if (!canvas) return;
-        var ctx = canvas.getContext('2d');
+        var isDark = document.documentElement.dataset.theme !== 'light';
+        var intraday = chartPeriod === '1D';
+        var token = ++_benchToken;
 
-        if (selectedChartType === 'stock') {
-            var isIntraday = (chartPeriod === '1D');
-            var spyStockLimit = (STOCK_PERIOD_MAP[chartPeriod] || STOCK_PERIOD_MAP['3M']).limit + 5;
-
-            fetchRealStockHistory(selectedSymbol, chartPeriod, function(stockData) {
-                if (!stockData || stockData.length === 0) {
-                    var headEl = document.getElementById('chartHeadlinePrice');
-                    if (headEl) headEl.textContent = 'No data';
-                    return;
-                }
-
-                var labels = stockData.map(function(d) {
-                    var raw = d.date;
-                    if (isIntraday) {
-                        // Parse ISO-like "YYYY-MM-DDTHH:MM" safely
-                        var parts = raw.replace('T', ' ').split(/[- :]/);
-                        var dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), parseInt(parts[3] || 0), parseInt(parts[4] || 0));
-                        return dt.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
-                    } else {
-                        var parts2 = raw.split('-');
-                        var dt2 = new Date(parseInt(parts2[0]), parseInt(parts2[1]) - 1, parseInt(parts2[2]));
-                        var opts = (chartPeriod === 'All' || chartPeriod === 'YTD' || chartPeriod === '6M')
-                            ? { day: '2-digit', month: 'short', year: '2-digit' }
-                            : { day: '2-digit', month: 'short' };
-                        return dt2.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', opts);
-                    }
-                });
-
-                var prices = stockData.map(function(d) { return d.price; });
-
-                // EMA-20
-                var ema20 = [];
-                var k = 2 / (20 + 1);
-                var currEma = prices[0];
-                for (var i = 0; i < prices.length; i++) {
-                    currEma = prices[i] * k + currEma * (1 - k);
-                    ema20.push(currEma);
-                }
-
-                // Bollinger Bands (20-period, 2σ)
-                var bbUpper = [], bbLower = [];
-                for (var i = 0; i < prices.length; i++) {
-                    var window20 = prices.slice(Math.max(0, i - 19), i + 1);
-                    var wAvg = window20.reduce(function(s, v) { return s + v; }, 0) / window20.length;
-                    if (window20.length < 5) {
-                        bbUpper.push(prices[i] * 1.03);
-                        bbLower.push(prices[i] * 0.97);
-                    } else {
-                        var variance = window20.reduce(function(s, v) { return s + Math.pow(v - wAvg, 2); }, 0) / window20.length;
-                        var sd = Math.sqrt(variance);
-                        bbUpper.push(wAvg + sd * 2);
-                        bbLower.push(wAvg - sd * 2);
-                    }
-                }
-
-                var currentP = prices[prices.length - 1];
-                var firstP   = prices[0];
-                var maxP     = Math.max.apply(null, prices);
-                var minP     = Math.min.apply(null, prices);
-                var trendPct = firstP > 0 ? ((currentP - firstP) / firstP) * 100 : 0;
-
-                // Update headline price immediately
-                var headlineEl = document.getElementById('chartHeadlinePrice');
-                if (headlineEl) headlineEl.textContent = '$' + fmt(currentP);
-
-                var periodLabel = isIntraday ? '1-Day' : chartPeriod;
-                var statsHtml =
-                    stat(lang === 'ar' ? 'سعر الافتتاح' : 'Start Price',   '$' + fmt(firstP), '') +
-                    stat(lang === 'ar' ? 'أعلى سعر' : 'Period High',        '$' + fmt(maxP), 'pf-pos') +
-                    stat(lang === 'ar' ? 'أقل سعر'  : 'Period Low',         '$' + fmt(minP), 'pf-neg') +
-                    stat(lang === 'ar' ? 'العائد الفعلي' : periodLabel + ' Return', pct(trendPct), trendPct >= 0 ? 'pf-pos' : 'pf-neg');
-
-                var statsPanel = document.getElementById('chartStatsPanel');
-                if (statsPanel) statsPanel.innerHTML = statsHtml;
-
-                function renderStockChart(spyPrices) {
-                    var datasets = [
-                        {
-                            label: selectedSymbol + ' Price',
-                            data: prices,
-                            borderColor: '#E55A1F',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2.5,
-                            tension: 0.25, pointRadius: 0, pointHoverRadius: 5,
-                            pointHoverBackgroundColor: '#E55A1F'
-                        },
-                        {
-                            label: 'EMA 20',
-                            data: ema20,
-                            borderColor: isDark ? '#FFC396' : '#C9461A',
-                            backgroundColor: 'transparent',
-                            borderWidth: 1.2,
-                            borderDash: [4, 3],
-                            tension: 0.25, pointRadius: 0
-                        },
-                        {
-                            label: 'BB Upper',
-                            data: bbUpper,
-                            borderColor: 'rgba(229,90,31,0.25)',
-                            backgroundColor: 'transparent',
-                            borderWidth: 1,
-                            tension: 0.25, pointRadius: 0
-                        },
-                        {
-                            label: 'BB Lower',
-                            data: bbLower,
-                            borderColor: 'rgba(229,90,31,0.25)',
-                            backgroundColor: 'rgba(229,90,31,0.04)',
-                            borderWidth: 1,
-                            fill: '-1',
-                            tension: 0.25, pointRadius: 0
-                        }
-                    ];
-
-                    if (spyPrices && spyPrices.length === prices.length && showBenchmark) {
-                        datasets.push({
-                            label: 'S&P 500 (SPY · normalized)',
-                            data: spyPrices,
-                            borderColor: '#7a6b5e',
-                            backgroundColor: 'transparent',
-                            borderWidth: 1.5,
-                            borderDash: [5, 4],
-                            tension: 0.25, pointRadius: 0, pointHoverRadius: 4
-                        });
-                    }
-
-                    if (perfChart) perfChart.destroy();
-                    perfChart = new Chart(ctx, {
-                        type: 'line',
-                        data: { labels: labels, datasets: datasets },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            interaction: { intersect: false, mode: 'index' },
-                            scales: {
-                                x: {
-                                    grid: { color: gridColor, drawBorder: false },
-                                    ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: isIntraday ? 10 : 8, maxRotation: 0 }
-                                },
-                                y: {
-                                    position: 'right', grid: { color: gridColor, drawBorder: false },
-                                    ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, callback: function(v) { return '$' + fmt(v, 2); } }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    display: true, position: 'top',
-                                    labels: { boxWidth: 10, font: { size: 9, family: 'Manrope' }, color: tickColor, padding: 12 }
-                                },
-                                tooltip: {
-                                    backgroundColor: isDark ? '#1a0f08' : '#ffffff',
-                                    borderColor: gridColor, borderWidth: 1,
-                                    titleFont: { family: 'Manrope', size: 11, weight: '700' },
-                                    bodyFont: { family: 'IBM Plex Mono', size: 10 },
-                                    titleColor: isDark ? '#fff1e8' : '#1a0f08',
-                                    bodyColor: isDark ? '#a39a92' : '#7a6b5e',
-                                    padding: 10,
-                                    callbacks: {
-                                        label: function(c) {
-                                            return ' ' + c.dataset.label + ': $' + fmt(c.raw, 2);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Fetch SPY for same period — use date range from stock data for proper alignment
-                var spyTf = isIntraday ? '5Min' : '1Day';
-                var sdStart = stockData.length > 0 ? stockData[0].date.slice(0, 10) : '';
-                var sdEnd   = stockData.length > 0 ? stockData[stockData.length - 1].date.slice(0, 10) : '';
-                var spyStockUrl = isIntraday
-                    ? '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(sdStart + 'T13:30:00Z') + '&end=' + encodeURIComponent(sdStart + 'T21:00:00Z')
-                    : '/api/market/bars/SPY?timeframe=1Day&limit=400&start=' + encodeURIComponent(sdStart) + '&end=' + encodeURIComponent(sdEnd);
-                fetch(spyStockUrl)
-                    .then(function(r) { return r.ok ? r.json() : []; })
-                    .then(function(spyBars) {
-                        if (!spyBars || spyBars.length < 2 || !showBenchmark) { renderStockChart(null); return; }
-                        // Build date-keyed lookup; normalize SPY to stock's opening price
-                        var spyByKey = {};
-                        spyBars.forEach(function(b) {
-                            var k = isIntraday ? (b.t || '').slice(0, 16) : (b.t || '').slice(0, 10);
-                            spyByKey[k] = b.c;
-                        });
-                        var spyFirst = null;
-                        var lastSpyVal = firstP;
-                        var spyNorm = stockData.map(function(d) {
-                            var k = isIntraday ? d.date.slice(0, 16) : d.date.slice(0, 10);
-                            var c = spyByKey[k];
-                            if (c && !spyFirst) spyFirst = c;
-                            if (c && spyFirst) { lastSpyVal = firstP * (c / spyFirst); return lastSpyVal; }
-                            return lastSpyVal; // forward-fill gaps
-                        });
-                        if (!spyFirst) { renderStockChart(null); return; }
-                        renderStockChart(spyNorm);
-                    })
-                    .catch(function() { renderStockChart(null); });
-            });
-
-        } else {
-            // Portfolio cumulative equity curve.
-            // Data priority: Supabase (real accumulated daily) → Alpaca live history → synthetic backfill.
-            // SPY benchmark priority: Supabase market_daily_history → Alpaca IEX bars.
-            var isIntraday = chartPeriod === '1D';
-
-            function periodToStartDate(p) {
-                var d = new Date();
-                if (p === '1W') d.setDate(d.getDate() - 7);
-                else if (p === '1M') d.setMonth(d.getMonth() - 1);
-                else if (p === '3M') d.setMonth(d.getMonth() - 3);
-                else if (p === '6M') d.setMonth(d.getMonth() - 6);
-                else if (p === 'YTD') { d.setMonth(0); d.setDate(1); }
-                else d.setFullYear(d.getFullYear() - 2);
-                return d.toISOString().slice(0, 10);
+        bmFetchEquity(chartPeriod).then(function (equityRows) {
+            if (token !== _benchToken) return; // superseded
+            if (!equityRows || equityRows.length < 2) {
+                if (!_benchLastGood) bmDrawEmpty(canvas, isDark);
+                return;
             }
-            var sbStart = isIntraday ? '' : periodToStartDate(chartPeriod);
-
-            function buildChartFromHistArr(histArr, baseValue) {
-                if (histArr.length === 1) {
-                    var fd = new Date(histArr[0].date); fd.setDate(fd.getDate() - 1);
-                    histArr.unshift({ date: fd.toISOString().slice(0, 10), equity: baseValue });
+            var startDate = (equityRows[0].date || '').slice(0, 10);
+            var endDate   = (equityRows[equityRows.length - 1].date || '').slice(0, 10);
+            bmFetchSpy(chartPeriod, startDate, endDate, intraday).then(function (spyMap) {
+                if (token !== _benchToken) return;
+                try {
+                    renderBenchmark(canvas, equityRows, spyMap, intraday, isDark);
+                } catch (e) {
+                    console.warn('[bench] render failed:', e && e.message);
+                    if (!_benchLastGood) bmDrawEmpty(canvas, isDark);
                 }
+            });
+        });
+    }
 
-                var labels = histArr.map(function(h) {
-                    var raw = h.date || '';
-                    if (isIntraday) {
-                        var dt = new Date(raw.replace('T', ' ').replace('Z', ''));
-                        return dt.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
-                    }
-                    var parts = raw.slice(0, 10).split('-');
-                    var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                    var longPeriod = (chartPeriod === 'All' || chartPeriod === 'YTD' || chartPeriod === '6M');
-                    return dt2.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', longPeriod ? { day: '2-digit', month: 'short', year: '2-digit' } : { day: '2-digit', month: 'short' });
-                });
-                var pValues = histArr.map(function(h) { return parseFloat(h.equity) || baseValue; });
-                var startVal = pValues[0] || baseValue;
+    function renderBenchmark(canvas, equityRows, spyMap, intraday, isDark) {
+        var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+        var tickColor = isDark ? '#a39a92' : '#7a6b5e';
+        var pfColor   = '#E55A1F';
+        var spyColor  = isDark ? '#9a8d82' : '#9b8e83';
 
-                var maxVal = Math.max.apply(null, pValues);
-                var minVal = Math.min.apply(null, pValues);
-                var lastVal = pValues[pValues.length - 1] || baseValue;
-                var totalPLPct = startVal > 0 ? ((lastVal - startVal) / startVal) * 100 : 0;
+        var labels     = equityRows.map(function (h) { return bmLabel(h.date || '', intraday); });
+        var equityVals = equityRows.map(function (h) { return parseFloat(h.equity) || 0; });
+        var startEq    = equityVals[0] || 1;
+        var pIndex     = bmNormalize(equityVals, startEq);
+        var spyIndex   = bmAlignSpyIndex(equityRows, spyMap, intraday); // may be null
 
-                var statsHtml =
-                    stat(t('bestDay'), '$' + fmt(baseValue, 0), '') +
-                    stat(lang === 'ar' ? 'الحد الأقصى' : 'Peak Valuation', '$' + fmt(maxVal, 0), 'pf-pos') +
-                    stat(lang === 'ar' ? 'الحد الأدنى' : 'Trough Valuation', '$' + fmt(minVal, 0), 'pf-neg') +
-                    stat(lang === 'ar' ? 'العائد للفترة' : 'Period Return', pct(totalPLPct), totalPLPct >= 0 ? 'pf-pos' : 'pf-neg');
-                var statsPanel = document.getElementById('chartStatsPanel');
-                if (statsPanel) statsPanel.innerHTML = statsHtml;
+        var pReturn   = pIndex[pIndex.length - 1] - 100;
+        var spyReturn = spyIndex ? (spyIndex[spyIndex.length - 1] - 100) : null;
+        var relative  = (spyReturn === null) ? null : (pReturn - spyReturn);
+        var maxDD     = bmMaxDrawdown(pIndex);
 
-                if (pValues.length === 0) {
-                    var c2 = document.getElementById('perfChart');
-                    if (c2) { var cx2 = c2.getContext('2d'); cx2.font = '13px Manrope'; cx2.fillStyle = tickColor; cx2.textAlign = 'center'; cx2.fillText('No equity history available', c2.width / 2, c2.height / 2); }
-                    return;
-                }
+        var initialCapital = (pfId === 'all') ? 300000 : 100000;
+        var bw = bmBestWorst(equityRows);
+        var sharpe = bmSharpe(equityVals, intraday);
+        var beta = (spyIndex && !intraday) ? bmBeta(bmDailyReturns(equityVals), bmDailyReturns(spyIndex)) : null;
 
-                function renderEquityChart(bValues) {
-                    var grad = ctx.createLinearGradient(0, 0, 0, 240);
-                    grad.addColorStop(0,   'rgba(229,90,31,0.28)');
-                    grad.addColorStop(0.7, 'rgba(229,90,31,0.04)');
-                    grad.addColorStop(1,   'rgba(229,90,31,0.00)');
-                    var chartData = chartMode === 'value' ? pValues : chartMode === 'return' ? toReturn(pValues) : toDrawdown(pValues);
-                    var benchData = bValues && bValues.length ? (chartMode === 'value' ? bValues : chartMode === 'return' ? toReturn(bValues) : toDrawdown(bValues)) : pValues.map(function() { return startVal; });
-                    if (perfChart) perfChart.destroy();
-                    perfChart = new Chart(ctx, {
-                        type: 'line',
-                        data: { labels: labels, datasets: [
-                            { label: portfolio.name, data: chartData, borderColor: '#E55A1F', backgroundColor: chartMode === 'value' ? grad : 'rgba(229,90,31,0.08)', borderWidth: 2.5, fill: chartMode !== 'drawdown', tension: 0.3, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#E55A1F' },
-                            { label: 'S&P 500 Benchmark', data: benchData, borderColor: '#7a6b5e', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], fill: false, tension: 0.3, pointRadius: 0, pointHoverRadius: 4, hidden: !showBenchmark }
-                        ]},
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            interaction: { intersect: false, mode: 'index' },
-                            scales: {
-                                x: { grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: isIntraday ? 12 : 8, maxRotation: 0 } },
-                                y: { position: 'right', grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, callback: function(v) { if (chartMode !== 'value') return v.toFixed(1) + '%'; return '$' + (v >= 1e3 ? (v/1e3).toFixed(1) + 'K' : v.toFixed(0)); } } }
-                            },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { backgroundColor: isDark ? '#1a0f08' : '#fff', borderColor: gridColor, borderWidth: 1, titleFont: { family: 'Manrope', size: 11, weight: '700' }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, titleColor: isDark ? '#fff1e8' : '#1a0f08', bodyColor: isDark ? '#a39a92' : '#7a6b5e', padding: 10,
-                                    callbacks: { label: function(ct) { var v = ct.raw; if (chartMode !== 'value') return ' ' + ct.dataset.label + ': ' + (v>=0?'+':'') + v.toFixed(2) + '%'; return ' ' + ct.dataset.label + ': $' + v.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2}); } }
-                                }
+        // Mode → series
+        var yTitle, pData, sData;
+        if (chartMode === 'return') {
+            yTitle = bl('Return %', 'العائد %');
+            pData = toReturn(equityVals);
+            sData = spyIndex ? spyIndex.map(function (v) { return v - 100; }) : null;
+        } else if (chartMode === 'drawdown') {
+            yTitle = bl('Drawdown %', 'التراجع %');
+            pData = toDrawdown(pIndex);
+            sData = spyIndex ? toDrawdown(spyIndex) : null;
+        } else {
+            yTitle = bl('Growth Index (Rebased)', 'مؤشر النمو (مُرتكز)');
+            pData = pIndex;
+            sData = spyIndex;
+        }
+
+        var ctx = canvas.getContext('2d');
+        var grad = ctx.createLinearGradient(0, 0, 0, 340);
+        grad.addColorStop(0,   'rgba(229,90,31,0.26)');
+        grad.addColorStop(0.7, 'rgba(229,90,31,0.04)');
+        grad.addColorStop(1,   'rgba(229,90,31,0.00)');
+
+        var datasets = [{
+            label: bl('Portfolio', 'المحفظة'),
+            data: pData,
+            borderColor: pfColor,
+            backgroundColor: chartMode === 'drawdown' ? 'rgba(229,90,31,0.06)' : grad,
+            borderWidth: 2.5,
+            fill: chartMode !== 'drawdown',
+            tension: 0.3, pointRadius: 0, pointHoverRadius: 5,
+            pointHoverBackgroundColor: pfColor, order: 1
+        }];
+        if (sData) {
+            datasets.push({
+                label: 'S&P 500',
+                data: sData,
+                borderColor: spyColor,
+                backgroundColor: 'transparent',
+                borderWidth: 1.6,
+                borderDash: [6, 4],
+                fill: false,
+                tension: 0.3, pointRadius: 0, pointHoverRadius: 4, order: 2
+            });
+        }
+
+        // Index-mode dynamic range (~95–130 typical) with padding.
+        // Tick precision adapts to the span so tiny ranges don't show duplicate labels.
+        var idxDecimals = 0;
+        var yScale = { position: 'right', grid: { color: gridColor, drawBorder: false },
+            title: { display: true, text: yTitle, color: tickColor, font: { family: 'Manrope', size: 10, weight: '700' } },
+            ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor,
+                callback: function (v) { return chartMode === 'index' ? v.toFixed(idxDecimals) : v.toFixed(1) + '%'; } } };
+        if (chartMode === 'index') {
+            var all = pData.concat(sData || []);
+            var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+            var span = hi - lo;
+            idxDecimals = span <= 4 ? 2 : span <= 15 ? 1 : 0;
+            var pad = Math.max(span * 0.12, 1.5);
+            yScale.suggestedMin = lo - pad;
+            yScale.suggestedMax = hi + pad;
+        }
+
+        if (perfChart) perfChart.destroy();
+        perfChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                animation: { duration: 600 },
+                scales: {
+                    x: { grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: intraday ? 10 : 8, maxRotation: 0 } },
+                    y: yScale
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1a0f08' : '#fff', borderColor: gridColor, borderWidth: 1,
+                        titleFont: { family: 'Manrope', size: 11, weight: '700' }, bodyFont: { family: 'IBM Plex Mono', size: 11 },
+                        titleColor: isDark ? '#fff1e8' : '#1a0f08', bodyColor: isDark ? '#a39a92' : '#7a6b5e', padding: 10,
+                        callbacks: {
+                            label: function (c) {
+                                var v = c.raw;
+                                if (chartMode === 'index') return ' ' + c.dataset.label + ': ' + v.toFixed(2);
+                                return ' ' + c.dataset.label + ': ' + (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
                             }
                         }
-                    });
+                    }
                 }
+            }
+        });
 
-                // Build SPY benchmark — try Supabase (real data) first, fall back to Alpaca IEX
-                function alignSpyToBValues(spyBars, isAlpacaFormat) {
-                    var spyByKey = {};
-                    spyBars.forEach(function(b) {
-                        var t = isAlpacaFormat ? (b.t || '') : (b.date || '');
-                        var c = isAlpacaFormat ? b.c : parseFloat(b.close_price);
-                        var k = isIntraday ? t.slice(0, 16) : t.slice(0, 10);
-                        if (k) spyByKey[k] = c;
-                    });
-                    var spyFirst = null, lastSpyVal = startVal;
-                    var bv = histArr.map(function(h) {
-                        var raw = h.date || '';
-                        var k = isIntraday ? raw.slice(0, 16) : raw.slice(0, 10);
-                        var c = spyByKey[k];
-                        if (c && !spyFirst) spyFirst = c;
-                        if (c && spyFirst) { lastSpyVal = startVal * (c / spyFirst); return lastSpyVal; }
-                        return lastSpyVal;
-                    });
-                    return spyFirst ? bv : null;
-                }
+        // ── Patch KPI cards ──
+        bmSetText('kpiPReturn', pct(pReturn), pReturn >= 0 ? 'pf-pos' : 'pf-neg');
+        if (spyReturn === null) { bmSetText('kpiSpyReturn', '—', ''); }
+        else { bmSetText('kpiSpyReturn', pct(spyReturn), spyReturn >= 0 ? 'pf-pos' : 'pf-neg'); }
+        if (relative === null) { bmSetText('kpiRelative', '—', ''); }
+        else { bmSetText('kpiRelative', pct(relative), relative >= 0 ? 'pf-pos' : 'pf-neg'); }
+        bmSetText('kpiMaxDD', fmt(maxDD, 2) + '%', maxDD < 0 ? 'pf-neg' : '');
 
-                var pfStartDate = histArr.length > 0 ? (histArr[0].date || '').slice(0, 10) : sbStart;
-                var pfEndDate   = histArr.length > 0 ? (histArr[histArr.length - 1].date || '').slice(0, 10) : '';
-                var alpacaSpyUrl = isIntraday
-                    ? '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(pfStartDate + 'T13:30:00Z') + '&end=' + encodeURIComponent(pfStartDate + 'T21:00:00Z')
-                    : '/api/market/bars/SPY?timeframe=1Day&limit=400&start=' + encodeURIComponent(pfStartDate) + '&end=' + encodeURIComponent(pfEndDate);
-
-                function fetchSpyAndRender() {
-                    if (!showBenchmark) { renderEquityChart(null); return; }
-                    // Try Supabase first (accumulated real daily closes, no subscription limit)
-                    var supabaseSpyPromise = (!isIntraday && pfStartDate)
-                        ? fetch('/api/supabase/market?symbol=SPY&start=' + pfStartDate).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; })
-                        : Promise.resolve([]);
-
-                    supabaseSpyPromise.then(function(sbRows) {
-                        if (sbRows && sbRows.length >= 3) {
-                            var bv = alignSpyToBValues(sbRows, false);
-                            if (bv) { renderEquityChart(bv); return; }
-                        }
-                        // Fall back to Alpaca IEX
-                        fetch(alpacaSpyUrl)
-                            .then(function(r) { return r.ok ? r.json() : []; })
-                            .then(function(spyBars) {
-                                var bv = (spyBars && spyBars.length >= 2) ? alignSpyToBValues(spyBars, true) : null;
-                                renderEquityChart(bv);
-                            })
-                            .catch(function() { renderEquityChart(null); });
-                    });
-                }
-
-                fetchSpyAndRender();
-            } // end buildChartFromHistArr
-
-            // Load equity data — try Supabase first for daily periods
-            if (isIntraday) {
-                PFStore.loadEquityHistory(pfId, chartPeriod).then(function(data) {
-                    buildChartFromHistArr(data.history || data || [], data.base_value || (pfId === 'all' ? 300000 : 100000));
-                });
+        // ── Insight badge ──
+        var insightEl = document.getElementById('benchInsight');
+        var insightTxt = document.getElementById('benchInsightText');
+        if (insightTxt && insightEl) {
+            insightEl.classList.remove('is-pos', 'is-neg', 'is-neutral');
+            if (relative === null) {
+                insightEl.classList.add('is-neutral');
+                insightTxt.textContent = bl('Benchmark data unavailable for this period', 'بيانات المقارنة غير متوفرة لهذه الفترة');
+            } else if (relative < -0.05) {
+                insightEl.classList.add('is-neg');
+                insightTxt.textContent = bl('Portfolio underperformed S&P 500 by ' + fmt(Math.abs(relative), 2) + '%', 'تراجعت المحفظة عن مؤشر S&P 500 بنسبة ' + fmt(Math.abs(relative), 2) + '%');
+            } else if (relative > 0.05) {
+                insightEl.classList.add('is-pos');
+                insightTxt.textContent = bl('Portfolio outperformed S&P 500 by ' + fmt(relative, 2) + '%', 'تفوقت المحفظة على مؤشر S&P 500 بنسبة ' + fmt(relative, 2) + '%');
             } else {
-                var sbEquityUrl = '/api/supabase/equity?portfolio_id=' + pfId + '&start=' + sbStart;
-                fetch(sbEquityUrl)
-                    .then(function(r) { return r.ok ? r.json() : []; })
-                    .catch(function() { return []; })
-                    .then(function(sbRows) {
-                        if (sbRows && sbRows.length >= 3) {
-                            var baseVal = pfId === 'all' ? 300000 : 100000;
-                            buildChartFromHistArr(sbRows, baseVal);
-                        } else {
-                            // Fall back to Alpaca / synthetic history
-                            PFStore.loadEquityHistory(pfId, chartPeriod).then(function(data) {
-                                buildChartFromHistArr(data.history || data || [], data.base_value || (pfId === 'all' ? 300000 : 100000));
-                            });
-                        }
-                    });
+                insightEl.classList.add('is-neutral');
+                insightTxt.textContent = bl('Portfolio is tracking the S&P 500', 'المحفظة تواكب مؤشر S&P 500');
             }
         }
+
+        // ── Summary row ──
+        bmSetText('sumStart', '$' + fmt(initialCapital, 0));
+        if (metrics && isFinite(metrics.totalValue)) bmSetText('sumNav', '$' + fmt(metrics.totalValue, 2));
+        if (bw.best)  { bmSetText('sumBest', '$' + fmt(bw.best.value, 0));  bmSetText('sumBestSub', bmSummaryDate(bw.best.date)); }
+        if (bw.worst) { bmSetText('sumWorst', '$' + fmt(bw.worst.value, 0)); bmSetText('sumWorstSub', bmSummaryDate(bw.worst.date)); }
+        bmSetText('sumRisk', (sharpe === null ? 'Sharpe —' : 'Sharpe ' + fmt(sharpe, 2)) + ' · ' + (beta === null ? 'β —' : 'β ' + fmt(beta, 2)));
+        bmSetText('sumRiskSub', (sharpe === null && beta === null) ? bl('builds with ≥20d history', 'يُحتسب بعد ≥20 يوماً') : '');
+
+        // ── Live pill timestamp ──
+        var ts = new Date();
+        bmSetText('benchLiveTs', bl('Updated ', 'تحديث ') + ts.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+
+        _benchLastGood = { period: chartPeriod, mode: chartMode };
     }
 
     function toReturn(arr) {
@@ -1072,17 +1087,13 @@
             }, 50);
         }
 
-        // Bind row clicks for stock chart
+        // Bind row clicks → drill into the dedicated stock detail page
         if (holdingsViewMode === 'table') {
             sec.querySelectorAll('tbody tr').forEach(function(row) {
                 row.style.cursor = 'pointer';
                 row.addEventListener('click', function() {
                     var sym = row.getAttribute('data-symbol');
-                    if (sym) {
-                        selectedSymbol = sym;
-                        selectedChartType = 'stock';
-                        renderChartCard();
-                    }
+                    if (sym) window.location.href = '/stock-detail.html?symbol=' + encodeURIComponent(sym);
                 });
             });
         }
@@ -1244,7 +1255,7 @@
             document.querySelectorAll('.pf-mini-card').forEach(function(card){
                 card.addEventListener('click', function(){
                     var sym = card.dataset.sym;
-                    if (sym) { selectedSymbol = sym; selectedChartType = 'stock'; renderChartCard(); }
+                    if (sym) window.location.href = '/stock-detail.html?symbol=' + encodeURIComponent(sym);
                 });
             });
         }, 100);
