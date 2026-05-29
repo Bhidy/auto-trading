@@ -52,15 +52,17 @@ jobs:
 
       - name: Save daily snapshot to Supabase
         if: always()
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          # Optional telemetry — must NEVER fail the trading/EOD job.
           python3 scripts/save_to_supabase.py \
             --portfolio-id portfolio_1 \
             --state-file data/portfolio_state.json \
             --api-key "${{ secrets.P1_API_KEY }}" \
-            --api-secret "${{ secrets.P1_API_SECRET }}"
+            --api-secret "${{ secrets.P1_API_SECRET }}" || echo "Supabase snapshot skipped/failed (non-fatal)"
 
       - name: Sync data to dashboard for Vercel deploy
         if: always()

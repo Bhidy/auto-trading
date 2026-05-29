@@ -49,20 +49,31 @@ def save_portfolio_state(state):
 
 def validate_trade(signal, portfolio, limits):
     rejections = []
-    symbol = signal["symbol"]
-    sig = signal["signal"]
+    symbol = signal.get("symbol", "UNKNOWN")
+    sig = signal.get("signal", "INSUFFICIENT_DATA")
     instrument_type = signal.get("instrument_type", "stock")
-    price = signal["indicators"]["price"]
+
+    # Guardrail checks that do NOT require price/indicators come first, so a
+    # malformed or INSUFFICIENT_DATA signal can never crash the session.
+    if portfolio.get("halted"):
+        return {"approved": False, "symbol": symbol, "signal": sig,
+                "rejections": [f"SYSTEM HALTED: {portfolio.get('halt_reason', 'Unknown')}"]}
+
+    if sig in ("HOLD", "INSUFFICIENT_DATA"):
+        return {"approved": False, "symbol": symbol, "signal": sig,
+                "rejections": [f"Signal is {sig}, no action needed"]}
+
+    # Only actionable BUY/SHORT signals reach here — extract price defensively.
+    indicators = signal.get("indicators") or {}
+    price = indicators.get("price")
+    if price is None or price <= 0:
+        return {"approved": False, "symbol": symbol, "signal": sig,
+                "rejections": [f"No valid price for {symbol} (price={price})"]}
+
     rm = signal.get("risk_management", {})
     suggested_pct = rm.get("suggested_position_pct") or signal.get("suggested_position_size_pct") or 1.0
     stop_loss = rm.get("stop_loss")
     take_profit = rm.get("take_profit")
-
-    if portfolio.get("halted"):
-        return {"approved": False, "rejections": [f"SYSTEM HALTED: {portfolio.get('halt_reason', 'Unknown')}"]}
-
-    if sig in ("HOLD", "INSUFFICIENT_DATA"):
-        return {"approved": False, "rejections": [f"Signal is {sig}, no action needed"]}
 
     equity = portfolio["equity"]
 
@@ -112,7 +123,7 @@ def validate_trade(signal, portfolio, limits):
         penny = limits["penny_stock_rules"]
         if price < penny["min_price"] or price > penny["max_price"]:
             rejections.append(f"Penny price ${price} outside ${penny['min_price']}-${penny['max_price']} range")
-        vol = signal["indicators"].get("avg_volume_20d", 0)
+        vol = indicators.get("avg_volume_20d", 0)
         if vol < penny["min_volume"]:
             rejections.append(f"Volume {vol:,.0f} below minimum {penny['min_volume']:,}")
         max_pct = limits["max_single_position_pct"]["penny"]

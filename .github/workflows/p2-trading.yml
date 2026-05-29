@@ -82,15 +82,17 @@ jobs:
 
       - name: Save daily snapshot to Supabase
         if: always()
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          # Optional telemetry — must NEVER fail the trading job.
           python3 scripts/save_to_supabase.py \
             --portfolio-id portfolio_2 \
             --state-file political-copy-bot/data/portfolio_state.json \
             --api-key "${{ secrets.P2_API_KEY }}" \
-            --api-secret "${{ secrets.P2_API_SECRET }}"
+            --api-secret "${{ secrets.P2_API_SECRET }}" || echo "Supabase snapshot skipped/failed (non-fatal)"
 
       - name: Validate P2 output
         if: always()
