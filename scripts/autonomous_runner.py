@@ -566,6 +566,49 @@ def run_intraday_monitor(alpaca: AlpacaClient):
 # MODE 4: END-OF-DAY JOURNAL
 # ---------------------------------------------------------------------------
 
+def reconcile_positions(alpaca: AlpacaClient):
+    """Read-only integrity audit: detect drift between the trade log and the
+    broker's actual positions. Writes data/reconciliation_report.json. Places
+    NO orders — surfaces issues for the journal/heartbeat to act on.
+
+    Two drift classes:
+      * orphan_open_trades  — trade_log says 'open' but no live position
+                              (an exit that wasn't logged).
+      * unlogged_positions  — a live position with no matching open trade
+                              (an entry fill that wasn't logged, e.g. a limit
+                              that filled after the confirmation window).
+    """
+    positions = alpaca.get_positions()
+    pos_syms = {p.get("symbol") for p in positions if p.get("symbol")}
+    trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    open_syms = {t.get("symbol") for t in trade_log
+                 if t.get("status") == "open" and t.get("symbol")}
+
+    orphan_open_trades = sorted(open_syms - pos_syms)
+    unlogged_positions = sorted(pos_syms - open_syms)
+    in_sync = not orphan_open_trades and not unlogged_positions
+
+    report = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "positions_held": len(pos_syms),
+        "open_trades_logged": len(open_syms),
+        "orphan_open_trades": orphan_open_trades,
+        "unlogged_positions": unlogged_positions,
+        "in_sync": in_sync,
+    }
+    save_json(DATA_DIR / "reconciliation_report.json", report)
+    if in_sync:
+        log.info("  Reconciliation: trade log and broker positions in sync")
+    else:
+        if orphan_open_trades:
+            log.warning(f"  Reconciliation: {len(orphan_open_trades)} open trade(s) "
+                        f"with no live position: {orphan_open_trades}")
+        if unlogged_positions:
+            log.warning(f"  Reconciliation: {len(unlogged_positions)} live position(s) "
+                        f"not in trade log: {unlogged_positions}")
+    return report
+
+
 def run_end_of_day(alpaca: AlpacaClient):
     log.info("=" * 60)
     log.info("END-OF-DAY JOURNAL — Performance, self-learning, adapt params")
@@ -590,6 +633,9 @@ def run_end_of_day(alpaca: AlpacaClient):
                     exit_price = float(sell_orders[0].get("filled_avg_price", trade["entry_price"]))
                     close_trade(trade["id"], exit_price)
                     log.info(f"  Closed trade #{trade['id']} {trade['symbol']} @ ${exit_price:.2f}")
+
+    # Read-only integrity audit: flag any drift between trade log and broker.
+    reconcile_positions(alpaca)
 
     # Run self-learning
     from performance_tracker import adapt_parameters, generate_learning_report
