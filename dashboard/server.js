@@ -570,17 +570,15 @@ app.get('/api/portfolio/all/equity-history', async (req, res) => {
     if (isDaily && history.length < 15) {
         const firstRealPoint = history[0];
         if (firstRealPoint) {
-            const backfillCount = Math.max(0, targetDays - history.length);
-            // Divide by portfolioCount so that after the ×(baseCapital/100000) scaling below,
-            // the backfill end value equals firstRealPoint.equity exactly — not 3× it.
-            const perPortfolioTarget = firstRealPoint.equity / Math.max(1, portfolioCount);
-            const backfill = generateStrategyBackfill('portfolio_1', firstRealPoint.date, backfillCount, perPortfolioTarget);
-            backfill.forEach(p => { p.equity = (p.equity / 100000) * baseCapital; p.profit_loss = Math.round((p.equity - baseCapital) * 100) / 100; p.profit_loss_pct = Math.round(((p.equity - baseCapital) / baseCapital) * 10000) / 100; });
-            res.json({ source: 'aggregated_alpaca', base_value: baseCapital, history: backfill.concat(history) });
-            return;
+            // Extend backward with REAL persisted equity history (never fabricated).
+            const backfill = await realEquityBackfill('all', firstRealPoint.date, baseCapital);
+            if (backfill.length > 0) {
+                res.json({ source: 'alpaca+supabase', base_value: baseCapital, history: backfill.concat(history) });
+                return;
+            }
         }
     }
-    res.json({ source: 'aggregated_alpaca', base_value: baseCapital, history });
+    res.json({ source: 'alpaca', base_value: baseCapital, history });
 });
 
 // 2. Fetch live and local status for a portfolio card
@@ -878,78 +876,50 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
 
 });
 
-// Helper to generate deterministic strategy-aligned historical backfill for portfolios with thin history
-function generateStrategyBackfill(id, firstRealDateStr, targetDaysCount, targetEquity) {
-    const history = [];
-    const firstRealDate = new Date(firstRealDateStr);
-    const startVal = 100000; // initial capital
-    const endVal = targetEquity;
-    
-    // Determine growth parameters based on strategy character
-    let drift = 0;
-    let volatility = 0.005;
-    let sineFreq = 0.15;
-    let sineAmp = 0.015;
-    
-    if (id === 'portfolio_1') { // Self Improving Brain: strong consistent trend
-        drift = 0.0006;
-        volatility = 0.0035;
-        sineFreq = 0.12;
-        sineAmp = 0.014;
-    } else if (id === 'portfolio_2') { // Capitol Shadow: high volatility swing trades
-        drift = 0.0004;
-        volatility = 0.008;
-        sineFreq = 0.20;
-        sineAmp = 0.024;
-    } else { // Cautious Sniper: extremely low drawdown steady growth
-        drift = 0.00025;
-        volatility = 0.002;
-        sineFreq = 0.08;
-        sineAmp = 0.006;
-    }
-    
-    // Generate dates backwards from firstRealDate, avoiding weekends
-    let daysToGen = [];
-    let checkDate = new Date(firstRealDate);
-    
-    while (daysToGen.length < targetDaysCount) {
-        checkDate.setDate(checkDate.getDate() - 1);
-        const dayOfWeek = checkDate.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // skip weekends
-            daysToGen.push(new Date(checkDate));
+// Honest historical backfill: pulls REAL persisted equity history from Supabase
+// for dates strictly before `beforeDate`. Never fabricates a curve — if no
+// persisted history exists, returns [] and the caller shows only real data.
+// (Replaces the former synthetic generateStrategyBackfill, which manufactured
+// equity curves and mislabeled them as real — an institutional-integrity defect.)
+async function realEquityBackfill(id, beforeDate, baseValue) {
+    const START = '2020-01-01';
+    const base = parseFloat(baseValue) || 100000;
+    let rows = [];
+    try {
+        if (id === 'all' || id === 'portfolio_all') {
+            const [p1, p2, p3] = await Promise.all([
+                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_1', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
+                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
+                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
+            ]);
+            const map = {};
+            for (const r of [...p1, ...p2, ...p3]) {
+                if (!r.date) continue;
+                map[r.date] = (map[r.date] || 0) + parseFloat(r.equity || 0);
+            }
+            rows = Object.entries(map).map(([date, equity]) => ({ date, equity }));
+        } else {
+            rows = await supabaseGet('portfolio_equity_history', {
+                portfolio_id: `eq.${id}`, date: `gte.${START}`,
+                select: 'date,equity', order: 'date.asc', limit: 2000,
+            });
         }
+    } catch (e) {
+        return [];
     }
-    
-    // Reverse so we go chronologically
-    daysToGen.reverse();
-    
-    // Generate deterministic walk anchored at startVal and ending exactly at endVal
-    for (let i = 0; i < daysToGen.length; i++) {
-        const dateObj = daysToGen[i];
-        const progress = i / daysToGen.length;
-        
-        // Linear bridge base path
-        let base = startVal + (endVal - startVal) * progress;
-        
-        // Strategy signature fluctuations
-        const sinPart = Math.sin(i * sineFreq) * sineAmp * startVal;
-        const cosPart = Math.cos(i * (sineFreq * 1.5)) * (volatility * 0.4) * startVal;
-        const noise = (Math.sin(i * 0.5) + Math.cos(i * 0.9)) * volatility * 0.22 * startVal;
-        
-        let val = base + sinPart + cosPart + noise;
-        
-        if (i === 0) val = startVal;
-        
-        const dateStr = dateObj.toISOString().slice(0, 10);
-        history.push({
-            date: dateStr,
-            equity: Math.round(val * 100) / 100,
-            profit_loss: Math.round((val - startVal) * 100) / 100,
-            profit_loss_pct: Math.round(((val - startVal) / startVal) * 10000) / 100
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows
+        .filter(r => r.date && r.date < beforeDate)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map(r => {
+            const equity = parseFloat(r.equity || 0);
+            return {
+                date: r.date,
+                equity: Math.round(equity * 100) / 100,
+                profit_loss: Math.round((equity - base) * 100) / 100,
+                profit_loss_pct: Math.round(((equity - base) / base) * 10000) / 100,
+            };
         });
-    }
-    
-    return history;
 }
 
 // 4. Compile historical performance curve from Alpaca Portfolio History API
@@ -1007,16 +977,11 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
                 const isDaily = (timeframe === '1D' || timeframe === '1Day');
                 if (isDaily && history.length < 15) {
                     const firstRealPoint = history[0];
-                    const firstRealDateStr = firstRealPoint ? firstRealPoint.date : new Date().toISOString().slice(0, 10);
-                    const targetEquity = firstRealPoint ? firstRealPoint.equity : 100000;
-                    
-                    const periodDaysMap = { '1W': 5, '1M': 21, '3M': 63, '6M': 126, '1A': 252, '1Y': 252, 'All': 252 };
-                    const targetDays = periodDaysMap[period] || 63;
-                    const backfillCount = Math.max(0, targetDays - history.length);
-                    
-                    if (backfillCount > 0) {
-                        const backfill = generateStrategyBackfill(id, firstRealDateStr, backfillCount, targetEquity);
-                        finalHistory = backfill.concat(history);
+                    if (firstRealPoint) {
+                        // Extend backward with REAL persisted equity (never fabricated).
+                        const backfill = await realEquityBackfill(id, firstRealPoint.date,
+                            parseFloat(alpacaHistory.base_value || 100000));
+                        if (backfill.length > 0) finalHistory = backfill.concat(history);
                     }
                 }
 
@@ -1086,16 +1051,10 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
     const isDaily = (timeframe === '1D' || timeframe === '1Day');
     if (isDaily && history.length < 15) {
         const firstRealPoint = history[0];
-        const firstRealDateStr = firstRealPoint ? firstRealPoint.date : new Date().toISOString().slice(0, 10);
-        const targetEquity = firstRealPoint ? firstRealPoint.equity : 100000;
-        
-        const periodDaysMap = { '1W': 5, '1M': 21, '3M': 63, '6M': 126, '1A': 252, '1Y': 252, 'All': 252 };
-        const targetDays = periodDaysMap[period] || 63;
-        const backfillCount = Math.max(0, targetDays - history.length);
-        
-        if (backfillCount > 0) {
-            const backfill = generateStrategyBackfill(id, firstRealDateStr, backfillCount, targetEquity);
-            finalHistory = backfill.concat(history);
+        if (firstRealPoint) {
+            // Extend backward with REAL persisted equity (never fabricated).
+            const backfill = await realEquityBackfill(id, firstRealPoint.date, 100000);
+            if (backfill.length > 0) finalHistory = backfill.concat(history);
         }
     }
 
