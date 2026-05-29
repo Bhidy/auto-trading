@@ -9,6 +9,8 @@ on:
     - cron: "30 17 * * 1-5"
     - cron: "30 18 * * 1-5"
     - cron: "30 19 * * 1-5"
+    # EST winter coverage
+    - cron: "30 20 * * 1-5"
   workflow_dispatch:
 
 permissions:

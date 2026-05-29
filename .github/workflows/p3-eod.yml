@@ -2,8 +2,14 @@ name: "P3 Cautious Sniper — End of Day"
 
 on:
   schedule:
-    # 4:20 PM ET = 20:20 UTC (M-F)
+    # 4:20 PM ET EOD journal. EDT=20:20 UTC, EST=21:20 UTC.
+    # Multiple staggered fires guard against GitHub Actions schedule delays/skips.
     - cron: "20 20 * * 1-5"
+    - cron: "35 20 * * 1-5"
+    - cron: "50 20 * * 1-5"
+    - cron: "20 21 * * 1-5"
+    - cron: "35 21 * * 1-5"
+    - cron: "50 21 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -43,6 +49,18 @@ jobs:
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
           python3 scripts/event_driven_bot.py eod-journal
+
+      - name: Save daily snapshot to Supabase
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python3 scripts/save_to_supabase.py \
+            --portfolio-id portfolio_3 \
+            --state-file event-driven-bot/data/portfolio_state.json \
+            --api-key "${{ secrets.P3_API_KEY }}" \
+            --api-secret "${{ secrets.P3_API_SECRET }}"
 
       - name: Sync data to dashboard for Vercel deploy
         if: always()

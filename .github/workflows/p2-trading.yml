@@ -2,10 +2,18 @@ name: "P2 Capitol Shadow — Daily Scan & Trade"
 
 on:
   schedule:
-    # 10:15 AM ET = 14:15 UTC (M-F)
+    # 10:15 AM ET morning scan. EDT=14:15 UTC, EST=15:15 UTC.
+    # Afternoon re-scan 3:45 PM ET. EDT=19:45 UTC, EST=20:45 UTC.
+    # Multiple staggered fires guard against GitHub Actions schedule delays/skips.
+    # P2 is idempotent by design — only acts on new political disclosures.
     - cron: "15 14 * * 1-5"
-    # Afternoon re-scan 3:45 PM ET = 19:45 UTC
+    - cron: "30 14 * * 1-5"
+    - cron: "15 15 * * 1-5"
+    - cron: "30 15 * * 1-5"
     - cron: "45 19 * * 1-5"
+    - cron: "0 20 * * 1-5"
+    - cron: "45 20 * * 1-5"
+    - cron: "0 21 * * 1-5"
   workflow_dispatch:
     inputs:
       mode:
@@ -71,6 +79,18 @@ jobs:
           cd "$GITHUB_WORKSPACE/political-copy-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/political-copy-bot/scripts"
           python3 scripts/politician_bot.py ${{ github.event.inputs.mode || 'scan' }}
+
+      - name: Save daily snapshot to Supabase
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python3 scripts/save_to_supabase.py \
+            --portfolio-id portfolio_2 \
+            --state-file political-copy-bot/data/portfolio_state.json \
+            --api-key "${{ secrets.P2_API_KEY }}" \
+            --api-secret "${{ secrets.P2_API_SECRET }}"
 
       - name: Validate P2 output
         if: always()

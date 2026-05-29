@@ -2,8 +2,15 @@ name: "P3 Cautious Sniper — Daily Trading Pipeline"
 
 on:
   schedule:
-    # 9:50 AM ET = 13:50 UTC (M-F)
+    # 9:50 AM ET. EDT (summer) = 13:50 UTC, EST (winter) = 14:50 UTC.
+    # Multiple staggered fires guard against GitHub Actions schedule delays/skips.
+    # Idempotency guard below prevents double-trading via signals file date check.
     - cron: "50 13 * * 1-5"
+    - cron: "5 14 * * 1-5"
+    - cron: "20 14 * * 1-5"
+    - cron: "50 14 * * 1-5"
+    - cron: "5 15 * * 1-5"
+    - cron: "20 15 * * 1-5"
   workflow_dispatch:
     inputs:
       mode:
@@ -61,8 +68,26 @@ jobs:
             f.write(f'is_open={str(is_open).lower()}\n')
           "
 
+      - name: Dedup — skip if today already traded
+        id: dedup
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          ALREADY=false
+          if [ -f event-driven-bot/data/signals.json ]; then
+            SIG_DATE=$(python3 -c "import json; d=json.load(open('event-driven-bot/data/signals.json')); print((d.get('timestamp') or d.get('generated_at') or '')[:10])" 2>/dev/null || echo "")
+            if [ "$SIG_DATE" = "$TODAY" ]; then
+              ALREADY=true
+              echo "Today's P3 session already ran (signals.json date=$SIG_DATE). Skipping."
+            fi
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ALREADY=false
+            echo "workflow_dispatch — bypassing dedup."
+          fi
+          echo "already_ran=$ALREADY" >> $GITHUB_OUTPUT
+
       - name: Weekly screen (Mondays only)
-        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'weekly-screen')
+        if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'weekly-screen')
         run: |
           DAY=$(date -u +%u)
           if [ "$DAY" = "1" ] || [ "${{ github.event.inputs.mode }}" = "weekly-screen" ]; then
@@ -72,21 +97,21 @@ jobs:
           fi
 
       - name: Morning scan
-        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'morning-scan')
+        if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'morning-scan')
         run: |
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
           python3 scripts/event_driven_bot.py morning-scan
 
       - name: Trading session
-        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
+        if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
         run: |
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
           python3 scripts/event_driven_bot.py trading-session
 
       - name: News scan
-        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'news-scan')
+        if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'news-scan')
         run: |
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"

@@ -2,8 +2,16 @@ name: "P1 Self Improving Brain — Daily Trading"
 
 on:
   schedule:
-    # Morning research: 9:45 AM ET = 13:45 UTC (M-F)
+    # Morning research: 9:45 AM ET. EDT (summer) = 13:45 UTC, EST (winter) = 14:45 UTC.
+    # Multiple staggered fires guard against GitHub Actions schedule delays/skips.
+    # Idempotency guard below prevents double-trading: only the first fire that finds
+    # no fresh signals.json runs; subsequent fires no-op via dedup gate.
     - cron: "45 13 * * 1-5"
+    - cron: "0 14 * * 1-5"
+    - cron: "15 14 * * 1-5"
+    - cron: "45 14 * * 1-5"
+    - cron: "0 15 * * 1-5"
+    - cron: "15 15 * * 1-5"
   workflow_dispatch:
     inputs:
       mode:
@@ -61,9 +69,28 @@ jobs:
             f.write(f'is_open={str(is_open).lower()}\n')
           "
 
+      - name: Dedup — skip if today already traded
+        id: dedup
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          ALREADY=false
+          if [ -f data/signals.json ]; then
+            SIG_DATE=$(python3 -c "import json; d=json.load(open('data/signals.json')); print((d.get('timestamp') or '')[:10])" 2>/dev/null || echo "")
+            if [ "$SIG_DATE" = "$TODAY" ]; then
+              ALREADY=true
+              echo "Today's session already ran (signals.json timestamp=$SIG_DATE). Skipping."
+            fi
+          fi
+          # Manual dispatch always runs (operator intent overrides dedup)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ALREADY=false
+            echo "workflow_dispatch — bypassing dedup."
+          fi
+          echo "already_ran=$ALREADY" >> $GITHUB_OUTPUT
+
       - name: Run morning research
         id: research
-        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'morning-research')
+        if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'morning-research')
         run: |
           cd "$GITHUB_WORKSPACE"
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
@@ -72,7 +99,7 @@ jobs:
 
       - name: Run trading session
         id: trading_session
-        if: steps.market.outputs.is_open == 'true' && steps.research.outcome != 'failure' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
+        if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && steps.research.outcome != 'failure' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'trading-session')
         run: |
           cd "$GITHUB_WORKSPACE"
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"

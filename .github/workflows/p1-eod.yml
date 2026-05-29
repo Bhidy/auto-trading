@@ -2,8 +2,14 @@ name: "P1 Self Improving Brain — End of Day"
 
 on:
   schedule:
-    # 4:15 PM ET = 20:15 UTC (M-F)
+    # 4:15 PM ET EOD journal. EDT=20:15 UTC, EST=21:15 UTC.
+    # Multiple staggered fires guard against GitHub Actions schedule delays/skips.
     - cron: "15 20 * * 1-5"
+    - cron: "30 20 * * 1-5"
+    - cron: "45 20 * * 1-5"
+    - cron: "15 21 * * 1-5"
+    - cron: "30 21 * * 1-5"
+    - cron: "45 21 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -43,6 +49,18 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
           python3 scripts/autonomous_runner.py end-of-day-journal
+
+      - name: Save daily snapshot to Supabase
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python3 scripts/save_to_supabase.py \
+            --portfolio-id portfolio_1 \
+            --state-file data/portfolio_state.json \
+            --api-key "${{ secrets.P1_API_KEY }}" \
+            --api-secret "${{ secrets.P1_API_SECRET }}"
 
       - name: Sync data to dashboard for Vercel deploy
         if: always()
