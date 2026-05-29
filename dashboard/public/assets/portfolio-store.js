@@ -95,7 +95,7 @@
                             symbol: t.symbol,
                             companyName: symMeta(t.symbol).name,
                             quantity: t.qty,
-                            price: t.entry_price || t.price || 0,
+                            price: t.entry_price || t.limit_price || (t.estimated_value && t.qty ? t.estimated_value / t.qty : 0) || t.price || 0,
                             commission: t.commission || 0,
                             notes: (t.source_label ? '[' + t.source_label + '] ' : '') + (t.reason || t.reasons?.join(', ') || '')
                         };

@@ -203,9 +203,9 @@
             kpi(t('totalReturn'), pct(metrics.totalReturn), null, retClass),
             kpi(t('cashBal'),     '$' + fmt(metrics.cashBalance), null),
             kpi(t('invested'),    '$' + fmt(metrics.invested), null),
-            kpi(t('dividends'),   formattedBp, null),
-            kpi(t('vsEgx'),       statusLabel, statusSub, statusClass)
+            kpi(t('dividends'),   formattedBp, null)
         ];
+        if (!isAgg) kpis.push(kpi(t('vsEgx'), statusLabel, statusSub, statusClass));
 
         document.getElementById('pfDashHeader').innerHTML =
             '<div class="pf-dash-header-inner">' +
@@ -624,34 +624,60 @@
                     });
                 }
 
-                // Fetch SPY for same period for benchmark overlay
+                // Fetch SPY for same period — use date range from stock data for proper alignment
                 var spyTf = isIntraday ? '5Min' : '1Day';
-                fetch('/api/market/bars/SPY?timeframe=' + spyTf + '&limit=' + spyStockLimit)
+                var sdStart = stockData.length > 0 ? stockData[0].date.slice(0, 10) : '';
+                var sdEnd   = stockData.length > 0 ? stockData[stockData.length - 1].date.slice(0, 10) : '';
+                var spyStockUrl = isIntraday
+                    ? '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(sdStart + 'T13:30:00Z') + '&end=' + encodeURIComponent(sdStart + 'T21:00:00Z')
+                    : '/api/market/bars/SPY?timeframe=1Day&limit=400&start=' + encodeURIComponent(sdStart) + '&end=' + encodeURIComponent(sdEnd);
+                fetch(spyStockUrl)
                     .then(function(r) { return r.ok ? r.json() : []; })
                     .then(function(spyBars) {
                         if (!spyBars || spyBars.length < 2 || !showBenchmark) { renderStockChart(null); return; }
-                        // Align SPY bars to stock bar count; normalize to stock's start price
-                        var spyRaw = spyBars.slice(-prices.length).map(function(b) { return b.c; });
-                        if (spyRaw.length !== prices.length) { renderStockChart(null); return; }
-                        var spyBase = spyRaw[0];
-                        var spyNorm = spyRaw.map(function(v) { return spyBase > 0 ? firstP * (v / spyBase) : firstP; });
+                        // Build date-keyed lookup; normalize SPY to stock's opening price
+                        var spyByKey = {};
+                        spyBars.forEach(function(b) {
+                            var k = isIntraday ? (b.t || '').slice(0, 16) : (b.t || '').slice(0, 10);
+                            spyByKey[k] = b.c;
+                        });
+                        var spyFirst = null;
+                        var lastSpyVal = firstP;
+                        var spyNorm = stockData.map(function(d) {
+                            var k = isIntraday ? d.date.slice(0, 16) : d.date.slice(0, 10);
+                            var c = spyByKey[k];
+                            if (c && !spyFirst) spyFirst = c;
+                            if (c && spyFirst) { lastSpyVal = firstP * (c / spyFirst); return lastSpyVal; }
+                            return lastSpyVal; // forward-fill gaps
+                        });
+                        if (!spyFirst) { renderStockChart(null); return; }
                         renderStockChart(spyNorm);
                     })
                     .catch(function() { renderStockChart(null); });
             });
 
         } else {
-            // Render Portfolio Cumulative Performance curve from Alpaca history
-            PFStore.loadEquityHistory(pfId, chartPeriod).then(function(data) {
-                var histArr = data.history || data || [];
-                var baseValue = data.base_value || 100000;
-                var isIntraday = chartPeriod === '1D';
+            // Portfolio cumulative equity curve.
+            // Data priority: Supabase (real accumulated daily) → Alpaca live history → synthetic backfill.
+            // SPY benchmark priority: Supabase market_daily_history → Alpaca IEX bars.
+            var isIntraday = chartPeriod === '1D';
 
-                // If only 1 data point, prepend base_value as initial point for a proper line
+            function periodToStartDate(p) {
+                var d = new Date();
+                if (p === '1W') d.setDate(d.getDate() - 7);
+                else if (p === '1M') d.setMonth(d.getMonth() - 1);
+                else if (p === '3M') d.setMonth(d.getMonth() - 3);
+                else if (p === '6M') d.setMonth(d.getMonth() - 6);
+                else if (p === 'YTD') { d.setMonth(0); d.setDate(1); }
+                else d.setFullYear(d.getFullYear() - 2);
+                return d.toISOString().slice(0, 10);
+            }
+            var sbStart = isIntraday ? '' : periodToStartDate(chartPeriod);
+
+            function buildChartFromHistArr(histArr, baseValue) {
                 if (histArr.length === 1) {
-                    var firstDate = new Date(histArr[0].date);
-                    firstDate.setDate(firstDate.getDate() - 1);
-                    histArr.unshift({ date: firstDate.toISOString().slice(0, 10), equity: baseValue, profit_loss: 0, profit_loss_pct: 0 });
+                    var fd = new Date(histArr[0].date); fd.setDate(fd.getDate() - 1);
+                    histArr.unshift({ date: fd.toISOString().slice(0, 10), equity: baseValue });
                 }
 
                 var labels = histArr.map(function(h) {
@@ -665,35 +691,25 @@
                     var longPeriod = (chartPeriod === 'All' || chartPeriod === 'YTD' || chartPeriod === '6M');
                     return dt2.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', longPeriod ? { day: '2-digit', month: 'short', year: '2-digit' } : { day: '2-digit', month: 'short' });
                 });
-                var pValues = histArr.map(function(h) { return h.equity; });
-
+                var pValues = histArr.map(function(h) { return parseFloat(h.equity) || baseValue; });
                 var startVal = pValues[0] || baseValue;
 
-                var maxVal = pValues.length > 0 ? Math.max.apply(null, pValues) : baseValue;
-                var minVal = pValues.length > 0 ? Math.min.apply(null, pValues) : baseValue;
+                var maxVal = Math.max.apply(null, pValues);
+                var minVal = Math.min.apply(null, pValues);
                 var lastVal = pValues[pValues.length - 1] || baseValue;
-                var drawDown = maxVal > 0 ? ((lastVal - maxVal) / maxVal) * 100 : 0;
-                var totalPL = lastVal - startVal;
-                var totalPLPct = startVal > 0 ? (totalPL / startVal) * 100 : 0;
+                var totalPLPct = startVal > 0 ? ((lastVal - startVal) / startVal) * 100 : 0;
 
                 var statsHtml =
                     stat(t('bestDay'), '$' + fmt(baseValue, 0), '') +
-                    stat(lang === 'ar' ? 'الحد الأقصى للمحفظة' : 'Peak Valuation', '$' + fmt(maxVal, 0), 'pf-pos') +
-                    stat(lang === 'ar' ? 'الحد الأدنى للمحفظة' : 'Trough Valuation', '$' + fmt(minVal, 0), 'pf-neg') +
+                    stat(lang === 'ar' ? 'الحد الأقصى' : 'Peak Valuation', '$' + fmt(maxVal, 0), 'pf-pos') +
+                    stat(lang === 'ar' ? 'الحد الأدنى' : 'Trough Valuation', '$' + fmt(minVal, 0), 'pf-neg') +
                     stat(lang === 'ar' ? 'العائد للفترة' : 'Period Return', pct(totalPLPct), totalPLPct >= 0 ? 'pf-pos' : 'pf-neg');
-
                 var statsPanel = document.getElementById('chartStatsPanel');
                 if (statsPanel) statsPanel.innerHTML = statsHtml;
 
                 if (pValues.length === 0) {
-                    var canvas2 = document.getElementById('perfChart');
-                    if (canvas2) {
-                        var ctx2 = canvas2.getContext('2d');
-                        ctx2.font = '13px Manrope';
-                        ctx2.fillStyle = isDark ? '#a39a92' : '#7a6b5e';
-                        ctx2.textAlign = 'center';
-                        ctx2.fillText('No equity history available for this period', canvas2.width / 2, canvas2.height / 2);
-                    }
+                    var c2 = document.getElementById('perfChart');
+                    if (c2) { var cx2 = c2.getContext('2d'); cx2.font = '13px Manrope'; cx2.fillStyle = tickColor; cx2.textAlign = 'center'; cx2.fillText('No equity history available', c2.width / 2, c2.height / 2); }
                     return;
                 }
 
@@ -702,114 +718,107 @@
                     grad.addColorStop(0,   'rgba(229,90,31,0.28)');
                     grad.addColorStop(0.7, 'rgba(229,90,31,0.04)');
                     grad.addColorStop(1,   'rgba(229,90,31,0.00)');
-
                     var chartData = chartMode === 'value' ? pValues : chartMode === 'return' ? toReturn(pValues) : toDrawdown(pValues);
-                    var benchData = chartMode === 'value' ? bValues : chartMode === 'return' ? toReturn(bValues) : toDrawdown(bValues);
-
+                    var benchData = bValues && bValues.length ? (chartMode === 'value' ? bValues : chartMode === 'return' ? toReturn(bValues) : toDrawdown(bValues)) : pValues.map(function() { return startVal; });
                     if (perfChart) perfChart.destroy();
                     perfChart = new Chart(ctx, {
                         type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: portfolio.name,
-                                    data: chartData,
-                                    borderColor: '#E55A1F',
-                                    backgroundColor: chartMode === 'value' ? grad : 'rgba(229,90,31,0.08)',
-                                    borderWidth: 2.5,
-                                    fill: chartMode !== 'drawdown',
-                                    tension: 0.3, pointRadius: 0, pointHoverRadius: 5,
-                                    pointHoverBackgroundColor: '#E55A1F'
-                                },
-                                {
-                                    label: 'S&P 500 Index Benchmark',
-                                    data: benchData,
-                                    borderColor: '#7a6b5e',
-                                    backgroundColor: 'transparent',
-                                    borderWidth: 1.5,
-                                    borderDash: [5, 4],
-                                    fill: false,
-                                    tension: 0.3, pointRadius: 0, pointHoverRadius: 4,
-                                    hidden: !showBenchmark
-                                }
-                            ]
-                        },
+                        data: { labels: labels, datasets: [
+                            { label: portfolio.name, data: chartData, borderColor: '#E55A1F', backgroundColor: chartMode === 'value' ? grad : 'rgba(229,90,31,0.08)', borderWidth: 2.5, fill: chartMode !== 'drawdown', tension: 0.3, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#E55A1F' },
+                            { label: 'S&P 500 Benchmark', data: benchData, borderColor: '#7a6b5e', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], fill: false, tension: 0.3, pointRadius: 0, pointHoverRadius: 4, hidden: !showBenchmark }
+                        ]},
                         options: {
                             responsive: true, maintainAspectRatio: false,
                             interaction: { intersect: false, mode: 'index' },
                             scales: {
                                 x: { grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: isIntraday ? 12 : 8, maxRotation: 0 } },
-                                y: {
-                                    position: 'right', grid: { color: gridColor, drawBorder: false },
-                                    ticks: {
-                                        font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor,
-                                        callback: function(v) {
-                                            if (chartMode === 'return' || chartMode === 'drawdown') return v.toFixed(1) + '%';
-                                            return '$' + (v >= 1e3 ? (v/1e3).toFixed(1) + 'K' : v.toFixed(0));
-                                        }
-                                    }
-                                }
+                                y: { position: 'right', grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, callback: function(v) { if (chartMode !== 'value') return v.toFixed(1) + '%'; return '$' + (v >= 1e3 ? (v/1e3).toFixed(1) + 'K' : v.toFixed(0)); } } }
                             },
                             plugins: {
                                 legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: isDark ? '#1a0f08' : '#ffffff',
-                                    borderColor: gridColor,
-                                    borderWidth: 1,
-                                    titleFont: { family: 'Manrope', size: 11, weight: '700' },
-                                    bodyFont:  { family: 'IBM Plex Mono', size: 11 },
-                                    titleColor: isDark ? '#fff1e8' : '#1a0f08',
-                                    bodyColor:  isDark ? '#a39a92' : '#7a6b5e',
-                                    padding: 10,
-                                    callbacks: {
-                                        label: function(ctxTip) {
-                                            var v = ctxTip.raw;
-                                            if (chartMode === 'return' || chartMode === 'drawdown') return ' ' + ctxTip.dataset.label + ': ' + (v>=0?'+':'') + v.toFixed(2) + '%';
-                                            return ' ' + ctxTip.dataset.label + ': $' + v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-                                        }
-                                    }
+                                tooltip: { backgroundColor: isDark ? '#1a0f08' : '#fff', borderColor: gridColor, borderWidth: 1, titleFont: { family: 'Manrope', size: 11, weight: '700' }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, titleColor: isDark ? '#fff1e8' : '#1a0f08', bodyColor: isDark ? '#a39a92' : '#7a6b5e', padding: 10,
+                                    callbacks: { label: function(ct) { var v = ct.raw; if (chartMode !== 'value') return ' ' + ct.dataset.label + ': ' + (v>=0?'+':'') + v.toFixed(2) + '%'; return ' ' + ct.dataset.label + ': $' + v.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2}); } }
                                 }
                             }
                         }
                     });
                 }
 
-                var spyLimitMap = { '1D': 10, '1W': 12, '1M': 35, '3M': 70, '6M': 190, 'YTD': 265, 'All': 265 };
-                var spyLimit = spyLimitMap[chartPeriod] || Math.max(histArr.length + 10, 35);
-                var spyTf = (chartPeriod === '1D') ? '5Min' : '1Day';
-                fetch('/api/market/bars/SPY?timeframe=' + spyTf + '&limit=' + spyLimit)
-                    .then(function(r) { return r.ok ? r.json() : []; })
-                    .then(function(spyBars) {
-                        if (!spyBars || spyBars.length < 2) throw new Error('no SPY data');
-                        var spyByDate = {};
-                        spyBars.forEach(function(b) { spyByDate[(b.t || '').slice(0, 10)] = b.c; });
-                        var spyFirst = null;
-                        var bValues = histArr.map(function(h) {
-                            var dateKey = (h.date || '').slice(0, 10);
-                            var spyClose = spyByDate[dateKey];
-                            if (spyClose && !spyFirst) spyFirst = spyClose;
-                            if (spyClose && spyFirst) {
-                                return Math.round(startVal * (spyClose / spyFirst));
-                            }
-                            return null;
-                        });
-                        if (spyFirst) {
-                            var lastValid = startVal;
-                            for (var bi = 0; bi < bValues.length; bi++) {
-                                if (bValues[bi] !== null) { lastValid = bValues[bi]; }
-                                else { bValues[bi] = lastValid; }
-                            }
-                        } else {
-                            bValues = pValues.map(function() { return startVal; });
-                        }
-                        renderEquityChart(bValues);
-                    })
-                    .catch(function() {
-                        var bValues = pValues.map(function() { return startVal; });
-                        renderEquityChart(bValues);
+                // Build SPY benchmark — try Supabase (real data) first, fall back to Alpaca IEX
+                function alignSpyToBValues(spyBars, isAlpacaFormat) {
+                    var spyByKey = {};
+                    spyBars.forEach(function(b) {
+                        var t = isAlpacaFormat ? (b.t || '') : (b.date || '');
+                        var c = isAlpacaFormat ? b.c : parseFloat(b.close_price);
+                        var k = isIntraday ? t.slice(0, 16) : t.slice(0, 10);
+                        if (k) spyByKey[k] = c;
                     });
-            });
+                    var spyFirst = null, lastSpyVal = startVal;
+                    var bv = histArr.map(function(h) {
+                        var raw = h.date || '';
+                        var k = isIntraday ? raw.slice(0, 16) : raw.slice(0, 10);
+                        var c = spyByKey[k];
+                        if (c && !spyFirst) spyFirst = c;
+                        if (c && spyFirst) { lastSpyVal = startVal * (c / spyFirst); return lastSpyVal; }
+                        return lastSpyVal;
+                    });
+                    return spyFirst ? bv : null;
+                }
+
+                var pfStartDate = histArr.length > 0 ? (histArr[0].date || '').slice(0, 10) : sbStart;
+                var pfEndDate   = histArr.length > 0 ? (histArr[histArr.length - 1].date || '').slice(0, 10) : '';
+                var alpacaSpyUrl = isIntraday
+                    ? '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(pfStartDate + 'T13:30:00Z') + '&end=' + encodeURIComponent(pfStartDate + 'T21:00:00Z')
+                    : '/api/market/bars/SPY?timeframe=1Day&limit=400&start=' + encodeURIComponent(pfStartDate) + '&end=' + encodeURIComponent(pfEndDate);
+
+                function fetchSpyAndRender() {
+                    if (!showBenchmark) { renderEquityChart(null); return; }
+                    // Try Supabase first (accumulated real daily closes, no subscription limit)
+                    var supabaseSpyPromise = (!isIntraday && pfStartDate)
+                        ? fetch('/api/supabase/market?symbol=SPY&start=' + pfStartDate).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; })
+                        : Promise.resolve([]);
+
+                    supabaseSpyPromise.then(function(sbRows) {
+                        if (sbRows && sbRows.length >= 3) {
+                            var bv = alignSpyToBValues(sbRows, false);
+                            if (bv) { renderEquityChart(bv); return; }
+                        }
+                        // Fall back to Alpaca IEX
+                        fetch(alpacaSpyUrl)
+                            .then(function(r) { return r.ok ? r.json() : []; })
+                            .then(function(spyBars) {
+                                var bv = (spyBars && spyBars.length >= 2) ? alignSpyToBValues(spyBars, true) : null;
+                                renderEquityChart(bv);
+                            })
+                            .catch(function() { renderEquityChart(null); });
+                    });
+                }
+
+                fetchSpyAndRender();
+            } // end buildChartFromHistArr
+
+            // Load equity data — try Supabase first for daily periods
+            if (isIntraday) {
+                PFStore.loadEquityHistory(pfId, chartPeriod).then(function(data) {
+                    buildChartFromHistArr(data.history || data || [], data.base_value || (pfId === 'all' ? 300000 : 100000));
+                });
+            } else {
+                var sbEquityUrl = '/api/supabase/equity?portfolio_id=' + pfId + '&start=' + sbStart;
+                fetch(sbEquityUrl)
+                    .then(function(r) { return r.ok ? r.json() : []; })
+                    .catch(function() { return []; })
+                    .then(function(sbRows) {
+                        if (sbRows && sbRows.length >= 3) {
+                            var baseVal = pfId === 'all' ? 300000 : 100000;
+                            buildChartFromHistArr(sbRows, baseVal);
+                        } else {
+                            // Fall back to Alpaca / synthetic history
+                            PFStore.loadEquityHistory(pfId, chartPeriod).then(function(data) {
+                                buildChartFromHistArr(data.history || data || [], data.base_value || (pfId === 'all' ? 300000 : 100000));
+                            });
+                        }
+                    });
+            }
         }
     }
 
@@ -866,7 +875,7 @@
             </div>`;
 
             rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">⚡ Combined Trading Strategies</div>
+                <div class="pf-panel__title">Combined Trading Strategies</div>
                 <div style="display:flex; flex-direction:column; gap:0.55rem; max-height:260px; overflow-y:auto;">
                     <div style="border-bottom:1px dashed var(--line); padding-bottom:0.45rem; font-size:0.75rem; line-height:1.5; color:var(--muted);">
                         <strong style="color:var(--teal);">Self Improving Brain</strong>: Multi-factor scoring, regime detection, adaptive self-learning parameters
@@ -923,12 +932,17 @@
             
             var leaderRows = p2Latest.length > 0 ? p2Latest.map(function(t){
                 var cls = t.side === 'buy' ? 'pf-pos' : 'pf-neg';
-                return '<div class="pf-pol-row" style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div><strong style="font-family:var(--pf-mono);font-size:0.82rem;">' + escHtml(t.symbol) + '</strong>' +
-                    '<span class="pf-badge-neu" style="margin-left:0.4rem;font-size:0.6rem;">' + (t.bucket || t.strategy || '') + '</span></div>' +
+                var price = t.limit_price || (t.estimated_value && t.qty ? t.estimated_value / t.qty : 0) || t.price || 0;
+                var tradeVal = t.estimated_value || (price > 0 && t.qty ? price * t.qty : 0);
+                var politician = t.politician || t.source || '';
+                return '<div style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">' +
+                    '<div>' +
+                        '<strong style="font-family:var(--pf-mono);font-size:0.82rem;">' + escHtml(t.symbol) + '</strong>' +
+                        (politician ? '<span style="display:block;font-size:0.68rem;color:var(--muted);margin-top:1px;">' + escHtml(politician) + '</span>' : '') +
+                    '</div>' +
                     '<div style="text-align:right;">' +
-                    '<span class="pf-num ' + cls + '" style="font-size:0.75rem;font-weight:700;">' + t.side.toUpperCase() + '</span>' +
-                    '<span class="pf-num" style="font-size:0.7rem;color:var(--muted);display:block;">' + (t.timestamp || t.date || '').slice(0,10) + '</span>' +
+                        '<span class="pf-num ' + cls + '" style="font-size:0.75rem;font-weight:700;">' + t.side.toUpperCase() + (tradeVal > 0 ? ' · $' + fmt(tradeVal, 0) : '') + '</span>' +
+                        '<span class="pf-num" style="font-size:0.68rem;color:var(--muted);display:block;">' + (t.timestamp || t.date || '').slice(0,10) + '</span>' +
                     '</div>' +
                 '</div>';
             }).join('') : '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang==='ar'?'لا توجد صفقات حتى الآن':'No copy-trades executed yet.') + '</div>';
@@ -939,13 +953,24 @@
             '</div>';
 
             var p2Signals = detailCache ? (detailCache.signals || {}) : {};
-            var p2Watchlist = p2Signals.signals || p2Signals.research || [];
-            var watchRows = p2Watchlist.length > 0 ? p2Watchlist.slice(0, 8).map(function(s){
-                var sc = s.score || s.confidence || s.rs_score || 0;
-                var scCls = sc >= 0.5 ? 'pf-pos' : 'pf-neg';
-                return '<div style="padding:0.4rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">' +
-                    '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.78rem;">' + escHtml(s.symbol) + '</span>' +
-                    '<span class="pf-num ' + scCls + '" style="font-size:0.7rem;">' + (typeof sc === 'number' ? sc.toFixed(2) : sc) + '</span>' +
+            // research_results.json uses { stats: [{politician, total, buys, sells, ratio, top_assets}] }
+            var p2Stats = p2Signals.stats || [];
+            var watchRows = p2Stats.length > 0 ? p2Stats.slice(0, 6).map(function(s){
+                var ratioColor = (s.ratio || 0) >= 2 ? 'var(--teal)' : (s.ratio || 0) >= 1 ? 'var(--ink)' : 'var(--muted)';
+                var topAssets = (s.top_assets || []).slice(0, 3).map(function(a) {
+                    if (!a) return '';
+                    if (typeof a === 'string') return a;
+                    return (a.ticker && a.ticker !== 'N/A') ? a.ticker : (a.issuer || '').slice(0, 14);
+                }).filter(Boolean).join(', ');
+                return '<div style="padding:0.45rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">' +
+                    '<div style="min-width:0;">' +
+                        '<span style="font-weight:700;font-size:0.78rem;color:var(--ink);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(s.politician || '') + '</span>' +
+                        (topAssets ? '<span style="font-family:var(--pf-mono);font-size:0.65rem;color:var(--muted);">' + escHtml(topAssets) + '</span>' : '') +
+                    '</div>' +
+                    '<div style="text-align:right;flex-shrink:0;">' +
+                        '<span class="pf-num" style="font-size:0.72rem;font-weight:700;color:' + ratioColor + ';">' + (s.buys || 0) + 'B / ' + (s.sells || 0) + 'S</span>' +
+                        '<span style="display:block;font-size:0.65rem;color:var(--muted);">ratio ' + ((s.ratio || 0).toFixed(1)) + 'x</span>' +
+                    '</div>' +
                 '</div>';
             }).join('') : '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang==='ar'?'لا توجد إشارات نشطة':'No active signals. Capitol Trades data will appear after next scan.') + '</div>';
 

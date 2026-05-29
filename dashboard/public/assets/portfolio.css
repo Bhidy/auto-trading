@@ -175,7 +175,7 @@
     border-bottom: 1px solid var(--line);
     background: var(--nav-bg);
     backdrop-filter: blur(20px);
-    position: sticky; top: calc(5rem + 32px); z-index: 20;
+    position: sticky; top: 5rem; margin-top: 5rem; z-index: 20;
 }
 .pf-dash-header-inner {
     max-width: 1536px; margin: 0 auto;
@@ -898,7 +898,7 @@ body {
     top: 0;
 }
 .pf-page {
-    padding-top: 5rem !important;
+    padding-top: 5rem;
     padding-bottom: 32px !important;
 }
 

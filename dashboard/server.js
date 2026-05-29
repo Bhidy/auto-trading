@@ -519,9 +519,11 @@ app.get('/api/portfolio/all/equity-history', async (req, res) => {
     if (isDaily && history.length < 15) {
         const firstRealPoint = history[0];
         if (firstRealPoint) {
-            const firstDate = new Date(firstRealPoint.date);
             const backfillCount = Math.max(0, targetDays - history.length);
-            const backfill = generateStrategyBackfill('portfolio_1', firstRealPoint.date, backfillCount, firstRealPoint.equity);
+            // Divide by portfolioCount so that after the ×(baseCapital/100000) scaling below,
+            // the backfill end value equals firstRealPoint.equity exactly — not 3× it.
+            const perPortfolioTarget = firstRealPoint.equity / Math.max(1, portfolioCount);
+            const backfill = generateStrategyBackfill('portfolio_1', firstRealPoint.date, backfillCount, perPortfolioTarget);
             backfill.forEach(p => { p.equity = (p.equity / 100000) * baseCapital; p.profit_loss = Math.round((p.equity - baseCapital) * 100) / 100; p.profit_loss_pct = Math.round(((p.equity - baseCapital) / baseCapital) * 10000) / 100; });
             res.json({ source: 'aggregated_alpaca', base_value: baseCapital, history: backfill.concat(history) });
             return;
@@ -1302,12 +1304,17 @@ app.get('/api/market/bars/:symbol', async (req, res) => {
     const symbol = req.params.symbol.toUpperCase();
     const limit = parseInt(req.query.limit || '30');
     const timeframe = req.query.timeframe || '1Day';
+    const start = req.query.start || '';
+    const end = req.query.end || '';
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
 
     if (cfg && cfg.api_key && !cfg.api_key.includes('REDACTED') && cfg.api_key !== 'MOCK_KEY_ID_REDACTED') {
         try {
-            const barsData = await alpacaRequest('GET', `${cfg.data_url}/v2/stocks/${symbol}/bars?timeframe=${timeframe}&limit=${limit}`, cfg.api_key, cfg.api_secret);
+            let barsUrl = `${cfg.data_url}/v2/stocks/${symbol}/bars?timeframe=${timeframe}&limit=${limit}&feed=iex`;
+            if (start) barsUrl += `&start=${encodeURIComponent(start)}`;
+            if (end) barsUrl += `&end=${encodeURIComponent(end)}`;
+            const barsData = await alpacaRequest('GET', barsUrl, cfg.api_key, cfg.api_secret);
             if (barsData && barsData.bars && barsData.bars.length > 0) {
                 return res.json(barsData.bars);
             }
@@ -1317,6 +1324,82 @@ app.get('/api/market/bars/:symbol', async (req, res) => {
     }
 
     res.json([]);
+});
+
+// ── Supabase historical data endpoints ──────────────────────────────────────
+// These read from the Supabase tables accumulated by daily EOD workflows.
+// SUPABASE_URL and SUPABASE_ANON_KEY must be set in Vercel environment variables.
+
+function supabaseGet(table, params) {
+    return new Promise((resolve) => {
+        const SB_URL = process.env.SUPABASE_URL;
+        const SB_KEY = process.env.SUPABASE_ANON_KEY;
+        if (!SB_URL || !SB_KEY) { resolve([]); return; }
+        const qs = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+        const url = `${SB_URL}/rest/v1/${table}?${qs}`;
+        const options = {
+            hostname: new URL(url).hostname,
+            path:     new URL(url).pathname + new URL(url).search,
+            headers:  { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+        };
+        const https = require('https');
+        const req = https.get(options, (r) => {
+            let data = '';
+            r.on('data', chunk => data += chunk);
+            r.on('end', () => {
+                try { resolve(JSON.parse(data)); }
+                catch { resolve([]); }
+            });
+        });
+        req.on('error', () => resolve([]));
+        req.end();
+    });
+}
+
+// 11b. Supabase equity history — /api/supabase/equity?portfolio_id=portfolio_1&start=2025-06-01
+app.get('/api/supabase/equity', async (req, res) => {
+    const portfolioId = req.query.portfolio_id || 'portfolio_1';
+    const start = req.query.start || '2025-01-01';
+
+    if (portfolioId === 'all') {
+        // Aggregate all 3 portfolios by date
+        const [p1, p2, p3] = await Promise.all([
+            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_1', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
+            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
+            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
+        ]);
+        // Build date-keyed map
+        const map = {};
+        for (const row of [...p1, ...p2, ...p3]) {
+            if (!row.date) continue;
+            map[row.date] = (map[row.date] || 0) + parseFloat(row.equity || 0);
+        }
+        const combined = Object.entries(map).sort(([a],[b]) => a.localeCompare(b)).map(([date, equity]) => ({ date, equity }));
+        return res.json(combined);
+    }
+
+    const rows = await supabaseGet('portfolio_equity_history', {
+        portfolio_id: `eq.${portfolioId}`,
+        date:         `gte.${start}`,
+        select:       'date,equity,cash,pnl,pnl_pct,positions_count',
+        order:        'date.asc',
+        limit:        1000,
+    });
+    res.json(rows || []);
+});
+
+// 11c. Supabase market history — /api/supabase/market?symbol=SPY&start=2025-06-01
+app.get('/api/supabase/market', async (req, res) => {
+    const symbol = (req.query.symbol || 'SPY').toUpperCase();
+    const start  = req.query.start || '2025-01-01';
+    const rows   = await supabaseGet('market_daily_history', {
+        symbol: `eq.${symbol}`,
+        date:   `gte.${start}`,
+        select: 'date,close_price,open_price,high_price,low_price,volume',
+        order:  'date.asc',
+        limit:  1000,
+    });
+    res.json(rows || []);
 });
 
 // 12. Sector ETF performance snapshot
