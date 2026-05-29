@@ -35,7 +35,7 @@ JOURNAL_DIR.mkdir(exist_ok=True)
 DATA_DIR.mkdir(exist_ok=True)
 
 sys.path.insert(0, str(SCRIPTS_DIR))
-from alpaca_client import AlpacaClient
+from alpaca_client import AlpacaClient, confirm_fill, make_client_order_id
 from fundamental_screener import (
     screen_universe, save_watchlist, SECTOR_MAP,
 )
@@ -348,11 +348,18 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             log.info(f"  BUYING {shares} x {sym} @ ~${price:.2f} "
                      f"(${trade_value:,.0f}) stop=${stop_price:.2f} tp=${tp1_price:.2f}")
 
+            coid = make_client_order_id("p3", sym, "buy")
             order = alpaca.place_bracket_order(
                 symbol=sym, qty=shares, side="buy",
                 take_profit_price=tp1_price,
                 stop_loss_price=stop_price,
+                client_order_id=coid,
             )
+
+            # Confirm the fill so the trade log records the REAL entry price,
+            # not the pre-trade quote.
+            status, filled_qty, filled_price = confirm_fill(alpaca, order.get("id"))
+            entry_price = filled_price if filled_price else price
 
             trade_record = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -360,13 +367,14 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 "symbol": sym,
                 "side": "buy",
                 "qty": shares,
-                "entry_price": price,
+                "entry_price": round(entry_price, 4),
                 "stop_loss": stop_price,
                 "take_profit_1": tp1_price,
                 "atr": atr_val,
                 "trade_value": round(trade_value, 2),
                 "order_id": order.get("id"),
-                "order_status": order.get("status"),
+                "order_status": status if status != "unknown" else order.get("status"),
+                "filled_qty": filled_qty,
                 "sector": sector,
                 "tranche": tranche,
                 "signal_score": signal["score"],
@@ -384,9 +392,14 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             time.sleep(0.5)
 
         except requests.HTTPError as e:
+            resp = getattr(e, "response", None)
+            # Duplicate client_order_id (422) -> already placed today; idempotent skip.
+            if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
+                log.info(f"  {sym}: already placed today (idempotent skip)")
+                continue
             log.error(f"  Order failed for {sym}: {e}")
-            if hasattr(e, "response") and e.response is not None:
-                log.error(f"  Response: {e.response.text}")
+            if resp is not None:
+                log.error(f"  Response: {resp.text}")
         except Exception as e:
             log.error(f"  Unexpected error for {sym}: {e}")
 

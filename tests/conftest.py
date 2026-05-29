@@ -7,8 +7,9 @@ import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS_DIR = os.path.join(REPO_ROOT, "scripts")
-if SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, SCRIPTS_DIR)
+for _p in (REPO_ROOT, SCRIPTS_DIR):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 
 @pytest.fixture

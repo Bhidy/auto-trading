@@ -16,16 +16,10 @@ import json
 import os
 import sys
 import time
-import random
 import logging
 import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-
-# HTTP resilience config — transient Alpaca errors must never crash a session.
-_RETRY_STATUS = {429, 500, 502, 503, 504}
-_MAX_RETRIES = 4
-_BACKOFF_BASE = 0.5
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = BASE_DIR / "scripts"
@@ -39,6 +33,13 @@ JOURNAL_DIR.mkdir(exist_ok=True)
 DATA_DIR.mkdir(exist_ok=True)
 
 sys.path.insert(0, str(SCRIPTS_DIR))
+sys.path.insert(0, str(BASE_DIR))
+
+from shared.alpaca_http import (  # noqa: E402  (path set above)
+    confirm_fill,
+    make_client_order_id,
+    resilient_request,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -67,48 +68,10 @@ class AlpacaClient:
             "APCA-API-SECRET-KEY": self.api_secret,
         }
 
-    def _retry_wait(self, resp, attempt):
-        # Honor server-provided Retry-After (429), else exponential backoff + jitter.
-        if resp is not None:
-            ra = resp.headers.get("Retry-After")
-            if ra:
-                try:
-                    return float(ra)
-                except ValueError:
-                    pass
-        return _BACKOFF_BASE * (2 ** attempt) + random.uniform(0, 0.3)
-
     def _request(self, method, url, params=None, data=None):
-        """Single resilient HTTP entry point: retries 429/5xx and network errors
-        with exponential backoff + jitter. 4xx (except 429) raise immediately."""
-        last_exc = None
-        for attempt in range(_MAX_RETRIES + 1):
-            try:
-                r = requests.request(
-                    method, url, headers=self.headers,
-                    params=params, json=data, timeout=30,
-                )
-                if r.status_code in _RETRY_STATUS and attempt < _MAX_RETRIES:
-                    wait = self._retry_wait(r, attempt)
-                    log.warning(f"Alpaca {r.status_code} on {method} {url} — "
-                                f"retry {attempt + 1}/{_MAX_RETRIES} in {wait:.1f}s")
-                    time.sleep(wait)
-                    continue
-                if r.status_code == 204:
-                    return {}
-                r.raise_for_status()
-                return r.json() if r.text else {}
-            except (requests.ConnectionError, requests.Timeout) as e:
-                last_exc = e
-                if attempt < _MAX_RETRIES:
-                    wait = _BACKOFF_BASE * (2 ** attempt) + random.uniform(0, 0.3)
-                    log.warning(f"Alpaca network error on {method} {url}: {e} — "
-                                f"retry {attempt + 1}/{_MAX_RETRIES} in {wait:.1f}s")
-                    time.sleep(wait)
-                    continue
-                raise
-        if last_exc:
-            raise last_exc
+        """Resilient HTTP via the shared core (retry/backoff on 429/5xx + network)."""
+        return resilient_request(method, url, self.headers,
+                                 params=params, json_body=data, logger=log)
 
     def _get(self, url, params=None):
         return self._request("GET", url, params=params)
@@ -229,37 +192,8 @@ def get_instrument_type(symbol):
             return info.get("instrument_type", "stock")
     return "stock"
 
-def make_client_order_id(prefix, symbol, side):
-    """Deterministic per-day idempotency key. Alpaca rejects a duplicate
-    client_order_id (422), so a retried/duplicate workflow fire cannot
-    double-place the same symbol/side on the same day."""
-    today = datetime.now(timezone.utc).strftime("%Y%m%d")
-    safe_symbol = symbol.replace("/", "")
-    return f"{prefix}-{today}-{safe_symbol}-{side}"
-
-def confirm_fill(alpaca, order_id, timeout=8.0, poll=1.0):
-    """Poll an order until it reaches a terminal/filled state or timeout.
-    Returns (status, filled_qty, filled_avg_price). Never logs a phantom
-    fill — only confirmed fills should reach the trade log."""
-    deadline = time.time() + timeout
-    status, filled_qty, filled_price = "unknown", 0.0, None
-    while time.time() < deadline:
-        try:
-            o = alpaca.get_order(order_id)
-        except Exception as e:
-            log.warning(f"  Could not poll order {order_id}: {e}")
-            break
-        status = o.get("status", "unknown")
-        filled_qty = float(o.get("filled_qty") or 0)
-        fap = o.get("filled_avg_price")
-        filled_price = float(fap) if fap else None
-        if status in ("filled", "canceled", "rejected", "expired"):
-            break
-        if status == "partially_filled" and filled_qty > 0:
-            # give it one more poll to fully fill, then accept the partial
-            pass
-        time.sleep(poll)
-    return status, filled_qty, filled_price
+# make_client_order_id and confirm_fill are imported from shared.alpaca_http
+# (single source of truth shared by P1/P2/P3).
 
 
 # ---------------------------------------------------------------------------

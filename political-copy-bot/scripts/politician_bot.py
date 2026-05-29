@@ -14,8 +14,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BASE_DIR.parent
 sys.path.insert(0, str(BASE_DIR / "scripts"))
+sys.path.insert(0, str(REPO_ROOT))
 from mcp_client import call_mcp_tool
+from shared.alpaca_http import confirm_fill, make_client_order_id, resilient_request
 
 (BASE_DIR / "logs").mkdir(exist_ok=True)
 logging.basicConfig(
@@ -44,23 +47,15 @@ class AlpacaClient:
 
     def get(self, endpoint: str, params: dict = None, use_data_url: bool = False) -> dict:
         url = f"{self.data_url if use_data_url else self.base_url}{endpoint}"
-        r = requests.get(url, headers=self.headers, params=params, timeout=30)
-        r.raise_for_status()
-        return r.json()
+        return resilient_request("GET", url, self.headers, params=params, logger=log)
 
     def post(self, endpoint: str, data: dict) -> dict:
         url = f"{self.base_url}{endpoint}"
-        r = requests.post(url, headers=self.headers, json=data, timeout=30)
-        r.raise_for_status()
-        return r.json()
+        return resilient_request("POST", url, self.headers, json_body=data, logger=log)
 
     def delete(self, endpoint: str) -> dict:
         url = f"{self.base_url}{endpoint}"
-        r = requests.delete(url, headers=self.headers, timeout=30)
-        if r.status_code == 204:
-            return {}
-        r.raise_for_status()
-        return r.json()
+        return resilient_request("DELETE", url, self.headers, logger=log)
 
     def get_account(self) -> dict:
         return self.get("/v2/account")
@@ -86,7 +81,8 @@ class AlpacaClient:
         return self.get(f"/v2/stocks/{symbol}/trades/latest", use_data_url=True)
 
     def place_order(self, symbol: str, qty: int, side: str, order_type: str = "limit",
-                    limit_price: float = None, time_in_force: str = "day") -> dict:
+                    limit_price: float = None, time_in_force: str = "day",
+                    client_order_id: str = None) -> dict:
         data = {
             "symbol": symbol,
             "qty": str(qty),
@@ -96,7 +92,12 @@ class AlpacaClient:
         }
         if limit_price and order_type == "limit":
             data["limit_price"] = str(round(limit_price, 2))
+        if client_order_id:
+            data["client_order_id"] = client_order_id
         return self.post("/v2/orders", data)
+
+    def get_order(self, order_id: str) -> dict:
+        return self.get(f"/v2/orders/{order_id}")
 
     def get_clock(self) -> dict:
         return self.get("/v2/clock")
@@ -382,19 +383,27 @@ class PoliticianBot:
 
             log.info(f"BUYING {qty} x {ticker} @ limit ${limit_price:.2f} (${qty*limit_price:.0f})")
 
+            coid = make_client_order_id("p2", ticker, "buy")
             order = self.alpaca.place_order(
                 symbol=ticker, qty=qty, side="buy",
                 order_type="limit", limit_price=limit_price,
+                client_order_id=coid,
             )
+
+            # Confirm the fill so the trade log records the real entry price.
+            status, filled_qty, filled_price = confirm_fill(self.alpaca, order.get("id"))
+            entry_price = filled_price if filled_price else limit_price
 
             trade_record = {
                 "symbol": ticker,
                 "side": "buy",
                 "qty": qty,
                 "limit_price": limit_price,
+                "entry_price": round(entry_price, 4),
+                "filled_qty": filled_qty,
                 "estimated_value": round(qty * limit_price, 2),
                 "order_id": order.get("id"),
-                "order_status": order.get("status"),
+                "order_status": status if status != "unknown" else order.get("status"),
                 "politician": trade.get("politician", {}).get("name", ""),
                 "politician_trade_size": reported_size,
                 "source": trade.get("_source", ""),
@@ -404,9 +413,14 @@ class PoliticianBot:
             return trade_record
 
         except requests.HTTPError as e:
+            resp = getattr(e, "response", None)
+            # Duplicate client_order_id (422) -> already placed today; idempotent skip.
+            if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
+                log.info(f"{ticker}: already placed today (idempotent skip)")
+                return None
             log.error(f"Order failed for {ticker}: {e}")
-            if hasattr(e, "response") and e.response is not None:
-                log.error(f"Response: {e.response.text}")
+            if resp is not None:
+                log.error(f"Response: {resp.text}")
             return None
         except Exception as e:
             log.error(f"Unexpected error for {ticker}: {e}")

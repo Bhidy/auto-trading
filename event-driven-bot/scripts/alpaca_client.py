@@ -1,11 +1,31 @@
 #!/usr/bin/env python3
-"""Alpaca REST API client for Portfolio 3."""
+"""Alpaca REST API client for Portfolio 3.
+
+Routes all broker calls through the shared hardened core (shared.alpaca_http)
+for retry/backoff, order idempotency, and fill confirmation — identical to P1
+and P2.
+"""
 
 import json
-import requests
+import logging
+import sys
 from pathlib import Path
 
+import requests
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+# confirm_fill / make_client_order_id are re-exported for event_driven_bot.
+from shared.alpaca_http import (  # noqa: E402,F401  (path set above; re-exported)
+    confirm_fill,
+    make_client_order_id,
+    resilient_request,
+)
+
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "alpaca_config.json"
+log = logging.getLogger("p3_alpaca")
 
 
 class AlpacaClient:
@@ -22,21 +42,13 @@ class AlpacaClient:
         }
 
     def _get(self, url, params=None):
-        r = requests.get(url, headers=self.headers, params=params, timeout=30)
-        r.raise_for_status()
-        return r.json()
+        return resilient_request("GET", url, self.headers, params=params, logger=log)
 
     def _post(self, url, data):
-        r = requests.post(url, headers=self.headers, json=data, timeout=30)
-        r.raise_for_status()
-        return r.json()
+        return resilient_request("POST", url, self.headers, json_body=data, logger=log)
 
     def _delete(self, url, params=None):
-        r = requests.delete(url, headers=self.headers, params=params, timeout=30)
-        if r.status_code == 204:
-            return {}
-        r.raise_for_status()
-        return r.json()
+        return resilient_request("DELETE", url, self.headers, params=params, logger=log)
 
     def get_account(self):
         return self._get(f"{self.base_url}/v2/account")
@@ -108,7 +120,7 @@ class AlpacaClient:
     def place_order(self, symbol, qty=None, notional=None, side="buy",
                     order_type="market", limit_price=None, stop_price=None,
                     time_in_force="day", trail_percent=None, order_class=None,
-                    take_profit=None, stop_loss=None):
+                    take_profit=None, stop_loss=None, client_order_id=None):
         data = {
             "symbol": symbol,
             "side": side,
@@ -131,15 +143,22 @@ class AlpacaClient:
             data["take_profit"] = take_profit
         if stop_loss:
             data["stop_loss"] = stop_loss
+        if client_order_id:
+            data["client_order_id"] = client_order_id
         return self._post(f"{self.base_url}/v2/orders", data)
 
-    def place_bracket_order(self, symbol, qty, side, take_profit_price, stop_loss_price):
+    def place_bracket_order(self, symbol, qty, side, take_profit_price,
+                            stop_loss_price, client_order_id=None):
         return self.place_order(
             symbol=symbol, qty=qty, side=side, order_type="market",
             time_in_force="day", order_class="bracket",
             take_profit={"limit_price": str(round(take_profit_price, 2))},
             stop_loss={"stop_price": str(round(stop_loss_price, 2))},
+            client_order_id=client_order_id,
         )
+
+    def get_order(self, order_id):
+        return self._get(f"{self.base_url}/v2/orders/{order_id}")
 
     def cancel_all_orders(self):
         return self._delete(f"{self.base_url}/v2/orders")

@@ -2,7 +2,6 @@
 and fill confirmation. These guard the money path."""
 import types
 
-import pytest
 import requests
 
 import autonomous_runner as ar
@@ -57,56 +56,22 @@ def _client():
     return c
 
 
-def test_request_retries_on_429_then_succeeds(monkeypatch):
+def test_client_request_delegates_to_shared_core(monkeypatch):
+    # P1's AlpacaClient._request must route through the shared hardened core,
+    # inheriting retry/backoff. (Exhaustive retry cases: test_shared_alpaca_http.)
+    from shared import alpaca_http as http
     calls = {"n": 0}
 
-    def fake_request(method, url, **kwargs):
+    def fake(method, url, **kw):
         calls["n"] += 1
         if calls["n"] == 1:
             return _FakeResp(429, headers={"Retry-After": "0"})
-        return _FakeResp(200, payload={"ok": True}, text='{"ok": true}')
+        return _FakeResp(200, payload={"ok": True}, text='{"ok":true}')
 
-    monkeypatch.setattr(ar.time, "sleep", lambda *_: None)
-    monkeypatch.setattr(ar.requests, "request", fake_request)
-    out = _client()._request("GET", "http://x")
-    assert out == {"ok": True}
-    assert calls["n"] == 2
-
-
-def test_request_retries_on_500_then_raises_after_max(monkeypatch):
-    monkeypatch.setattr(ar.time, "sleep", lambda *_: None)
-    monkeypatch.setattr(ar.requests, "request", lambda *a, **k: _FakeResp(503))
-    with pytest.raises(requests.HTTPError):
-        _client()._request("GET", "http://x")
-
-
-def test_request_does_not_retry_4xx(monkeypatch):
-    calls = {"n": 0}
-
-    def fake_request(method, url, **kwargs):
-        calls["n"] += 1
-        return _FakeResp(422, text="invalid")
-
-    monkeypatch.setattr(ar.time, "sleep", lambda *_: None)
-    monkeypatch.setattr(ar.requests, "request", fake_request)
-    with pytest.raises(requests.HTTPError):
-        _client()._request("POST", "http://x", data={"a": 1})
-    assert calls["n"] == 1  # no retries on a client error
-
-
-def test_request_retries_network_error(monkeypatch):
-    calls = {"n": 0}
-
-    def fake_request(method, url, **kwargs):
-        calls["n"] += 1
-        if calls["n"] < 3:
-            raise requests.ConnectionError("boom")
-        return _FakeResp(200, payload={"ok": 1}, text='{"ok":1}')
-
-    monkeypatch.setattr(ar.time, "sleep", lambda *_: None)
-    monkeypatch.setattr(ar.requests, "request", fake_request)
-    assert _client()._request("GET", "http://x") == {"ok": 1}
-    assert calls["n"] == 3
+    monkeypatch.setattr(http.time, "sleep", lambda *_: None)
+    monkeypatch.setattr(http.requests, "request", fake)
+    assert _client()._request("GET", "http://x") == {"ok": True}
+    assert calls["n"] == 2  # retried via shared core
 
 
 # --- Fill confirmation ------------------------------------------------------
