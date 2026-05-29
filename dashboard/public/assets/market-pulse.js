@@ -372,12 +372,11 @@
             renderOrderBook(price);
             renderKeyFinancials(activeSymbol, data.profile);
             renderPositionsTable();
-            renderRevenueGrowthChart();
-
-            if (bars.length > 0) { renderWorkspaceChart(bars); }
 
             stockPriceDatabase[activeSymbol] = { price: price, changePct: changePct, prev: prev };
             updateSelectedListStyles();
+
+            if (window.loadChartForPeriod) loadChartForPeriod('1D');
         } catch (e) {
             console.error('Error loading stock details for ' + activeSymbol, e);
         }
@@ -1433,6 +1432,59 @@
             });
         });
 
+        // Shared chart loader — called by period buttons and auto-init
+        window.loadChartForPeriod = function(range) {
+            var chartToggleEl = document.getElementById('chartPeriodToggles');
+            if (chartToggleEl) {
+                var periodBtns = chartToggleEl.querySelectorAll('[data-range]');
+                periodBtns.forEach(function(b) { b.classList.remove('active'); });
+                var activeBtn = chartToggleEl.querySelector('[data-range="' + range + '"]');
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            if (range === '1D') {
+                apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(bars) {
+                    if (bars && Array.isArray(bars) && bars.length > 0) {
+                        renderWorkspaceChart(bars);
+                    }
+                }).catch(function() {
+                    fallbackLoadDailyBars(activeSymbol, 1);
+                });
+            } else if (range === '5D') {
+                apiFetch('/api/market/bars/' + activeSymbol + '?limit=65&timeframe=30Min&feed=iex').then(function(bars) {
+                    if (bars && Array.isArray(bars) && bars.length > 0) {
+                        renderWorkspaceChart(bars);
+                    }
+                }).catch(function() {
+                    fallbackLoadDailyBars(activeSymbol, 5);
+                });
+            } else if (range === '1W') {
+                var d = new Date();
+                d.setDate(d.getDate() - 7);
+                var startDate = d.toISOString().slice(0, 10);
+                apiFetch('/api/supabase/market?symbol=' + activeSymbol + '&start=' + startDate).then(function(rows) {
+                    if (rows && rows.length > 0) {
+                        var bars = rows.map(function(r) {
+                            return { t: r.date, c: parseFloat(r.close_price), o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), v: parseInt(r.volume || 0) };
+                        });
+                        renderWorkspaceChart(bars);
+                    } else {
+                        fallbackLoadDailyBars(activeSymbol, 7);
+                    }
+                }).catch(function() {
+                    fallbackLoadDailyBars(activeSymbol, 7);
+                });
+            }
+        };
+
+        function fallbackLoadDailyBars(symbol, days) {
+            apiFetch('/api/market/bars/' + symbol + '?limit=' + days + '&timeframe=1Day&feed=iex').then(function(bars) {
+                if (bars && Array.isArray(bars) && bars.length > 0) {
+                    renderWorkspaceChart(bars);
+                }
+            });
+        }
+
         // Period buttons
         var chartToggleEl = document.getElementById('chartPeriodToggles');
         if (chartToggleEl) {
@@ -1441,18 +1493,8 @@
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    periodBtns.forEach(function(b) { b.classList.remove('active'); });
-                    this.classList.add('active');
                     var range = this.getAttribute('data-range');
-                    var timeframe = '1Day', limit = 30;
-                    if (range === '1D') { timeframe = '5Min'; limit = 78; }
-                    else if (range === '5D') { timeframe = '30Min'; limit = 65; }
-
-                    apiFetch('/api/market/bars/' + activeSymbol + '?limit=' + limit + '&timeframe=' + timeframe).then(function(bars) {
-                        if (bars && Array.isArray(bars) && bars.length > 0) {
-                            renderWorkspaceChart(bars);
-                        }
-                    });
+                    loadChartForPeriod(range);
                 });
             });
         }

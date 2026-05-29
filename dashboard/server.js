@@ -1374,6 +1374,31 @@ app.get('/api/market/bars/:symbol', async (req, res) => {
         }
     }
 
+    // Fallback to Supabase for daily bars when Alpaca is unavailable
+    if (timeframe === '1Day') {
+        try {
+            const rows = await supabaseGet('market_daily_history', {
+                symbol: `eq.${symbol}`,
+                select: 'date,close_price,open_price,high_price,low_price,volume',
+                order: 'date.desc',
+                limit: limit,
+            });
+            if (rows && rows.length > 0) {
+                const bars = rows.reverse().map(r => ({
+                    t: r.date,
+                    c: parseFloat(r.close_price),
+                    o: parseFloat(r.open_price),
+                    h: parseFloat(r.high_price),
+                    l: parseFloat(r.low_price),
+                    v: parseInt(r.volume || 0)
+                }));
+                return res.json(bars);
+            }
+        } catch (e) {
+            console.warn(`Supabase bars fallback error for ${symbol}:`, e.message);
+        }
+    }
+
     res.json([]);
 });
 
