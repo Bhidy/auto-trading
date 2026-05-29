@@ -680,7 +680,70 @@
         });
     }
 
+    // ── Professional Candlestick Plugin for Chart.js 4.x ──
+    var pluginsRegistered = false;
+    function ensurePlugins() {
+        if (pluginsRegistered || !window.Chart) return;
+        Chart.register({
+            id: 'candleWicks',
+            afterDatasetDraw: function(chart, args) {
+                if (args.index !== 0) return;
+                var ctx = chart.ctx, meta = args.meta, yScale = chart.scales.y;
+                var candles = chart.data.datasets[0]._candles;
+                if (!candles) return;
+                var isDark = getTheme() === 'dark';
+                ctx.save();
+                for (var i = 0; i < meta.data.length; i++) {
+                    var el = meta.data[i], c = candles[i];
+                    if (!c || !el) continue;
+                    var x = el.x, bw = Math.min(el.width * 0.6, 6);
+                    var yH = yScale.getPixelForValue(c.h), yL = yScale.getPixelForValue(c.l);
+                    var yO = yScale.getPixelForValue(c.o), yC = yScale.getPixelForValue(c.c);
+                    var isGreen = c.c >= c.o;
+                    var bodyColor = isGreen ? '#22c55e' : '#ef4444';
+                    var wickColor = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
+
+                    ctx.strokeStyle = wickColor;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, Math.min(yO, yC)); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x, yL); ctx.lineTo(x, Math.max(yO, yC)); ctx.stroke();
+
+                    var bodyTop = Math.min(yO, yC);
+                    var bodyH = Math.max(1, Math.abs(yC - yO));
+                    ctx.fillStyle = isGreen ? 'rgba(34,197,94,0.85)' : 'rgba(239,68,68,0.85)';
+                    ctx.fillRect(x - bw / 2, bodyTop, bw, bodyH);
+                    ctx.strokeStyle = bodyColor;
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x - bw / 2, bodyTop, bw, bodyH);
+                }
+                ctx.restore();
+            }
+        });
+        Chart.register({
+            id: 'crosshair',
+            afterDraw: function(chart) {
+                if (chart.tooltip && chart.tooltip._active && chart.tooltip._active.length) {
+                    var ctx = chart.ctx;
+                    var activePoint = chart.tooltip._active[0];
+                    var x = activePoint.element.x;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([3, 3]);
+                    ctx.moveTo(x, chart.scales.y.top);
+                    ctx.lineTo(x, chart.scales.y.bottom);
+                    ctx.strokeStyle = 'rgba(229,90,31,0.35)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+            }
+        });
+        pluginsRegistered = true;
+    }
+
     function renderWorkspaceChart(bars, chartType) {
+        ensurePlugins();
         chartType = chartType || 'daily';
         var canvas = document.getElementById('stockDetailsChart');
         if (!canvas) return;
@@ -695,46 +758,53 @@
         var ctx = canvas.getContext('2d');
         if (detailChart) { detailChart.destroy(); detailChart = null; }
 
-        var isIntraday = (chartType === 'intraday' && bars.length < 100);
-        var labels = bars.map(function (b) {
-            var date = new Date(b.t);
-            if (isIntraday && b.t && b.t.includes('T')) {
-                return b.t.slice(11, 16);
-            }
-            return isNaN(date.getTime()) ? (b.t ? b.t.slice(0, 10) : '') : date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+        var isIntraday = (chartType === 'intraday');
+        var candles = bars.map(function(b) {
+            return {
+                x: new Date(b.t).getTime(),
+                o: parseFloat(b.o || b.c),
+                h: parseFloat(b.h || b.c),
+                l: parseFloat(b.l || b.c),
+                c: parseFloat(b.c)
+            };
         });
-        var points = bars.map(function (b) { return parseFloat(b.c); });
+
+        var midPoints = candles.map(function(c) { return c.c; });
+        var labels = bars.map(function(b) {
+            var d = new Date(b.t);
+            if (isIntraday && b.t && b.t.includes('T')) return b.t.slice(11, 16);
+            return isNaN(d.getTime()) ? (b.t ? b.t.slice(0, 10) : '') : d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+        });
 
         var isDark = getTheme() === 'dark';
         var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(26,15,8,0.06)';
+        var textColor = isDark ? '#A39A92' : '#7A6B5E';
 
-        var gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(229,90,31,0.22)');
-        gradient.addColorStop(1, 'rgba(229,90,31,0.00)');
+        // Boilerplate dataset so Chart.js validates — real rendering is via plugin
+        var boilerData = candles.map(function(c) { return c.c; });
 
         detailChart = new Chart(canvas, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
                     label: activeSymbol,
-                    data: points,
-                    borderColor: '#E55A1F',
-                    backgroundColor: gradient,
-                    borderWidth: 2.2,
-                    fill: true,
-                    tension: isIntraday ? 0.15 : 0.25,
-                    pointRadius: points.length > 80 ? 0 : 1.5,
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: '#E55A1F',
-                    pointHoverBorderColor: '#FFFFFF',
-                    yAxisID: 'y'
+                    data: boilerData,
+                    _candles: candles,
+                    backgroundColor: function(ctx) {
+                        var c = candles[ctx.dataIndex];
+                        return c && c.c >= c.o ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
+                    },
+                    borderColor: 'transparent',
+                    borderWidth: 0,
+                    barPercentage: 0.85,
+                    categoryPercentage: 0.95,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: { duration: points.length > 200 ? 100 : 400 },
+                animation: { duration: candles.length > 200 ? 100 : 400 },
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: { display: false },
@@ -744,21 +814,36 @@
                         borderWidth: 1,
                         titleColor: isDark ? '#FFF1E8' : '#1A0F08',
                         bodyColor: isDark ? '#A39A92' : '#7A6B5E',
-                        padding: 10,
+                        padding: 12,
                         callbacks: {
-                            label: function(ctx) { return activeSymbol + ': $' + ctx.raw.toFixed(2); }
+                            title: function(items) {
+                                return activeSymbol + ' · ' + (labels[items[0].dataIndex] || '');
+                            },
+                            label: function(ctx) {
+                                var c = candles[ctx.dataIndex];
+                                if (!c) return '';
+                                return ['O: $' + c.o.toFixed(2), 'H: $' + c.h.toFixed(2), 'L: $' + c.l.toFixed(2), 'C: $' + c.c.toFixed(2)];
+                            },
+                            afterLabel: function(ctx) {
+                                var c = candles[ctx.dataIndex];
+                                if (!c || !c.o) return '';
+                                var chg = c.c - c.o;
+                                var chgPct = c.o ? ((chg / c.o) * 100) : 0;
+                                var arrow = chg >= 0 ? '▲' : '▼';
+                                return arrow + ' ' + chg.toFixed(2) + ' (' + chgPct.toFixed(2) + '%)';
+                            }
                         }
                     }
                 },
                 scales: {
                     x: {
                         grid: { color: gridColor },
-                        ticks: { color: '#7A6B5E', font: { size: 9 }, maxTicksLimit: isIntraday ? 6 : 8, maxRotation: 0 }
+                        ticks: { color: textColor, font: { size: 9 }, maxTicksLimit: isIntraday ? 6 : 8, maxRotation: 0 }
                     },
                     y: {
                         position: lang === 'ar' ? 'right' : 'left',
                         grid: { color: gridColor },
-                        ticks: { color: '#7A6B5E', font: { size: 9 }, callback: function(v) { return '$' + v.toFixed(isIntraday ? 2 : 1); } }
+                        ticks: { color: textColor, font: { size: 9 }, callback: function(v) { return '$' + v.toFixed(isIntraday ? 2 : 1); } }
                     }
                 }
             }
@@ -1460,47 +1545,40 @@
             apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(bars) {
                 if (bars && Array.isArray(bars) && bars.length > 0) {
                     renderWorkspaceChart(bars, 'intraday');
-                    intradayRefreshTimer = setInterval(function() {
-                        if (activePeriod !== '1D') { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; return; }
-                        apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(b) {
-                            if (b && b.length > 0) renderWorkspaceChart(b, 'intraday');
-                        });
-                    }, 30000);
+                    if (activePeriod === '1D') {
+                        intradayRefreshTimer = setInterval(function() {
+                            if (activePeriod !== '1D') { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; return; }
+                            apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(b) {
+                                if (b && b.length > 0) renderWorkspaceChart(b, 'intraday');
+                            });
+                        }, 30000);
+                    }
                 } else {
                     fallbackLoadDailyBars(activeSymbol, 1);
                 }
             }).catch(function() { fallbackLoadDailyBars(activeSymbol, 1); });
-        } else if (range === '5D') {
-            apiFetch('/api/market/bars/' + activeSymbol + '?limit=65&timeframe=30Min&feed=iex').then(function(bars) {
-                if (bars && Array.isArray(bars) && bars.length > 0) {
-                    renderWorkspaceChart(bars, 'intraday');
-                } else {
-                    fallbackLoadDailyBars(activeSymbol, 5);
-                }
-            }).catch(function() { fallbackLoadDailyBars(activeSymbol, 5); });
         } else {
             var periodDays = { '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365 };
             var days = periodDays[range] || 30;
             var d = new Date();
-            d.setDate(d.getDate() - days);
+            d.setDate(d.getDate() - days - 1);
             var startDate = d.toISOString().slice(0, 10);
-            var limit = Math.min(days + 10, 1000);
+            var limit = Math.min(days + 20, 1000);
 
             apiFetch('/api/supabase/market?symbol=' + activeSymbol + '&start=' + startDate + '&limit=' + limit).then(function(rows) {
                 if (rows && rows.length > 0) {
                     var bars = rows.map(function(r) {
-                        return { t: r.date, c: parseFloat(r.close_price), o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), v: parseInt(r.volume || 0) };
+                        return { t: r.date, o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), c: parseFloat(r.close_price), v: parseInt(r.volume || 0) };
                     });
-                    renderWorkspaceChart(bars, 'daily');
-                } else {
-                    fallbackLoadDailyBars(activeSymbol, days);
+                    if (bars.length > 0) { renderWorkspaceChart(bars, 'daily'); return; }
                 }
+                fallbackLoadDailyBars(activeSymbol, days);
             }).catch(function() { fallbackLoadDailyBars(activeSymbol, days); });
         }
     }
 
     function fallbackLoadDailyBars(symbol, days) {
-        apiFetch('/api/market/bars/' + symbol + '?limit=' + days + '&timeframe=1Day&feed=iex').then(function(bars) {
+        apiFetch('/api/market/bars/' + symbol + '?limit=' + Math.min(days + 10, 100) + '&timeframe=1Day&feed=iex').then(function(bars) {
             if (bars && Array.isArray(bars) && bars.length > 0) {
                 renderWorkspaceChart(bars, 'daily');
             }
