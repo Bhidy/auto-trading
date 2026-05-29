@@ -16,11 +16,16 @@ import json
 import os
 import sys
 import time
+import random
 import logging
 import requests
-import math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+# HTTP resilience config — transient Alpaca errors must never crash a session.
+_RETRY_STATUS = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 4
+_BACKOFF_BASE = 0.5
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = BASE_DIR / "scripts"
@@ -62,22 +67,57 @@ class AlpacaClient:
             "APCA-API-SECRET-KEY": self.api_secret,
         }
 
+    def _retry_wait(self, resp, attempt):
+        # Honor server-provided Retry-After (429), else exponential backoff + jitter.
+        if resp is not None:
+            ra = resp.headers.get("Retry-After")
+            if ra:
+                try:
+                    return float(ra)
+                except ValueError:
+                    pass
+        return _BACKOFF_BASE * (2 ** attempt) + random.uniform(0, 0.3)
+
+    def _request(self, method, url, params=None, data=None):
+        """Single resilient HTTP entry point: retries 429/5xx and network errors
+        with exponential backoff + jitter. 4xx (except 429) raise immediately."""
+        last_exc = None
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                r = requests.request(
+                    method, url, headers=self.headers,
+                    params=params, json=data, timeout=30,
+                )
+                if r.status_code in _RETRY_STATUS and attempt < _MAX_RETRIES:
+                    wait = self._retry_wait(r, attempt)
+                    log.warning(f"Alpaca {r.status_code} on {method} {url} — "
+                                f"retry {attempt + 1}/{_MAX_RETRIES} in {wait:.1f}s")
+                    time.sleep(wait)
+                    continue
+                if r.status_code == 204:
+                    return {}
+                r.raise_for_status()
+                return r.json() if r.text else {}
+            except (requests.ConnectionError, requests.Timeout) as e:
+                last_exc = e
+                if attempt < _MAX_RETRIES:
+                    wait = _BACKOFF_BASE * (2 ** attempt) + random.uniform(0, 0.3)
+                    log.warning(f"Alpaca network error on {method} {url}: {e} — "
+                                f"retry {attempt + 1}/{_MAX_RETRIES} in {wait:.1f}s")
+                    time.sleep(wait)
+                    continue
+                raise
+        if last_exc:
+            raise last_exc
+
     def _get(self, url, params=None):
-        r = requests.get(url, headers=self.headers, params=params, timeout=30)
-        r.raise_for_status()
-        return r.json()
+        return self._request("GET", url, params=params)
 
     def _post(self, url, data):
-        r = requests.post(url, headers=self.headers, json=data, timeout=30)
-        r.raise_for_status()
-        return r.json()
+        return self._request("POST", url, data=data)
 
     def _delete(self, url):
-        r = requests.delete(url, headers=self.headers, timeout=30)
-        if r.status_code == 204:
-            return {}
-        r.raise_for_status()
-        return r.json()
+        return self._request("DELETE", url)
 
     def get_account(self):
         return self._get(f"{self.base_url}/v2/account")
@@ -119,7 +159,7 @@ class AlpacaClient:
         return self._get(f"{self.data_url}/v2/stocks/{symbol}/trades/latest")
 
     def place_order(self, symbol, qty, side, order_type="limit",
-                    limit_price=None, time_in_force="day"):
+                    limit_price=None, time_in_force="day", client_order_id=None):
         data = {
             "symbol": symbol,
             "qty": str(qty),
@@ -129,10 +169,12 @@ class AlpacaClient:
         }
         if limit_price and order_type == "limit":
             data["limit_price"] = str(round(limit_price, 2))
+        if client_order_id:
+            data["client_order_id"] = client_order_id
         return self._post(f"{self.base_url}/v2/orders", data)
 
     def place_crypto_order(self, symbol, qty, side, order_type="limit",
-                           limit_price=None, time_in_force="gtc"):
+                           limit_price=None, time_in_force="gtc", client_order_id=None):
         data = {
             "symbol": symbol.replace("/", ""),
             "qty": str(qty),
@@ -142,7 +184,12 @@ class AlpacaClient:
         }
         if limit_price and order_type == "limit":
             data["limit_price"] = str(round(limit_price, 2))
+        if client_order_id:
+            data["client_order_id"] = client_order_id
         return self._post(f"{self.base_url}/v2/orders", data)
+
+    def get_order(self, order_id):
+        return self._get(f"{self.base_url}/v2/orders/{order_id}")
 
     def cancel_all_orders(self):
         return self._delete(f"{self.base_url}/v2/orders")
@@ -181,6 +228,38 @@ def get_instrument_type(symbol):
         if symbol in info.get("symbols", []):
             return info.get("instrument_type", "stock")
     return "stock"
+
+def make_client_order_id(prefix, symbol, side):
+    """Deterministic per-day idempotency key. Alpaca rejects a duplicate
+    client_order_id (422), so a retried/duplicate workflow fire cannot
+    double-place the same symbol/side on the same day."""
+    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+    safe_symbol = symbol.replace("/", "")
+    return f"{prefix}-{today}-{safe_symbol}-{side}"
+
+def confirm_fill(alpaca, order_id, timeout=8.0, poll=1.0):
+    """Poll an order until it reaches a terminal/filled state or timeout.
+    Returns (status, filled_qty, filled_avg_price). Never logs a phantom
+    fill — only confirmed fills should reach the trade log."""
+    deadline = time.time() + timeout
+    status, filled_qty, filled_price = "unknown", 0.0, None
+    while time.time() < deadline:
+        try:
+            o = alpaca.get_order(order_id)
+        except Exception as e:
+            log.warning(f"  Could not poll order {order_id}: {e}")
+            break
+        status = o.get("status", "unknown")
+        filled_qty = float(o.get("filled_qty") or 0)
+        fap = o.get("filled_avg_price")
+        filled_price = float(fap) if fap else None
+        if status in ("filled", "canceled", "rejected", "expired"):
+            break
+        if status == "partially_filled" and filled_qty > 0:
+            # give it one more poll to fully fill, then accept the partial
+            pass
+        time.sleep(poll)
+    return status, filled_qty, filled_price
 
 
 # ---------------------------------------------------------------------------
@@ -353,6 +432,7 @@ def run_trading_session(alpaca: AlpacaClient):
         itype = get_instrument_type(symbol)
         side = "buy" if signal == "BUY" else "sell"
 
+        coid = make_client_order_id("p1", symbol, side)
         try:
             if itype == "crypto":
                 quote_price = price
@@ -360,6 +440,7 @@ def run_trading_session(alpaca: AlpacaClient):
                 result = alpaca.place_crypto_order(
                     symbol=symbol, qty=qty, side=side,
                     order_type="limit", limit_price=limit_price,
+                    client_order_id=coid,
                 )
             else:
                 quote = alpaca.get_latest_quote(symbol)
@@ -375,27 +456,49 @@ def run_trading_session(alpaca: AlpacaClient):
                 result = alpaca.place_order(
                     symbol=symbol, qty=qty, side=side,
                     order_type="limit", limit_price=limit_price,
+                    client_order_id=coid,
                 )
 
-            log.info(f"  {side.upper()} {qty} x {symbol} @ limit ${limit_price:.2f} (${qty*limit_price:,.0f}) — {result.get('status')}")
+            order_id = result.get("id")
+            # Confirm the fill before logging — never record a phantom entry.
+            status, filled_qty, filled_price = confirm_fill(alpaca, order_id)
+            entry_price = filled_price if filled_price else limit_price
+
+            if filled_qty <= 0:
+                log.info(f"  {side.upper()} {symbol}: order {status} (0 filled) "
+                         f"— working limit @ ${limit_price:.2f}, not logged until filled")
+                # Order still counts against the daily trade budget (it was placed).
+                trades_executed += 1
+                cash -= qty * limit_price
+                time.sleep(0.5)
+                continue
+
+            log.info(f"  {side.upper()} {filled_qty:g} x {symbol} @ ${entry_price:.2f} "
+                     f"(${filled_qty * entry_price:,.0f}) — {status}")
 
             from performance_tracker import log_trade
             bucket = get_bucket_for_symbol(symbol)
             log_trade(
-                symbol=symbol, side=side, qty=qty, entry_price=limit_price,
+                symbol=symbol, side=side, qty=filled_qty, entry_price=entry_price,
                 bucket=bucket, signal_score=order.get("confidence", 0),
                 reasons=order.get("reasons", []),
                 stop_loss=order.get("stop_loss"),
                 take_profit=order.get("take_profit"),
             )
             trades_executed += 1
-            cash -= qty * limit_price
+            cash -= filled_qty * entry_price
             time.sleep(0.5)
 
         except requests.HTTPError as e:
+            resp = getattr(e, "response", None)
+            # 422 with a duplicate client_order_id means this order was already
+            # placed on a prior fire today — idempotent no-op, not an error.
+            if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
+                log.info(f"  {symbol}: already placed today (idempotent skip)")
+                continue
             log.error(f"  Order failed for {symbol}: {e}")
-            if hasattr(e, "response") and e.response is not None:
-                log.error(f"  Response: {e.response.text}")
+            if resp is not None:
+                log.error(f"  Response: {resp.text}")
         except Exception as e:
             log.error(f"  Unexpected error for {symbol}: {e}")
 
@@ -541,7 +644,7 @@ def run_end_of_day(alpaca: AlpacaClient):
     # Close open trades that were filled
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     position_symbols = {p["symbol"] for p in positions}
-    from performance_tracker import find_open_trade, close_trade
+    from performance_tracker import close_trade
 
     for trade in trade_log:
         if trade["status"] == "open" and trade["symbol"] not in position_symbols:

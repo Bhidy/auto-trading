@@ -15,7 +15,6 @@ Modes:
 """
 
 import json
-import math
 import os
 import sys
 import time
@@ -38,8 +37,7 @@ DATA_DIR.mkdir(exist_ok=True)
 sys.path.insert(0, str(SCRIPTS_DIR))
 from alpaca_client import AlpacaClient
 from fundamental_screener import (
-    screen_universe, save_watchlist, sma, ema, momentum_pct, rsi, atr,
-    bollinger_bands, macd, SECTOR_MAP, FULL_UNIVERSE,
+    screen_universe, save_watchlist, SECTOR_MAP,
 )
 
 logging.basicConfig(
@@ -754,7 +752,7 @@ def main():
                 executed = execute_signals(alpaca, news_signals, "event_driven")
                 log.info(f"Executed {len(executed)} event-driven trades")
             else:
-                log.info(f"Skipping execution — market closed")
+                log.info("Skipping execution — market closed")
         else:
             log.info("No actionable news catalysts found")
 

@@ -6,7 +6,7 @@ Multi-timeframe, regime-aware, adaptive, with relative strength ranking.
 import json
 import os
 import math
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "..", "config")
@@ -266,7 +266,7 @@ def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params):
             reasons.append(f"Uptrend: price above MA{params['ma_fast']} & MA{params['ma_slow']}")
         elif price < ma_fast and price < ma_slow:
             score -= 0.30
-            reasons.append(f"Downtrend: price below both MAs")
+            reasons.append("Downtrend: price below both MAs")
         else:
             reasons.append("Mixed trend")
 
@@ -335,7 +335,7 @@ def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params):
     elif score < 0:
         if regime in ("BEAR", "STRONG_BEAR"):
             score *= 1.2
-            reasons.append(f"Bear regime amplifying short signal")
+            reasons.append("Bear regime amplifying short signal")
 
     # 8) RELATIVE STRENGTH BONUS (weight: 0.10)
     rs_entry = next((r for r in rs_data if r["symbol"] == symbol), None)

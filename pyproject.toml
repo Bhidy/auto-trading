@@ -1,0 +1,18 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+
+[tool.ruff]
+# Lint the trading engines; vendored deps and the dashboard are out of scope.
+line-length = 120
+target-version = "py313"
+extend-exclude = ["dashboard/node_modules", "isolated-portfolio"]
+
+[tool.ruff.lint]
+# Gate on high-value real-bug codes only (not stylistic noise) so the gate
+# stays green and meaningful on a large existing codebase:
+#   F401 unused import, F811 redefinition, F821 undefined name,
+#   F823 used-before-assignment, F706/F707 bad return/except, E9 syntax.
+# Unused-local (F841) and empty f-string (F541) are tracked as cleanup, not gated.
+select = ["F401", "F811", "F821", "F823", "F706", "F707", "E9"]

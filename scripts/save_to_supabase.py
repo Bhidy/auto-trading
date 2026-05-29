@@ -17,7 +17,6 @@ Required env vars:
 """
 
 import os
-import sys
 import json
 import argparse
 import urllib.request

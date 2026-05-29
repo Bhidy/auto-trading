@@ -5,7 +5,6 @@ Lightweight MCP client that talks to mcp-capitol-trades via stdio JSON-RPC.
 
 import json
 import subprocess
-import sys
 
 
 def call_mcp_tool(tool_name: str, arguments: dict, timeout: int = 120) -> dict:

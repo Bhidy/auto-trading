@@ -1,0 +1,42 @@
+name: "CI — Lint & Tests"
+
+# Quality gate: every push and PR must pass lint + tests before code is trusted.
+# This is the gate that would have caught the risk_officer KeyError that silently
+# broke P1 trading on 2026-05-29.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "event-driven-bot/scripts/**"
+      - "political-copy-bot/scripts/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "requirements*.txt"
+      - ".github/workflows/ci.yml"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff lint (real-bug codes)
+        run: python3 -m ruff check scripts/ event-driven-bot/scripts/ political-copy-bot/scripts/
+
+      - name: Pytest
+        run: python3 -m pytest tests/ -v

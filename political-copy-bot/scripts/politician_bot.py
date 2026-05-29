@@ -6,12 +6,11 @@ Executes via Alpaca paper trading API.
 """
 
 import json
-import os
 import sys
 import time
 import logging
 import requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
