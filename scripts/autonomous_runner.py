@@ -578,34 +578,25 @@ def reconcile_positions(alpaca: AlpacaClient):
                               (an entry fill that wasn't logged, e.g. a limit
                               that filled after the confirmation window).
     """
+    from shared.reconcile import compute_drift
+
     positions = alpaca.get_positions()
-    pos_syms = {p.get("symbol") for p in positions if p.get("symbol")}
+    pos_syms = [p.get("symbol") for p in positions if p.get("symbol")]
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
-    open_syms = {t.get("symbol") for t in trade_log
-                 if t.get("status") == "open" and t.get("symbol")}
+    open_syms = [t.get("symbol") for t in trade_log
+                 if t.get("status") == "open" and t.get("symbol")]
 
-    orphan_open_trades = sorted(open_syms - pos_syms)
-    unlogged_positions = sorted(pos_syms - open_syms)
-    in_sync = not orphan_open_trades and not unlogged_positions
-
-    report = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "positions_held": len(pos_syms),
-        "open_trades_logged": len(open_syms),
-        "orphan_open_trades": orphan_open_trades,
-        "unlogged_positions": unlogged_positions,
-        "in_sync": in_sync,
-    }
+    report = compute_drift(pos_syms, open_syms)
     save_json(DATA_DIR / "reconciliation_report.json", report)
-    if in_sync:
+    if report["in_sync"]:
         log.info("  Reconciliation: trade log and broker positions in sync")
     else:
-        if orphan_open_trades:
-            log.warning(f"  Reconciliation: {len(orphan_open_trades)} open trade(s) "
-                        f"with no live position: {orphan_open_trades}")
-        if unlogged_positions:
-            log.warning(f"  Reconciliation: {len(unlogged_positions)} live position(s) "
-                        f"not in trade log: {unlogged_positions}")
+        if report["orphan_open_trades"]:
+            log.warning(f"  Reconciliation: {len(report['orphan_open_trades'])} open trade(s) "
+                        f"with no live position: {report['orphan_open_trades']}")
+        if report["unlogged_positions"]:
+            log.warning(f"  Reconciliation: {len(report['unlogged_positions'])} live position(s) "
+                        f"not in trade log: {report['unlogged_positions']}")
     return report
 
 

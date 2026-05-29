@@ -489,6 +489,22 @@ def run_eod_journal(alpaca: AlpacaClient):
     positions = alpaca.get_positions()
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
 
+    # Read-only integrity audit: flag drift between trade log and broker.
+    from shared.reconcile import compute_drift
+    recon = compute_drift(
+        [p.get("symbol") for p in positions if p.get("symbol")],
+        [t.get("symbol") for t in trade_log
+         if t.get("status") == "open" and t.get("symbol")],
+    )
+    save_json(DATA_DIR / "reconciliation_report.json", recon)
+    if recon["in_sync"]:
+        log.info("  Reconciliation: trade log and broker positions in sync")
+    else:
+        if recon["orphan_open_trades"]:
+            log.warning(f"  Reconciliation: open trades with no position: {recon['orphan_open_trades']}")
+        if recon["unlogged_positions"]:
+            log.warning(f"  Reconciliation: positions not in trade log: {recon['unlogged_positions']}")
+
     today = datetime.now().strftime("%Y-%m-%d")
     today_trades = [t for t in trade_log if t.get("date", "").startswith(today)]
 

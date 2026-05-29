@@ -670,6 +670,27 @@ class PoliticianBot:
             log.warning("Daily loss limit — no new trades until tomorrow")
         self.check_stops()
         self.save_portfolio_state()
+        self.reconcile_orders()
+
+    def reconcile_orders(self):
+        """Read-only audit of still-working (unfilled) limit orders — P2 uses
+        limit entries, so a limit that didn't fill in the confirm window lingers
+        as a working day-order. Surfaces it to data/reconciliation_report.json."""
+        try:
+            from shared.reconcile import working_orders_report
+            open_orders = self.alpaca.get_orders("open")
+            report = working_orders_report(open_orders)
+            positions = self.alpaca.get_positions()
+            report["positions_held"] = len(positions)
+            with open(BASE_DIR / "data" / "reconciliation_report.json", "w") as f:
+                json.dump(report, f, indent=2)
+            if report["working_count"]:
+                log.warning(f"Reconciliation: {report['working_count']} unfilled/working "
+                            f"order(s): {[o['symbol'] for o in report['working_orders']]}")
+            else:
+                log.info("Reconciliation: no unfilled working orders")
+        except Exception as e:
+            log.warning(f"Reconciliation audit skipped: {e}")
 
     def run_weekly_review(self):
         log.info("=" * 50)
