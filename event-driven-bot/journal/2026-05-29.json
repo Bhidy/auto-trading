@@ -1,0 +1,76 @@
+[
+  {
+    "date": "2026-05-29",
+    "timestamp": "2026-05-29T20:38:23.128626+00:00",
+    "audit": {
+      "equity": 102097.97,
+      "cash": 23630.44,
+      "daily_pnl": 1643.09,
+      "daily_pnl_pct": 1.636,
+      "total_open_exposure": 78467.53,
+      "exposure_pct": 76.9,
+      "position_count": 5,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 32958.72,
+        "Energy": 29494.71,
+        "Financials": 16014.1
+      }
+    },
+    "positions": [
+      {
+        "symbol": "CSCO",
+        "qty": "129",
+        "entry": "119.399922",
+        "current": "120.68",
+        "market_value": "15567.72",
+        "unrealized_pl": "165.130062",
+        "pnl_pct": 1.07,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "248.77",
+        "market_value": "14677.43",
+        "unrealized_pl": "-295.59",
+        "pnl_pct": -1.97,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MS",
+        "qty": "77",
+        "entry": "200.681558",
+        "current": "207.9753",
+        "market_value": "16014.0981",
+        "unrealized_pl": "561.618134",
+        "pnl_pct": 3.63,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "OXY",
+        "qty": "262",
+        "entry": "57.519046",
+        "current": "56.5545",
+        "market_value": "14817.279",
+        "unrealized_pl": "-252.711052",
+        "pnl_pct": -1.68,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "62",
+        "entry": "249.54",
+        "current": "280.5",
+        "market_value": "17391",
+        "unrealized_pl": "1919.52",
+        "pnl_pct": 12.41,
+        "sector": "Tech"
+      }
+    ],
+    "trades": []
+  }
+]
