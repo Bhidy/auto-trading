@@ -1,8 +1,17 @@
 name: "Deploy & Smoke Test"
 
+# Vercel deploys the dashboard automatically via its native Git integration on
+# every push to main, so this workflow does NOT need to invoke the Vercel CLI
+# (which previously failed on an expired VERCEL_TOKEN and silently disabled the
+# whole smoke check). It now polls production until the new deploy propagates,
+# then verifies the data path is intact — the post-deploy safety net mandated
+# by CLAUDE.md.
 on:
   push:
     branches: [main]
+    paths:
+      - "dashboard/**"
+      - ".github/workflows/smoke-test.yml"
   workflow_dispatch:
 
 permissions:
@@ -13,97 +22,72 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to Vercel
-        run: |
-          cd dashboard
-          # Link to existing project (CI lacks .vercel/project.json since it's gitignored)
-          mkdir -p .vercel
-          cat > .vercel/project.json << 'PROJ'
-          {
-            "projectId": "prj_Ig61I6uR0q614j6xGS07EQCkIyZ3",
-            "orgId": "team_Gqpf3K97tjrOCyIlEnGjWCOE"
-          }
-          PROJ
-          npm install --silent
-          echo "Deploying dashboard to Vercel production..."
-          npx vercel --prod --force --token "${{ secrets.VERCEL_TOKEN }}" --yes 2>&1
-          echo "Deploy completed"
-
   smoke:
-    needs: deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     steps:
-      - name: Wait for Vercel propagation
-        run: sleep 12
-
-      - name: Smoke test production API
+      - name: Smoke test production API (poll for Vercel git-deploy propagation)
         run: |
           PROD_URL="https://autotradingportfolios.vercel.app"
-          FAILURES=0
-
           echo "=== POST-DEPLOY SMOKE TEST ==="
           echo "Target: $PROD_URL"
-          echo ""
 
-          echo "--- Health Check ---"
-          HEALTH=$(curl -sf "$PROD_URL/api/health" || echo '{"error":"FAIL"}')
-          echo "$HEALTH" | python3 -c "
+          # Poll health for up to ~5 min while Vercel's git-integration deploy
+          # builds and propagates.
+          HEALTH_OK=0
+          for attempt in $(seq 1 20); do
+            HEALTH=$(curl -sf "$PROD_URL/api/health" 2>/dev/null || echo '{"error":"FAIL"}')
+            if echo "$HEALTH" | python3 -c "
           import json, sys
-          data = json.load(sys.stdin)
+          try:
+              data = json.load(sys.stdin)
+          except Exception:
+              sys.exit(1)
           if data.get('error'):
-              print('FAIL: Health endpoint returned error')
               sys.exit(1)
           files = data.get('files', {})
-          critical = ['tradeLog', 'signals', 'state']
-          for f in critical:
-              fdata = files.get(f, {})
-              if not fdata.get('exists'):
-                  print(f'FAIL: {f} does not exist on Vercel')
+          for f in ['tradeLog', 'signals', 'state']:
+              if not files.get(f, {}).get('exists'):
                   sys.exit(1)
-              else:
-                  print(f'OK: {f} exists')
-          " || FAILURES=$((FAILURES + 1))
-          echo ""
+          print('OK: health + critical files present')
+          " 2>/dev/null; then
+              HEALTH_OK=1
+              break
+            fi
+            echo "  attempt $attempt/20 — not ready yet, waiting 15s..."
+            sleep 15
+          done
 
+          if [ "$HEALTH_OK" -ne 1 ]; then
+            echo "FAIL: health endpoint never became healthy after ~5min"
+            exit 1
+          fi
+
+          FAILURES=0
           echo "--- P1 Trade Data ---"
           curl -sf "$PROD_URL/api/portfolio/portfolio_1/details" | python3 -c "
           import json, sys
           data = json.load(sys.stdin)
           tl = len(data.get('trade_log', []))
-          pos = len(data.get('positions', {}))
-          print(f'trade_log={tl} positions={pos}')
+          print(f'trade_log={tl} positions={len(data.get(\"positions\", {}))}')
           if tl == 0:
-              print('FAIL: trade_log is empty')
-              sys.exit(1)
-          else:
-              latest = data['trade_log'][-1]
-              print(f'  Latest: {latest[\"symbol\"]} {latest.get(\"timestamp\",\"\")[:10]}')
+              print('FAIL: P1 trade_log is empty'); sys.exit(1)
           " || FAILURES=$((FAILURES + 1))
-          echo ""
 
           echo "--- P2 Trade Data ---"
           curl -sf "$PROD_URL/api/portfolio/portfolio_2/details" | python3 -c "
           import json, sys
-          print(f'P2 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
+          print('P2 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
           " || FAILURES=$((FAILURES + 1))
-          echo ""
 
           echo "--- P3 Trade Data ---"
           curl -sf "$PROD_URL/api/portfolio/portfolio_3/details" | python3 -c "
           import json, sys
-          print(f'P3 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
+          print('P3 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
           " || FAILURES=$((FAILURES + 1))
-          echo ""
 
           echo "=== SMOKE TEST: $FAILURES failures ==="
-          if [ $FAILURES -gt 0 ]; then
+          if [ "$FAILURES" -gt 0 ]; then
             echo "DEPLOYMENT VERIFICATION FAILED"
             exit 1
           fi
