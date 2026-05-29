@@ -1,0 +1,59 @@
+[
+  {
+    "date": "2026-05-29",
+    "timestamp": "2026-05-29T15:06:53.523502",
+    "account_snapshot": {
+      "equity": "100027.04",
+      "cash": "88176.43",
+      "portfolio_value": "100027.04"
+    },
+    "trades_executed": [
+      {
+        "symbol": "T",
+        "side": "buy",
+        "qty": 60,
+        "limit_price": 24.79,
+        "estimated_value": 1487.4,
+        "order_id": "30e6a106-77b9-4ba1-aaf4-2e62ea78dfda",
+        "order_status": "pending_new",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "reason": "Copying David Taylor BUY of AT&T Inc",
+        "timestamp": "2026-05-29T15:06:41.528844",
+        "date": "2026-05-29"
+      },
+      {
+        "symbol": "MEDP",
+        "side": "buy",
+        "qty": 3,
+        "limit_price": 448.63,
+        "estimated_value": 1345.89,
+        "order_id": "dfdaaafc-eafd-4149-bf13-339bdf2b457f",
+        "order_status": "pending_new",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "reason": "Copying David Taylor BUY of Medpace Holdings Inc",
+        "timestamp": "2026-05-29T15:06:47.158585",
+        "date": "2026-05-29"
+      },
+      {
+        "symbol": "PH",
+        "side": "buy",
+        "qty": 1,
+        "limit_price": 854.55,
+        "estimated_value": 854.55,
+        "order_id": "759ce7f0-ff23-4a39-98f7-37ae3c22c97e",
+        "order_status": "pending_new",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "reason": "Copying David Taylor BUY of Parker-Hannifin Corp",
+        "timestamp": "2026-05-29T15:06:50.373640",
+        "date": "2026-05-29"
+      }
+    ],
+    "trades_count": 3
+  }
+]
