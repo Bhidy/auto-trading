@@ -742,112 +742,172 @@
         pluginsRegistered = true;
     }
 
+    // Self-contained professional candlestick renderer (no Chart.js dependency).
+    // Real price-range scaling, wicks + bodies, volume strip, crosshair + OHLC
+    // tooltip, HiDPI-crisp. Replaces the former Chart.js bar hack that drew
+    // flat columns from a $0 baseline.
+    var _chartState = null;
+    var _chartMouseBound = false;
+
     function renderWorkspaceChart(bars, chartType) {
-        ensurePlugins();
         chartType = chartType || 'daily';
         var canvas = document.getElementById('stockDetailsChart');
         if (!canvas) return;
-
-        var container = canvas.parentElement;
-        if (container) {
-            canvas.width = container.clientWidth || 600;
-            canvas.height = 320;
-            canvas.style.width = '100%';
-            canvas.style.height = '320px';
-        }
-        var ctx = canvas.getContext('2d');
-        if (detailChart) { detailChart.destroy(); detailChart = null; }
+        if (detailChart) { try { detailChart.destroy(); } catch (e) {} detailChart = null; }
 
         var isIntraday = (chartType === 'intraday');
-        var candles = bars.map(function(b) {
+        var candles = (bars || []).map(function(b) {
+            var c = parseFloat(b.c);
             return {
-                x: new Date(b.t).getTime(),
-                o: parseFloat(b.o || b.c),
-                h: parseFloat(b.h || b.c),
-                l: parseFloat(b.l || b.c),
-                c: parseFloat(b.c)
+                t: b.t,
+                o: parseFloat(b.o != null ? b.o : c),
+                h: parseFloat(b.h != null ? b.h : c),
+                l: parseFloat(b.l != null ? b.l : c),
+                c: c,
+                v: parseFloat(b.v || 0)
             };
-        });
+        }).filter(function(c) { return isFinite(c.c) && isFinite(c.h) && isFinite(c.l) && isFinite(c.o); });
+        if (!candles.length) return;
 
-        var midPoints = candles.map(function(c) { return c.c; });
-        var labels = bars.map(function(b) {
-            var d = new Date(b.t);
-            if (isIntraday && b.t && b.t.includes('T')) return b.t.slice(11, 16);
-            return isNaN(d.getTime()) ? (b.t ? b.t.slice(0, 10) : '') : d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
-        });
-
-        var isDark = getTheme() === 'dark';
-        var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(26,15,8,0.06)';
-        var textColor = isDark ? '#A39A92' : '#7A6B5E';
-
-        // Boilerplate dataset so Chart.js validates — real rendering is via plugin
-        var boilerData = candles.map(function(c) { return c.c; });
-
-        detailChart = new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: activeSymbol,
-                    data: boilerData,
-                    _candles: candles,
-                    backgroundColor: function(ctx) {
-                        var c = candles[ctx.dataIndex];
-                        return c && c.c >= c.o ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
-                    },
-                    borderColor: 'transparent',
-                    borderWidth: 0,
-                    barPercentage: 0.85,
-                    categoryPercentage: 0.95,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: candles.length > 200 ? 100 : 400 },
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: isDark ? '#1A0F08' : '#FFFFFF',
-                        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(26,15,8,0.07)',
-                        borderWidth: 1,
-                        titleColor: isDark ? '#FFF1E8' : '#1A0F08',
-                        bodyColor: isDark ? '#A39A92' : '#7A6B5E',
-                        padding: 12,
-                        callbacks: {
-                            title: function(items) {
-                                return activeSymbol + ' · ' + (labels[items[0].dataIndex] || '');
-                            },
-                            label: function(ctx) {
-                                var c = candles[ctx.dataIndex];
-                                if (!c) return '';
-                                return ['O: $' + c.o.toFixed(2), 'H: $' + c.h.toFixed(2), 'L: $' + c.l.toFixed(2), 'C: $' + c.c.toFixed(2)];
-                            },
-                            afterLabel: function(ctx) {
-                                var c = candles[ctx.dataIndex];
-                                if (!c || !c.o) return '';
-                                var chg = c.c - c.o;
-                                var chgPct = c.o ? ((chg / c.o) * 100) : 0;
-                                var arrow = chg >= 0 ? '▲' : '▼';
-                                return arrow + ' ' + chg.toFixed(2) + ' (' + chgPct.toFixed(2) + '%)';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: gridColor },
-                        ticks: { color: textColor, font: { size: 9 }, maxTicksLimit: isIntraday ? 6 : 8, maxRotation: 0 }
-                    },
-                    y: {
-                        position: lang === 'ar' ? 'right' : 'left',
-                        grid: { color: gridColor },
-                        ticks: { color: textColor, font: { size: 9 }, callback: function(v) { return '$' + v.toFixed(isIntraday ? 2 : 1); } }
-                    }
-                }
+        // Multi-day intraday (e.g. 1W hourly) -> date labels, not HH:MM.
+        var firstT = new Date(candles[0].t).getTime();
+        var lastT = new Date(candles[candles.length - 1].t).getTime();
+        var spanDays = (lastT - firstT) / 86400000;
+        candles.forEach(function(c) {
+            var dt = new Date(c.t);
+            if (isIntraday && spanDays <= 1.5 && c.t && c.t.indexOf('T') >= 0) {
+                c.label = c.t.slice(11, 16);
+            } else {
+                c.label = isNaN(dt.getTime())
+                    ? (c.t ? c.t.slice(0, 10) : '')
+                    : dt.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
             }
         });
+
+        _chartState = { candles: candles, hoverIdx: -1, geom: null };
+        if (!_chartMouseBound) {
+            canvas.addEventListener('mousemove', function(e) {
+                if (!_chartState || !_chartState.geom) return;
+                var rect = canvas.getBoundingClientRect();
+                var g = _chartState.geom;
+                var idx = Math.round((e.clientX - rect.left - g.plotX - g.step / 2) / g.step);
+                idx = Math.max(0, Math.min(_chartState.candles.length - 1, idx));
+                if (idx !== _chartState.hoverIdx) { _chartState.hoverIdx = idx; drawCandleChart(); }
+            });
+            canvas.addEventListener('mouseleave', function() {
+                if (_chartState && _chartState.hoverIdx !== -1) { _chartState.hoverIdx = -1; drawCandleChart(); }
+            });
+            window.addEventListener('resize', function() { if (_chartState) drawCandleChart(); });
+            _chartMouseBound = true;
+        }
+        drawCandleChart();
+    }
+
+    function drawCandleChart() {
+        var canvas = document.getElementById('stockDetailsChart');
+        if (!canvas || !_chartState || !_chartState.candles.length) return;
+        var candles = _chartState.candles;
+        var n = candles.length;
+
+        var cssW = (canvas.parentElement && canvas.parentElement.clientWidth) || 600;
+        var cssH = 320;
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        canvas.style.width = '100%';
+        canvas.style.height = cssH + 'px';
+        var ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssW, cssH);
+
+        var isDark = getTheme() === 'dark';
+        var grid = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(26,15,8,0.06)';
+        var axisTxt = isDark ? '#A39A92' : '#7A6B5E';
+        var inkTxt = isDark ? '#FFF1E8' : '#1A0F08';
+        var up = '#16c784', down = '#ea3943';
+        var rtl = (lang === 'ar');
+
+        var padTop = 10, padBot = 26, padAxis = 56;
+        var plotX = rtl ? 8 : padAxis;
+        var plotW = cssW - padAxis - 8;
+        var innerH = cssH - padTop - padBot;
+        var volH = Math.round(innerH * 0.16);
+        var priceH = innerH - volH - 6;
+        var plotY = padTop;
+
+        var lo = Infinity, hi = -Infinity, maxVol = 0;
+        candles.forEach(function(c) { if (c.l < lo) lo = c.l; if (c.h > hi) hi = c.h; if (c.v > maxVol) maxVol = c.v; });
+        var pad = (hi - lo) * 0.06 || (hi * 0.02) || 1;
+        lo -= pad; hi += pad;
+        var range = (hi - lo) || 1;
+        function py(p) { return plotY + (1 - (p - lo) / range) * priceH; }
+        var step = plotW / n;
+        var bodyW = Math.max(1, Math.min(step * 0.7, 16));
+        _chartState.geom = { plotX: plotX, plotW: plotW, step: step };
+
+        ctx.font = '10px ui-monospace,Menlo,monospace';
+        ctx.textBaseline = 'middle';
+        var gl = 5;
+        for (var i = 0; i <= gl; i++) {
+            var p = lo + range * (i / gl);
+            var yy = py(p);
+            ctx.strokeStyle = grid; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(plotX, yy); ctx.lineTo(plotX + plotW, yy); ctx.stroke();
+            ctx.fillStyle = axisTxt;
+            ctx.textAlign = rtl ? 'left' : 'right';
+            ctx.fillText('$' + p.toFixed(p >= 100 ? 0 : 2), rtl ? plotX + plotW + 4 : plotX - 6, yy);
+        }
+
+        var volTop = plotY + priceH + 6;
+        for (var j = 0; j < n; j++) {
+            var c = candles[j];
+            var cx = plotX + step * j + step / 2;
+            var col = c.c >= c.o ? up : down;
+            ctx.strokeStyle = col; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(cx, py(c.h)); ctx.lineTo(cx, py(c.l)); ctx.stroke();
+            var yO = py(c.o), yC = py(c.c);
+            ctx.fillStyle = col;
+            ctx.fillRect(cx - bodyW / 2, Math.min(yO, yC), bodyW, Math.max(1, Math.abs(yC - yO)));
+            if (maxVol > 0) {
+                var vh = (c.v / maxVol) * volH;
+                ctx.fillStyle = c.c >= c.o ? 'rgba(22,199,132,0.3)' : 'rgba(234,57,67,0.3)';
+                ctx.fillRect(cx - bodyW / 2, volTop + volH - vh, bodyW, vh);
+            }
+        }
+
+        ctx.fillStyle = axisTxt; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var xl = 6;
+        for (var k = 0; k < xl; k++) {
+            var idx = Math.round((n - 1) * (k / (xl - 1)));
+            var cc = candles[idx]; if (!cc) continue;
+            var lxx = plotX + step * idx + step / 2;
+            ctx.fillText(cc.label, Math.max(plotX + 14, Math.min(plotX + plotW - 14, lxx)), plotY + priceH + volH + 10);
+        }
+
+        var hidx = _chartState.hoverIdx;
+        if (hidx >= 0 && hidx < n) {
+            var hc = candles[hidx];
+            var hx = plotX + step * hidx + step / 2;
+            ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.28)' : 'rgba(26,15,8,0.28)';
+            ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(hx, plotY); ctx.lineTo(hx, plotY + priceH); ctx.stroke();
+            ctx.setLineDash([]);
+            var chg = hc.c - hc.o, chgPct = hc.o ? (chg / hc.o * 100) : 0;
+            var tip = [hc.label, 'O ' + hc.o.toFixed(2), 'H ' + hc.h.toFixed(2),
+                       'L ' + hc.l.toFixed(2), 'C ' + hc.c.toFixed(2),
+                       (chg >= 0 ? '▲ ' : '▼ ') + chg.toFixed(2) + ' (' + chgPct.toFixed(2) + '%)'];
+            var tw = 104, th = tip.length * 14 + 10;
+            var tx = hx + (hx > plotX + plotW - tw - 12 ? -tw - 12 : 12);
+            var ty = plotY + 4;
+            ctx.fillStyle = isDark ? 'rgba(20,12,6,0.96)' : 'rgba(255,255,255,0.98)';
+            ctx.strokeStyle = grid;
+            ctx.fillRect(tx, ty, tw, th); ctx.strokeRect(tx, ty, tw, th);
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            for (var m = 0; m < tip.length; m++) {
+                ctx.fillStyle = m === 0 ? inkTxt : (m === tip.length - 1 ? (chg >= 0 ? up : down) : axisTxt);
+                ctx.fillText(tip[m], tx + 8, ty + 6 + m * 14);
+            }
+        }
     }
 
     /* ─── Level 2 Order Book — Real NBBO from Alpaca ────────────────── */
@@ -1541,48 +1601,53 @@
             if (activeBtn) activeBtn.classList.add('active');
         }
 
-        if (range === '1D') {
-            apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(bars) {
-                if (bars && Array.isArray(bars) && bars.length > 0) {
-                    renderWorkspaceChart(bars, 'intraday');
-                    if (activePeriod === '1D') {
-                        intradayRefreshTimer = setInterval(function() {
-                            if (activePeriod !== '1D') { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; return; }
-                            apiFetch('/api/market/bars/' + activeSymbol + '?limit=78&timeframe=5Min&feed=iex').then(function(b) {
-                                if (b && b.length > 0) renderWorkspaceChart(b, 'intraday');
-                            });
-                        }, 30000);
-                    }
-                } else {
-                    fallbackLoadDailyBars(activeSymbol, 1);
-                }
-            }).catch(function() { fallbackLoadDailyBars(activeSymbol, 1); });
-        } else {
-            var periodDays = { '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365 };
-            var days = periodDays[range] || 30;
-            var d = new Date();
-            d.setDate(d.getDate() - days - 1);
-            var startDate = d.toISOString().slice(0, 10);
-            var limit = Math.min(days + 20, 1000);
-
-            apiFetch('/api/supabase/market?symbol=' + activeSymbol + '&start=' + startDate + '&limit=' + limit).then(function(rows) {
-                if (rows && rows.length > 0) {
-                    var bars = rows.map(function(r) {
-                        return { t: r.date, o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), c: parseFloat(r.close_price), v: parseInt(r.volume || 0) };
-                    });
-                    if (bars.length > 0) { renderWorkspaceChart(bars, 'daily'); return; }
-                }
-                fallbackLoadDailyBars(activeSymbol, days);
-            }).catch(function() { fallbackLoadDailyBars(activeSymbol, days); });
+        // Free IEX tier: 1D=5Min intraday, 1W=1Hour, the rest=daily (1M shows one
+        // candle per day, exactly as requested). Daily/hourly REQUIRE an explicit
+        // start date or Alpaca returns a single bar.
+        var cfgMap = {
+            '1D': { tf: '5Min', days: 1,   intraday: true,  limit: 130 },
+            '1W': { tf: '1Hour', days: 8,  intraday: true,  limit: 130 },
+            '1M': { tf: '1Day', days: 35,  intraday: false, limit: 40 },
+            '3M': { tf: '1Day', days: 95,  intraday: false, limit: 110 },
+            '6M': { tf: '1Day', days: 190, intraday: false, limit: 210 },
+            '1Y': { tf: '1Day', days: 372, intraday: false, limit: 400 }
+        };
+        var cf = cfgMap[range] || cfgMap['1M'];
+        var startDate = '';
+        if (range !== '1D') {
+            var d = new Date(); d.setDate(d.getDate() - cf.days);
+            startDate = d.toISOString().slice(0, 10);
         }
+        var url = '/api/market/bars/' + activeSymbol + '?timeframe=' + cf.tf +
+                  '&limit=' + cf.limit + '&feed=iex' + (startDate ? ('&start=' + startDate) : '');
+
+        apiFetch(url).then(function(bars) {
+            if (bars && Array.isArray(bars) && bars.length > 0) {
+                renderWorkspaceChart(bars, cf.intraday ? 'intraday' : 'daily');
+                if (range === '1D' || range === '1W') {
+                    intradayRefreshTimer = setInterval(function() {
+                        if (activePeriod !== range) { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; return; }
+                        apiFetch(url).then(function(b) { if (b && b.length > 0) renderWorkspaceChart(b, cf.intraday ? 'intraday' : 'daily'); });
+                    }, 20000);
+                }
+            } else {
+                supaDailyFallback(range, cf);
+            }
+        }).catch(function() { supaDailyFallback(range, cf); });
     }
 
-    function fallbackLoadDailyBars(symbol, days) {
-        apiFetch('/api/market/bars/' + symbol + '?limit=' + Math.min(days + 10, 100) + '&timeframe=1Day&feed=iex').then(function(bars) {
-            if (bars && Array.isArray(bars) && bars.length > 0) {
+    // Durable fallback: Supabase persisted daily history (accumulated by the bots).
+    function supaDailyFallback(range, cf) {
+        var d = new Date(); d.setDate(d.getDate() - cf.days);
+        var s = d.toISOString().slice(0, 10);
+        apiFetch('/api/supabase/market?symbol=' + activeSymbol + '&start=' + s + '&limit=' + cf.limit).then(function(rows) {
+            if (rows && rows.length > 0) {
+                var bars = rows.map(function(r) {
+                    return { t: r.date, o: parseFloat(r.open_price), h: parseFloat(r.high_price), l: parseFloat(r.low_price), c: parseFloat(r.close_price), v: parseInt(r.volume || 0) };
+                });
                 renderWorkspaceChart(bars, 'daily');
             }
-        });
+        }).catch(function() {});
     }
 
     // Period buttons

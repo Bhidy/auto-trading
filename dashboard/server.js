@@ -1310,23 +1310,47 @@ app.get('/api/market/quotes', async (req, res) => {
 });
 
 // 11. Historical bars for a symbol (for sparkline / chart)
+// Compute a safe default `start` so Alpaca never returns just one bar when the
+// caller omits it. IEX historical bars require an explicit time range.
+function defaultBarsStart(timeframe, limit) {
+    const tf = String(timeframe);
+    let days;
+    if (/Day/i.test(tf)) {
+        days = Math.ceil(limit * 1.6) + 5;          // calendar days cover weekends/holidays
+    } else if (/Week/i.test(tf)) {
+        days = limit * 8 + 14;
+    } else if (/Hour/i.test(tf)) {
+        const perDay = 7;                             // ~7 trading hours
+        days = Math.ceil(limit / perDay) + 5;
+    } else {                                          // minute bars
+        const mins = parseInt(tf) || 5;
+        const perDay = Math.max(1, Math.floor(390 / mins));
+        days = Math.ceil(limit / perDay) + 5;
+    }
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toISOString().slice(0, 10);
+}
+
 app.get('/api/market/bars/:symbol', async (req, res) => {
     const symbol = req.params.symbol.toUpperCase();
     const limit = parseInt(req.query.limit || '30');
     const timeframe = req.query.timeframe || '1Day';
-    const start = req.query.start || '';
+    const start = req.query.start || defaultBarsStart(timeframe, limit);
     const end = req.query.end || '';
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
 
     if (cfg && cfg.api_key && !cfg.api_key.includes('REDACTED') && cfg.api_key !== 'MOCK_KEY_ID_REDACTED') {
         try {
-            let barsUrl = `${cfg.data_url}/v2/stocks/${symbol}/bars?timeframe=${timeframe}&limit=${limit}&feed=iex`;
+            // sort=desc + limit => the most RECENT `limit` bars; reverse to
+            // chronological for the chart. (sort=asc would return the OLDEST.)
+            let barsUrl = `${cfg.data_url}/v2/stocks/${symbol}/bars?timeframe=${timeframe}&limit=${limit}&feed=iex&sort=desc`;
             if (start) barsUrl += `&start=${encodeURIComponent(start)}`;
             if (end) barsUrl += `&end=${encodeURIComponent(end)}`;
             const barsData = await alpacaRequest('GET', barsUrl, cfg.api_key, cfg.api_secret);
             if (barsData && barsData.bars && barsData.bars.length > 0) {
-                return res.json(barsData.bars);
+                return res.json(barsData.bars.slice().reverse());
             }
         } catch (e) {
             console.warn(`Bars fetch error for ${symbol}:`, e.message);
