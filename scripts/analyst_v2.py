@@ -121,8 +121,6 @@ def detect_regime(spy_closes, vix_level=None):
     ma200 = sma(spy_closes, 200) if len(spy_closes) >= 200 else sma(spy_closes, len(spy_closes))
     price = spy_closes[-1]
     mom_1m = momentum(spy_closes, 21)
-    mom_3m = momentum(spy_closes, 63)
-    r = rsi(spy_closes)
 
     if price > ma50 and price > ma200 and ma50 > ma200:
         if mom_1m and mom_1m > 3:

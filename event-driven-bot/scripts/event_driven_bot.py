@@ -92,7 +92,6 @@ def generate_signals(watchlist_data: dict, alpaca: AlpacaClient) -> list:
         sym = stock["symbol"]
         price = stock["price"]
         bb_upper = stock.get("bb_upper")
-        bb_lower = stock.get("bb_lower")
         bb_width = stock.get("bb_width_pct")
         macd_line = stock.get("macd_line")
         macd_sig = stock.get("macd_signal")
@@ -444,13 +443,14 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             state["halt_until"] = None
             save_json(DATA_DIR / "bot_state.json", state)
 
+    # Per-position stop-loss and take-profit are enforced server-side by the
+    # bracket (OCO) orders placed at entry (see run_trading_session →
+    # place_bracket_order), so this loop is for portfolio-level reporting and
+    # the kill switch above — not manual stop execution.
     positions = alpaca.get_positions()
     for pos in positions:
         sym = pos["symbol"]
         pnl_pct = float(pos.get("unrealized_plpc", 0)) * 100
-        qty = int(float(pos["qty"]))
-        current = float(pos["current_price"])
-        entry = float(pos["avg_entry_price"])
 
         if pnl_pct <= -10:
             log.warning(f"  {sym} down {pnl_pct:.1f}% — severe drawdown")

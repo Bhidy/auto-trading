@@ -457,6 +457,25 @@ class PoliticianBot:
             log.error(f"Sell order failed for {ticker}: {e}")
             return None
 
+    def _position_age_days(self, symbol: str):
+        """Age (in days) of the oldest open buy for `symbol`, derived from the
+        trade log. Returns None if no buy record exists (predates logging)."""
+        buys = [t for t in self.risk.trade_log
+                if t.get("symbol") == symbol and t.get("side") == "buy" and t.get("timestamp")]
+        if not buys:
+            return None
+        earliest = None
+        for t in buys:
+            try:
+                ts = datetime.fromisoformat(t["timestamp"])
+            except (ValueError, TypeError):
+                continue
+            if earliest is None or ts < earliest:
+                earliest = ts
+        if earliest is None:
+            return None
+        return (datetime.now() - earliest).days
+
     def check_stops(self):
         sell_cfg = self.watchlist_cfg.get("sell_logic", {})
         trailing_stop_pct = sell_cfg.get("trailing_stop_pct", 8.0)
@@ -468,6 +487,7 @@ class PoliticianBot:
             symbol = pos.get("symbol", "")
             unrealized_plpc = float(pos.get("unrealized_plpc", 0)) * 100
             qty = int(float(pos.get("qty", 0)))
+            age_days = self._position_age_days(symbol)
 
             if unrealized_plpc <= -trailing_stop_pct:
                 log.warning(f"STOP LOSS triggered for {symbol}: {unrealized_plpc:.1f}% loss")
@@ -480,6 +500,19 @@ class PoliticianBot:
                     })
                 except Exception as e:
                     log.error(f"Stop loss order failed for {symbol}: {e}")
+
+            elif age_days is not None and age_days >= max_hold_days:
+                log.warning(f"MAX HOLD reached for {symbol}: held {age_days}d "
+                            f">= {max_hold_days}d ({unrealized_plpc:+.1f}%) — exiting")
+                try:
+                    self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
+                                            order_type="market", time_in_force="day")
+                    self.risk.log_trade({
+                        "symbol": symbol, "side": "sell", "qty": qty,
+                        "reason": f"Max hold {age_days}d at {unrealized_plpc:+.1f}%",
+                    })
+                except Exception as e:
+                    log.error(f"Max-hold exit failed for {symbol}: {e}")
 
             elif unrealized_plpc >= take_profit_pct:
                 sell_qty = max(1, qty // 2)
