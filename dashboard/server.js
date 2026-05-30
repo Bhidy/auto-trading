@@ -260,6 +260,205 @@ function getPortfolioPaths(id) {
 
 
 // ──────────────────────────────────────────────────────────────────────────
+// SYSTEM INTELLIGENCE — surfaces the hardening engine's data files (the new
+// execution-quality / validation / accounting / governance / reconciliation
+// outputs). Pure file reads + trade-log derivations, so it always works whether
+// or not the Alpaca keys are live. Files that don't exist yet degrade to empty.
+// ──────────────────────────────────────────────────────────────────────────
+
+function getIntelligencePaths(id) {
+    const base = getPortfolioPaths(id);
+    if (!base) return null;
+    const d = (f) => path.join(base.baseDir, 'data', f);
+    return {
+        ...base,
+        reconciliation: d('reconciliation_report.json'),
+        orderState: d('order_state.json'),
+        paramChangeLog: d('param_change_log.json'),
+        governanceAudit: d('governance_audit.json'),
+        lastGood: d('strategy_params.last_good.json'),
+    };
+}
+
+// Derive execution-quality + accounting facts from the schema-v2 trade log.
+function deriveTradeLogIntelligence(tradeLog) {
+    const trades = Array.isArray(tradeLog) ? tradeLog : [];
+    const closed = trades.filter(t => t.status === 'closed');
+    const withSlip = trades.filter(t => typeof t.slippage_pct === 'number');
+    const avgSlippage = withSlip.length
+        ? withSlip.reduce((s, t) => s + t.slippage_pct, 0) / withSlip.length : null;
+
+    let grossPnl = 0, fees = 0, netPnl = 0, feeKnown = 0;
+    closed.forEach(t => {
+        if (typeof t.gross_pnl === 'number') { grossPnl += t.gross_pnl; feeKnown++; }
+        if (typeof t.fees === 'number') fees += t.fees;
+        const net = (typeof t.realized_pnl === 'number') ? t.realized_pnl
+                  : (typeof t.pnl === 'number') ? t.pnl : 0;
+        netPnl += net;
+    });
+
+    const orderClasses = {};
+    const borrow = { etb: 0, htb: 0, unknown: 0 };
+    trades.forEach(t => {
+        const oc = t.order_class || 'unspecified';
+        orderClasses[oc] = (orderClasses[oc] || 0) + 1;
+        if (t.side === 'sell' || t.side === 'short') {
+            if (t.borrow_status === 'etb') borrow.etb++;
+            else if (t.borrow_status === 'htb') borrow.htb++;
+            else if (t.borrow_status) borrow.unknown++;
+        }
+    });
+
+    const schemaV2 = trades.filter(t => t.schema_version >= 2).length;
+    return {
+        total_trades: trades.length,
+        closed_trades: closed.length,
+        schema_v2_trades: schemaV2,
+        avg_slippage_pct: avgSlippage === null ? null : Number(avgSlippage.toFixed(4)),
+        slippage_sample: withSlip.length,
+        accounting: {
+            gross_pnl: Number(grossPnl.toFixed(2)),
+            fees: Number(fees.toFixed(2)),
+            net_pnl: Number(netPnl.toFixed(2)),
+            fee_aware_trades: feeKnown,
+        },
+        order_classes: orderClasses,
+        borrow_status: borrow,
+    };
+}
+
+function summarizeWorkingOrders(orderState) {
+    const WORKING = new Set(['new', 'accepted', 'partially_filled', 'pending_new',
+        'held', 'pending_replace', 'pending_cancel']);
+    const state = (orderState && typeof orderState === 'object') ? orderState : {};
+    const working = [];
+    let stale = 0;
+    const now = Date.now();
+    Object.entries(state).forEach(([oid, v]) => {
+        if (!v || !WORKING.has(v.status)) return;
+        let ageS = null;
+        const ts = v.updated_at;
+        if (ts) {
+            const t = Date.parse(String(ts).replace('Z', '+00:00'));
+            if (!isNaN(t)) ageS = Math.round((now - t) / 1000);
+        }
+        if (ageS !== null && ageS >= 7200) stale++;
+        working.push({ order_id: oid, symbol: v.symbol, side: v.side,
+            status: v.status, age_seconds: ageS });
+    });
+    return { working_count: working.length, stale_count: stale, working };
+}
+
+app.get('/api/portfolio/:id/intelligence', (req, res) => {
+    loadConfig();
+    const id = req.params.id;
+    const paths = getIntelligencePaths(id);
+    if (!paths) return res.status(404).json({ error: 'unknown portfolio' });
+
+    const tradeLog = readJsonFile(paths.tradeLog, []);
+    const reconciliation = readJsonFile(paths.reconciliation, null);
+    const orderState = readJsonFile(paths.orderState, {});
+    const paramLog = readJsonFile(paths.paramChangeLog, []);
+    const lastGood = readJsonFile(paths.lastGood, null);
+    const strategyParams = readJsonFile(paths.strategyParams, {});
+    const learningReport = readJsonFile(paths.learningReport, {});
+
+    const latestDecision = Array.isArray(paramLog) && paramLog.length
+        ? paramLog[paramLog.length - 1] : null;
+    const gate = latestDecision && latestDecision.gate ? latestDecision.gate : null;
+
+    res.json({
+        id,
+        label: (portfoliosConfig[id] || {}).label || id,
+        execution: deriveTradeLogIntelligence(tradeLog),
+        order_state: summarizeWorkingOrders(orderState),
+        reconciliation: reconciliation || { unavailable: true },
+        validation: {
+            current_oos_sharpe: gate ? gate.current_oos_sharpe : null,
+            candidate_oos_sharpe: gate ? gate.candidate_oos_sharpe : null,
+            pbo: gate ? gate.pbo : null,
+            deflated_sharpe: gate ? gate.deflated_sharpe : null,
+            challenger_sharpe: gate ? gate.challenger_sharpe : null,
+            beats_challenger: gate ? gate.beats_challenger : null,
+            n_windows: gate ? gate.n_windows : null,
+            screen_reasons: gate ? (gate.screen_reasons || []) : [],
+            self_learning: id === 'portfolio_1',
+        },
+        governance: {
+            decisions: Array.isArray(paramLog) ? paramLog.slice(-8).reverse() : [],
+            last_known_good: lastGood,
+            total_decisions: Array.isArray(paramLog) ? paramLog.length : 0,
+        },
+        strategy_params: strategyParams,
+        learning_report: learningReport,
+    });
+});
+
+// Cross-portfolio concentration (R1): combined single-name + sector exposure.
+const SECTOR_MAP = {
+    SPY: 'Index', QQQ: 'Index', DIA: 'Index', IWM: 'Index',
+    NVDA: 'Technology', AAPL: 'Technology', MSFT: 'Technology', GOOGL: 'Technology',
+    META: 'Technology', AMZN: 'Consumer', TSLA: 'Consumer',
+    XLK: 'Technology', XLE: 'Energy', XLF: 'Financials', XLV: 'Healthcare',
+    XLY: 'Consumer', XLI: 'Industrials', XLC: 'Communications', XLB: 'Materials',
+    XLU: 'Utilities', XLRE: 'Real Estate',
+    BIL: 'Defensive', SHY: 'Defensive', TLT: 'Defensive', GLD: 'Defensive',
+    JPM: 'Financials', MS: 'Financials',
+};
+
+app.get('/api/intelligence/cross-portfolio', async (req, res) => {
+    loadConfig();
+    const singleNameCap = 10.0, sectorCap = 30.0;
+    let totalEquity = 0;
+    const bySymbol = {}, bySector = {};
+    const books = [];
+
+    for (const id of Object.keys(portfoliosConfig)) {
+        const d = await fetchPortfolioData(id);
+        if (!d) continue;
+        const equity = d.account ? parseFloat(d.account.equity) : 100000;
+        totalEquity += equity;
+        const positions = (d.positions && d.positions.length)
+            ? d.positions.map(p => ({ symbol: p.symbol, mv: Math.abs(parseFloat(p.market_value || 0)) }))
+            // Fallback to committed state cost-basis when Alpaca isn't connected.
+            : Object.entries((d.localState && d.localState.positions) || {}).map(([sym, pos]) =>
+                ({ symbol: sym, mv: Math.abs((pos.qty || 0) * (pos.avg_price || 0)) }));
+        books.push({ portfolio_id: id, label: d.cfg.label, equity, positions });
+        positions.forEach(p => {
+            if (!p.symbol) return;
+            if (!bySymbol[p.symbol]) bySymbol[p.symbol] = { mv: 0, books: new Set() };
+            bySymbol[p.symbol].mv += p.mv;
+            bySymbol[p.symbol].books.add(id);
+            const sec = SECTOR_MAP[p.symbol] || 'Other';
+            bySector[sec] = (bySector[sec] || 0) + p.mv;
+        });
+    }
+
+    const pct = v => totalEquity > 0 ? Number((v / totalEquity * 100).toFixed(3)) : 0;
+    const symbols = Object.entries(bySymbol).map(([sym, d]) => ({
+        symbol: sym, market_value: Number(d.mv.toFixed(2)), pct_of_total: pct(d.mv),
+        books: Array.from(d.books), breach: pct(d.mv) > singleNameCap,
+    })).sort((a, b) => b.pct_of_total - a.pct_of_total);
+    const sectors = Object.entries(bySector).map(([sec, mv]) => ({
+        sector: sec, market_value: Number(mv.toFixed(2)), pct_of_total: pct(mv),
+        breach: pct(mv) > sectorCap,
+    })).sort((a, b) => b.pct_of_total - a.pct_of_total);
+
+    res.json({
+        total_equity: Number(totalEquity.toFixed(2)),
+        single_name_cap_pct: singleNameCap,
+        sector_cap_pct: sectorCap,
+        books: books.map(b => ({ portfolio_id: b.portfolio_id, label: b.label,
+            equity: b.equity, positions: b.positions.length })),
+        by_symbol: symbols,
+        by_sector: sectors,
+        single_name_breaches: symbols.filter(s => s.breach).map(s => s.symbol),
+        sector_breaches: sectors.filter(s => s.breach).map(s => s.sector),
+        ok: !symbols.some(s => s.breach) && !sectors.some(s => s.breach),
+    });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
 // API ENDPOINTS
 // ──────────────────────────────────────────────────────────────────────────
 
