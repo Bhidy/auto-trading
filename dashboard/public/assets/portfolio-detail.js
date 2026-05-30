@@ -37,6 +37,26 @@
     // Premium stock metadata fetched live from Alpaca API
     var STOCK_PROFILES = {};
 
+    function getLogoHtml(sym, size = 28) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
     function getStockProfile(symbol, callback) {
         if (STOCK_PROFILES[symbol]) { callback(STOCK_PROFILES[symbol]); return; }
         fetch('/api/stock/' + symbol + '/details')
@@ -2116,7 +2136,7 @@
         }
 
         return '<div class="pf-sym">' +
-            '<div class="pf-sym-chip" style="background:' + h.color + '">' + h.symbol.slice(0,3) + '</div>' +
+            getLogoHtml(h.symbol, 28) +
             '<div class="pf-sym-info">' +
                 '<div class="sym-code" style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">' + h.symbol + sideBadge + exchBadge + '</div>' +
                 '<div class="sym-name">' + (lang==='ar' ? escHtml(h.companyNameAr||h.companyName) : escHtml(h.companyName)) + '</div>' +
@@ -2125,9 +2145,9 @@
     }
 
     function symChipBySymbol(sym) {
-        var meta = PFStore.symMeta(sym);
-        return '<div class="pf-sym"><div class="pf-sym-chip" style="background:' + meta.color + ';width:1.7rem;height:1.7rem;font-size:.58rem;">' + sym.slice(0,3) + '</div>' +
-            '<span style="font-family:var(--pf-mono);font-size:.78rem;font-weight:700;">' + sym + '</span></div>';
+        return '<div class="pf-sym" style="gap:0.45rem;">' +
+            getLogoHtml(sym, 24) +
+            '<span style="font-family:var(--pf-mono);font-size:.78rem;font-weight:700;line-height:1;">' + sym + '</span></div>';
     }
 
     /* ─── Bottom Panels (Risk circle SVGs, Contributors, Executions) ───── */

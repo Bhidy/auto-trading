@@ -984,12 +984,15 @@
             <!-- Selected Stock Detailed Hero -->
             <div class="pf-panel" style="padding:1.5rem;">
                 <div class="mp-detail-hero">
-                    <div class="mp-hero-main">
-                        <span class="mp-hero-symbol-badge" id="heroSymbol">NVDA</span>
+                    <div class="mp-hero-main" style="display:flex; align-items:center; gap:0.85rem;">
+                        <img id="heroLogo" src="" width="42" height="42" style="width:42px; height:42px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:none;" />
                         <div>
+                            <div style="display:flex; align-items:center; gap:0.45rem; margin-bottom:0.15rem;">
+                                <span class="mp-hero-symbol-badge" id="heroSymbol">NVDA</span>
+                                <span id="heroExchange" style="font-size:0.58rem;font-weight:700;background:rgba(255,255,255,0.06);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);"></span>
+                            </div>
                             <div style="display:flex;align-items:center;gap:0.55rem;">
                                 <h3 class="mp-hero-title" id="heroName">—</h3>
-                                <span id="heroExchange" style="font-size:0.58rem;font-weight:700;background:rgba(255,255,255,0.06);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);"></span>
                             </div>
                             <p class="mp-hero-sub" id="heroSub"></p>
                         </div>

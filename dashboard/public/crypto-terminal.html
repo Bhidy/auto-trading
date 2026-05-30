@@ -255,8 +255,9 @@
 
                 <!-- Order Entry -->
                 <div class="ct-order">
-                    <div class="ct-order-header">
-                        <span data-key="ct_new_order">New Crypto Order</span>
+                    <div class="ct-order-header" style="display:flex; align-items:center; gap:0.4rem;">
+                        <span data-key="ct_new_order" style="flex:1;">New Crypto Order</span>
+                        <img id="ctOrderLogo" src="" width="16" height="16" style="width:16px; height:16px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); display:none;" />
                         <span id="ctOrderSymbol" style="font-family:var(--pf-mono);font-weight:700;color:var(--ink);font-size:.78rem;">BTC/USD</span>
                     </div>
                     <div class="ct-order-body">

@@ -21,6 +21,26 @@
     var quotesRefreshInterval = null;
     var globalQuotesCache = {};
 
+    function getLogoHtml(sym, size = 28) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.55rem; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
     // Curated data-feed universe — these are the symbols the system collects
     // daily bars for (CHART_CORE in scripts/collect_market_history.py, backfilled
     // ~2y into Supabase) and serves live via the Alpaca quote/chart endpoints.
@@ -406,6 +426,24 @@
         activeSymbol = symbol.toUpperCase();
         updateFavoriteStar();
 
+        var heroLogo = document.getElementById('heroLogo');
+        if (heroLogo) {
+            var logoFile = activeSymbol;
+            if (activeSymbol.includes('BTC') || activeSymbol === 'BTC/USD' || activeSymbol === 'BTCUSD') {
+                logoFile = 'BTC_USD';
+            } else if (activeSymbol.includes('ETH') || activeSymbol === 'ETH/USD' || activeSymbol === 'ETHUSD') {
+                logoFile = 'ETH_USD';
+            } else {
+                logoFile = logoFile.replace('/', '-');
+            }
+            heroLogo.src = '/assets/logos/' + logoFile + '.svg';
+            heroLogo.onerror = function() {
+                this.onerror = null;
+                this.src = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+            };
+            heroLogo.style.display = 'block';
+        }
+
         var priceEl = document.getElementById('heroPrice');
         var chgEl = document.getElementById('heroPriceChg');
         if (priceEl) priceEl.textContent = '...';
@@ -607,7 +645,10 @@
                 var cls = pnl >= 0 ? 'pf-pos' : 'pf-neg';
                 var hiddenCls = idx >= 10 ? ' pf-pos-extra' : '';
                 html += '<tr class="' + hiddenCls + '">' +
-                    '<td style="font-weight:800;font-family:var(--pf-mono);cursor:pointer;" onclick="document.dispatchEvent(new CustomEvent(\'mp:selectSymbol\',{detail:\'' + sym + '\'}))">' + sym + '</td>' +
+                    '<td style="font-weight:800;font-family:var(--pf-mono);cursor:pointer; display:flex; align-items:center; gap:0.45rem;" onclick="document.dispatchEvent(new CustomEvent(\'mp:selectSymbol\',{detail:\'' + sym + '\'}))">' +
+                        getLogoHtml(sym, 20) +
+                        '<span>' + sym + '</span>' +
+                    '</td>' +
                     '<td style="font-family:var(--pf-mono);">' + qty.toLocaleString() + '</td>' +
                     '<td style="font-family:var(--pf-mono);">$' + avg.toFixed(2) + '</td>' +
                     '<td class="mp-tick-target" style="font-family:var(--pf-mono);">$' + price.toFixed(2) + '</td>' +
@@ -1173,9 +1214,12 @@
                 row.className = 'mp-list-item ' + selectedCls;
                 row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.55rem 0.65rem;';
                 row.innerHTML = `
-                    <div class="mp-list-info" style="flex:1; min-width:0;">
-                        <span class="mp-list-symbol" style="display:block;">${sym}</span>
-                        <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem;">${companyNames[sym] || sym}</span>
+                    <div class="mp-list-info" style="flex:1; min-width:0; display:flex; align-items:center;">
+                        ${getLogoHtml(sym, 28)}
+                        <div style="flex:1; min-width:0;">
+                            <span class="mp-list-symbol" style="display:block; font-weight:700; color:var(--ink);">${sym}</span>
+                            <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem; color:var(--muted);">${companyNames[sym] || sym}</span>
+                        </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.55rem; justify-content:flex-end; flex-shrink:0;">
                         <span class="pf-num" style="font-size:0.76rem; font-weight:700; color:var(--ink);">${db.price ? '$' + db.price.toFixed(2) : '—'}</span>
@@ -1235,9 +1279,12 @@
             itemEl.className = 'mp-list-item';
             itemEl.style.padding = '0.45rem 0.65rem';
             itemEl.innerHTML = `
-                <div class="mp-list-info" style="flex:1; min-width:0;">
-                    <span class="mp-list-symbol" style="display:block;">${sym}</span>
-                    <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem;">${companyNames[sym] || sym}</span>
+                <div class="mp-list-info" style="flex:1; min-width:0; display:flex; align-items:center;">
+                    ${getLogoHtml(sym, 28)}
+                    <div style="flex:1; min-width:0;">
+                        <span class="mp-list-symbol" style="display:block; font-weight:700; color:var(--ink);">${sym}</span>
+                        <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem; color:var(--muted);">${companyNames[sym] || sym}</span>
+                    </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
                     <span class="pf-num" style="font-size:0.78rem;font-weight:700;">$${q.price.toFixed(2)}</span>

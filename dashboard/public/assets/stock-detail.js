@@ -18,6 +18,26 @@
     var stockChartInstance = null;
     var rawBarsData = [];
 
+    function getLogoHtml(sym, size = 20) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
     /* ─── Translations Dictionary ───────────────────────────────────────── */
     var T = {
         en: {
@@ -174,6 +194,16 @@
         rawBarsData = data.bars || [];
 
         // Meta text
+        var logoEl = document.getElementById('stockDetailLogo');
+        if (logoEl) {
+            var logoFile = symbol.toUpperCase();
+            logoEl.src = '/assets/logos/' + logoFile + '.svg';
+            logoEl.onerror = function() {
+                this.onerror = null;
+                this.src = 'https://img.logo.dev/ticker/' + logoFile + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+            };
+            logoEl.style.display = 'block';
+        }
         document.getElementById('stockSymbolText').textContent = symbol;
         document.getElementById('stockCompanyName').textContent = profile.name || (symbol + ' Corp.');
         document.getElementById('stockCompanyDesc').textContent = profile.desc || 'No profile description available.';
@@ -417,7 +447,10 @@
                     var changePct = q.changePct !== undefined ? (q.changePct >= 0 ? '+' : '') + q.changePct.toFixed(2) + '%' : '—';
                     var vol = q.volume ? (q.volume / 1e6).toFixed(1) + 'M' : '—';
                     html += '<tr style="' + styleHighlight + '">' +
-                        '<td style="font-family:var(--pf-mono);">' + pSym + '</td>' +
+                        '<td style="font-family:var(--pf-mono); display:flex; align-items:center; gap:0.45rem;">' +
+                            getLogoHtml(pSym, 20) +
+                            '<span>' + pSym + '</span>' +
+                        '</td>' +
                         '<td style="font-family:var(--pf-mono);">' + price + '</td>' +
                         '<td style="font-family:var(--pf-mono); color:' + (q.changePct >= 0 ? '#2ecc71' : '#e74c3c') + ';">' + changePct + '</td>' +
                         '<td style="font-family:var(--pf-mono);">' + vol + '</td>' +

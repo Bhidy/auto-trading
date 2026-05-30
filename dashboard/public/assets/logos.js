@@ -29,11 +29,8 @@ const LOGO_DEV_TOKEN = 'pk_XldCCgGITcKAcfCcVh8lXg';
  * symbol-specific. The custom-rendered versions are intentional.
  */
 const LOCAL_SYMBOLS = new Set([
-  // Stocks — logo.dev sourced (correct brand logos)
-  'AAPL','AMD','AMZN','GOOGL','INTC','META','MS','MSFT','NFLX','NVDA','QQQ','TSLA',
-  // ETFs & JPM — custom-rendered (gradient + ticker label)
-  'BIL','DIA','GLD','IWM','JPM','SHY','SPY','TLT',
-  'XLB','XLC','XLE','XLF','XLI','XLK','XLP','XLRE','XLU','XLV','XLY',
+  'AAPL','AMD','AMZN','BIL','BTC_USD','DIA','ETH_USD','GLD','GOOGL','INTC','IWM','META','MSFT','NFLX','NVDA','QQQ','SHY','SPY','TLT','TSLA',
+  'XLB','XLC','XLE','XLF','XLI','XLK','XLP','XLRE','XLU','XLV','XLY'
 ]);
 
 /**
@@ -43,9 +40,17 @@ const LOCAL_SYMBOLS = new Set([
  * @returns {string}
  */
 export function getLogoUrl(symbol, size = 64) {
-  const sym = (symbol || '').toUpperCase().replace('/', '-');
+  let sym = (symbol || '').toUpperCase().trim();
+  if (sym.includes('BTC') || sym === 'BTC/USD' || sym === 'BTCUSD' || sym === 'BTC-USD' || sym === 'BTC_USD') {
+    sym = 'BTC_USD';
+  } else if (sym.includes('ETH') || sym === 'ETH/USD' || sym === 'ETHUSD' || sym === 'ETH-USD' || sym === 'ETH_USD') {
+    sym = 'ETH_USD';
+  } else {
+    sym = sym.replace('/', '-');
+  }
+
   if (LOCAL_SYMBOLS.has(sym)) {
-    return `/assets/logos/${sym}.png`;
+    return `/assets/logos/${sym}.svg`;
   }
   // CDN fallback for any symbol not pre-downloaded
   return `https://img.logo.dev/ticker/${sym}?token=${LOGO_DEV_TOKEN}&size=${size}&format=png`;
@@ -53,7 +58,7 @@ export function getLogoUrl(symbol, size = 64) {
 
 /**
  * Creates an <img> element with a graceful 2-step fallback:
- *   local PNG → CDN → SVG placeholder
+ *   local SVG -> CDN -> SVG placeholder
  *
  * @param {string} symbol
  * @param {{ size?: number, className?: string, alt?: string }} [opts]
@@ -61,7 +66,15 @@ export function getLogoUrl(symbol, size = 64) {
  */
 export function renderLogoImg(symbol, opts = {}) {
   const { size = 32, className = '', alt } = opts;
-  const sym = (symbol || '').toUpperCase().replace('/', '-');
+  let sym = (symbol || '').toUpperCase().trim();
+  if (sym.includes('BTC') || sym === 'BTC/USD' || sym === 'BTCUSD' || sym === 'BTC-USD' || sym === 'BTC_USD') {
+    sym = 'BTC_USD';
+  } else if (sym.includes('ETH') || sym === 'ETH/USD' || sym === 'ETHUSD' || sym === 'ETH-USD' || sym === 'ETH_USD') {
+    sym = 'ETH_USD';
+  } else {
+    sym = sym.replace('/', '-');
+  }
+
   const img = document.createElement('img');
   img.width  = size;
   img.height = size;
@@ -73,8 +86,8 @@ export function renderLogoImg(symbol, opts = {}) {
   // Track fallback state
   let step = 0;
   const sources = [
-    `/assets/logos/${sym}.png`,
-    `https://img.logo.dev/ticker/${sym}?token=${LOGO_DEV_TOKEN}&size=${size}&format=png`,
+    `/assets/logos/${sym}.svg`,
+    `https://img.logo.dev/ticker/${sym.replace('_', '-')}?token=${LOGO_DEV_TOKEN}&size=${size}&format=png`,
   ];
 
   img.src = sources[0];
@@ -107,9 +120,17 @@ export function renderLogoImg(symbol, opts = {}) {
  * @returns {string}
  */
 export function logoImgHtml(symbol, size = 32, cls = '') {
-  const src = getLogoUrl(symbol, size);
-  const sym = (symbol || '').toUpperCase();
+  let sym = (symbol || '').toUpperCase().trim();
+  if (sym.includes('BTC') || sym === 'BTC/USD' || sym === 'BTCUSD' || sym === 'BTC-USD' || sym === 'BTC_USD') {
+    sym = 'BTC_USD';
+  } else if (sym.includes('ETH') || sym === 'ETH/USD' || sym === 'ETHUSD' || sym === 'ETH-USD' || sym === 'ETH_USD') {
+    sym = 'ETH_USD';
+  } else {
+    sym = sym.replace('/', '-');
+  }
+
+  const src = getLogoUrl(sym, size);
   return `<img src="${src}" width="${size}" height="${size}" alt="${sym}" ` +
          `class="${cls}" style="border-radius:50%;object-fit:contain;" ` +
-         `onerror="this.onerror=null;this.src='https://img.logo.dev/ticker/${sym}?token=${LOGO_DEV_TOKEN}&size=${size}&format=png'">`;
+         `onerror="this.onerror=null;this.src='https://img.logo.dev/ticker/${sym.replace('_', '-')}?token=${LOGO_DEV_TOKEN}&size=${size}&format=png'">`;
 }

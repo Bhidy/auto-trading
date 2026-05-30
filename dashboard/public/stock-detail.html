@@ -387,12 +387,15 @@
         <div>
             <!-- Stock Hero & Quote details -->
             <div class="stock-card">
-                <div class="stock-hero-row">
-                    <div>
-                        <h2 style="font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--ink); margin-bottom: 0.35rem;" id="stockCompanyName">Apple Inc.</h2>
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <span style="font-family: var(--pf-mono); font-weight: 800; color: var(--teal); font-size: 1.25rem;" id="stockSymbolText">AAPL</span>
-                            <span class="chg-pill pos" id="stockChangePill">▲ +0.83%</span>
+                <div class="stock-hero-row" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.5rem; margin-bottom:2rem; border-bottom:1px solid var(--line); padding-bottom:1.5rem;">
+                    <div style="display:flex; align-items:center; gap:0.85rem;">
+                        <img id="stockDetailLogo" src="" width="42" height="42" style="width:42px; height:42px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:none;" />
+                        <div>
+                            <h2 style="font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--ink); margin-bottom: 0.35rem;" id="stockCompanyName">Apple Inc.</h2>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-family: var(--pf-mono); font-weight: 800; color: var(--teal); font-size: 1.25rem;" id="stockSymbolText">AAPL</span>
+                                <span class="chg-pill pos" id="stockChangePill">▲ +0.83%</span>
+                            </div>
                         </div>
                     </div>
                     <div style="text-align: right;">

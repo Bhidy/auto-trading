@@ -117,6 +117,26 @@
         }
     };
 
+    function getLogoHtml(sym, size = 20) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
     function applyLang(l) {
         lang = l;
         localStorage.setItem('starta-lang', l);
@@ -164,7 +184,10 @@
                 : item.threshold.toLocaleString();
 
             return `<tr id="alert-row-${item.id}">
-                <td style="font-weight: 800; font-family: var(--pf-mono);">${item.symbol}</td>
+                <td style="font-weight: 800; font-family: var(--pf-mono); display:flex; align-items:center; gap:0.45rem;">
+                    ${getLogoHtml(item.symbol, 20)}
+                    <span>${item.symbol}</span>
+                </td>
                 <td>${typeLabel}</td>
                 <td style="font-family: var(--pf-mono);">${valFormatted}</td>
                 <td>
@@ -255,7 +278,10 @@
             card.className = 'live-feed-card ' + cls;
             card.innerHTML =
                 '<div>' +
-                    '<span style="font-weight:800; color:var(--ink); font-size:0.8rem; margin-inline-end: 0.5rem;">' + s.symbol + '</span>' +
+                    '<span style="font-weight:800; color:var(--ink); font-size:0.8rem; margin-inline-end: 0.5rem; display:inline-flex; align-items:center; gap:0.35rem;">' +
+                        getLogoHtml(s.symbol, 16) +
+                        '<span>' + s.symbol + '</span>' +
+                    '</span>' +
                     '<span style="font-size:0.7rem; font-weight:700; color:var(--teal); text-transform:uppercase;">' + typeText + '</span>' +
                     '<span style="font-size:0.68rem; color:var(--muted);">' + priceText + '</span>' +
                     '<p style="margin-top:0.35rem; color:var(--muted); font-size:0.72rem;">' + desc + '</p>' +

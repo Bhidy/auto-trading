@@ -53,6 +53,26 @@
         });
     }
 
+    function getLogoHtml(sym, size = 20) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
     function badge(val, yesClass, noClass) {
         if (val === true || val === 'true') return '<span class="scr-badge ' + yesClass + '">Yes</span>';
         if (val === false || val === 'false') return '<span class="scr-badge ' + noClass + '">No</span>';
@@ -99,7 +119,10 @@
         tbody.innerHTML = display.map(function (a) {
             var statusBadge = a.status === 'active' ? '<span class="scr-badge scr-badge--active">active</span>' : '<span class="scr-badge scr-badge--inactive">' + (a.status || '') + '</span>';
             return '<tr>' +
-                '<td style="font-weight:700;color:var(--ink);"><a href="/stock-detail.html?symbol=' + (a.symbol || '') + '" style="color:var(--teal);text-decoration:none;">' + (a.symbol || '') + '</a></td>' +
+                '<td style="font-weight:700;color:var(--ink); display:flex; align-items:center; gap:0.45rem;"><a href="/stock-detail.html?symbol=' + (a.symbol || '') + '" style="color:var(--teal);text-decoration:none; display:inline-flex; align-items:center;">' +
+                    getLogoHtml(a.symbol, 20) +
+                    '<span>' + (a.symbol || '') + '</span>' +
+                '</a></td>' +
                 '<td style="font-family:Manrope,sans-serif;max-width:250px;overflow:hidden;text-overflow:ellipsis;">' + (a.name || '') + '</td>' +
                 '<td>' + (a.class || a.asset_class || '') + '</td>' +
                 '<td>' + (a.exchange || '') + '</td>' +

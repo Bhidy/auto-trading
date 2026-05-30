@@ -18,6 +18,26 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  const getLogoHtml = (sym, size = 16) => {
+    if (!sym) return '';
+    var ticker = sym.toUpperCase().trim();
+    var logoFile = ticker;
+    if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+        logoFile = 'BTC_USD';
+    } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+        logoFile = 'ETH_USD';
+    } else {
+        logoFile = logoFile.replace('/', '-');
+    }
+    var src = '/assets/logos/' + logoFile + '.svg';
+    var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+    return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+        'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
+        'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+        'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+        'onmouseout="this.style.transform=\'scale(1)\'" />';
+  };
+
   function setPill(el, kind, text) {
     el.className = 'pill ' + (kind === 'ok' ? 'pill-ok' : kind === 'warn' ? 'pill-warn' : 'pill-muted');
     el.textContent = text;
@@ -44,8 +64,12 @@
     const symBars = topSyms.map(s => {
       const w = Math.min(100, (s.pct_of_total / d.single_name_cap_pct) * 100);
       return `<div class="bar-row">
-        <div class="bar-head"><span>${esc(s.symbol)}
-          <span class="mono" style="margin-inline-start:.4rem">${s.books.length} book${s.books.length > 1 ? 's' : ''}</span></span>
+        <div class="bar-head" style="display:flex; align-items:center; gap:0.45rem;">
+          <span style="display:inline-flex; align-items:center; flex:1;">
+            ${getLogoHtml(s.symbol, 16)}
+            <strong style="margin-inline-start:0.35rem">${esc(s.symbol)}</strong>
+            <span class="mono" style="margin-inline-start:.4rem">${s.books.length} book${s.books.length > 1 ? 's' : ''}</span>
+          </span>
           <span class="mono">${pct(s.pct_of_total)}</span></div>
         <div class="bar-track"><div class="bar-fill ${s.breach ? 'breach' : ''}" style="width:${w}%"></div></div></div>`;
     }).join('') || '<div class="empty-note">No positions held.</div>';

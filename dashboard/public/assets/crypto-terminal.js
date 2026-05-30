@@ -131,6 +131,40 @@
         setTimeout(function () { toast.remove(); }, 3500);
     }
 
+    function getLogoHtml(sym, size = 16) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
+    function updateOrderLogo() {
+        $('ctOrderSymbol').textContent = currentSymbol;
+        var logoEl = $('ctOrderLogo');
+        if (logoEl) {
+            var logoFile = currentSymbol.replace('/', '_').toUpperCase();
+            logoEl.src = '/assets/logos/' + logoFile + '.svg';
+            logoEl.onerror = function() {
+                this.onerror = null;
+                this.src = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+            };
+            logoEl.style.display = 'inline-block';
+        }
+    }
+
     /* ──────────────────────────────────────────────────────────────────────
        INIT
     ────────────────────────────────────────────────────────────────────── */
@@ -139,6 +173,7 @@
         bindEvents();
         loadPortfolios();
         applyLang();
+        updateOrderLogo();
         loadSnapshot();
         loadOrderbook();
         loadTrades();
@@ -153,7 +188,8 @@
         var bar = $('ctSymBar');
         bar.innerHTML = SYMBOLS.map(function (sym) {
             var cls = sym === currentSymbol ? 'ct-sym-pill active' : 'ct-sym-pill';
-            return '<button class="' + cls + '" data-sym="' + sym + '">' + sym.replace('/', '<span style="opacity:.4">/</span>') + '</button>';
+            var logoHtml = getLogoHtml(sym, 16);
+            return '<button class="' + cls + '" data-sym="' + sym + '" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.35rem 0.65rem;">' + logoHtml + '<span>' + sym.replace('/', '<span style="opacity:.4">/</span>') + '</span></button>';
         }).join('');
     }
 
@@ -167,7 +203,7 @@
             if (!btn) return;
             currentSymbol = btn.getAttribute('data-sym');
             buildSymbolBar();
-            $('ctOrderSymbol').textContent = currentSymbol;
+            updateOrderLogo();
             refreshAll();
         });
 
@@ -429,7 +465,10 @@
                 var pct = parseFloat(p.unrealized_plpc || 0) * 100;
                 var clr = unrealized >= 0 ? 'var(--pf-green)' : 'var(--pf-red)';
                 html += '<tr>' +
-                    '<td style="font-weight:700;color:var(--ink);">' + (p.symbol || '—') + '</td>' +
+                    '<td style="font-weight:700;color:var(--ink); display:flex; align-items:center; gap:0.45rem;">' +
+                        getLogoHtml(p.symbol, 18) +
+                        '<span>' + (p.symbol || '—') + '</span>' +
+                    '</td>' +
                     '<td>' + fmtNum(p.qty, 6) + '</td>' +
                     '<td>' + fmtPrice(p.avg_entry_price) + '</td>' +
                     '<td>' + fmtPrice(p.current_price) + '</td>' +
