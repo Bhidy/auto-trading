@@ -83,19 +83,19 @@ These are hard go/no-go items. Real capital must not move until every one is GRE
 - **Done when:** a simulated halted symbol is rejected for new entry but still
   exitable; a circuit-breaker flag pauses entries cleanly.
 
-### C4 — Human-approval gate on self-learning parameter changes
-- **Why:** `adapt_parameters` auto-writes `strategy_params.json`
-  (`performance_tracker.py:279`) and commits to git with no human in the loop.
-  Even with the OOS gate, an adaptive change altering live sizing/risk must be
-  approved before it affects real capital (audit governance gate + Fed SR 11-7
-  doctrine).
-- **Fix:** Split into *propose* vs *apply*. EOD writes a
-  `data/param_change_request.json` (before/after, OOS evidence, challenger
-  notes). Production sizing keeps using the **approved** params until a human
-  (or, pre-live, an explicit signed config flag) promotes the request. Full
-  rollback record retained.
-- **Done when:** no knob that affects sizing/risk can reach production without an
-  approval record; a one-command rollback restores the prior approved set.
+### C4 — Automated governance on self-learning parameter changes
+- **Why:** `adapt_parameters` auto-writes `strategy_params.json` with no record
+  of *why* a knob moved and no way to roll back. Even with the OOS gate, an
+  adaptive change altering sizing/risk needs an auditable, reversible decision
+  (audit governance gate + Fed SR 11-7 doctrine).
+- **Design choice (fully automated, zero human):** governance is a
+  **deterministic policy, not a person**. The walk-forward + overfitting gate is
+  the approver; a change is auto-promoted only if it passes every codified gate
+  (OOS Sharpe, PBO, Deflated Sharpe, challenger, hard bounds) and is otherwise
+  auto-reverted. Every decision is written to an append-only provenance log and a
+  last-known-good snapshot enables automatic rollback. No manual step exists.
+- **Done when:** no knob reaches production without a recorded, gated decision;
+  rollback restores the last validated set automatically.
 
 ### C5 — Fee- and corporate-action-aware P&L (accounting honesty)
 - **Why:** Logged P&L excludes TAF/CAT regulatory fees and ignores dividends,
@@ -316,16 +316,24 @@ Adopt the audit's six go-live gates as the control framework, enforced in code:
 5. **Accounting & tax gate** — wash-sale visibility, T+1 settlement awareness,
    realized-vs-unrealized, borrow fees, corporate actions in the ledger (C5, C6,
    D1, T4, T5).
-6. **Governance gate** — **Claude advisory-only, enforced by code.** Hard policy
-   approves, sizes, submits. A human approval record is required for any
-   real-money capital or parameter change (C4, T13).
+6. **Governance gate (automated)** — **Claude advisory-only, enforced by code.**
+   Hard policy approves, sizes, submits. Every parameter change reaching
+   production is gated by the deterministic validation policy and recorded with
+   provenance; failures auto-revert (C4, governance module). No human in the loop.
 
-**Manual-approval points (hard stops):**
-- Promoting any portfolio from paper → live.
-- Any change to `config/risk_limits*.json` (already "never programmatic").
-- Any self-learning parameter change reaching production.
-- Any first short on a name / any new instrument class.
-- Disabling/overriding a halt or kill-switch (runbook + sign-off).
+**Automated policy stops (deterministic hard stops — no human action):**
+- Self-learning param change → must pass the full gate or it auto-reverts; every
+  decision is logged with provenance and a last-known-good snapshot.
+- `config/risk_limits*.json` is never modified programmatically; the live profile
+  is strictly tighter and selected by `RISK_PROFILE`, falling back to paper.
+- Any short → blocked unless a fresh ETB confirmation passes (fail-closed).
+- Any entry into a halted/not-tradable/stale asset → blocked automatically.
+- Loss/drawdown breaches → automatic 24h/7d halt or kill-switch liquidation.
+
+> Note on "paper → live": promoting real capital is the one action that remains a
+> deliberate human decision *by policy* (`docs/LIVE_READINESS.md`), because it is
+> a capital-allocation choice, not a trading action. Day-to-day trading,
+> adaptation, risk control, and rollback are fully autonomous.
 
 ---
 
@@ -398,9 +406,9 @@ Adopt the audit's six go-live gates as the control framework, enforced in code:
 - [ ] Wash-sale visibility in realized-P&L reporting (D1).
 - [ ] T+1 settlement + borrow fees reflected; realized vs unrealized split.
 
-**Governance:**
-- [ ] Claude advisory-only enforced in code; hard policy approves/sizes/submits.
-- [ ] Human approval recorded for: go-live, any param→production, any limit change.
+**Governance (automated):**
+- [x] Claude advisory-only enforced in code; hard policy approves/sizes/submits.
+- [x] Every param→production change gated + recorded with provenance; auto-rollback.
 - [ ] Separate **live** Alpaca account; live keys never reuse paper keys.
 - [ ] Runbook complete: key rotation, halt override, manual liquidation, rollback.
 - [ ] Kill-switch + daily/weekly halts drilled in CI and in paper.
@@ -411,6 +419,47 @@ Adopt the audit's six go-live gates as the control framework, enforced in code:
 **Sign-off:**
 - [ ] Dated sign-off (who / which portfolio / metric snapshot) recorded.
 - [ ] Fractional ramp plan (5–10% for 2 weeks) approved before scaling.
+
+---
+
+---
+
+## Section 11 — Implementation Status (this delivery)
+
+Built and shipped in this pass, **fully automated (zero manual steps)**, each
+landed green on `pytest` + `ruff` with new tests. Test count grew 115 → 207.
+
+| Item | Status | Modules | Tests |
+|------|--------|---------|-------|
+| C1 ETB short gate | ✅ Done | `shared/alpaca_http.evaluate_asset_gate`, `risk_officer.validate_trade`, `autonomous_runner` (lookup + money-path re-check) | `test_asset_gate.py` |
+| C3 halt/tradable gate | ✅ Done | same gate (tradable/active/stale-quote) | `test_asset_gate.py` |
+| C6 qty/cost-basis reconciliation | ✅ Done | `shared/reconcile.compute_drift` (+ P1 EOD detailed records) | `test_shared_reconcile.py` |
+| C5 fees + corporate actions | ✅ Done | `shared/accounting.py`; net-of-fee P&L in `performance_tracker.close_trade` | `test_accounting.py` |
+| C2 order-state reconciler | ✅ Done | `shared/order_state.py` (+ P1 monitor wiring) | `test_order_state.py` |
+| V1+V2 PBO / Deflated Sharpe / challenger | ✅ Done | `backtest/metrics.py`, `backtest/challenger.py`, `walk_forward` gate | `test_overfitting.py` |
+| C4 automated governance | ✅ Done | `shared/governance.py` (provenance + auto-rollback) | `test_governance.py` |
+| T9 P2 disclosure-age + confirmation | ✅ Done | `politician_bot.py` (+ watchlist config) | `test_politician_signal_hierarchy.py` |
+| T10 P3 catalyst-decay time stop | ✅ Done | `event_driven_bot.py` (+ `cancel_order`, config) | `test_catalyst_decay.py` |
+| R1 cross-portfolio risk + heat | ✅ Done | `shared/portfolio_risk.py` | `test_portfolio_risk.py` |
+| R4 tighter live limits | ✅ Done | `config/risk_limits.live.json`, `RISK_PROFILE`-aware `load_config` | `test_portfolio_risk.py` |
+| D1 trade schema v2 | ✅ Done | `performance_tracker.log_trade` (slippage/borrow/order_class/evidence) | `test_trade_schema.py` |
+| D6 canonical metric source | ✅ Done | `performance_tracker.equity_curve_metrics` + per-trade disambiguation | `test_trade_schema.py` |
+
+**Deliberately deferred (follow-up, lower-risk, no money-path impact):**
+- **Section 7 dashboard panels** — the engine now *computes* execution-quality,
+  validation (PBO/DSR/challenger), accounting, cross-portfolio risk, and
+  governance data; surfacing them as brand-compliant dashboard panels is
+  front-end work that should follow with visual testing (per the design rules).
+- **T8 standalone challenger CLI / T10 EDGAR primary feed** — the challenger
+  benchmark is wired into the gate; a standalone EDGAR catalyst client for P3 is
+  a data-source addition that needs its own integration tests.
+- **Cross-portfolio reporter wiring** — `portfolio_risk` is unit-complete; the
+  combined live reporter belongs in the dashboard/monitor layer (which holds all
+  three API keys) and should read the three live accounts there.
+
+Everything above keeps the system **100% autonomous**: no human approval, no
+manual action. Governance, validation, rollback, borrow checks, halt checks, and
+risk halts are all deterministic policy code.
 
 ---
 
