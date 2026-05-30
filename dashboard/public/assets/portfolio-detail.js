@@ -328,15 +328,12 @@
             '<div class="pf-holdings-section" id="holdingsSection"></div>' +
             '<!-- Bottom Pane: Performance contributions, Risk svg circles, executions -->' +
             '<div class="pf-bottom-grid" id="bottomGrid"></div>' +
-            '<!-- Strategy & Analytics Smart Panels (pinned at bottom) -->' +
-            '<div id="smartPanelsGrid" class="pf-smart-panels-grid"></div>' +
             '<!-- Advanced Portfolio Intelligence (9 additive sections) -->' +
             '<div id="pfIntel" class="pf-intel"></div>';
 
         renderChartCard();
         renderHoldings(holdingsTab);
         renderBottomGrid();
-        renderSmartPanels();
         renderIntelligence();
     }
 
@@ -1178,18 +1175,7 @@
         try { I = computeIntel(); }
         catch (e) { console.warn('[intel] compute failed:', e && e.message); return; }
 
-        var banner =
-            '<div class="pf-intel-banner">' +
-                '<span class="pf-intel-banner-icon">' + ICON('cpu') + '</span>' +
-                '<div class="pf-intel-banner-text">' +
-                    '<h2>' + il('Advanced Portfolio Intelligence', 'ذكاء المحفظة المتقدم') + '</h2>' +
-                    '<p>' + il('Institutional-grade health, risk, attribution and AI decision analytics — derived from your live positions.', 'تحليلات مؤسسية للصحة والمخاطر والإسناد وقرارات الذكاء الاصطناعي — مشتقة من مراكزك المباشرة.') + '</p>' +
-                '</div>' +
-                '<span class="pf-intel-banner-pill"><span class="pf-live-dot"></span>' + il('Live', 'مباشر') + '</span>' +
-            '</div>';
-
         root.innerHTML =
-            banner +
             '<div class="pf-intel-row pf-intel-row--health">' +
                 healthScoreCard(I) +
                 riskExposureCard(I) +
