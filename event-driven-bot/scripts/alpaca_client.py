@@ -163,6 +163,9 @@ class AlpacaClient:
     def cancel_all_orders(self):
         return self._delete(f"{self.base_url}/v2/orders")
 
+    def cancel_order(self, order_id):
+        return self._delete(f"{self.base_url}/v2/orders/{order_id}")
+
     def close_all_positions(self):
         return self._delete(f"{self.base_url}/v2/positions")
 

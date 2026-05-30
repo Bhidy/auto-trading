@@ -16,6 +16,7 @@
   },
   "swing_hold_days": {"min": 3, "max": 15},
   "event_hold_days": {"min": 0, "max": 1},
+  "catalyst_max_hold_days": 2,
   "atr_stop_multiplier": 1.5,
   "atr_tp1_multiplier": 3.0,
   "atr_trailing_multiplier": 1.5,

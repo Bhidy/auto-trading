@@ -64,6 +64,56 @@ def save_json(path, data):
 
 
 # ---------------------------------------------------------------------------
+# CATALYST-DECAY TIME STOP (T10) — pure + unit-testable.
+#
+# A news/event trade's edge is the catalyst surprise; once the market has
+# digested it the position is just unmanaged risk. P3 therefore force-exits a
+# catalyst trade after its short hold window, regardless of P&L. Core fundamental
+# trades are NOT catalyst-decayed (they have a thesis with a longer horizon).
+# ---------------------------------------------------------------------------
+
+def is_catalyst_trade(trade):
+    """A trade entered on a news/event catalyst (the event_driven tranche or a
+    news-sourced signal), as opposed to a core fundamental/breakout position."""
+    if not isinstance(trade, dict):
+        return False
+    if trade.get("tranche") == "event_driven":
+        return True
+    sig = str(trade.get("signal_type") or trade.get("signal") or "").upper()
+    return "NEWS" in sig or "CATALYST" in sig
+
+
+def trade_age_days(trade, now=None):
+    """Calendar days since entry, from the trade's timestamp (or date)."""
+    now = now or datetime.now(timezone.utc)
+    ts = trade.get("timestamp") or trade.get("date")
+    if not ts:
+        return None
+    try:
+        entered = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            entered = datetime.fromisoformat(str(ts)[:10]).replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    if entered.tzinfo is None:
+        entered = entered.replace(tzinfo=timezone.utc)
+    return (now - entered).days
+
+
+def catalyst_decayed(trade, now=None, max_hold_days=1):
+    """True when a catalyst trade has been held at least `max_hold_days` — its
+    edge has decayed and it should be exited. Non-catalyst trades never decay
+    here. Unknown age does NOT force an exit (avoid closing on bad data)."""
+    if not is_catalyst_trade(trade):
+        return False
+    age = trade_age_days(trade, now=now)
+    if age is None:
+        return False
+    return age >= max_hold_days
+
+
+# ---------------------------------------------------------------------------
 # POSITION SIZING (ATR-Based)
 # ---------------------------------------------------------------------------
 
@@ -470,8 +520,51 @@ def run_intraday_monitor(alpaca: AlpacaClient):
         elif pnl_pct >= 15:
             log.info(f"  {sym} up {pnl_pct:.1f}% — consider scaling out remainder")
 
+    # T10: catalyst-decay time stop. Force-exit news/event trades past their hold
+    # window — the catalyst edge is gone and the position is now unmanaged risk.
+    _enforce_catalyst_decay(alpaca, positions, limits)
+
     _sync_state(alpaca)
     log.info(f"Monitor: {len(positions)} positions, equity=${equity:,.2f}")
+
+
+def _enforce_catalyst_decay(alpaca: AlpacaClient, positions: list, limits: dict):
+    """Close any held catalyst trade whose edge has decayed. Cancels its working
+    bracket legs first so the close doesn't conflict, then liquidates. Lets the
+    EOD journal finalize the trade record (exit price from the fill)."""
+    max_hold = limits.get("catalyst_max_hold_days")
+    if max_hold is None:
+        max_hold = (limits.get("event_hold_days", {}) or {}).get("max", 1)
+    trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    held = {p.get("symbol") for p in positions}
+    if not held:
+        return
+    try:
+        open_orders = alpaca.get_orders(status="open")
+    except Exception:
+        open_orders = []
+
+    for t in trade_log:
+        if t.get("status") != "open":
+            continue
+        sym = t.get("symbol")
+        if sym not in held or not catalyst_decayed(t, max_hold_days=max_hold):
+            continue
+        age = trade_age_days(t)
+        log.info(f"  Catalyst-decay exit: {sym} held {age}d ≥ {max_hold}d — closing")
+        for o in open_orders:
+            if o.get("symbol") == sym and o.get("id"):
+                try:
+                    alpaca.cancel_order(o["id"])
+                except Exception as e:
+                    log.warning(f"    could not cancel order {o.get('id')} for {sym}: {e}")
+        try:
+            alpaca.close_position(sym)
+            t["catalyst_decay_exit"] = True
+        except Exception as e:
+            log.error(f"    catalyst-decay close failed for {sym}: {e}")
+
+    save_json(DATA_DIR / "trade_log.json", trade_log)
 
 
 # ---------------------------------------------------------------------------
