@@ -439,7 +439,7 @@
             heroLogo.src = '/assets/logos/' + logoFile + '.svg';
             heroLogo.onerror = function() {
                 this.onerror = null;
-                this.src = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+                this.src = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=128';
             };
             heroLogo.style.display = 'block';
         }
@@ -463,16 +463,30 @@
             }
             var profile = data.profile || {};
 
-            document.getElementById('heroSymbol').textContent = data.symbol;
+            var symBadge = document.getElementById('heroSymbol');
+            if (symBadge) symBadge.textContent = data.symbol;
+            
             document.getElementById('heroName').textContent = (profile.name || data.symbol)
                 .replace(/\s+(Class [A-C] )?Common (Stock|Shares)$/i, '').trim() || data.symbol;
             var exEl = document.getElementById('heroExchange');
             if (exEl) exEl.textContent = profile.exchange || '';
-            var subTxt = profile.sector || '';
-            if (!subTxt && profile.asset_class) {
-                subTxt = profile.asset_class === 'us_equity' ? 'US Equity'
-                       : profile.asset_class === 'crypto' ? 'Crypto'
-                       : String(profile.asset_class).replace(/_/g, ' ');
+            
+            // Construct dynamic, premium subtitle
+            var exchangeTxt = profile.exchange || '';
+            var subTxt = activeSymbol + ' · ';
+            var sectorOrClass = profile.sector || '';
+            if (!sectorOrClass && profile.asset_class) {
+                sectorOrClass = profile.asset_class === 'us_equity' ? 'US Equity'
+                              : profile.asset_class === 'crypto' ? 'Crypto'
+                              : String(profile.asset_class).replace(/_/g, ' ');
+            }
+            if (sectorOrClass) {
+                subTxt += sectorOrClass;
+            } else {
+                subTxt += 'Asset';
+            }
+            if (exchangeTxt) {
+                subTxt += ' · ' + exchangeTxt;
             }
             document.getElementById('heroSub').textContent = subTxt;
 
@@ -1214,16 +1228,15 @@
                 row.className = 'mp-list-item ' + selectedCls;
                 row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.55rem 0.65rem;';
                 row.innerHTML = `
-                    <div class="mp-list-info" style="flex:1; min-width:0; display:flex; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:0.55rem; flex:1; min-width:0;">
                         ${getLogoHtml(sym, 28)}
-                        <div style="flex:1; min-width:0;">
+                        <div class="mp-list-info" style="flex:1; min-width:0;">
                             <span class="mp-list-symbol" style="display:block; font-weight:700; color:var(--ink);">${sym}</span>
                             <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem; color:var(--muted);">${companyNames[sym] || sym}</span>
                         </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.55rem; justify-content:flex-end; flex-shrink:0;">
-                        <span class="pf-num" style="font-size:0.76rem; font-weight:700; color:var(--ink);">${db.price ? '$' + db.price.toFixed(2) : '—'}</span>
-                        <span class="pf-num ${cls}" style="font-size:0.68rem; font-weight:600; min-width:52px; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
+                    <div style="display:flex; align-items:center; justify-content:flex-end; flex-shrink:0;">
+                        <span class="pf-num mp-chg-val ${cls}" style="font-size:0.68rem; font-weight:600; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
                     </div>
                 `;
                 row.addEventListener('click', function () { loadStockDetails(sym); });
@@ -1279,16 +1292,15 @@
             itemEl.className = 'mp-list-item';
             itemEl.style.padding = '0.45rem 0.65rem';
             itemEl.innerHTML = `
-                <div class="mp-list-info" style="flex:1; min-width:0; display:flex; align-items:center;">
+                <div style="display:flex; align-items:center; gap:0.55rem; flex:1; min-width:0;">
                     ${getLogoHtml(sym, 28)}
-                    <div style="flex:1; min-width:0;">
+                    <div class="mp-list-info" style="flex:1; min-width:0;">
                         <span class="mp-list-symbol" style="display:block; font-weight:700; color:var(--ink);">${sym}</span>
                         <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem; color:var(--muted);">${companyNames[sym] || sym}</span>
                     </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
-                    <span class="pf-num" style="font-size:0.78rem;font-weight:700;">$${q.price.toFixed(2)}</span>
-                    <span class="pf-num ${isPos ? 'pf-pos' : 'pf-neg'}" style="font-size:0.72rem;font-weight:600;width:56px;text-align:right;">${sign} ${(q.changePct || 0).toFixed(2)}%</span>
+                <div style="display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;">
+                    <span class="pf-num mp-chg-val ${isPos ? 'pf-pos' : 'pf-neg'}" style="font-size:0.72rem;font-weight:600;text-align:right;">${sign} ${(q.changePct || 0).toFixed(2)}%</span>
                 </div>
             `;
             itemEl.addEventListener('click', function () { loadStockDetails(sym); });
@@ -1505,17 +1517,15 @@
             var rows = wlContainer.querySelectorAll('.mp-list-item');
             rows.forEach(function(row) {
                 var symEl = row.querySelector('.mp-list-symbol');
-                var priceEl = row.querySelector('.pf-num');
-                var pctEl = row.querySelectorAll('.pf-num')[1];
                 if (!symEl) return;
                 var sym = symEl.textContent.trim().toUpperCase();
                 var db = stockPriceDatabase[sym];
                 if (!db) return;
-                if (priceEl) priceEl.textContent = '$' + db.price.toFixed(2);
+                var pctEl = row.querySelector('.mp-chg-val');
                 if (pctEl) {
                     var isPos = db.changePct >= 0;
                     pctEl.textContent = (isPos ? '▲ ' : '▼ ') + Math.abs(db.changePct).toFixed(2) + '%';
-                    pctEl.className = 'pf-num ' + (isPos ? 'pf-pos' : 'pf-neg');
+                    pctEl.className = 'pf-num mp-chg-val ' + (isPos ? 'pf-pos' : 'pf-neg');
                 }
             });
         }
@@ -1525,18 +1535,16 @@
         if (tlContainer) {
             var items = tlContainer.querySelectorAll('.mp-list-item');
             items.forEach(function(item) {
-                var badge = item.querySelector('.pf-sym-badge');
-                var priceEl = item.querySelectorAll('.pf-num')[0];
-                var pctEl = item.querySelectorAll('.pf-num')[1];
+                var badge = item.querySelector('.mp-list-symbol');
                 if (!badge) return;
                 var sym = badge.textContent.trim().toUpperCase();
                 var db = stockPriceDatabase[sym];
-                if (!db || !priceEl) return;
-                priceEl.textContent = '$' + db.price.toFixed(2);
+                if (!db) return;
+                var pctEl = item.querySelector('.mp-chg-val');
                 if (pctEl) {
                     var isPos = db.changePct >= 0;
                     pctEl.textContent = (isPos ? '▲ ' : '▼ ') + Math.abs(db.changePct).toFixed(2) + '%';
-                    pctEl.className = 'pf-num ' + (isPos ? 'pf-pos' : 'pf-neg') + ' mp-tick-cell';
+                    pctEl.className = 'pf-num mp-chg-val ' + (isPos ? 'pf-pos' : 'pf-neg') + ' mp-tick-cell';
                 }
             });
         }
