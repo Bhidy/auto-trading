@@ -1841,10 +1841,12 @@ var TV_EXCHANGE = {
     NVDA: 'NASDAQ', AAPL: 'NASDAQ', MSFT: 'NASDAQ', GOOGL: 'NASDAQ', AMZN: 'NASDAQ',
     META: 'NASDAQ', TSLA: 'NASDAQ', AMD: 'NASDAQ', NFLX: 'NASDAQ', INTC: 'NASDAQ'
 };
-function tvSymbolFor(sym) {
-    var ex = TV_EXCHANGE[sym];
-    return ex ? ex + ':' + sym : sym;
-}
+    function tvSymbolFor(sym) {
+        if (sym === 'BTC/USD' || sym === 'BTCUSD') return 'COINBASE:BTCUSD';
+        if (sym === 'ETH/USD' || sym === 'ETHUSD') return 'COINBASE:ETHUSD';
+        var ex = TV_EXCHANGE[sym];
+        return ex ? ex + ':' + sym : sym;
+    }
 
 var tvScriptPromise = null;
 function loadTradingView() {
