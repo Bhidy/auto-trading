@@ -651,24 +651,39 @@
 }
 
 .pf-contrib-panel { padding: 1.1rem; }
-.pf-contrib-tabs { display: flex; gap: .35rem; margin-bottom: .85rem; }
-.pf-contrib-tab {
-    padding: .28rem .7rem; border: 1px solid var(--line);
-    border-radius: 999px; font-size: .72rem; font-weight: 600;
-    cursor: pointer; background: transparent; color: var(--muted); transition: all 150ms;
+
+/* Donut chart layout */
+.pf-contrib-donut-wrap {
+    display: flex; align-items: center; gap: .9rem; margin: .75rem 0 .25rem;
 }
-.pf-contrib-tab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+.pf-contrib-donut-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none;
+}
+.pf-contrib-donut-legend {
+    display: flex; flex-direction: column; gap: .55rem; flex: 1;
+}
+.pf-contrib-donut-stat {
+    display: flex; flex-direction: column; gap: .08rem;
+}
+.pf-contrib-donut-dot {
+    width: .55rem; height: .55rem; border-radius: 50%; display: inline-block; margin-bottom: .1rem;
+}
+.pf-contrib-group-label {
+    font-size: .62rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .06em; margin-bottom: .25rem;
+}
 
 .pf-contrib-row {
     display: flex; align-items: center; gap: .6rem;
-    padding: .45rem 0; border-bottom: 1px solid var(--line);
+    padding: .4rem 0; border-bottom: 1px solid var(--line);
 }
 .pf-contrib-row:last-child { border-bottom: none; }
 .pf-contrib-chip { width: 1.7rem; height: 1.7rem; border-radius: .35rem; display: grid; place-items: center; font-family: var(--pf-mono); font-size: .6rem; font-weight: 700; color: #fff; flex-shrink: 0; }
 .pf-contrib-name { flex: 1; font-size: .78rem; font-weight: 600; }
 .pf-contrib-val  { text-align: end; }
 .pf-contrib-val span:first-child { font-family: var(--pf-mono); font-size: .78rem; font-weight: 600; display: block; }
-.pf-contrib-val span:last-child  { font-size: .68rem; color: var(--muted); }
+.pf-contrib-val span:last-child  { font-size: .68rem; }
 
 /* Risk metrics */
 .pf-risk-panel { padding: 1.1rem; }

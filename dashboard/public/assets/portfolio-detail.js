@@ -2255,26 +2255,123 @@
         });
     }
 
+    var _contribChart = null;
+
     function renderContrib() {
-        var sorted = metrics.holdings.slice().sort(function(a,b){
-            return contribTab === 'gainers' ? b.totalGain - a.totalGain : a.totalGain - b.totalGain;
-        });
-        var rows = sorted.slice(0,5).map(function(h){
-            var cls = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
+        var holds = metrics.holdings.slice();
+        var gainers = holds.filter(function(h){ return h.totalGain > 0; })
+                           .sort(function(a,b){ return b.totalGain - a.totalGain; });
+        var losers  = holds.filter(function(h){ return h.totalGain < 0; })
+                           .sort(function(a,b){ return a.totalGain - b.totalGain; });
+        var totalGain = gainers.reduce(function(s,h){ return s + h.totalGain; }, 0);
+        var totalLoss = Math.abs(losers.reduce(function(s,h){ return s + h.totalGain; }, 0));
+        var winRate = holds.length ? Math.round(gainers.length / holds.length * 100) : 0;
+
+        function row(h) {
+            var cls  = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
             var sign = h.totalGain >= 0 ? '+' : '';
             return '<div class="pf-contrib-row">' +
                 '<div class="pf-contrib-chip" style="background:' + h.color + '">' + h.symbol.slice(0,3) + '</div>' +
                 '<span class="pf-contrib-name">' + h.symbol + '</span>' +
                 '<div class="pf-contrib-val">' +
                     '<span class="' + cls + ' pf-num">' + sign + '$' + fmt(h.totalGain, 0) + '</span>' +
-                    '<span class="pf-num">' + pct(h.totalReturn) + '</span>' +
+                    '<span class="pf-num ' + cls + '">' + pct(h.totalReturn) + '</span>' +
                 '</div></div>';
-        }).join('');
-        var tabBtns = '<div class="pf-contrib-tabs">' +
-            '<button class="pf-contrib-tab' + (contribTab==='gainers'?' active':'') + '" data-tab="gainers">' + t('gainers') + '</button>' +
-            '<button class="pf-contrib-tab' + (contribTab==='losers'?' active':'') + '" data-tab="losers">'  + t('losers')  + '</button>' +
-        '</div>';
-        return '<div class="pf-panel__title">' + t('topContrib') + '</div>' + tabBtns + rows;
+        }
+
+        var html =
+            '<div class="pf-panel__title">' + t('topContrib') + '</div>' +
+
+            // Donut chart
+            '<div class="pf-contrib-donut-wrap">' +
+                '<div style="position:relative;width:128px;height:128px;flex-shrink:0;">' +
+                    '<canvas id="contribDonutChart" width="128" height="128"></canvas>' +
+                    '<div class="pf-contrib-donut-center">' +
+                        '<span class="pf-num" style="font-size:1.35rem;font-weight:700;color:var(--ink);">' + winRate + '%</span>' +
+                        '<span style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">' + il('Win Rate', 'معدل الربح') + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="pf-contrib-donut-legend">' +
+                    '<div class="pf-contrib-donut-stat">' +
+                        '<span class="pf-contrib-donut-dot" style="background:#22c55e;"></span>' +
+                        '<span style="font-size:.68rem;color:var(--muted);">' + il('Gainers', 'رابحون') + '</span>' +
+                        '<span class="pf-num pf-pos" style="font-size:.8rem;font-weight:700;">+$' + fmt(totalGain, 0) + '</span>' +
+                        '<span style="font-size:.65rem;color:var(--muted);">' + gainers.length + ' ' + il('pos.', 'مركز') + '</span>' +
+                    '</div>' +
+                    '<div class="pf-contrib-donut-stat">' +
+                        '<span class="pf-contrib-donut-dot" style="background:#ef4444;"></span>' +
+                        '<span style="font-size:.68rem;color:var(--muted);">' + il('Losers', 'خاسرون') + '</span>' +
+                        '<span class="pf-num pf-neg" style="font-size:.8rem;font-weight:700;">-$' + fmt(totalLoss, 0) + '</span>' +
+                        '<span style="font-size:.65rem;color:var(--muted);">' + losers.length + ' ' + il('pos.', 'مركز') + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // Top gainers
+            '<div style="margin-top:.65rem;">' +
+                '<div class="pf-contrib-group-label pf-pos">' + il('Top Gainers', 'أفضل الرابحين') + '</div>' +
+                gainers.slice(0,3).map(row).join('') +
+            '</div>' +
+
+            // Top losers
+            (losers.length ? '<div style="margin-top:.55rem;border-top:1px solid var(--line);padding-top:.55rem;">' +
+                '<div class="pf-contrib-group-label pf-neg">' + il('Top Losers', 'أكبر الخاسرين') + '</div>' +
+                losers.slice(0,3).map(row).join('') +
+            '</div>' : '');
+
+        // Init chart after DOM paint
+        setTimeout(initContribChart, 60);
+        return html;
+    }
+
+    function initContribChart() {
+        var canvas = document.getElementById('contribDonutChart');
+        if (!canvas) return;
+        if (_contribChart) { try { _contribChart.destroy(); } catch(e){} _contribChart = null; }
+
+        var holds = metrics.holdings.slice();
+        var gainers = holds.filter(function(h){ return h.totalGain > 0; });
+        var losers  = holds.filter(function(h){ return h.totalGain < 0; });
+        var totalGain = gainers.reduce(function(s,h){ return s + h.totalGain; }, 0);
+        var totalLoss = Math.abs(losers.reduce(function(s,h){ return s + h.totalGain; }, 0));
+
+        if (totalGain + totalLoss <= 0) return;
+
+        var isDark = document.documentElement.dataset.theme !== 'light';
+        var ctx = canvas.getContext('2d');
+        _contribChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [il('Gainers','رابحون'), il('Losers','خاسرون')],
+                datasets: [{
+                    data: [totalGain, totalLoss],
+                    backgroundColor: ['#22c55e', '#ef4444'],
+                    borderWidth: 3,
+                    borderColor: isDark ? '#1A0F08' : '#FFFFFF',
+                    hoverOffset: 5
+                }]
+            },
+            options: {
+                responsive: false,
+                cutout: '62%',
+                animation: { duration: 700 },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1a0f08' : '#fff',
+                        borderColor: 'rgba(0,0,0,.08)', borderWidth: 1,
+                        titleColor: isDark ? '#fff1e8' : '#1a0f08',
+                        bodyColor: isDark ? '#a39a92' : '#7a6b5e',
+                        bodyFont: { family: 'IBM Plex Mono', size: 11 },
+                        callbacks: {
+                            label: function(c) {
+                                return ' ' + c.label + ': ' + (c.dataIndex === 0 ? '+' : '-') + '$' + fmt(c.raw, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     function makeGauge(label, valStr, pct, smallText) {
