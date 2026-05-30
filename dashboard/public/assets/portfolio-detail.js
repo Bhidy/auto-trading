@@ -27,6 +27,7 @@
     var chartPeriod = 'All', chartMode = 'index';
     var holdingsTab = 'overview';
     var contribTab  = 'gainers';
+    var intelTab    = 'overview'; // hub tab: overview | attribution | risk | quality
     var holdingsViewMode = 'table'; // 'table' or 'chart'
     var tabChartInst = null; // Chart.js instance for holdings tab
 
@@ -197,14 +198,8 @@
                 // Segment-isolated UI patches (run with whatever data we have)
                 safeSegment('header', renderHeader);
                 safeSegment('chart', initChart);
-                safeSegment('holdings', function () {
-                    var hRoot = document.getElementById('pf-detail-holdings-root');
-                    if (hRoot) renderHoldingsTable(hRoot);
-                });
-                safeSegment('orders', function () {
-                    var ordersEl = document.getElementById('pfDetailOrders');
-                    if (ordersEl) renderOrdersWidget(ordersEl);
-                });
+                safeSegment('sidebar', renderSidebar);
+                safeSegment('intel', renderIntelligence);
                 _tickInFlight = false;
             });
     }
@@ -322,18 +317,21 @@
 
         body.innerHTML =
             haltBanner +
-            '<!-- Full-Width Chart Canvas -->' +
+            '<!-- Tier 1: Full-Width Benchmark Chart -->' +
             '<div class="pf-card pf-chart-card" id="chartCard" style="margin-bottom:1.25rem;"></div>' +
-            '<!-- Main Positions Holding table -->' +
-            '<div class="pf-holdings-section" id="holdingsSection"></div>' +
-            '<!-- Bottom Pane: Performance contributions, Risk svg circles, executions -->' +
-            '<div class="pf-bottom-grid" id="bottomGrid"></div>' +
-            '<!-- Advanced Portfolio Intelligence (9 additive sections) -->' +
-            '<div id="pfIntel" class="pf-intel"></div>';
+            '<!-- Tier 2: Holdings Terminal + Compact Sidebar -->' +
+            '<div class="pf-terminal-layout">' +
+                '<div class="pf-terminal-main">' +
+                    '<div id="holdingsSection" class="pf-holdings-section" style="margin-bottom:0;"></div>' +
+                '</div>' +
+                '<div id="terminalSidebar" class="pf-terminal-side"></div>' +
+            '</div>' +
+            '<!-- Tier 3: Intelligence Hub (tabbed) -->' +
+            '<div id="pfIntelHub" class="pf-intel-hub"></div>';
 
         renderChartCard();
         renderHoldings(holdingsTab);
-        renderBottomGrid();
+        renderSidebar();
         renderIntelligence();
     }
 
@@ -1167,31 +1165,102 @@
         return null;
     }
 
-    /* ── Orchestrator ─────────────────────────────────────────────────── */
+    /* ── Tier 2 Sidebar: Contributors + Quick Risk Status ─────────────── */
+    function renderSidebar() {
+        var sb = document.getElementById('terminalSidebar');
+        if (!sb) return;
+
+        // Quick Risk panel (compact rows, no SVG circles)
+        var tradesToday = detailCache ? (detailCache.trade_log || []).length : 0;
+        var signalCount = detailCache ? ((detailCache.signals || {}).signals || []).length : 0;
+        var halted = portfolio.halted;
+        function qrow(lbl, val, cls) {
+            return '<div class="pf-qrisk-row"><span class="pf-qrisk-label">' + lbl + '</span>' +
+                '<span class="pf-qrisk-val' + (cls ? ' ' + cls : '') + '">' + val + '</span></div>';
+        }
+        var qrisk =
+            qrow(il('Status', 'الحالة'), halted ? 'HALTED' : 'ACTIVE', halted ? 'pf-neg' : 'pf-pos') +
+            qrow(il('Trades Today', 'صفقات اليوم'), tradesToday, '') +
+            qrow(il('Active Signals', 'إشارات نشطة'), signalCount, signalCount ? 'pf-pos' : '') +
+            qrow(il('Daily Loss Limit', 'حد الخسارة اليومي'), '4.0%', '') +
+            qrow(il('Kill Switch', 'مفتاح الإيقاف'), il('Armed', 'مُفعّل'), 'pf-pos') +
+            qrow(il('Kill Threshold', 'عتبة الإيقاف'), '18% DD', '');
+
+        sb.innerHTML =
+            '<div class="pf-card pf-contrib-panel" id="contribPanel" style="padding:1.1rem;">' +
+                renderContrib() +
+            '</div>' +
+            '<div class="pf-card pf-panel" style="padding:1.1rem;">' +
+                '<div class="pf-panel__title">' + il('System Risk Status', 'حالة مخاطر النظام') + '</div>' +
+                '<div class="pf-qrisk">' + qrisk + '</div>' +
+            '</div>';
+
+        wireContribTabs();
+    }
+
+    /* ── Tier 3 Intelligence Hub Orchestrator (tabbed card) ───────────── */
     function renderIntelligence() {
-        var root = document.getElementById('pfIntel');
+        var root = document.getElementById('pfIntelHub');
         if (!root) return;
         var I;
         try { I = computeIntel(); }
         catch (e) { console.warn('[intel] compute failed:', e && e.message); return; }
 
-        root.innerHTML =
-            '<div class="pf-intel-row pf-intel-row--health">' +
-                healthScoreCard(I) +
-                riskExposureCard(I) +
-            '</div>' +
-            strategyAttributionCard(I) +
-            aiDecisionInsightsCard(I) +
-            '<div class="pf-intel-row pf-intel-row--trio">' +
-                recommendedActionsCard(I) +
-                riskGuardrailsCard(I) +
-                drawdownRecoveryCard(I) +
-            '</div>' +
-            tradeQualityCard(I) +
-            attentionAlertsCard(I);
+        var TABS = [
+            { id: 'overview',    label: il('Overview', 'نظرة عامة') },
+            { id: 'attribution', label: il('Attribution & AI', 'الإسناد والذكاء') },
+            { id: 'risk',        label: il('Risk & Alerts', 'المخاطر والتنبيهات') },
+            { id: 'quality',     label: il('Trade Quality', 'جودة التداول') },
+        ];
+        var tabBar = TABS.map(function(tab) {
+            return '<button class="pf-hub-tab' + (tab.id === intelTab ? ' active' : '') +
+                '" data-hub-tab="' + tab.id + '">' + tab.label + '</button>';
+        }).join('');
 
-        // Async: paint the drawdown chart from REAL equity history.
-        loadDrawdownChart();
+        var pane = intelTab === 'overview'    ? hubPaneOverview(I) :
+                   intelTab === 'attribution' ? hubPaneAttribution(I) :
+                   intelTab === 'risk'        ? hubPaneRisk(I) :
+                                                hubPaneQuality(I);
+
+        root.innerHTML =
+            '<div class="pf-hub-head">' +
+                '<div class="pf-hub-title">' + ICON('cpu') +
+                    '<span>' + il('Portfolio Intelligence', 'ذكاء المحفظة') + '</span>' +
+                '</div>' +
+                '<div class="pf-hub-tabs">' + tabBar + '</div>' +
+                '<span class="pf-live-pill"><span class="pf-live-dot"></span>' + il('Live', 'مباشر') + '</span>' +
+            '</div>' +
+            '<div class="pf-hub-pane">' + pane + '</div>';
+
+        root.querySelectorAll('.pf-hub-tab').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                intelTab = btn.dataset.hubTab;
+                renderIntelligence();
+            });
+        });
+
+        if (intelTab === 'risk') loadDrawdownChart();
+    }
+
+    /* ── Hub pane renderers (one per tab) ────────────────────────────── */
+    function hubPaneOverview(I) {
+        return '<div class="pf-hub-ov">' +
+            healthScoreCard(I) +
+            riskExposureCard(I) +
+        '</div>';
+    }
+    function hubPaneAttribution(I) {
+        return strategyAttributionCard(I) + aiDecisionInsightsCard(I);
+    }
+    function hubPaneRisk(I) {
+        return '<div class="pf-hub-risk-top">' +
+            riskGuardrailsCard(I) +
+            drawdownRecoveryCard(I) +
+        '</div>' +
+        attentionAlertsCard(I);
+    }
+    function hubPaneQuality(I) {
+        return tradeQualityCard(I) + recommendedActionsCard(I);
     }
 
     /* ── 1) Portfolio Health Score ────────────────────────────────────── */
@@ -1691,17 +1760,26 @@
         var sec = document.getElementById('holdingsSection');
         if (!sec) return;
 
-        var tabs = ['overview','performance','allocation','dividendTab'].map(function(k){
-            return '<button class="pf-tab' + (holdingsTab === k ? ' active' : '') + '" data-tab="' + k + '">' + t(k) + '</button>';
+        var HTABS = [
+            { k: 'overview',    l: t('overview') },
+            { k: 'performance', l: t('performance') },
+            { k: 'allocation',  l: t('allocation') },
+            { k: 'dividendTab', l: t('dividendTab') },
+            { k: 'orders',      l: il('Open Orders', 'الأوامر المفتوحة') },
+        ];
+        var tabs = HTABS.map(function(tb) {
+            return '<button class="pf-tab' + (holdingsTab === tb.k ? ' active' : '') + '" data-tab="' + tb.k + '">' + tb.l + '</button>';
         }).join('');
 
         var tableHtml = holdingsTab === 'overview'     ? holdingsOverviewTable()     :
                         holdingsTab === 'performance'   ? holdingsPerformanceTable()  :
                         holdingsTab === 'allocation'    ? holdingsAllocationTable()   :
+                        holdingsTab === 'orders'        ? holdingsOrdersTable()       :
                                                           holdingsDividendsTable();
         var chartHtml = holdingsTab === 'overview'     ? holdingsOverviewChart()      :
                         holdingsTab === 'performance'   ? holdingsPerformanceChart()   :
                         holdingsTab === 'allocation'    ? holdingsAllocationChart()    :
+                        holdingsTab === 'orders'        ? holdingsOrdersTable()        :
                                                           holdingsDividendsChart();
 
         var viewLabel = holdingsViewMode === 'table' ? (lang==='ar' ? 'عرض رسم بياني' : 'Chart View') : (lang==='ar' ? 'عرض جدول' : 'Table View');
@@ -1738,7 +1816,7 @@
         }
 
         // Chart initialization (after DOM rendered)
-        if (holdingsViewMode === 'chart') {
+        if (holdingsViewMode === 'chart' && holdingsTab !== 'orders') {
             setTimeout(function() {
                 if (holdingsTab === 'overview') initOverviewChart();
                 else if (holdingsTab === 'performance') initPerformanceChart();
@@ -1746,6 +1824,8 @@
                 else if (holdingsTab === 'dividendTab') initDividendChart();
             }, 50);
         }
+        // Orders tab always shows table (no chart variant)
+        if (holdingsTab === 'orders') wireCancelButtons();
 
         // Bind row clicks → drill into the dedicated stock detail page
         if (holdingsViewMode === 'table') {
@@ -1848,6 +1928,32 @@
                 '<td class="num pf-num">$' + fmt(tx.price) + '</td>' +
                 '<td class="num pf-num ' + cls + '">$' + fmt(tx.quantity * tx.price) + '</td>' +
                 '<td style="font-size:0.75rem; color:var(--muted); max-width:200px; overflow:hidden; text-overflow:ellipsis;" title="' + escHtml(tx.notes) + '">' + escHtml(tx.notes) + '</td>' +
+            '</tr>';
+        }).join('');
+        return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
+    }
+
+    /* ─── Open Orders tab (5th Holdings tab) ────────────────────────── */
+    function holdingsOrdersTable() {
+        if (!portfolio.isServer || !detailCache) {
+            return '<div class="pf-empty" style="padding:1.5rem;">' + il('Live order data requires a connected Alpaca portfolio.', 'بيانات الأوامر المباشرة تتطلب محفظة Alpaca متصلة.') + '</div>';
+        }
+        var orders = detailCache.orders || [];
+        if (!orders.length) {
+            return '<div class="pf-empty" style="padding:1.5rem;">' + il('No active open orders on Alpaca right now.', 'لا توجد أوامر مفتوحة نشطة على Alpaca حالياً.') + '</div>';
+        }
+        var ths = [il('Symbol', 'الرمز'), il('Side', 'الجهة'), il('Type', 'النوع'), il('Qty', 'الكمية'), il('Limit Price', 'سعر الحد'), il('Status', 'الحالة'), ''];
+        var rows = orders.map(function(o) {
+            var sideCls = o.side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
+            var price = parseFloat(o.limit_price || o.price || 0);
+            return '<tr>' +
+                '<td>' + symChipBySymbol(o.symbol) + '</td>' +
+                '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.66rem;padding:.15rem .5rem;">' + (o.side||'').toUpperCase() + '</span></td>' +
+                '<td class="pf-num" style="font-size:.74rem;">' + (o.type||'').toUpperCase() + ' · ' + (o.time_in_force||'').toUpperCase() + '</td>' +
+                '<td class="num pf-num">' + (o.qty||0) + '</td>' +
+                '<td class="num pf-num">' + (price > 0 ? '$' + fmt(price) : '—') + '</td>' +
+                '<td><span class="pf-badge-neu">' + (o.status||'pending') + '</span></td>' +
+                '<td><button class="pf-btn pf-btn--sm pf-btn--danger-ghost cancel-order-btn" data-order-id="' + escHtml(o.id||'') + '" style="font-size:.65rem;padding:.2rem .5rem;">' + il('Cancel', 'إلغاء') + '</button></td>' +
             '</tr>';
         }).join('');
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
