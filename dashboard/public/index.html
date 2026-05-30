@@ -424,6 +424,26 @@
 
             apply(lang);
             
+            function getLogoHtml(sym, size = 28) {
+                if (!sym) return '';
+                var ticker = sym.toUpperCase().trim();
+                var logoFile = ticker;
+                if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+                    logoFile = 'BTC_USD';
+                } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+                    logoFile = 'ETH_USD';
+                } else {
+                    logoFile = logoFile.replace('/', '-');
+                }
+                var src = '/assets/logos/' + logoFile + '.svg';
+                var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+                return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+                    'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; transition: transform 0.2s;" ' +
+                    'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+                    'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+                    'onmouseout="this.style.transform=\'scale(1)\'" />';
+            }
+
             // Fetch live ticker prices if available
             function updateMarquee() {
                 fetch('/api/market/quotes')
@@ -438,16 +458,27 @@
                             if (q) {
                                 var sign = q.change >= 0 ? '▲' : '▼';
                                 var cls = q.change >= 0 ? 'pf-pos' : 'pf-neg';
-                                html += '<div class="pf-ticker-item"><span class="sym">' + sym + '</span> <span class="price pf-num">$' + q.price.toFixed(2) + '</span> <span class="chg ' + cls + ' pf-num">' + sign + ' ' + q.changePct.toFixed(2) + '%</span></div>';
+                                html += '<div class="pf-ticker-item" style="display:inline-flex; align-items:center; gap:0.4rem;">' + getLogoHtml(sym, 16) + '<span class="sym">' + sym + '</span> <span class="price pf-num">$' + q.price.toFixed(2) + '</span> <span class="chg ' + cls + ' pf-num">' + sign + ' ' + q.changePct.toFixed(2) + '%</span></div>';
                             }
                         });
                         if (html) el.innerHTML = html + html;
-                        // Also update static market-item prices on homepage
-                        document.querySelectorAll('.market-item .sym').forEach(function(symEl) {
+                        // Also update static market-item prices and logos on homepage
+                        document.querySelectorAll('.market-item').forEach(function(itemEl) {
+                            var symEl = itemEl.querySelector('.sym');
+                            if (!symEl) return;
                             var sym = symEl.textContent.trim();
                             var q = data[sym];
+                            
+                            // Prepend logo if not already present
+                            if (!itemEl.querySelector('img')) {
+                                var imgContainer = document.createElement('div');
+                                imgContainer.innerHTML = getLogoHtml(sym, 36);
+                                imgContainer.firstElementChild.style.marginBottom = '0.35rem';
+                                itemEl.insertBefore(imgContainer.firstElementChild, symEl);
+                            }
+                            
                             if (q) {
-                                var priceEl = symEl.parentElement.querySelector('.price');
+                                var priceEl = itemEl.querySelector('.price');
                                 if (priceEl) {
                                     var sign = q.change >= 0 ? '▲' : '▼';
                                     priceEl.textContent = '$' + q.price.toFixed(2) + ' ' + sign + ' ' + Math.abs(q.changePct).toFixed(2) + '%';
