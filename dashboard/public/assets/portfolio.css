@@ -178,7 +178,7 @@
     position: sticky; top: 5rem; margin-top: 5rem; z-index: 20;
 }
 .pf-dash-header-inner {
-    max-width: 1536px; margin: 0 auto;
+    max-width: 1380px; margin: 0 auto;
     padding: .75rem 1.5rem;
     display: flex; align-items: center; gap: 1.25rem;
     flex-wrap: nowrap; overflow-x: auto;
@@ -227,7 +227,9 @@
 }
 
 /* ─── Dashboard body ────────────────────────────────────────────────── */
-.pf-dash-body { max-width: 1536px; margin: 0 auto; padding: 1.5rem; }
+/* max-width reduced to 1380px (was 1536px) so the layout breathes at typical
+   MacBook viewport widths without relying on the CSS zoom for fitting. */
+.pf-dash-body { max-width: 1380px; margin: 0 auto; padding: 1.25rem; }
 
 .pf-main-grid {
     display: grid;
@@ -2004,7 +2006,9 @@ body {
 .pf-alert.sev-low  .pf-alert-sev { background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2); }
 
 /* ── Intelligence + Hub responsive ──────────────────────────────────── */
-@media (max-width: 1100px) {
+/* Lowered from 1100px → 880px: the terminal 2-column layout now holds at
+   typical MacBook widths (1280px) without relying on the CSS zoom rule. */
+@media (max-width: 880px) {
     .pf-terminal-layout { grid-template-columns: 1fr; }
     .pf-hub-ov { grid-template-columns: 1fr; }
     .pf-hub-risk-top { grid-template-columns: 1fr; }

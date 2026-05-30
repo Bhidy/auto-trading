@@ -13,39 +13,52 @@
     <link rel="stylesheet" href="/assets/portfolio.css">
     <style>
         /* US Market Pulse Custom Styles (World-Class Terminal density) */
+        /* ─── WHY these numbers ─────────────────────────────────────────────
+           CSS `zoom:0.9` on <html> scales content visually but does NOT change
+           the layout viewport width used by @media queries — that is a known
+           Chrome/Safari behaviour difference from browser zoom.
+           A MacBook Air 13" at default scaling = ~1280 CSS px viewport.
+           Previous side-column minimums (280+300 = 580px) + gaps + CSS zoom
+           caused the 1320px breakpoint to fire and collapse to 1 column.
+           Fix: reduce side-column minimums + lower the collapse breakpoint so
+           the 3-column layout fits at 1024px and above without relying on zoom.
+           ─────────────────────────────────────────────────────────────────── */
         .mp-grid {
             display: grid;
-            grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(300px, 360px);
-            gap: 1.25rem;
+            /* Left: 230–270px  |  Center: all remaining  |  Right: 240–290px
+               Total min side columns: 230+240+2×16px gap = 502px
+               At 1024px viewport: center gets 1024−502 = 522px → fits comfortably */
+            grid-template-columns: minmax(230px, 270px) minmax(0, 1fr) minmax(240px, 290px);
+            gap: 1rem;
             width: 100%;
-            max-width: 1650px;
+            max-width: 1620px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 1.25rem;
             box-sizing: border-box;
         }
-        /* Critical: grid items default to min-width:auto (min-content), which lets
-           wide children (tables, nowrap text, canvases) force tracks past the
-           viewport and clip the side columns — in both LTR and RTL. Allow shrink. */
+        /* Grid children must never force tracks wider than the viewport */
         .mp-grid > * { min-width: 0; }
         .mp-grid > * > * { min-width: 0; }
         body { overflow-x: hidden; }
-        /* Tablet: collapse to two columns (workspace + right rail), watchlist on top */
-        @media (max-width: 1320px) {
+
+        /* Narrow desktop/tablet (< 960px): 2-column, left panel on top */
+        @media (max-width: 960px) {
             .mp-grid {
-                grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
+                grid-template-columns: minmax(0, 1fr) minmax(230px, 270px);
+                padding: 1rem;
             }
             .mp-grid > :first-child {
                 grid-column: 1 / -1;
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                gap: 1.25rem;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 1rem;
             }
         }
         /* Mobile: single column */
-        @media (max-width: 960px) {
+        @media (max-width: 680px) {
             .mp-grid {
                 grid-template-columns: 1fr;
-                padding: 1rem;
+                padding: 0.75rem;
             }
             .mp-grid > :first-child {
                 grid-template-columns: 1fr;
