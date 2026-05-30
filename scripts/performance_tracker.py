@@ -5,9 +5,15 @@ Tracks every trade outcome, computes win rates, and adapts strategy parameters.
 """
 import json
 import os
+import sys
 from datetime import datetime, timezone, timedelta
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+from shared.accounting import realized_pnl  # noqa: E402
 
 def load_json(filename, default=None):
     path = os.path.join(DATA_DIR, filename)
@@ -61,12 +67,15 @@ def close_trade(trade_id, exit_price):
             entry = datetime.fromisoformat(trade["timestamp"])
             trade["hold_days"] = (datetime.now(timezone.utc) - entry).days
 
-            if trade["side"] == "buy":
-                trade["pnl"] = round((exit_price - trade["entry_price"]) * trade["qty"], 2)
-                trade["pnl_pct"] = round((exit_price - trade["entry_price"]) / trade["entry_price"] * 100, 2)
-            else:
-                trade["pnl"] = round((trade["entry_price"] - exit_price) * trade["qty"], 2)
-                trade["pnl_pct"] = round((trade["entry_price"] - exit_price) / trade["entry_price"] * 100, 2)
+            # Net-of-fee realized P&L (C5): logged P&L now reflects round-trip
+            # regulatory fees so Sharpe/profit-factor/readiness gates are honest.
+            r = realized_pnl(trade["side"], trade["qty"], trade["entry_price"],
+                             exit_price)
+            entry_notional = abs(trade["entry_price"] * trade["qty"]) or 1.0
+            trade["gross_pnl"] = r["gross_pnl"]
+            trade["fees"] = r["fees"]
+            trade["pnl"] = r["net_pnl"]
+            trade["pnl_pct"] = round(r["net_pnl"] / entry_notional * 100, 2)
             trade["status"] = "closed"
             break
     save_json("trade_log.json", log)
