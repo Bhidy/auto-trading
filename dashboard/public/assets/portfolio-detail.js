@@ -1168,6 +1168,20 @@
     /* ── Tier 2 Sidebar: Contributors + Quick Risk Status ─────────────── */
     var sidebarTab = 'contributors'; // 'contributors' | 'risk'
 
+    /* Measure the actual rendered height of the holdings section and apply
+       it as max-height to the sidebar so both are pixel-perfect equal.
+       Called after every render that could change either column's height. */
+    function syncSidebarHeight() {
+        var mainEl = document.querySelector('.pf-terminal-main');
+        var sideEl = document.getElementById('terminalSidebar');
+        if (!mainEl || !sideEl) return;
+        var h = Math.round(mainEl.getBoundingClientRect().height);
+        if (h > 0) {
+            sideEl.style.maxHeight = h + 'px';
+            sideEl.style.overflow  = 'hidden';
+        }
+    }
+
     function renderSidebar() {
         var sb = document.getElementById('terminalSidebar');
         if (!sb) return;
@@ -1216,6 +1230,8 @@
         });
 
         if (isContrib) wireContribTabs();
+        // Sync sidebar height to holdings column after content paints
+        setTimeout(syncSidebarHeight, 80);
     }
 
     /* ── Tier 3 Intelligence Hub Orchestrator (tabbed card) ───────────── */
@@ -1824,6 +1840,8 @@
 
         // Wire sort on all tables in this section
         if (holdingsViewMode === 'table') setTimeout(function() { wireAllTables(sec); }, 0);
+        // Sync sidebar height to match this column's real height
+        setTimeout(syncSidebarHeight, 80);
 
         sec.querySelectorAll('.pf-tab').forEach(function(tabEl){
             tabEl.addEventListener('click', function(){ holdingsViewMode = 'table'; renderHoldings(tabEl.dataset.tab); });

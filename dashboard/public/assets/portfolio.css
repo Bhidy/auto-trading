@@ -1592,11 +1592,12 @@ body {
 }
 .pf-terminal-main .pf-table-scroll::-webkit-scrollbar { display: none; }
 
-/* Sidebar: capped to same visual height as holdings (head ~3.5rem + table 23rem) */
+/* Sidebar: max-height is set dynamically by JS (syncSidebarHeight)
+   to exactly match the measured height of .pf-terminal-main */
 .pf-terminal-side {
     display: flex;
     flex-direction: column;
-    max-height: 26.5rem;    /* matches holdings tab-bar + 6-row table */
+    overflow: hidden;       /* clips content when JS applies max-height */
 }
 
 /* Sidebar card: flex-column so tab bar stays fixed, pane scrolls */
