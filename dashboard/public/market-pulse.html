@@ -537,6 +537,120 @@
             stroke: var(--teal);
         }
 
+        /* Chart expand (full-screen) icon button */
+        .chart-expand-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.95rem;
+            height: 1.95rem;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--muted);
+            cursor: pointer;
+            transition: color 160ms ease, border-color 160ms ease, background 160ms ease, transform 160ms ease;
+        }
+        .chart-expand-btn:hover {
+            color: var(--teal);
+            border-color: rgba(229, 90, 31, 0.40);
+            background: var(--teal-soft);
+            transform: translateY(-1px);
+        }
+
+        /* Full-screen professional charting overlay */
+        .full-chart-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: var(--page);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.985);
+            transition: opacity 220ms ease, transform 220ms ease, visibility 0s linear 220ms;
+        }
+        .full-chart-overlay.open {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            transition: opacity 220ms ease, transform 220ms ease;
+        }
+        .full-chart-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+        .full-chart-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+        .full-chart-badge {
+            font-family: var(--pf-mono);
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #FFF7EE;
+            background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+        .full-chart-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.15rem;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .full-chart-hint {
+            font-size: 0.72rem;
+            color: var(--muted);
+            border-inline-start: 1px solid var(--line);
+            padding-inline-start: 0.75rem;
+        }
+        .full-chart-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.4rem;
+            height: 2.4rem;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--page);
+            color: var(--ink);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+        }
+        .full-chart-close:hover {
+            color: var(--teal);
+            border-color: rgba(229, 90, 31, 0.40);
+            background: var(--teal-soft);
+        }
+        .full-chart-stage {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+        .full-chart-mount {
+            position: absolute;
+            inset: 0;
+        }
+        .full-chart-mount iframe { border: none; }
+        @media (max-width: 680px) {
+            .full-chart-hint { display: none; }
+            .full-chart-name { font-size: 1rem; }
+        }
+
         /* Custom alert notification toast */
         .order-toast {
             position: fixed;
@@ -938,6 +1052,9 @@
                             <button class="pf-btn pf-btn--sm" data-range="6M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">6M</button>
                             <button class="pf-btn pf-btn--sm" data-range="1Y" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1Y</button>
                         </div>
+                        <button class="chart-expand-btn" id="btnExpandChart" type="button" title="Full-screen pro chart" aria-label="Open full-screen professional chart">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                        </button>
                     </div>
                 </div>
 
@@ -1122,6 +1239,23 @@
             <div class="pf-ticker-item"><span class="sym">SPY</span> <span class="price pf-num">—</span> <span class="chg pf-pos pf-num">—</span></div>
             <div class="pf-ticker-item"><span class="sym">QQQ</span> <span class="price pf-num">—</span> <span class="chg pf-pos pf-num">—</span></div>
             <div class="pf-ticker-item"><span class="sym">DIA</span> <span class="price pf-num">—</span> <span class="chg pf-neg pf-num">—</span></div>
+        </div>
+    </div>
+
+    <!-- Full-screen professional charting overlay (TradingView Advanced Chart) -->
+    <div id="fullChartOverlay" class="full-chart-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Professional chart">
+        <div class="full-chart-bar">
+            <div class="full-chart-title">
+                <span class="full-chart-badge" id="fullChartBadge">META</span>
+                <span class="full-chart-name" id="fullChartName">Professional Charting Terminal</span>
+                <span class="full-chart-hint">Drawing tools, indicators &amp; multi-timeframe analysis</span>
+            </div>
+            <button class="full-chart-close" id="btnCloseFullChart" type="button" aria-label="Close full-screen chart" title="Close (Esc)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="full-chart-stage">
+            <div id="tvChartContainer" class="full-chart-mount"></div>
         </div>
     </div>
 

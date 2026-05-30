@@ -1789,6 +1789,116 @@
         optionsTab.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
+    /* ─── Full-screen professional chart (TradingView Advanced Chart) ──────
+       The compact in-page candlestick canvas stays the default view. The
+       expand icon opens a full-viewport overlay with TradingView's pro chart
+       engine: drawing tools, 100+ studies, multi-timeframe — themed to match. */
+    var TV_EXCHANGE = {
+        SPY: 'AMEX', DIA: 'AMEX', IWM: 'AMEX', GLD: 'AMEX', BIL: 'AMEX',
+        XLK: 'AMEX', XLE: 'AMEX', XLF: 'AMEX', XLV: 'AMEX', XLY: 'AMEX', XLI: 'AMEX',
+        XLU: 'AMEX', XLP: 'AMEX', XLB: 'AMEX', XLRE: 'AMEX', XLC: 'AMEX',
+        QQQ: 'NASDAQ', TLT: 'NASDAQ', SHY: 'NASDAQ',
+        NVDA: 'NASDAQ', AAPL: 'NASDAQ', MSFT: 'NASDAQ', GOOGL: 'NASDAQ', AMZN: 'NASDAQ',
+        META: 'NASDAQ', TSLA: 'NASDAQ', AMD: 'NASDAQ', NFLX: 'NASDAQ', INTC: 'NASDAQ'
+    };
+    function tvSymbolFor(sym) {
+        var ex = TV_EXCHANGE[sym];
+        return ex ? ex + ':' + sym : sym;
+    }
+
+    var tvScriptPromise = null;
+    function loadTradingView() {
+        if (window.TradingView && window.TradingView.widget) return Promise.resolve();
+        if (tvScriptPromise) return tvScriptPromise;
+        tvScriptPromise = new Promise(function (resolve, reject) {
+            var s = document.createElement('script');
+            s.src = 'https://s3.tradingview.com/tv.js';
+            s.async = true;
+            s.onload = function () { resolve(); };
+            s.onerror = function () { tvScriptPromise = null; reject(new Error('TradingView failed to load')); };
+            document.head.appendChild(s);
+        });
+        return tvScriptPromise;
+    }
+
+    var tvMountedSymbol = null;
+    function mountTradingViewWidget() {
+        var mount = document.getElementById('tvChartContainer');
+        if (!mount || !window.TradingView) return;
+        mount.innerHTML = '';
+        var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+        tvMountedSymbol = activeSymbol;
+        new TradingView.widget({
+            container_id: 'tvChartContainer',
+            autosize: true,
+            symbol: tvSymbolFor(activeSymbol),
+            interval: 'D',
+            timezone: 'America/New_York',
+            theme: isDark ? 'dark' : 'light',
+            style: '1',
+            locale: (lang === 'ar' ? 'ar' : 'en'),
+            toolbar_bg: isDark ? '#1A0F08' : '#FFFFFF',
+            enable_publishing: false,
+            hide_side_toolbar: false,
+            allow_symbol_change: true,
+            withdateranges: true,
+            details: true,
+            hotlist: false,
+            calendar: false,
+            studies: ['MASimple@tv-basicstudies', 'Volume@tv-basicstudies']
+        });
+    }
+
+    function openFullChart() {
+        var overlay = document.getElementById('fullChartOverlay');
+        if (!overlay) return;
+        var badge = document.getElementById('fullChartBadge');
+        var name = document.getElementById('fullChartName');
+        if (badge) badge.textContent = activeSymbol;
+        if (name) name.textContent = companyNames[activeSymbol] || activeSymbol;
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        loadTradingView().then(function () {
+            var mount = document.getElementById('tvChartContainer');
+            // (Re)mount only when the symbol changed or nothing is mounted —
+            // this preserves the user's drawings when re-opening the same symbol.
+            if (tvMountedSymbol !== activeSymbol || !mount || !mount.hasChildNodes()) {
+                mountTradingViewWidget();
+            }
+        }).catch(function () {
+            var mount = document.getElementById('tvChartContainer');
+            if (mount) mount.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:2rem;text-align:center;color:var(--muted);font-size:0.9rem;">Professional chart is temporarily unavailable. Check your connection and try again.</div>';
+        });
+    }
+
+    function closeFullChart() {
+        var overlay = document.getElementById('fullChartOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('open');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    function initFullChart() {
+        var expandBtn = document.getElementById('btnExpandChart');
+        var closeBtn = document.getElementById('btnCloseFullChart');
+        if (expandBtn) expandBtn.addEventListener('click', openFullChart);
+        if (closeBtn) closeBtn.addEventListener('click', closeFullChart);
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            var overlay = document.getElementById('fullChartOverlay');
+            if (overlay && overlay.classList.contains('open')) closeFullChart();
+        });
+        // Re-theme the pro chart live if the user toggles light/dark while open.
+        document.addEventListener('starta:themechange', function () {
+            var overlay = document.getElementById('fullChartOverlay');
+            if (overlay && overlay.classList.contains('open') && window.TradingView) {
+                mountTradingViewWidget();
+            }
+        });
+    }
+
     var activePeriod = '1D';
     var intradayRefreshTimer = null;
 
@@ -1888,6 +1998,7 @@
         applyTranslations(lang);
         applyNavLang(lang);
         bindControls();
+        initFullChart();
 
         loadMarketClock();
         loadUSNews();
