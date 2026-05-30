@@ -81,6 +81,83 @@ def make_client_order_id(prefix, symbol, side, day=None):
     return f"{prefix}-{day}-{safe_symbol}-{side}"
 
 
+def evaluate_asset_gate(asset, signal_side, *, quote_fresh=True,
+                        require_borrow_for_short=True):
+    """Pure pre-trade tradability + borrow gate for a NEW entry (BUY or SHORT).
+
+    This is the single source of truth for the two critical real-money safety
+    gates the audit flagged:
+
+      * Easy-to-borrow (ETB): P1 actively places SHORT (sell-to-open) orders. A
+        short on a hard-to-borrow name is canceled pre-market or charged punitive
+        borrow fees, silently corrupting risk and P&L. A SHORT is therefore
+        FAIL-CLOSED: it is rejected unless the asset is confirmed shortable AND
+        easy_to_borrow. Borrow status changes daily, so callers must pass a FRESH
+        asset (re-checked at execution time, not cached).
+
+      * Halt / not-tradable: new entries into a non-tradable/inactive asset, or
+        one whose market data is stale (a halt proxy), are rejected. Exits are
+        never routed through this gate, so risk-reducing closes are unaffected.
+
+    Args:
+        asset: dict from Alpaca ``GET /v2/assets/{symbol}`` (or None if the
+            lookup failed / was unavailable).
+        signal_side: "BUY" / "LONG" or "SHORT" / "SELL_SHORT".
+        quote_fresh: caller-computed freshness of the latest quote/trade during
+            market hours. False is treated as a possible halt/LULD condition and
+            blocks NEW entries.
+        require_borrow_for_short: keep True in production. Only relax in tests.
+
+    Returns:
+        (ok: bool, reasons: list[str], asset_info: dict)
+    """
+    side = str(signal_side or "").upper()
+    is_short = side in ("SHORT", "SELL_SHORT", "SELL")
+    reasons = []
+
+    if asset is None:
+        # No broker confirmation available. Longs may proceed (the broker will
+        # reject an untradable symbol anyway); shorts FAIL CLOSED — you cannot
+        # short what you cannot confirm is borrowable.
+        info = {"tradable": None, "shortable": None, "easy_to_borrow": None,
+                "status": None, "borrow_verified": False}
+        if is_short and require_borrow_for_short:
+            reasons.append("SHORT blocked: borrow status unverified "
+                           "(no asset metadata; fail-closed)")
+            return False, reasons, info
+        if not quote_fresh:
+            reasons.append("New entry blocked: market data stale (possible halt)")
+            return False, reasons, info
+        return True, reasons, info
+
+    status = asset.get("status")
+    tradable = bool(asset.get("tradable", False))
+    shortable = bool(asset.get("shortable", False))
+    etb = bool(asset.get("easy_to_borrow", False))
+    info = {
+        "tradable": tradable,
+        "shortable": shortable,
+        "easy_to_borrow": etb,
+        "status": status,
+        "borrow_verified": bool(asset),
+    }
+
+    if status is not None and status != "active":
+        reasons.append(f"Asset not active (status={status})")
+    if not tradable:
+        reasons.append("Asset not tradable on the broker")
+    if not quote_fresh:
+        reasons.append("New entry blocked: market data stale (possible halt/LULD)")
+
+    if is_short and require_borrow_for_short:
+        if not shortable:
+            reasons.append("SHORT blocked: asset is not shortable")
+        elif not etb:
+            reasons.append("SHORT blocked: asset is not easy-to-borrow (HTB)")
+
+    return (len(reasons) == 0), reasons, info
+
+
 def confirm_fill(client, order_id, timeout=8.0, poll=1.0, logger=None):
     """Poll an order until terminal/filled or timeout.
 

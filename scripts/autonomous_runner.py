@@ -105,6 +105,16 @@ class AlpacaClient:
     def get_orders(self, status="open"):
         return self._get(f"{self.base_url}/v2/orders", {"status": status})
 
+    def get_asset(self, symbol):
+        """Fetch the broker asset record (tradable/shortable/easy_to_borrow/status).
+        Returns None on 404 so callers fail-closed on shorts."""
+        try:
+            return self._get(f"{self.base_url}/v2/assets/{symbol}")
+        except requests.HTTPError as e:
+            if getattr(e, "response", None) is not None and e.response.status_code == 404:
+                return None
+            raise
+
     def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
         params = {"timeframe": timeframe, "limit": limit, "feed": "sip"}
         if start:
@@ -194,6 +204,43 @@ def get_instrument_type(symbol):
 
 # make_client_order_id and confirm_fill are imported from shared.alpaca_http
 # (single source of truth shared by P1/P2/P3).
+
+
+def _quote_is_fresh(alpaca, symbol, max_age_s=900):
+    """Best-effort halt proxy: is the latest trade recent during market hours?
+    Returns True on any error so a data hiccup never blocks risk-reducing flow;
+    the ETB short gate is enforced independently and remains fail-closed."""
+    try:
+        tr = alpaca.get_latest_trade(symbol).get("trade", {})
+        ts = tr.get("t")
+        if not ts:
+            return True
+        t = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        age = (datetime.now(timezone.utc) - t).total_seconds()
+        return age <= max_age_s
+    except Exception:
+        return True
+
+
+def _build_asset_lookup(alpaca):
+    """Return `symbol -> asset_info` for the risk officer. Carries the broker
+    asset record (tradable/shortable/easy_to_borrow/status) plus a `quote_fresh`
+    halt proxy. Cached per session to avoid duplicate calls."""
+    cache = {}
+
+    def lookup(symbol):
+        if not symbol:
+            return None
+        if symbol in cache:
+            return cache[symbol]
+        asset = alpaca.get_asset(symbol)
+        info = dict(asset) if isinstance(asset, dict) else None
+        if info is not None:
+            info["quote_fresh"] = _quote_is_fresh(alpaca, symbol)
+        cache[symbol] = info
+        return info
+
+    return lookup
 
 
 # ---------------------------------------------------------------------------
@@ -322,7 +369,7 @@ def run_trading_session(alpaca: AlpacaClient):
     portfolio_state["crypto_exposure"] = 0
     save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
 
-    validated = run_validation()
+    validated = run_validation(asset_lookup=_build_asset_lookup(alpaca))
     approved = validated.get("approved_orders", [])
     log.info(f"Validated: {validated['summary']['approved']} approved, {validated['summary']['rejected']} rejected")
 
@@ -365,6 +412,17 @@ def run_trading_session(alpaca: AlpacaClient):
 
         itype = get_instrument_type(symbol)
         side = "buy" if signal == "BUY" else "sell"
+
+        # Money-path re-check: borrow status changes daily, so re-confirm ETB
+        # immediately before opening a short. Fail-closed — skip if not ETB.
+        if signal == "SHORT" and itype != "crypto":
+            from shared.alpaca_http import evaluate_asset_gate
+            ok_short, short_reasons, _ = evaluate_asset_gate(
+                alpaca.get_asset(symbol), "SHORT")
+            if not ok_short:
+                log.warning(f"  SHORT {symbol} skipped at execution: "
+                            f"{'; '.join(short_reasons)}")
+                continue
 
         coid = make_client_order_id("p1", symbol, side)
         try:
@@ -583,10 +641,13 @@ def reconcile_positions(alpaca: AlpacaClient):
     positions = alpaca.get_positions()
     pos_syms = [p.get("symbol") for p in positions if p.get("symbol")]
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
-    open_syms = [t.get("symbol") for t in trade_log
-                 if t.get("status") == "open" and t.get("symbol")]
+    open_trades = [t for t in trade_log if t.get("status") == "open" and t.get("symbol")]
+    open_syms = [t.get("symbol") for t in open_trades]
 
-    report = compute_drift(pos_syms, open_syms)
+    # Pass detailed records so qty + cost-basis drift (C6) is caught, not just
+    # symbol presence — a partial fill or missed corporate action shows up here.
+    report = compute_drift(pos_syms, open_syms, positions=positions,
+                           open_trades=open_trades)
     save_json(DATA_DIR / "reconciliation_report.json", report)
     if report["in_sync"]:
         log.info("  Reconciliation: trade log and broker positions in sync")
@@ -597,6 +658,12 @@ def reconcile_positions(alpaca: AlpacaClient):
         if report["unlogged_positions"]:
             log.warning(f"  Reconciliation: {len(report['unlogged_positions'])} live position(s) "
                         f"not in trade log: {report['unlogged_positions']}")
+        if report.get("qty_drift"):
+            log.warning(f"  Reconciliation: quantity drift on "
+                        f"{[d['symbol'] for d in report['qty_drift']]}")
+        if report.get("cost_basis_drift"):
+            log.warning(f"  Reconciliation: cost-basis drift on "
+                        f"{[d['symbol'] for d in report['cost_basis_drift']]}")
     return report
 
 

@@ -5,11 +5,17 @@ Enforces institutional guardrails that cannot be overridden.
 """
 import json
 import os
+import sys
 from datetime import datetime, timezone
 
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "..", "config")
 JOURNAL_DIR = os.path.join(os.path.dirname(__file__), "..", "journal")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+from shared.alpaca_http import evaluate_asset_gate  # noqa: E402
 
 def load_config():
     with open(os.path.join(CONFIG_DIR, "risk_limits.json")) as f:
@@ -46,7 +52,15 @@ def save_portfolio_state(state):
     with open(os.path.join(DATA_DIR, "portfolio_state.json"), "w") as f:
         json.dump(state, f, indent=2)
 
-def validate_trade(signal, portfolio, limits):
+def validate_trade(signal, portfolio, limits, asset_info=None):
+    """Validate a single signal against hardcoded limits.
+
+    `asset_info`: optional dict from a fresh Alpaca asset lookup (tradable,
+    shortable, easy_to_borrow, status) plus an optional `quote_fresh` flag. When
+    present it enforces the ETB short gate and the halt/not-tradable gate. A
+    SHORT with no borrow confirmation is FAIL-CLOSED (rejected) — you cannot
+    short what you cannot confirm is borrowable.
+    """
     rejections = []
     symbol = signal.get("symbol", "UNKNOWN")
     sig = signal.get("signal", "INSUFFICIENT_DATA")
@@ -68,6 +82,19 @@ def validate_trade(signal, portfolio, limits):
     if price is None or price <= 0:
         return {"approved": False, "symbol": symbol, "signal": sig,
                 "rejections": [f"No valid price for {symbol} (price={price})"]}
+
+    # --- Asset tradability + easy-to-borrow gate (C1/C3) ---
+    # Crypto is exempt from equity ETB/halt rules. For everything else: a SHORT
+    # is fail-closed unless a fresh asset lookup confirms shortable + ETB; a new
+    # entry into a non-tradable / inactive / stale (halted) asset is rejected.
+    # Exits never pass through validate_trade, so closes are unaffected.
+    if instrument_type != "crypto":
+        a = dict(asset_info) if isinstance(asset_info, dict) else None
+        quote_fresh = a.pop("quote_fresh", True) if a is not None else True
+        ok_gate, gate_reasons, _gate_info = evaluate_asset_gate(
+            a, sig, quote_fresh=quote_fresh)
+        if not ok_gate:
+            rejections.extend(gate_reasons)
 
     rm = signal.get("risk_management", {})
     suggested_pct = rm.get("suggested_position_pct") or signal.get("suggested_position_size_pct") or 1.0
@@ -149,7 +176,14 @@ def validate_trade(signal, portfolio, limits):
         result["take_profit"] = take_profit
     return result
 
-def run_validation():
+def run_validation(asset_lookup=None):
+    """Validate all pending signals.
+
+    `asset_lookup`: optional callable `symbol -> asset_info dict` (a fresh Alpaca
+    asset record, optionally carrying `quote_fresh`). When supplied it enforces
+    the ETB short gate and halt/not-tradable gate on the live money path. Lookup
+    failures fail-closed: a SHORT with no confirmable borrow is rejected.
+    """
     limits = load_config()
     signals = load_signals()
     portfolio = load_portfolio_state()
@@ -158,7 +192,13 @@ def run_validation():
     rejected_orders = []
 
     for signal in signals.get("signals", []):
-        result = validate_trade(signal, portfolio, limits)
+        asset_info = None
+        if asset_lookup is not None:
+            try:
+                asset_info = asset_lookup(signal.get("symbol"))
+            except Exception:
+                asset_info = None  # fail-closed (shorts get rejected downstream)
+        result = validate_trade(signal, portfolio, limits, asset_info=asset_info)
         result["confidence"] = signal.get("score", signal.get("confidence", 0))
         result["reasons"] = signal.get("reasons", [])
         if result["approved"]:
