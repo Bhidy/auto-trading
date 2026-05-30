@@ -1180,9 +1180,9 @@
                     <div class="mp-spark-holder" style="flex:1; display:flex; justify-content:center; align-items:center; min-width:55px; opacity:0.8;">
                         ${getSvgSparkline(sym, isPos)}
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.6rem; justify-content:flex-end; width:110px; flex-shrink:0;">
-                        <span class="pf-num" style="font-size:0.85rem; font-weight:700; color:var(--ink);">${db.price ? '$' + db.price.toFixed(2) : '—'}</span>
-                        <span class="pf-num ${cls}" style="font-size:0.75rem; font-weight:600; width:52px; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
+                    <div style="display:flex; align-items:center; gap:0.55rem; justify-content:flex-end; width:104px; flex-shrink:0;">
+                        <span class="pf-num" style="font-size:0.76rem; font-weight:700; color:var(--ink);">${db.price ? '$' + db.price.toFixed(2) : '—'}</span>
+                        <span class="pf-num ${cls}" style="font-size:0.68rem; font-weight:600; width:48px; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
                     </div>
                 `;
                 row.addEventListener('click', function () { loadStockDetails(sym); });

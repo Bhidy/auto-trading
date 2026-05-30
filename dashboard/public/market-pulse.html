@@ -188,11 +188,11 @@
         .mp-list-symbol {
             font-family: var(--pf-mono);
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.76rem;
             color: var(--ink);
         }
         .mp-list-name {
-            font-size: 0.7rem;
+            font-size: 0.63rem;
             color: var(--muted);
             white-space: nowrap;
             overflow: hidden;
@@ -644,19 +644,16 @@
             flex-direction: column;
             gap: 0.35rem;
             overflow-y: auto;
-            padding-inline-end: 0.25rem;
-            scrollbar-gutter: stable;
+            padding-inline-end: 0.1rem;
             overscroll-behavior: contain;
+            /* Hidden scrollbar — content still scrolls (wheel/trackpad/touch) */
+            scrollbar-width: none;        /* Firefox */
+            -ms-overflow-style: none;     /* legacy Edge/IE */
         }
         .scrollable-sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .scrollable-sidebar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scrollable-sidebar::-webkit-scrollbar-thumb {
-            background: var(--line);
-            border-radius: 99px;
+            width: 0;
+            height: 0;
+            display: none;                /* Chrome / Safari / Edge */
         }
 
         /* Anti-flicker: prevent layout shifts while data loads */
