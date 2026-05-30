@@ -1230,7 +1230,6 @@
             { id: 'overview',    label: il('Overview', 'نظرة عامة') },
             { id: 'attribution', label: il('Attribution & AI', 'الإسناد والذكاء') },
             { id: 'risk',        label: il('Risk & Alerts', 'المخاطر والتنبيهات') },
-            { id: 'quality',     label: il('Trade Quality', 'جودة التداول') },
         ];
         var tabBar = TABS.map(function(tab) {
             return '<button class="pf-hub-tab' + (tab.id === intelTab ? ' active' : '') +
@@ -1239,8 +1238,7 @@
 
         var pane = intelTab === 'overview'    ? hubPaneOverview(I) :
                    intelTab === 'attribution' ? hubPaneAttribution(I) :
-                   intelTab === 'risk'        ? hubPaneRisk(I) :
-                                                hubPaneQuality(I);
+                                                hubPaneRisk(I);
 
         root.innerHTML =
             '<div class="pf-hub-head">' +
@@ -1267,7 +1265,8 @@
         return '<div class="pf-hub-ov">' +
             healthScoreCard(I) +
             riskExposureCard(I) +
-        '</div>';
+        '</div>' +
+        tradeQualityCard(I);
     }
     function hubPaneAttribution(I) {
         return strategyAttributionCard(I) + aiDecisionInsightsCard(I);
