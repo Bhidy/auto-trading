@@ -32,6 +32,62 @@ logging.basicConfig(
 log = logging.getLogger("politician_bot")
 
 
+# ---------------------------------------------------------------------------
+# SIGNAL-HIERARCHY HELPERS (T9) — pure + unit-testable.
+#
+# Congressional disclosures are structurally delayed (the STOCK Act allows 30-45
+# days from transaction to disclosure). They are therefore RESEARCH-GRADE
+# CONTEXT, never fresh alpha. Two disciplines follow: (1) reject trades whose
+# underlying transaction is already stale, and (2) never copy on the political
+# signal alone — require a corroborating technical confirmation.
+# ---------------------------------------------------------------------------
+
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value)[:10])
+    except ValueError:
+        return None
+
+
+def disclosure_age_days(trade, now=None):
+    """Days from the actual transaction date (the conservative staleness measure)
+    to `now`. Falls back to published/disclosed date. None if unparseable."""
+    now = now or datetime.now()
+    dates = trade.get("dates", {}) if isinstance(trade, dict) else {}
+    txn = (_parse_date(dates.get("trade"))
+           or _parse_date(dates.get("transaction"))
+           or _parse_date(dates.get("published"))
+           or _parse_date(dates.get("disclosed")))
+    if txn is None:
+        return None
+    return (now - txn).days
+
+
+def is_fresh_enough(trade, max_age_days, now=None):
+    """A congressional copy is actionable only if its transaction is recent
+    enough to still be relevant. Unknown age FAILS CLOSED (treated as stale)."""
+    age = disclosure_age_days(trade, now=now)
+    if age is None:
+        return False
+    return 0 <= age <= max_age_days
+
+
+def confirm_with_technicals(closes, ma_period=20, min_momentum_pct=0.0):
+    """Technical confirmation overlay: a delayed political signal is only copied
+    when price action still agrees. Requires price above its `ma_period` SMA and
+    non-negative recent momentum. Insufficient data FAILS CLOSED."""
+    if not closes or len(closes) < ma_period + 1:
+        return False
+    ma = sum(closes[-ma_period:]) / ma_period
+    price = closes[-1]
+    lookback = min(ma_period, len(closes) - 1)
+    prior = closes[-1 - lookback]
+    momentum_pct = ((price - prior) / prior * 100) if prior else 0.0
+    return price > ma and momentum_pct >= min_momentum_pct
+
+
 class AlpacaClient:
     def __init__(self, config_path: Path):
         with open(config_path) as f:
@@ -104,6 +160,13 @@ class AlpacaClient:
 
     def is_market_open(self) -> bool:
         return self.get_clock().get("is_open", False)
+
+    def get_stock_bars(self, symbol: str, timeframe: str = "1Day", limit: int = 40) -> list:
+        """Recent daily bars for the technical-confirmation overlay (T9)."""
+        resp = self.get(f"/v2/stocks/{symbol}/bars",
+                        {"timeframe": timeframe, "limit": limit, "feed": "iex"},
+                        use_data_url=True)
+        return resp.get("bars", []) or []
 
 
 class RiskManager:
@@ -235,6 +298,13 @@ class PoliticianBot:
         tx_type = (trade.get("transaction", {}).get("type", "") or "").upper()
         if tx_type not in [t.upper() for t in cfg["transaction_types"]]:
             return False
+        # T9: reject decayed signals — a delayed disclosure whose transaction is
+        # already stale is research context, not a tradeable edge. Fails closed.
+        if not is_fresh_enough(trade, self._max_disclosure_age()):
+            age = disclosure_age_days(trade)
+            log.info(f"Skipping stale disclosure ({age}d old) for "
+                     f"{trade.get('issuer', {}).get('ticker', '?')}")
+            return False
         issuer = trade.get("issuer", {}).get("name", "")
         ticker = trade.get("issuer", {}).get("ticker", "")
         if cfg.get("skip_private_investments") and ticker == "N/A" and not issuer.startswith("SPDR"):
@@ -250,6 +320,12 @@ class PoliticianBot:
     def _is_sell_signal(self, trade: dict) -> bool:
         tx_type = (trade.get("transaction", {}).get("type", "") or "").upper()
         return tx_type == "SELL"
+
+    def _max_disclosure_age(self) -> int:
+        """Max age (days) of the underlying transaction we will still copy.
+        Default 45 (the STOCK Act disclosure window) — older = decayed edge."""
+        return int(self.watchlist_cfg.get("copy_filters", {})
+                   .get("max_transaction_age_days", 45))
 
     def scan_politician_trades(self) -> list:
         primary = self.watchlist_cfg["primary_politician"]
@@ -347,6 +423,20 @@ class PoliticianBot:
             existing_pct = abs(float(existing["market_value"])) / equity * 100
             if existing_pct >= self.risk.limits["max_single_position_pct"] * 0.8:
                 log.info(f"Already hold {existing_pct:.1f}% of {ticker}, skipping add")
+                return None
+
+        # T9 confirmation overlay: never copy on the (delayed) political signal
+        # alone. Require price action to still agree. Fails closed when required.
+        if self.watchlist_cfg.get("copy_filters", {}).get("require_technical_confirmation", True):
+            try:
+                bars = self.alpaca.get_stock_bars(ticker, limit=40)
+                closes = [float(b.get("c", 0)) for b in bars if b.get("c")]
+            except Exception as e:
+                log.warning(f"Confirmation bars unavailable for {ticker}: {e}")
+                closes = []
+            if not confirm_with_technicals(closes):
+                log.info(f"Skipping {ticker}: no technical confirmation of the "
+                         f"delayed congressional signal")
                 return None
 
         reported_size = trade.get("transaction", {}).get("size", "1K–15K")

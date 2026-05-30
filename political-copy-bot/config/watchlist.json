@@ -12,7 +12,9 @@
     "min_trade_size": "1K–15K",
     "skip_private_investments": true,
     "skip_municipal_bonds": true,
-    "skip_treasury_bills": true
+    "skip_treasury_bills": true,
+    "max_transaction_age_days": 45,
+    "require_technical_confirmation": true
   },
   "sell_logic": {
     "copy_politician_sells": true,
