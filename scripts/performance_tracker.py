@@ -287,6 +287,16 @@ def adapt_parameters(validate_with_bars=None):
 
     save_json("strategy_params.json", params)
 
+    # Automated governance (C4): record provenance for every adaptation decision
+    # and maintain a last-known-good snapshot for automatic rollback. No human in
+    # the loop — the walk-forward + overfitting gate is the deterministic approver.
+    try:
+        from shared.governance import record_param_change
+        record_param_change(DATA_DIR, original, params, gate_detail,
+                            gated_knobs=_GATED_KNOBS)
+    except Exception:
+        pass  # provenance must never break the trading loop
+
     return {
         "metrics_7d": metrics_7d,
         "metrics_30d": metrics_30d,
