@@ -68,7 +68,7 @@ GitHub Actions (CI/CD)           Vercel (Dashboard)
 ## GitHub Actions Workflow Architecture
 
 ### Critical: Concurrency Groups (PER PORTFOLIO — NOT shared!)
-All 9 workflows use isolated concurrency groups (`p1-trading`, `p1-monitor`, `p2-trading`, etc.). This ensures P1, P2, and P3 can ALL run in parallel without blocking each other.
+All 9 trading/monitor/EOD/weekly workflows use isolated concurrency groups (`p1-trading`, `p1-monitor`, `p2-trading`, etc.). This ensures P1, P2, and P3 can ALL run in parallel without blocking each other. (There are now **14 workflows total** — the 9 trading ones plus `ci`, `codeql`, `heartbeat`, `market-data`, `smoke-test`; see the ENTERPRISE HARDENING section.)
 
 ### Workflows by Portfolio
 
@@ -110,6 +110,74 @@ Every trading/monitor code path has DOUBLE protection:
 - **Python level**: `if not alpaca.is_market_open(): return` inside each function
 
 This applies to: P1 trading-session, P1 intraday-monitor, P2 scan-and-trade, P2 monitor, P3 trading-session, P3 intraday-monitor, P3 news-scan.
+
+---
+
+# ⭐ ENTERPRISE HARDENING & SYSTEM OF RECORD (2026-05) — READ BEFORE EDITING
+
+> This section documents the hardening layered on top of the original system. A
+> future AI/engineer **must understand these invariants before changing the
+> money path, the chart, the data layer, or the workflows.** Breaking any of
+> these silently regresses correctness or reliability.
+
+## 14 GitHub Actions workflows (was 9)
+Trading/monitor/EOD/weekly (9, per CLAUDE above) **plus**:
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | push/PR to engine code | **Quality gate**: ruff + pytest must pass. |
+| `codeql.yml` | push/PR + weekly | Security static analysis. |
+| `heartbeat.yml` | 22:30 & 23:30 UTC M-F | Watchdog: alerts (GitHub issue / Slack) if any portfolio went stale. |
+| `market-data.yml` | 21:30 & 22:30 UTC M-F + dispatch | Mirrors daily bars → Supabase. `dispatch days=730` = full backfill. |
+| `smoke-test.yml` | push to `dashboard/**` | Polls prod health post-deploy. **No VERCEL_TOKEN** (Vercel git-integration auto-deploys). |
+
+**Scheduled-trading reliability:** all trading/EOD crons use MULTIPLE staggered cron lines covering BOTH EDT and EST UTC offsets, with an idempotency dedup gate (P1/P3 check today's `signals.json` date). A single cron line is a known-fragile pattern — never reduce to one.
+
+## Unified Alpaca client — `shared/alpaca_http.py` (SINGLE SOURCE OF TRUTH)
+All three bots' broker calls route through this module. **Do not duplicate or bypass it.**
+- `resilient_request()` — retries 429/5xx + network errors (exp backoff + jitter, honors Retry-After). 4xx (except 429) raise immediately.
+- `make_client_order_id(prefix,symbol,side)` — deterministic per-portfolio/symbol/side/day key. **Every order MUST send `client_order_id`** so a retried/duplicate run can't double-place; a 422 duplicate is an idempotent skip (not an error).
+- `confirm_fill(client,order_id)` — logs trades at the REAL `filled_avg_price`/`filled_qty`, never a phantom limit price.
+- Consumers: P1 `scripts/autonomous_runner.py`, P2 `political-copy-bot/scripts/politician_bot.py` (`AlpacaClient`), P3 `event-driven-bot/scripts/alpaca_client.py` (re-exports the helpers for `event_driven_bot.py`). Each adds repo-root to `sys.path` then imports `shared.alpaca_http`.
+
+## Tests + CI gate — `tests/` (RUN BEFORE SHIPPING ENGINE CHANGES)
+- `python3 -m pytest tests/` (80+ tests) and `python3 -m ruff check scripts/ shared/ event-driven-bot/scripts/ political-copy-bot/scripts/`.
+- Config in `pyproject.toml`; dev deps in `requirements-dev.txt`. CI gate (`ci.yml`) runs both on every push — it must stay green. Covers: risk_officer (incl. the INSUFFICIENT_DATA regression), execution resilience/idempotency/fill, indicators, backtest metrics+engine, walk-forward gate, reconciliation, heartbeat.
+
+## Backtester + walk-forward-gated self-learning — `scripts/backtest/`
+- `metrics.py` — Sharpe/Sortino/Calmar/CAGR/max-drawdown (pure; also used on the live equity curve).
+- `multifactor.py` — point-in-time, **no-look-ahead** portfolio backtest that reuses the REAL `analyst_v2` scoring (regime, relative strength, composite). Signal at close t → execute at open t+1; cost+slippage modeled.
+- `walk_forward.py` — `gate_param_change()` approves a self-learning param change only if its out-of-sample mean Sharpe ≥ current's (fails CLOSED). `load_aligned_bars()` reads morning-research's cached `data/{bucket}.json` bars.
+- Wired into `performance_tracker.adapt_parameters(validate_with_bars=...)`: in EOD it loads cached bars and **reverts any knob change that fails OOS validation**. P1 only — P2/P3 have no self-learning loop. **Never let self-learning tune on live noise without this gate.**
+
+## Reconciliation (read-only integrity audit) — `shared/reconcile.py`
+- `compute_drift(positions, open_trades)` → orphan open trades / unlogged positions. Used by P1 (`autonomous_runner.reconcile_positions`, EOD) and P3 (`run_eod_journal`).
+- `working_orders_report(open_orders)` → unfilled-limit surface; P2 monitor uses it (P2 is the only limit-entry portfolio; P3 uses bracket MARKET orders that fill instantly).
+- Writes `data/reconciliation_report.json` (+ per-portfolio). **Read-only — places NO orders.**
+
+## Supabase = SYSTEM OF RECORD — see `memory/reference_supabase.md`
+- Project `auto-trading-prod`, ref `iqbnjzzrwcwxnipwposk`, URL `https://iqbnjzzrwcwxnipwposk.supabase.co`.
+- Tables (public, **RLS on: anon SELECT-only, service_role writes**): `portfolio_equity_history` (portfolio_id,date,equity,cash,pnl,pnl_pct,positions_count), `market_daily_history` (symbol,date,open/high/low/close_price,volume). Both PK on (id,date) for merge-upserts.
+- **Credential map:** GitHub secrets `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (WRITE path — `save_to_supabase.py`, `collect_market_history.py`). Vercel env `SUPABASE_URL` + `SUPABASE_ANON_KEY` (READ path — `dashboard/server.js`). The running system does NOT depend on any personal access token.
+- **Manage via the Management API** (`https://api.supabase.com/v1/...`) with a PAT from supabase.com/dashboard/account/tokens — NOT the browser. `POST /v1/projects/{ref}/database/query` runs SQL.
+- Writers: `scripts/save_to_supabase.py` (daily equity snapshot per portfolio, in p1-eod/p2-trading/p3-eod) and `scripts/collect_market_history.py` (full chart-universe daily bars, in `market-data.yml`). Backfilled to ~2y × 37 symbols.
+- **Honesty rule:** the dashboard shows ONLY real data. `dashboard/server.js` `realEquityBackfill()` uses real Supabase history; the old synthetic `generateStrategyBackfill` was DELETED. **Never reintroduce fabricated equity/price data.**
+
+## Market-Pulse chart (world-class candlesticks) — `dashboard/public/assets/market-pulse.js`
+- `renderWorkspaceChart` + `drawCandleChart` = a **self-contained canvas candlestick renderer** (wicks+bodies, volume strip, crosshair+OHLC tooltip, HiDPI). **Do NOT revert to a Chart.js `type:'bar'` approach** — that caused the flat-columns-from-$0 bug.
+- Period→data mapping (free IEX tier): `1D`=5Min, `1W`=1Hour, `1M`/`3M`/`6M`/`1Y`=1Day (one candle/day). **Every non-1D request MUST send an explicit `start` date** — without it Alpaca IEX returns a SINGLE bar (the empty-period bug). Periods are exactly 1D/1W/1M/3M/6M/1Y (no 5D).
+- Backend `/api/market/bars/:symbol` (`server.js`): `defaultBarsStart()` guarantees a start is always present; `sort=desc`+`.reverse()` returns the most-recent N bars chronologically. Free IEX gives years of daily history when `start` is set.
+- Live updates: REST polling (20s for 1D/1W). **WebSocket is intentionally not used** — Vercel serverless can't hold a persistent connection and IEX free data is 15-min delayed, so polling is equivalent. True streaming would need a separate always-on worker.
+
+## Dashboard security — `dashboard/server.js`
+- All POST/mutation endpoints (`/order`, `/close`, `/positions/close-all`) require `DASHBOARD_ACCESS_TOKEN` (Bearer or `x-access-token`). **Unset → 503 (fail-closed); anonymous trade execution is impossible.** Reads stay public for the showcase.
+- `helmet` headers, CORS locked to `DASHBOARD_ALLOWED_ORIGINS`, per-IP rate limit (`DASHBOARD_RATE_LIMIT`, default 120/min).
+- `node_modules` is gitignored and **untracked** (Vercel runs `npm install`). Do not re-commit it.
+
+## Live-readiness gate — `docs/LIVE_READINESS.md`
+System is **PAPER ONLY**. The doc defines the engineering + strategy + ops gates (90d paper, OOS Sharpe ≥ 1.0, max DD ≤ 15%, etc.) and fractional go-live procedure. Do not deploy real capital until all gates are signed off.
+
+## Still open (deliberate, not bugs)
+Full sole-source migration (retire git-JSON state in favor of Supabase); P2/P3 active fill-backfill (currently read-only audits); time-on-paper to meet live-readiness gates.
 
 ---
 
@@ -278,8 +346,14 @@ Set in Vercel Dashboard → Project Settings → Environment Variables:
 | `PORTFOLIO_2_API_SECRET` | P2 Alpaca paper API secret |
 | `PORTFOLIO_3_API_KEY` | P3 Alpaca paper API key |
 | `PORTFOLIO_3_API_SECRET` | P3 Alpaca paper API secret |
+| `SUPABASE_URL` | Supabase system-of-record URL (read path for charts/equity) |
+| `SUPABASE_ANON_KEY` | Supabase anon key (RLS: read-only) |
+| `DASHBOARD_ACCESS_TOKEN` | Gates POST/mutation endpoints. **Unset = mutations fail-closed (503).** |
+| `DASHBOARD_ALLOWED_ORIGINS` | CORS allow-list (comma-sep). Default: prod URL + localhost. |
 
-Without these, the dashboard falls back to committed JSON state files only.
+Without the PORTFOLIO_* keys, the dashboard falls back to committed JSON state files only.
+All of the above are **already set in Vercel production** (configured 2026-05). See the
+"ENTERPRISE HARDENING & SYSTEM OF RECORD" section for the full credential map.
 
 ## Dashboard Data Sources (Priority Order)
 1. **Live Alpaca API** (primary) — positions, equity, P&L, quotes, news, clock, sectors
@@ -500,6 +574,6 @@ The dashboard uses the **RiseWealth Brand Kit** (saved at `docs/branding/`), reb
 - Paper trading only until live-readiness gates are met
 - Self-learning parameters have bounds (e.g., position_size_multiplier: 0.5–1.5)
 - NEVER commit API keys or dashboard/config/portfolios.json
-- All 9 GitHub Actions workflows have per-portfolio concurrency groups
+- All 9 trading GitHub Actions workflows have per-portfolio concurrency groups (14 workflows total incl. ci/codeql/heartbeat/market-data/smoke-test)
 - Market-open checked at BOTH workflow and Python levels
 - Dashboard deploys from dashboard/ directory only (not repo root)
