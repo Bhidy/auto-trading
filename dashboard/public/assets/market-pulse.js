@@ -1738,6 +1738,16 @@
             });
         });
 
+    // Opens the live options-chain pane (used by the order panel's Options tab
+    // and the global "Options Lab" nav via ?view=options). Reuses the working
+    // chart-area Options pane — no dead-end navigation.
+    window.openOptionsChain = function () {
+        var optionsTab = document.getElementById('tabOptions');
+        if (!optionsTab) return;
+        optionsTab.click();
+        optionsTab.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
     var activePeriod = '1D';
     var intradayRefreshTimer = null;
 
@@ -1868,6 +1878,14 @@
             loadMarketClock();
             loadPortfolioSignals();
         }, 30000);
+
+        // Deep-link: /market-pulse?view=options opens the options-chain pane
+        // (the global "Options Lab" nav routes here).
+        try {
+            if (new URLSearchParams(window.location.search).get('view') === 'options') {
+                checkChartLoaded(function () { window.openOptionsChain(); });
+            }
+        } catch (e) { /* URLSearchParams unsupported — ignore */ }
     }
 
     if (document.readyState === 'loading') {
