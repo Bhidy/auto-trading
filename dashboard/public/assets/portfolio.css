@@ -1579,25 +1579,26 @@ body {
     grid-template-columns: 1fr 296px;
     gap: 1.25rem;
     margin-bottom: 1.25rem;
-    align-items: start;
+    align-items: stretch;   /* both columns same height */
 }
 .pf-terminal-main { min-width: 0; }
-.pf-terminal-side { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* Table scroll: ~6 rows visible, rest scrollable, scrollbar hidden */
-.pf-terminal-main .pf-table-scroll {
-    max-height: 23rem;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+/* Sidebar column fills full height of the grid row */
+.pf-terminal-side {
+    display: flex; flex-direction: column;
+    min-height: 0;          /* allow shrink in flex context */
 }
-.pf-terminal-main .pf-table-scroll::-webkit-scrollbar { display: none; }
 
-/* Quick-risk sidebar card rows */
-/* Sidebar two-tab card */
-.pf-sidebar-card { overflow: hidden; }
+/* Sidebar card stretches to fill the column, tabs fixed, pane scrolls */
+.pf-sidebar-card {
+    flex: 1;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
 .pf-sidebar-tabs {
     display: flex; border-bottom: 1px solid var(--line);
+    flex-shrink: 0;         /* tab bar never shrinks */
 }
 .pf-sidebar-tab {
     flex: 1; padding: .65rem .5rem; border: none; background: transparent;
@@ -1607,7 +1608,26 @@ body {
 }
 .pf-sidebar-tab:hover:not(.active) { color: var(--teal); }
 .pf-sidebar-tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--teal-soft); }
-.pf-sidebar-pane { padding: 1.1rem; }
+
+/* Pane fills remaining height and scrolls silently */
+.pf-sidebar-pane {
+    flex: 1;
+    padding: 1.1rem;
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.pf-sidebar-pane::-webkit-scrollbar { display: none; }
+
+/* Table scroll: ~6 rows visible, rest scrollable, scrollbar hidden */
+.pf-terminal-main .pf-table-scroll {
+    max-height: 23rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.pf-terminal-main .pf-table-scroll::-webkit-scrollbar { display: none; }
 
 /* Quick-risk status rows */
 .pf-qrisk { display: flex; flex-direction: column; }
