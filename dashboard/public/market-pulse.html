@@ -526,6 +526,17 @@
             box-shadow: 0 8px 18px rgba(229, 90, 31, 0.18);
         }
 
+        /* Favorite star — filled solar orange when the symbol is in the watchlist */
+        #btnToggleFavorite.active {
+            color: var(--teal);
+            border-color: rgba(229, 90, 31, 0.40);
+            background: var(--teal-soft);
+        }
+        #btnToggleFavorite.active svg {
+            fill: var(--teal);
+            stroke: var(--teal);
+        }
+
         /* Custom alert notification toast */
         .order-toast {
             position: fixed;

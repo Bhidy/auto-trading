@@ -375,9 +375,20 @@
         data.forEach(function (pf) { portfolioHoldings[pf.id] = pf; });
     }
 
+    // Reflects whether the active symbol is in the watchlist on the favorite
+    // star (filled solar orange when present, original outline when not).
+    function updateFavoriteStar() {
+        var favBtn = document.getElementById('btnToggleFavorite');
+        if (!favBtn) return;
+        var inList = watchlistSymbols.indexOf(activeSymbol) !== -1;
+        favBtn.classList.toggle('active', inList);
+        favBtn.title = inList ? 'Remove from watchlist' : 'Add to watchlist';
+    }
+
     /* ─── Stock Details Workspace Loader ────────────────────────────── */
     async function loadStockDetails(symbol) {
         activeSymbol = symbol.toUpperCase();
+        updateFavoriteStar();
 
         var priceEl = document.getElementById('heroPrice');
         var chgEl = document.getElementById('heroPriceChg');
@@ -1682,7 +1693,21 @@
         // Toggle favorite
         var favBtn = document.getElementById('btnToggleFavorite');
         if (favBtn) favBtn.addEventListener('click', function() {
-            this.classList.toggle('active');
+            var idx = watchlistSymbols.indexOf(activeSymbol);
+            if (idx === -1) {
+                // Add the active symbol to the watchlist
+                watchlistSymbols.push(activeSymbol);
+                if (!companyNames[activeSymbol]) companyNames[activeSymbol] = activeSymbol;
+                loadRealQuotes([activeSymbol]).then(function() {
+                    renderWatchlistPane();
+                    renderTopLists();
+                });
+            } else {
+                // Remove it from the watchlist
+                watchlistSymbols.splice(idx, 1);
+                renderWatchlistPane();
+            }
+            updateFavoriteStar();
         });
 
         // Clear limit price
