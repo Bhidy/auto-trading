@@ -1626,13 +1626,17 @@ body {
 }
 
 /* Pane-specific grid layouts */
-.pf-hub-ov       { display: grid; grid-template-columns: 330px 1fr; gap: 1.25rem; align-items: start; }
+.pf-hub-ov       { display: grid; grid-template-columns: 330px 1fr; gap: 1.25rem; align-items: stretch; }
 .pf-hub-risk-top { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 
 /* Sub-cards inside the hub get a slightly inset page-bg to feel nested */
 .pf-hub-pane > .pf-ic,
 .pf-hub-ov > .pf-ic,
 .pf-hub-risk-top > .pf-ic { background: var(--page); }
+
+/* Risk Exposure card fills height to match Health Score */
+.pf-hub-ov > .pf-ic { display: flex; flex-direction: column; }
+.pf-hub-ov > .pf-ic .pf-risk-exposure-grid { flex: 1; }
 
 /* ════════════════════════════════════════════════════════════════════
    ADVANCED PORTFOLIO INTELLIGENCE  (9 components, additive block)
