@@ -30,26 +30,56 @@ def save_json(filename, data):
 # TRADE LOGGING
 # ---------------------------------------------------------------------------
 
+SCHEMA_VERSION = 2
+
+
 def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons,
-              stop_loss=None, take_profit=None):
+              stop_loss=None, take_profit=None, intended_price=None,
+              borrow_status=None, order_class=None, evidence_quality=None,
+              catalyst_source=None):
+    """Append a trade with schema-v2 fields (D1).
+
+    Beyond the core fields, records execution-quality and evidence provenance so
+    slippage, borrow status, and signal quality are auditable post-trade:
+      * intended_price -> slippage vs the real fill (`slippage_pct`);
+      * borrow_status  -> ETB/HTB confirmation captured at order time (shorts);
+      * order_class    -> simple / bracket / oco;
+      * evidence_quality / catalyst_source -> signal provenance (P2/P3).
+    """
     log = load_json("trade_log.json", [])
     entry = {
         "id": len(log) + 1,
+        "schema_version": SCHEMA_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "symbol": symbol,
         "side": side,
         "qty": qty,
         "entry_price": entry_price,
+        "intended_price": intended_price,
+        "slippage_pct": None,
         "bucket": bucket,
         "signal_score": signal_score,
         "reasons": reasons,
+        "borrow_status": borrow_status,
+        "order_class": order_class,
+        "evidence_quality": evidence_quality,
+        "catalyst_source": catalyst_source,
         "exit_price": None,
         "exit_timestamp": None,
+        "gross_pnl": None,
+        "fees": None,
         "pnl": None,
         "pnl_pct": None,
+        "realized_pnl": None,
         "hold_days": None,
         "status": "open",
     }
+    if intended_price and entry_price:
+        try:
+            entry["slippage_pct"] = round(
+                (float(entry_price) - float(intended_price)) / float(intended_price) * 100, 4)
+        except (TypeError, ValueError, ZeroDivisionError):
+            entry["slippage_pct"] = None
     if stop_loss is not None:
         entry["stop_loss"] = stop_loss
     if take_profit is not None:
@@ -75,6 +105,7 @@ def close_trade(trade_id, exit_price):
             trade["gross_pnl"] = r["gross_pnl"]
             trade["fees"] = r["fees"]
             trade["pnl"] = r["net_pnl"]
+            trade["realized_pnl"] = r["net_pnl"]
             trade["pnl_pct"] = round(r["net_pnl"] / entry_notional * 100, 2)
             trade["status"] = "closed"
             break
@@ -150,8 +181,26 @@ def compute_metrics(lookback_days=None):
         "max_loss_pct": round(min(pnl_values), 2) if pnl_values else 0,
         "total_pnl": round(sum(t.get("pnl", 0) for t in closed), 2),
         "profit_factor": round(profit_factor, 2),
-        "sharpe_estimate": round(sharpe, 2),
+        # Per-trade dispersion ratio (NOT annualized). For the canonical,
+        # annualized, equity-curve Sharpe/Sortino/Calmar use equity_curve_metrics()
+        # — that is the single source of truth the gates and dashboard read (D6).
+        "per_trade_sharpe": round(sharpe, 2),
+        "sharpe_estimate": round(sharpe, 2),  # back-compat alias
     }
+
+
+def equity_curve_metrics(equity_series, risk_free_rate=0.0):
+    """Canonical, annualized risk metrics from an equity curve (D6).
+
+    Single source of truth for Sharpe/Sortino/Calmar/CAGR/max-drawdown — the same
+    institutional functions used by the backtester and the live-readiness gates,
+    so every surface reports identical, comparable numbers. Returns None when
+    there isn't enough history (< 2 points)."""
+    series = [float(v) for v in (equity_series or []) if v is not None]
+    if len(series) < 2:
+        return None
+    from backtest.metrics import summary
+    return summary(series, risk_free_rate=risk_free_rate)
 
 def compute_metrics_by_bucket():
     log = load_json("trade_log.json", [])

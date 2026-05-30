@@ -476,6 +476,9 @@ def run_trading_session(alpaca: AlpacaClient):
                 reasons=order.get("reasons", []),
                 stop_loss=order.get("stop_loss"),
                 take_profit=order.get("take_profit"),
+                intended_price=limit_price,
+                borrow_status=("etb" if signal == "SHORT" else None),
+                order_class="simple",
             )
             trades_executed += 1
             cash -= filled_qty * entry_price
