@@ -1379,12 +1379,13 @@
 
             if (badge) {
                 if (data.is_open) {
-                    badge.className = 'mp-clock-badge mp-clock-open';
-                    badge.innerHTML = '<span style="display:inline-block;width:5px;height:5px;background:#22c55e;border-radius:50%;animation:pulse-blink 1.2s infinite;"></span> MARKET OPEN';
+                    badge.className = 'mp-status-dot mp-status-dot--open';
+                    badge.title = 'Market Open';
                 } else {
-                    badge.className = 'mp-clock-badge mp-clock-closed';
-                    badge.textContent = 'MARKET CLOSED';
+                    badge.className = 'mp-status-dot mp-status-dot--closed';
+                    badge.title = 'Market Closed';
                 }
+                badge.innerHTML = '';
             }
             if (statusLabel) statusLabel.textContent = data.is_open ? 'OPEN' : 'CLOSED';
             if (data.timestamp && clockTime) {
