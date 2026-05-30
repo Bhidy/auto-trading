@@ -84,6 +84,26 @@
     function fmtDate(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); }
     function fmtQty(v) { var n = parseFloat(v); return isNaN(n) ? '—' : n.toLocaleString('en-US'); }
 
+    function getLogoHtml(sym, size = 20) {
+        if (!sym) return '';
+        var ticker = sym.toUpperCase().trim();
+        var logoFile = ticker;
+        if (ticker.includes('BTC') || ticker === 'BTC/USD' || ticker === 'BTCUSD') {
+            logoFile = 'BTC_USD';
+        } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
+            logoFile = 'ETH_USD';
+        } else {
+            logoFile = logoFile.replace('/', '-');
+        }
+        var src = '/assets/logos/' + logoFile + '.svg';
+        var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
+            'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
+            'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
+            'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
     function showToast(msg, type) {
         var toast = document.createElement('div');
         toast.textContent = msg;
@@ -161,7 +181,10 @@
             }
             actions += '</div>';
             return '<tr>' +
-                '<td style="font-weight:700;color:var(--ink);">' + (o.symbol || '—') + '</td>' +
+                '<td style="font-weight:700;color:var(--ink);display:flex;align-items:center;gap:0.45rem;">' +
+                    getLogoHtml(o.symbol, 20) +
+                    '<span>' + (o.symbol || '—') + '</span>' +
+                '</td>' +
                 '<td><span class="' + sideCls + '">' + (o.side || '').toUpperCase() + '</span></td>' +
                 '<td>' + (o.type || '').replace(/_/g, ' ') + '</td>' +
                 '<td>' + fmtQty(o.qty || o.notional) + '</td>' +
