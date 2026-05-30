@@ -20,6 +20,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backtest.multifactor import backtest_multifactor  # noqa: E402
+from backtest import metrics as _metrics  # noqa: E402
 
 
 def walk_forward(symbol_bars, spy_bars, params, test_days=63, warmup=150,
@@ -71,14 +72,71 @@ def walk_forward(symbol_bars, spy_bars, params, test_days=63, warmup=150,
     }
 
 
+def evaluate_overfitting_screens(cur_windows, cand_windows, *,
+                                 challenger_sharpe=None, cand_sharpe=None,
+                                 pbo_reject=0.5, dsr_reject=0.5,
+                                 challenger_margin=0.10):
+    """Pure overfitting screens (V1/V2) applied on top of the OOS Sharpe test.
+
+    Conservative by design: these VETO a clearly overfit / benchmark-losing
+    candidate but do not demand statistical certainty the small self-learning
+    sample can't provide — so the system stays fully automated and still adapts.
+
+    Veto when (and only when computable):
+      * PBO ≥ pbo_reject               — the in-sample winner fails out-of-sample.
+      * Deflated Sharpe < dsr_reject   — best Sharpe no better than a coin flip
+                                         after the multiple-testing haircut.
+      * candidate clearly below the fixed challenger benchmark OOS.
+
+    Returns {ok, reasons, pbo, deflated_sharpe, beats_challenger}.
+    """
+    reasons = []
+    cand_sh = [w.get("sharpe", 0.0) for w in (cand_windows or [])]
+    cur_sh = [w.get("sharpe", 0.0) for w in (cur_windows or [])]
+    n_windows = len(cand_sh)
+
+    # Deflated Sharpe across the candidate's OOS windows (windows ≈ trials).
+    deflated = None
+    if n_windows >= 2:
+        deflated = _metrics.deflated_sharpe_ratio(cand_sh, n_obs=n_windows)
+        if deflated < dsr_reject:
+            reasons.append(f"deflated Sharpe {deflated:.3f} < {dsr_reject} "
+                           f"(not distinguishable from noise)")
+
+    # PBO across the two configurations over the OOS windows.
+    pbo = None
+    if n_windows >= 4 and len(cur_sh) == n_windows:
+        pbo = _metrics.probability_of_backtest_overfitting([cur_sh, cand_sh])
+        if pbo is not None and pbo >= pbo_reject:
+            reasons.append(f"PBO {pbo:.2f} ≥ {pbo_reject} (overfit)")
+
+    # Challenger benchmark: candidate must not be clearly worse than buy-and-hold.
+    beats_challenger = None
+    if challenger_sharpe is not None and cand_sharpe is not None:
+        beats_challenger = cand_sharpe >= challenger_sharpe - challenger_margin
+        if not beats_challenger:
+            reasons.append(f"candidate OOS Sharpe {cand_sharpe:.3f} below challenger "
+                           f"{challenger_sharpe:.3f} (no edge over buy-and-hold)")
+
+    return {
+        "ok": len(reasons) == 0,
+        "reasons": reasons,
+        "pbo": pbo,
+        "deflated_sharpe": deflated,
+        "beats_challenger": beats_challenger,
+    }
+
+
 def gate_param_change(current_params, candidate_params, symbol_bars, spy_bars,
                       min_sharpe_margin=-0.05, **kw):
     """Return (approved: bool, detail: dict).
 
-    Approves the candidate only if its aggregate OOS mean Sharpe is at least
-    current's minus a small tolerance (so trivially-equal changes pass, but a
-    materially worse candidate is rejected). Fails closed on any error or if
-    there isn't enough aligned data to validate.
+    Approves the candidate only if it passes ALL gates, fully automatically:
+      1. aggregate OOS mean Sharpe ≥ current − margin (robustness vs status quo);
+      2. overfitting screens (Deflated Sharpe + PBO) do not flag it as noise;
+      3. it is not clearly worse than the fixed challenger benchmark OOS.
+    Fails closed on any error or insufficient data (an unvalidatable change is
+    never applied).
     """
     try:
         cur = walk_forward(symbol_bars, spy_bars, current_params, **kw)
@@ -91,11 +149,40 @@ def gate_param_change(current_params, candidate_params, symbol_bars, spy_bars,
 
     cur_sharpe = cur["aggregate"]["mean_sharpe"]
     cand_sharpe = cand["aggregate"]["mean_sharpe"]
-    approved = cand_sharpe >= cur_sharpe + min_sharpe_margin
+    sharpe_ok = cand_sharpe >= cur_sharpe + min_sharpe_margin
+
+    # The overfitting screens guard an actual CHANGE. Identical params are a
+    # no-op (no new risk) and are approved on the Sharpe test alone — otherwise
+    # the absolute screens could paradoxically reject "keep things as they are."
+    is_change = current_params != candidate_params
+
+    challenger_sharpe = None
+    screens = {"ok": True, "reasons": [], "pbo": None,
+               "deflated_sharpe": None, "beats_challenger": None}
+    if is_change:
+        # Fixed challenger benchmark (best-effort; never blocks on its own failure).
+        try:
+            from backtest.challenger import challenger_backtest
+            warmup = kw.get("warmup", 150)
+            ch = challenger_backtest(symbol_bars, spy_bars, warmup=warmup)
+            challenger_sharpe = ch["metrics"]["sharpe"]
+        except Exception:
+            challenger_sharpe = None
+        screens = evaluate_overfitting_screens(
+            cur["windows"], cand["windows"],
+            challenger_sharpe=challenger_sharpe, cand_sharpe=cand_sharpe)
+
+    approved = bool(sharpe_ok and screens["ok"])
     return approved, {
         "current_oos_sharpe": cur_sharpe,
         "candidate_oos_sharpe": cand_sharpe,
         "n_windows": cand["aggregate"]["n_windows"],
+        "sharpe_ok": sharpe_ok,
+        "challenger_sharpe": challenger_sharpe,
+        "pbo": screens["pbo"],
+        "deflated_sharpe": screens["deflated_sharpe"],
+        "beats_challenger": screens["beats_challenger"],
+        "screen_reasons": screens["reasons"],
         "approved": approved,
     }
 
