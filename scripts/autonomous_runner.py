@@ -519,6 +519,23 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
     limits = load_json(CONFIG_DIR / "risk_limits.json")
 
+    # C2: reconcile order state every cycle so partial/late fills, cancels and
+    # rejections are never invisible between cron runs. Best-effort — never break
+    # the monitor loop on a reconciliation hiccup.
+    try:
+        from shared.order_state import reconcile_and_persist, stale_working_orders, load_state
+        all_orders = alpaca.get_orders(status="all")
+        events = reconcile_and_persist(str(DATA_DIR / "order_state.json"), all_orders)
+        for ev in events:
+            log.info(f"  Order event: {ev['type']} {ev.get('symbol','')} "
+                     f"{ev.get('order_id','')}")
+        stale = stale_working_orders(load_state(str(DATA_DIR / "order_state.json")))
+        for s in stale:
+            log.warning(f"  Stale working order {s['order_id']} ({s['symbol']}) "
+                        f"age {s['age_seconds']}s — review for repricing/cancel")
+    except Exception as e:
+        log.warning(f"  Order-state reconcile skipped: {e}")
+
     # Kill switch
     starting_equity = portfolio_state.get("starting_equity", 100000)
     drawdown_pct = (starting_equity - equity) / starting_equity * 100
