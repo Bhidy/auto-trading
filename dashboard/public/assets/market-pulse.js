@@ -7,7 +7,7 @@
     'use strict';
 
     var lang = localStorage.getItem('starta-lang') || localStorage.getItem('lang') || 'en';
-    var activeSymbol = 'NVDA';
+    var activeSymbol = 'GOOGL';
     var activeDetailTab = 'Overview';
     var activeListTab = 'Watchlist';
     var activeTopTab = 'Active';
@@ -46,8 +46,9 @@
     // ~2y into Supabase) and serves live via the Alpaca quote/chart endpoints.
     // Crypto pairs are intentionally excluded (handled by the Crypto Terminal).
     var watchlistSymbols = [
+        'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'AMD', 'NFLX',
         'SPY', 'QQQ', 'DIA', 'IWM',
-        'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'AMD', 'NFLX', 'INTC',
+        'INTC',
         'XLK', 'XLE', 'XLF', 'XLV', 'XLY', 'XLI', 'XLU', 'XLP', 'XLB', 'XLRE', 'XLC',
         'TLT', 'GLD', 'SHY', 'BIL'
     ];
