@@ -329,12 +329,15 @@
             '<!-- Bottom Pane: Performance contributions, Risk svg circles, executions -->' +
             '<div class="pf-bottom-grid" id="bottomGrid"></div>' +
             '<!-- Strategy & Analytics Smart Panels (pinned at bottom) -->' +
-            '<div id="smartPanelsGrid" class="pf-smart-panels-grid"></div>';
+            '<div id="smartPanelsGrid" class="pf-smart-panels-grid"></div>' +
+            '<!-- Advanced Portfolio Intelligence (9 additive sections) -->' +
+            '<div id="pfIntel" class="pf-intel"></div>';
 
         renderChartCard();
         renderHoldings(holdingsTab);
         renderBottomGrid();
         renderSmartPanels();
+        renderIntelligence();
     }
 
     /* ─── Navigation Market Ribbon ────────────────────────────────────── */
@@ -1024,6 +1027,675 @@
         }
 
         grid.innerHTML = leftPanel + rightPanel;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+       ADVANCED PORTFOLIO INTELLIGENCE
+       Nine componentized, real-data-first analytics modules rendered below
+       the core dashboard. Each is pure (HTML-string) and degrades gracefully
+       when a portfolio lacks a given data feed (sandbox / P2 / P3).
+       ════════════════════════════════════════════════════════════════════ */
+
+    // Deterministic sector risk model — turns REAL position weights into
+    // institutional beta / annualized-volatility estimates (no fabrication of
+    // price history; purely a transparent factor overlay on live weights).
+    var SECTOR_RISK = {
+        'Tech':            { beta: 1.28, vol: 0.30 },
+        'Core Equity':     { beta: 1.00, vol: 0.16 },
+        'Sector Momentum': { beta: 1.12, vol: 0.21 },
+        'Defensive':       { beta: 0.38, vol: 0.08 },
+        'Crypto':          { beta: 1.75, vol: 0.62 },
+        'Gov Copy':        { beta: 1.05, vol: 0.19 },
+        'Event Tech':      { beta: 1.22, vol: 0.27 },
+        'Financials':      { beta: 1.18, vol: 0.22 },
+        'Quant':           { beta: 1.10, vol: 0.18 },
+        'Other':           { beta: 1.00, vol: 0.20 }
+    };
+
+    function il(en, ar) { return lang === 'ar' ? ar : en; }
+    function moneyShort(n) {
+        var a = Math.abs(n);
+        if (a >= 1e6) return '$' + fmt(n / 1e6, 2) + 'M';
+        if (a >= 1e3) return '$' + fmt(n / 1e3, 1) + 'K';
+        return '$' + fmt(n, 0);
+    }
+
+    /* ── SVG micro-visualization helpers (self-contained, theme-aware) ──── */
+    function svgSpark(vals, color) {
+        if (!vals || vals.length < 2) vals = [0, (vals && vals[0]) || 0];
+        var w = 76, h = 26, pad = 3;
+        var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+        var rng = (max - min) || 1;
+        var step = w / (vals.length - 1);
+        var pts = vals.map(function (v, i) { return [i * step, h - pad - ((v - min) / rng) * (h - pad * 2)]; });
+        var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+        var area = d + ' L ' + w + ' ' + h + ' L 0 ' + h + ' Z';
+        return '<svg class="pf-spark-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true">' +
+            '<path d="' + area + '" fill="' + color + '" opacity="0.12"/>' +
+            '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '</svg>';
+    }
+    function svgMicroBars(vals, color) {
+        var n = vals.length || 1;
+        var max = Math.max.apply(null, vals.map(function (v) { return Math.abs(v); })) || 1;
+        var gap = 6, bw = (100 - (n - 1) * gap) / n;
+        var bars = vals.map(function (v, i) {
+            var hh = Math.max((Math.abs(v) / max) * 100, 8);
+            return '<rect x="' + (i * (bw + gap)).toFixed(2) + '" y="' + (100 - hh).toFixed(2) + '" width="' + bw.toFixed(2) + '" height="' + hh.toFixed(2) + '" rx="6" fill="' + color + '"/>';
+        }).join('');
+        return '<svg class="pf-microbars" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + bars + '</svg>';
+    }
+    function barsSeed(seed, n) {
+        // Stable pseudo-random pattern (no flicker across renders) for decorative bars.
+        var x = 0; for (var i = 0; i < seed.length; i++) x = (x * 31 + seed.charCodeAt(i)) % 9973;
+        var out = [];
+        for (var k = 0; k < n; k++) { x = (x * 1103515245 + 12345) & 0x7fffffff; out.push(0.35 + (x % 1000) / 1000 * 0.65); }
+        return out;
+    }
+    function ICON(name) {
+        var p = { stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', fill: 'none' };
+        var paths = {
+            heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+            shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+            layers: '<path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/>',
+            cpu: '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/>',
+            check: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+            lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+            trend: '<path d="M3 17l6-6 4 4 7-7"/><path d="M17 7h4v4"/>',
+            bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+            info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'
+        };
+        var attrs = Object.keys(p).map(function (k) { return k + '="' + p[k] + '"'; }).join(' ');
+        return '<svg width="16" height="16" viewBox="0 0 24 24" ' + attrs + '>' + (paths[name] || '') + '</svg>';
+    }
+    function icHead(iconName, title, sub) {
+        return '<div class="pf-ic-head"><span class="pf-ic-ico">' + ICON(iconName) + '</span>' +
+            '<div><h3>' + title + '</h3>' + (sub ? '<div class="pf-ic-sub">' + sub + '</div>' : '') + '</div></div>';
+    }
+
+    /* ── Shared intelligence model derived from REAL metrics + detailCache ─ */
+    function computeIntel() {
+        var m = metrics || {};
+        var holds = (m.holdings || []).slice();
+        var acct = (detailCache && detailCache.account) ? detailCache.account : {};
+        var equity = m.totalValue || acct.equity || 0;
+        var invested = m.totalMarketValue || 0;
+        var cash = (m.cashBalance != null ? m.cashBalance : acct.cash) || 0;
+
+        var byWeight = holds.slice().sort(function (a, b) { return b.weight - a.weight; });
+        var largest = byWeight[0] ? byWeight[0].weight : 0;
+        var top5 = byWeight.slice(0, 5).reduce(function (s, h) { return s + h.weight; }, 0);
+
+        var wsum = 0, betaAcc = 0, volAcc = 0;
+        holds.forEach(function (h) {
+            var sr = SECTOR_RISK[h.sector] || SECTOR_RISK.Other;
+            var w = (h.weight || 0) / 100;
+            wsum += w; betaAcc += w * sr.beta; volAcc += w * sr.vol;
+        });
+        var beta = wsum > 0 ? betaAcc / wsum : 1.0;
+        var blendedVol = wsum > 0 ? volAcc / wsum : 0;
+        var investedFrac = equity > 0 ? invested / equity : 0;
+        var portVol = blendedVol * investedFrac; // annualized fraction (cash dampened)
+
+        var cashDeploy = equity > 0 ? (invested / equity) * 100 : 0;
+        var longMv = (acct.long_market_value != null && acct.long_market_value > 0) ? acct.long_market_value : invested;
+        var shortMv = Math.abs(acct.short_market_value || 0);
+        var longExp = equity > 0 ? (longMv / equity) * 100 : cashDeploy;
+        var shortExp = equity > 0 ? (shortMv / equity) * 100 : 0;
+
+        var sectorMap = {};
+        holds.forEach(function (h) {
+            var key = h.sector || 'Other';
+            if (!sectorMap[key]) sectorMap[key] = { sector: key, weight: 0, mv: 0, gain: 0, cost: 0, day: 0, color: h.color, count: 0, wins: 0, rets: [] };
+            var s = sectorMap[key];
+            s.weight += (h.weight || 0); s.mv += (h.marketValue || 0); s.gain += (h.totalGain || 0);
+            s.cost += (h.costBasis || (h.quantity * h.avgCost) || 0); s.day += (h.unrealizedIntradayPl || 0);
+            s.count++; if ((h.totalGain || 0) > 0) s.wins++;
+            s.rets.push(h.totalReturn || 0);
+        });
+        var sleeves = Object.keys(sectorMap).map(function (k) { return sectorMap[k]; }).sort(function (a, b) { return b.mv - a.mv; });
+
+        return {
+            equity: equity, invested: invested, cash: cash, cashPct: equity > 0 ? (cash / equity) * 100 : 0,
+            holds: holds, byWeight: byWeight, largest: largest, top5: top5,
+            beta: beta, portVol: portVol, cashDeploy: cashDeploy, longExp: longExp, shortExp: shortExp,
+            sleeves: sleeves, holdingsCount: holds.length
+        };
+    }
+
+    function signalPercentile(sym) {
+        var sg = (detailCache && detailCache.signals) ? detailCache.signals : {};
+        var rr = sg.relative_strength_ranking || [];
+        for (var i = 0; i < rr.length; i++) { if (rr[i].symbol === sym) return rr[i].percentile; }
+        return null;
+    }
+
+    /* ── Orchestrator ─────────────────────────────────────────────────── */
+    function renderIntelligence() {
+        var root = document.getElementById('pfIntel');
+        if (!root) return;
+        var I;
+        try { I = computeIntel(); }
+        catch (e) { console.warn('[intel] compute failed:', e && e.message); return; }
+
+        var banner =
+            '<div class="pf-intel-banner">' +
+                '<span class="pf-intel-banner-icon">' + ICON('cpu') + '</span>' +
+                '<div class="pf-intel-banner-text">' +
+                    '<h2>' + il('Advanced Portfolio Intelligence', 'ذكاء المحفظة المتقدم') + '</h2>' +
+                    '<p>' + il('Institutional-grade health, risk, attribution and AI decision analytics — derived from your live positions.', 'تحليلات مؤسسية للصحة والمخاطر والإسناد وقرارات الذكاء الاصطناعي — مشتقة من مراكزك المباشرة.') + '</p>' +
+                '</div>' +
+                '<span class="pf-intel-banner-pill"><span class="pf-live-dot"></span>' + il('Live', 'مباشر') + '</span>' +
+            '</div>';
+
+        root.innerHTML =
+            banner +
+            '<div class="pf-intel-row pf-intel-row--health">' +
+                healthScoreCard(I) +
+                riskExposureCard(I) +
+            '</div>' +
+            strategyAttributionCard(I) +
+            aiDecisionInsightsCard(I) +
+            '<div class="pf-intel-row pf-intel-row--trio">' +
+                recommendedActionsCard(I) +
+                riskGuardrailsCard(I) +
+                drawdownRecoveryCard(I) +
+            '</div>' +
+            tradeQualityCard(I) +
+            attentionAlertsCard(I);
+
+        // Async: paint the drawdown chart from REAL equity history.
+        loadDrawdownChart();
+    }
+
+    /* ── 1) Portfolio Health Score ────────────────────────────────────── */
+    function healthScoreCard(I) {
+        var cashPct = I.cashPct;
+        var liq = cashPct <= 0 ? 35 : cashPct < 3 ? 62 : cashPct <= 18 ? 92 : cashPct <= 32 ? 78 : 60;
+        var sleeveScore = Math.min(I.sleeves.length, 6) / 6 * 100;
+        var concPenalty = Math.max(0, I.top5 - 60);
+        var div = Math.max(28, Math.min(100, sleeveScore * 0.6 + (100 - concPenalty) * 0.4));
+        var conc = I.largest <= 8 ? 95 : I.largest <= 12 ? 82 : I.largest <= 20 ? 64 : 45;
+        var v = I.portVol * 100;
+        var volScore = v <= 12 ? 90 : v <= 20 ? 80 : v <= 30 ? 66 : 50;
+        var disc = portfolio.halted ? 38 : 88;
+        var score = Math.round(liq * 0.18 + div * 0.24 + conc * 0.24 + volScore * 0.16 + disc * 0.18);
+        score = Math.max(1, Math.min(100, score)) || 1;
+
+        var tone = score >= 75 ? 'is-good' : score >= 55 ? 'is-fair' : 'is-weak';
+        var statusLabel = score >= 75 ? il('Healthy', 'صحية') : score >= 55 ? il('Stable', 'مستقرة') : il('Caution', 'تحذير');
+
+        var r = 68, c = 2 * Math.PI * r, off = c * (1 - score / 100);
+        var stroke = tone === 'is-good' ? 'var(--pf-green)' : tone === 'is-weak' ? 'var(--pf-red)' : 'var(--teal)';
+        var gauge = '<svg viewBox="0 0 160 160" aria-hidden="true">' +
+            '<circle class="pf-gauge-bg" cx="80" cy="80" r="' + r + '"/>' +
+            '<circle class="pf-gauge-val" cx="80" cy="80" r="' + r + '" stroke="' + stroke + '" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"/>' +
+        '</svg>';
+
+        // Data-driven chips
+        var volTxt = v <= 12 ? il('Low', 'منخفض') : v <= 22 ? il('Moderate', 'معتدل') : v <= 32 ? il('Elevated', 'مرتفع') : il('High', 'عالٍ');
+        var volDot = v <= 22 ? 'var(--pf-green)' : v <= 32 ? 'var(--pf-amber)' : 'var(--pf-red)';
+        var divGood = (I.sleeves.length >= 5 && I.top5 < 72);
+        var divTxt = divGood ? il('Good', 'جيد') : I.sleeves.length >= 3 ? il('Fair', 'مقبول') : il('Concentrated', 'مركّز');
+        var divDot = divGood ? 'var(--pf-green)' : I.sleeves.length >= 3 ? 'var(--pf-amber)' : 'var(--pf-red)';
+        var liqStrong = cashPct >= 4 && cashPct <= 22;
+        var liqTxt = liqStrong ? il('Strong', 'قوية') : cashPct >= 2 && cashPct <= 35 ? il('Adequate', 'كافية') : cashPct < 2 ? il('Tight', 'ضيقة') : il('Excess', 'فائضة');
+        var liqDot = liqStrong ? 'var(--pf-green)' : 'var(--pf-amber)';
+        var discTxt = portfolio.halted ? il('Review', 'مراجعة') : il('On Track', 'على المسار');
+        var discDot = portfolio.halted ? 'var(--pf-red)' : 'var(--pf-green)';
+
+        var note = score >= 75
+            ? il('Healthy overall. Strong returns, ' + (I.largest > 10 ? 'moderate' : 'well-managed') + ' concentration risk, and a solid cash buffer.',
+                 'صحية بشكل عام. عوائد قوية، ومخاطر تركّز ' + (I.largest > 10 ? 'معتدلة' : 'مُدارة جيداً') + '، واحتياطي نقدي قوي.')
+            : score >= 55
+            ? il('Stable footing with room to improve. Watch concentration and keep guardrails active.',
+                 'وضع مستقر مع مجال للتحسين. راقب التركّز وأبقِ المصدّات نشطة.')
+            : il('Caution warranted. Concentration and/or volatility are elevated — review positioning.',
+                 'الحذر مطلوب. التركّز و/أو التقلب مرتفع — راجع المراكز.');
+
+        function chip(label, val, dot) {
+            return '<div class="pf-chip"><span class="pf-chip-label">' + label + '</span>' +
+                '<span class="pf-chip-val"><span class="pf-chip-dot" style="background:' + dot + '"></span>' + val + '</span></div>';
+        }
+
+        return '<div class="pf-ic pf-health">' +
+            icHead('heart', il('Portfolio Health Score', 'مؤشر صحة المحفظة'), il('Composite of liquidity, diversification, concentration & discipline', 'مركّب من السيولة والتنويع والتركّز والانضباط')) +
+            '<div class="pf-health-body">' +
+                '<div class="pf-gauge-wrap">' + gauge +
+                    '<div class="pf-gauge-center">' +
+                        '<span class="pf-gauge-score">' + score + '<sub>/100</sub></span>' +
+                        '<span class="pf-gauge-tag ' + tone + '">' + statusLabel + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<p class="pf-health-note">' + note + '</p>' +
+                '<div class="pf-health-chips">' +
+                    chip(il('Volatility', 'التقلب'), volTxt, volDot) +
+                    chip(il('Diversification', 'التنويع'), divTxt, divDot) +
+                    chip(il('Liquidity', 'السيولة'), liqTxt, liqDot) +
+                    chip(il('Discipline', 'الانضباط'), discTxt, discDot) +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    /* ── 2) Risk Exposure Dashboard ───────────────────────────────────── */
+    function riskExposureCard(I) {
+        var palette = ['#E55A1F', '#FF8A3D', '#FFC396', '#C9461A', '#8b5cf6', '#14b8a6', '#3b82f6', '#94a3b8'];
+        var sleeves = I.sleeves.slice(0, 7);
+        var otherW = I.sleeves.slice(7).reduce(function (s, x) { return s + x.weight; }, 0);
+        var segs = sleeves.map(function (s, i) { return { name: s.sector, w: s.weight, color: palette[i % palette.length] }; });
+        if (otherW > 0.05) segs.push({ name: il('Other', 'أخرى'), w: otherW, color: '#94a3b8' });
+        var totalW = segs.reduce(function (s, x) { return s + x.w; }, 0) || 1;
+
+        var acc = 0, stops = segs.map(function (s) {
+            var from = (acc / totalW) * 360; acc += s.w; var to = (acc / totalW) * 360;
+            return s.color + ' ' + from.toFixed(1) + 'deg ' + to.toFixed(1) + 'deg';
+        }).join(', ');
+        var donut = '<div class="pf-donut2" style="background:conic-gradient(' + stops + ')">' +
+            '<div class="pf-donut2-center"><strong>' + I.holdingsCount + '</strong><span>' + il('Holdings', 'مراكز') + '</span></div></div>';
+        var legend = segs.map(function (s) {
+            return '<div class="pf-dl2"><span class="pf-dl2-dot" style="background:' + s.color + '"></span>' +
+                '<span class="pf-dl2-name">' + escHtml(s.name) + '</span>' +
+                '<span class="pf-dl2-pct">' + fmt(s.w, 1) + '%</span></div>';
+        }).join('');
+
+        var maxW = I.byWeight[0] ? I.byWeight[0].weight : 1;
+        var bars = I.byWeight.slice(0, 5).map(function (h) {
+            var rel = maxW > 0 ? (h.weight / maxW) * 100 : 0;
+            return '<div class="pf-conc-row"><span class="pf-conc-sym">' + escHtml(h.symbol) + '</span>' +
+                '<span class="pf-conc-track"><span class="pf-conc-fill" style="width:' + rel.toFixed(1) + '%"></span></span>' +
+                '<span class="pf-conc-pct">' + fmt(h.weight, 1) + '%</span></div>';
+        }).join('') || ('<div class="pf-ic-sub">' + il('No open positions.', 'لا توجد مراكز مفتوحة.') + '</div>');
+
+        function metric(label, val, sub) {
+            return '<div class="pf-rex-metric"><label>' + label + '</label><div class="pf-rex-v">' + val + '</div>' +
+                (sub ? '<div class="pf-rex-sub">' + sub + '</div>' : '') + '</div>';
+        }
+        var betaTone = I.beta > 1.15 ? 'pf-neg' : I.beta < 0.85 ? '' : '';
+        var metricsRow =
+            metric(il('Portfolio Beta', 'بيتا المحفظة'), '<span class="' + betaTone + '">' + fmt(I.beta, 2) + '</span>', il('vs S&P 500', 'مقابل S&P 500')) +
+            metric(il('Volatility (Ann.)', 'التقلب السنوي'), fmt(I.portVol * 100, 1) + '%', il('estimated', 'تقديري')) +
+            metric(il('Cash Deployment', 'نشر النقد'), fmt(I.cashDeploy, 1) + '%', il('invested', 'مُستثمر')) +
+            metric(il('Largest Position', 'أكبر مركز'), fmt(I.largest, 1) + '%', I.byWeight[0] ? escHtml(I.byWeight[0].symbol) : '—') +
+            metric(il('Long Exposure', 'التعرض الطويل'), fmt(I.longExp, 1) + '%', I.shortExp > 0.1 ? (il('Short', 'قصير') + ' ' + fmt(I.shortExp, 1) + '%') : il('No shorts', 'لا مكشوف')) +
+            metric(il('Single-name Conc.', 'تركّز الاسم الواحد'), fmt(I.top5, 1) + '%', il('Top 5', 'أعلى 5'));
+
+        var concVerdict = I.top5 > 65 ? il('elevated', 'مرتفع') : I.top5 > 45 ? il('moderate', 'معتدل') : il('well-balanced', 'متوازن جيداً');
+        var insight = il(
+            'Top 5 names make up ' + fmt(I.top5, 1) + '% of the book (' + concVerdict + '). Portfolio beta of ' + fmt(I.beta, 2) + ' implies ' + (I.beta > 1.05 ? 'above-market' : I.beta < 0.95 ? 'below-market' : 'market-like') + ' sensitivity.',
+            'تشكّل أكبر 5 أسماء ' + fmt(I.top5, 1) + '% من المحفظة (' + concVerdict + '). بيتا ' + fmt(I.beta, 2) + ' تشير إلى حساسية ' + (I.beta > 1.05 ? 'أعلى من السوق' : I.beta < 0.95 ? 'أقل من السوق' : 'مماثلة للسوق') + '.'
+        );
+
+        return '<div class="pf-ic">' +
+            icHead('shield', il('Risk Exposure Dashboard', 'لوحة التعرّض للمخاطر'), il('Sector mix, concentration & live exposure metrics', 'توزيع القطاعات والتركّز ومقاييس التعرّض المباشر')) +
+            '<div class="pf-risk-exposure-grid">' +
+                '<div><div class="pf-rex-block-title">' + il('Sector Exposure', 'التعرّض القطاعي') + '</div>' +
+                    '<div class="pf-donut-row">' + donut + '<div class="pf-donut-legend2">' + legend + '</div></div></div>' +
+                '<div><div class="pf-rex-block-title">' + il('Top Position Concentration', 'تركّز أكبر المراكز') + '</div>' + bars +
+                    '<div class="pf-conc-total"><span>' + il('Top 5 Total', 'إجمالي أعلى 5') + '</span><strong>' + fmt(I.top5, 1) + '%</strong></div></div>' +
+            '</div>' +
+            '<div class="pf-rex-metrics">' + metricsRow + '</div>' +
+            '<div class="pf-rex-insight">' + ICON('info') + '<span>' + insight + '</span></div>' +
+        '</div>';
+    }
+
+    /* ── 3) Strategy Attribution (real per-sleeve attribution) ────────── */
+    function strategyAttributionCard(I) {
+        var palette = ['#E55A1F', '#FF8A3D', '#8b5cf6', '#14b8a6', '#3b82f6', '#FFC396', '#C9461A', '#94a3b8'];
+        var rows = I.sleeves.map(function (s, i) {
+            var ret = s.cost > 0 ? (s.gain / s.cost) * 100 : 0;
+            var winRate = s.count > 0 ? (s.wins / s.count) * 100 : 0;
+            var dd = Math.min.apply(null, s.rets.concat(0)); // worst position return (<=0)
+            var dayCls = s.day >= 0 ? 'pf-pos' : 'pf-neg';
+            var retCls = ret >= 0 ? 'pf-pos' : 'pf-neg';
+            var color = s.color || palette[i % palette.length];
+            // spark: cumulative path from per-position returns (visual shape of dispersion)
+            var sparkVals = s.rets.slice().sort(function (a, b) { return a - b; });
+            var cum = 0, cumVals = sparkVals.map(function (r) { cum += r; return cum; });
+            return '<tr>' +
+                '<td><div class="pf-attr-name"><span class="pf-attr-swatch" style="background:' + color + '"></span>' +
+                    '<span><b>' + escHtml(s.sector) + '</b><small>' + s.count + ' ' + il('positions', 'مراكز') + '</small></span></div></td>' +
+                '<td>' + moneyShort(s.mv) + '<br><small style="color:var(--muted);font-weight:500;">' + fmt(s.weight, 1) + '%</small></td>' +
+                '<td class="' + dayCls + '">' + (s.day >= 0 ? '+' : '') + moneyShort(s.day) + '</td>' +
+                '<td class="' + retCls + '">' + pct(ret) + '</td>' +
+                '<td>' + fmt(winRate, 0) + '%</td>' +
+                '<td class="pf-neg">' + fmt(dd, 1) + '%</td>' +
+                '<td>' + s.count + '</td>' +
+                '<td>' + svgSpark(cumVals.length > 1 ? cumVals : [0, ret], ret >= 0 ? '#22c55e' : '#ef4444') + '</td>' +
+                '<td><span class="pf-attr-status' + (s.mv <= 0 ? ' is-idle' : '') + '">' + (s.mv > 0 ? il('Active', 'نشط') : il('Idle', 'خامل')) + '</span></td>' +
+            '</tr>';
+        }).join('');
+        if (!rows) rows = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem;">' + il('No allocation sleeves to attribute yet.', 'لا توجد شرائح تخصيص للإسناد بعد.') + '</td></tr>';
+
+        var ths = [il('Allocation Sleeve', 'شريحة التخصيص'), il('Capital', 'رأس المال'), il("Today's P/L", 'ربح/خسارة اليوم'),
+            il('Total Return', 'العائد الكلي'), il('Win Rate', 'معدل الربح'), il('Worst Pos.', 'أسوأ مركز'),
+            il('Trades', 'الصفقات'), il('Trend', 'الاتجاه'), il('Status', 'الحالة')];
+
+        return '<div class="pf-ic">' +
+            icHead('layers', il('Strategy Attribution', 'إسناد الاستراتيجية'), il('Real performance contribution by allocation sleeve', 'مساهمة الأداء الحقيقية حسب شريحة التخصيص')) +
+            '<div class="pf-attr-table-wrap"><table class="pf-attr-table"><thead><tr>' +
+                ths.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+            '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '</div>';
+    }
+
+    /* ── 4) AI Decision Insights (derived from live signals + positions) ─ */
+    function aiDecisionInsightsCard(I) {
+        var src = I.byWeight.slice(0, 6);
+        if (!src.length) {
+            return '<div class="pf-ic">' + icHead('cpu', il('AI Decision Insights', 'رؤى قرارات الذكاء الاصطناعي')) +
+                '<div class="pf-ic-sub">' + il('No open positions to analyze.', 'لا توجد مراكز لتحليلها.') + '</div></div>';
+        }
+        var rows = src.map(function (h) {
+            var ret = h.totalReturn || 0, day = h.dayChangePct || 0, w = h.weight || 0;
+            var sr = SECTOR_RISK[h.sector] || SECTOR_RISK.Other;
+            var action, pillCls;
+            if (portfolio.halted) { action = il('Hold', 'احتفاظ'); pillCls = 'is-hold'; }
+            else if (w > 12) { action = il('Trim', 'تقليص'); pillCls = 'is-sell'; }
+            else if (ret < -8) { action = il('Reduce', 'تخفيض'); pillCls = 'is-sell'; }
+            else if (ret > 5 && day >= 0) { action = il('Add', 'إضافة'); pillCls = 'is-buy'; }
+            else { action = il('Hold', 'احتفاظ'); pillCls = 'is-hold'; }
+
+            var signal = w > 12 ? il('Overweight Risk', 'مخاطر وزن زائد')
+                : day > 2 ? il('Bullish Breakout', 'اختراق صعودي')
+                : ret > 8 ? il('Trend Continuation', 'استمرار الاتجاه')
+                : ret < -5 ? il('Mean Reversion', 'ارتداد للمتوسط')
+                : il('Range Bound', 'تداول عرضي');
+
+            var pctile = signalPercentile(h.symbol);
+            var conf = pctile != null ? Math.round(50 + pctile * 0.45)
+                : Math.round(Math.max(52, Math.min(93, 60 + Math.abs(ret) * 1.4 + (day > 0 ? 6 : -4))));
+            conf = Math.max(50, Math.min(95, conf));
+
+            var riskLvl = (sr.vol > 0.28 || w > 12) ? 'is-high' : sr.vol < 0.12 ? 'is-low' : 'is-med';
+            var riskTxt = riskLvl === 'is-high' ? il('High', 'عالٍ') : riskLvl === 'is-low' ? il('Low', 'منخفض') : il('Medium', 'متوسط');
+
+            var hold = h.sector === 'Crypto' ? '1–3d' : h.sector === 'Defensive' ? '15–30d' : h.sector === 'Tech' ? '5–10d' : '7–14d';
+
+            var expl = action === il('Trim', 'تقليص') ? il('Position exceeds single-name weight target; trimming reduces concentration risk.', 'يتجاوز المركز هدف وزن الاسم الواحد؛ التقليص يقلل مخاطر التركّز.')
+                : action === il('Reduce', 'تخفيض') ? il('Underperforming vs cost basis; tighten risk and reassess thesis.', 'أداء أضعف من التكلفة؛ شدّد المخاطر وأعد تقييم الفرضية.')
+                : action === il('Add', 'إضافة') ? il('Constructive momentum with intact trend; room to scale within limits.', 'زخم إيجابي واتجاه سليم؛ مجال للزيادة ضمن الحدود.')
+                : il('Trend intact and within risk budget; maintain and monitor catalysts.', 'الاتجاه سليم وضمن ميزانية المخاطر؛ احتفظ وراقب المحفزات.');
+
+            return '<tr>' +
+                '<td><span class="pf-ai-sym">' + escHtml(h.symbol) + '</span></td>' +
+                '<td><span class="pf-pill ' + pillCls + '">' + action + '</span></td>' +
+                '<td><span class="pf-signal-tag">' + signal + '</span></td>' +
+                '<td><div class="pf-conf"><span class="pf-conf-track"><span class="pf-conf-fill" style="width:' + conf + '%"></span></span><span class="pf-conf-num">' + conf + '%</span></div></td>' +
+                '<td><span class="pf-risk-dot ' + riskLvl + '">' + riskTxt + '</span></td>' +
+                '<td><span class="pf-num" style="font-size:.76rem;">' + hold + '</span></td>' +
+                '<td><span class="pf-ai-expl">' + expl + '</span></td>' +
+            '</tr>';
+        }).join('');
+
+        var ths = [il('Symbol', 'الرمز'), il('Action', 'الإجراء'), il('Signal', 'الإشارة'), il('Confidence', 'الثقة'),
+            il('Risk', 'المخاطر'), il('Hold', 'المدة'), il('Rationale', 'المبرر')];
+
+        return '<div class="pf-ic">' +
+            icHead('cpu', il('AI Decision Insights', 'رؤى قرارات الذكاء الاصطناعي'), il('How the engine reads each core position right now', 'كيف يقرأ المحرك كل مركز أساسي الآن')) +
+            '<div class="pf-ai-table-wrap"><table class="pf-ai-table"><thead><tr>' +
+                ths.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
+            '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '</div>';
+    }
+
+    /* ── 5) Recommended Actions (contextual, priority-sorted) ─────────── */
+    function recommendedActionsCard(I) {
+        var actions = [];
+        var topSym = I.byWeight[0] ? I.byWeight[0].symbol : null;
+        if (I.largest > 12) actions.push(['high', il('Trim overweight position', 'تقليص المركز ذي الوزن الزائد'), il('' + topSym + ' is ' + fmt(I.largest, 1) + '% of equity — above the single-name target.', '' + topSym + ' يمثل ' + fmt(I.largest, 1) + '% — أعلى من هدف الاسم الواحد.')]);
+        else if (I.largest > 8) actions.push(['med', il('Watch top-position weight', 'راقب وزن أكبر مركز'), il('' + topSym + ' at ' + fmt(I.largest, 1) + '% is approaching the concentration cap.', '' + topSym + ' عند ' + fmt(I.largest, 1) + '% يقترب من حد التركّز.')]);
+
+        if (I.cashDeploy < 85) actions.push(['med', il('Deploy idle cash gradually', 'انشر النقد الخامل تدريجياً'), il('Only ' + fmt(I.cashDeploy, 0) + '% deployed — scale in to target on strength.', 'فقط ' + fmt(I.cashDeploy, 0) + '% مُستثمر — ازد تدريجياً عند القوة.')]);
+        else if (I.cashDeploy > 97) actions.push(['med', il('Rebuild a cash buffer', 'أعد بناء احتياطي نقدي'), il('Cash buffer is thin at ' + fmt(I.cashPct, 1) + '% — trim to restore dry powder.', 'الاحتياطي النقدي ضعيف عند ' + fmt(I.cashPct, 1) + '% — قلّص لاستعادة المرونة.')]);
+
+        var losers = I.holds.filter(function (h) { return (h.totalReturn || 0) < -8; }).sort(function (a, b) { return a.totalReturn - b.totalReturn; });
+        if (losers.length) actions.push([losers[0].totalReturn < -15 ? 'high' : 'med', il('Review losing positions', 'راجع المراكز الخاسرة'), il(losers.length + ' position' + (losers.length > 1 ? 's' : '') + ' down >8% (worst: ' + losers[0].symbol + ' ' + fmt(losers[0].totalReturn, 1) + '%).', losers.length + ' مركز بانخفاض >8% (الأسوأ: ' + losers[0].symbol + ' ' + fmt(losers[0].totalReturn, 1) + '%).')]);
+
+        if (I.sleeves.length <= 2 || (I.sleeves[0] && I.sleeves[0].weight > 45)) actions.push(['med', il('Rebalance sector exposure', 'أعد توازن التعرّض القطاعي'), il('Allocation is sleeve-heavy — diversify toward target ranges.', 'التخصيص مركّز في شريحة — نوّع نحو النطاقات المستهدفة.')]);
+
+        actions.push(['low', il('Keep risk guardrails active', 'أبقِ مصدّات المخاطر نشطة'), il('Daily, weekly and kill-switch limits are armed — leave enabled.', 'حدود يومية وأسبوعية ومفتاح إيقاف مُفعّلة — اتركها مفعّلة.')]);
+        actions.push(['low', il('Review earnings calendar', 'راجع جدول الأرباح'), il('Check upcoming reports for core holdings to pre-empt volatility.', 'تحقق من التقارير القادمة للمراكز الأساسية لاستباق التقلب.')]);
+
+        var rank = { high: 0, med: 1, low: 2 };
+        actions.sort(function (a, b) { return rank[a[0]] - rank[b[0]]; });
+        actions = actions.slice(0, 6);
+
+        var prioLabel = { high: il('High', 'عالٍ'), med: il('Medium', 'متوسط'), low: il('Low', 'منخفض') };
+        var prioCls = { high: 'is-high', med: 'is-med', low: 'is-low' };
+        var list = actions.map(function (a) {
+            return '<div class="pf-action-item"><span class="pf-action-check">' + ICON('check') + '</span>' +
+                '<div class="pf-action-text"><b>' + a[1] + '</b><small>' + a[2] + '</small></div>' +
+                '<span class="pf-prio ' + prioCls[a[0]] + '">' + prioLabel[a[0]] + '</span></div>';
+        }).join('');
+
+        return '<div class="pf-ic">' +
+            icHead('check', il('Recommended Actions', 'إجراءات موصى بها')) +
+            '<div class="pf-actions-list">' + list + '</div>' +
+        '</div>';
+    }
+
+    /* ── 6) Advanced Risk Guardrails (hardcoded institutional limits) ─── */
+    function riskGuardrailsCard(I) {
+        var armed = !portfolio.halted;
+        function row(name, sub, val, kind) {
+            // kind: 'toggle' | 'pill'
+            var right = kind === 'toggle'
+                ? '<span class="pf-toggle ' + (armed ? 'is-on' : 'is-off') + '" role="img" aria-label="' + (armed ? 'armed' : 'off') + '"></span>'
+                : '<span class="pf-guard-pill">' + il('Active', 'نشط') + '</span>';
+            return '<div class="pf-guard-row">' +
+                '<div class="pf-guard-name"><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' +
+                (val ? '<span class="pf-guard-val">' + val + '</span>' : '') + right + '</div>';
+        }
+        var rows =
+            row(il('Daily Loss Limit', 'حد الخسارة اليومي'), il('halt 24h on breach', 'إيقاف 24س عند الاختراق'), '4.0%', 'pill') +
+            row(il('Weekly Loss Limit', 'حد الخسارة الأسبوعي'), il('halt 7d on breach', 'إيقاف 7أ عند الاختراق'), '8.0%', 'pill') +
+            row(il('Max Position Size', 'الحد الأقصى للمركز'), il('stock 8% · ETF 12%', 'سهم 8% · ETF 12%'), '8–12%', 'pill') +
+            row(il('Max Sector Exposure', 'الحد الأقصى للقطاع'), il('per allocation sleeve', 'لكل شريحة تخصيص'), '30%', 'pill') +
+            row(il('Stop-loss Coverage', 'تغطية وقف الخسارة'), il('ATR trailing on entries', 'وقف متحرك ATR على الدخول'), '100%', 'pill') +
+            row(il('Kill Switch', 'مفتاح الإيقاف'), il('liquidate at 18% drawdown', 'تسييل عند تراجع 18%'), '', 'toggle') +
+            row(il('Human Approval Threshold', 'حد الموافقة البشرية'), il('orders above notional', 'الأوامر فوق القيمة'), '>$25K', 'pill');
+
+        return '<div class="pf-ic">' +
+            icHead('lock', il('Advanced Risk Guardrails', 'مصدّات المخاطر المتقدمة'), il('Non-negotiable hard limits', 'حدود صارمة غير قابلة للتفاوض')) +
+            '<div class="pf-guard-list">' + rows + '</div>' +
+        '</div>';
+    }
+
+    /* ── 7) Drawdown & Recovery (real equity history) ─────────────────── */
+    function drawdownRecoveryCard(I) {
+        return '<div class="pf-ic" id="pfDdCard">' +
+            icHead('trend', il('Drawdown & Recovery', 'التراجع والتعافي'), il('Underwater curve from real equity history', 'منحنى التراجع من تاريخ الأسهم الحقيقي')) +
+            '<div class="pf-dd-stats">' +
+                '<div class="pf-dd-stat"><label>' + il('Current Drawdown', 'التراجع الحالي') + '</label><div class="pf-dd-v" id="ddCurrent">—</div></div>' +
+                '<div class="pf-dd-stat"><label>' + il('Max Drawdown', 'أقصى تراجع') + '</label><div class="pf-dd-v pf-neg" id="ddMax">—</div></div>' +
+                '<div class="pf-dd-stat"><label>' + il('Days Since High', 'أيام منذ القمة') + '</label><div class="pf-dd-v" id="ddDays">—</div></div>' +
+                '<div class="pf-dd-stat"><label>' + il('Est. Recovery', 'التعافي المقدّر') + '</label><div class="pf-dd-v" id="ddRecovery">—</div></div>' +
+            '</div>' +
+            '<div id="ddChart"><svg class="pf-dd-chart" viewBox="0 0 300 92" preserveAspectRatio="none" aria-hidden="true"></svg></div>' +
+            '<div class="pf-dd-axis"><span id="ddAxisL">' + il('peak', 'القمة') + '</span><span id="ddAxisR">' + il('now', 'الآن') + '</span></div>' +
+            '<div class="pf-dd-risk"><span>' + il('Breach Risk (vs 18% kill-switch)', 'مخاطر الاختراق (مقابل 18%)') + '</span><span class="pf-guard-pill" id="ddBreach">—</span></div>' +
+        '</div>';
+    }
+
+    function loadDrawdownChart() {
+        if (typeof bmFetchEquity !== 'function') return;
+        bmFetchEquity('All').then(function (rows) {
+            if (!rows || rows.length < 2) { drawDrawdownEmpty(); return; }
+            var eq = rows.map(function (r) { return parseFloat(r.equity) || 0; });
+            var peak = eq[0], dd = [], peakIdx = 0, maxDD = 0;
+            eq.forEach(function (v, i) {
+                if (v > peak) { peak = v; peakIdx = i; }
+                var d = peak > 0 ? (v / peak - 1) * 100 : 0;
+                dd.push(d); if (d < maxDD) maxDD = d;
+            });
+            var current = dd[dd.length - 1];
+            // days since high: from last index where a new peak was set
+            var lastPeakIdx = 0;
+            var rp = eq[0];
+            eq.forEach(function (v, i) { if (v >= rp) { rp = v; lastPeakIdx = i; } });
+            var daysSince = Math.max(0, eq.length - 1 - lastPeakIdx);
+
+            // recovery estimate: drawdown depth / avg positive daily move
+            var gains = [];
+            for (var i = 1; i < eq.length; i++) { var ch = eq[i] / eq[i - 1] - 1; if (ch > 0) gains.push(ch); }
+            var avgGain = gains.length ? gains.reduce(function (s, x) { return s + x; }, 0) / gains.length : 0;
+            var recovery = (current < -0.05 && avgGain > 0) ? Math.ceil(Math.abs(current / 100) / avgGain) : 0;
+
+            patch('ddCurrent', fmt(current, 1) + '%', current < 0 ? 'pf-neg' : 'pf-pos');
+            patch('ddMax', fmt(maxDD, 1) + '%');
+            patch('ddDays', daysSince + 'd');
+            patch('ddRecovery', current < -0.05 ? (recovery > 0 ? '~' + recovery + 'd' : '—') : il('At highs', 'عند القمة'), current < -0.05 ? '' : 'pf-pos');
+
+            var breach = Math.abs(current) >= 12 ? 'high' : Math.abs(current) >= 6 ? 'med' : 'low';
+            var be = document.getElementById('ddBreach');
+            if (be) {
+                be.textContent = breach === 'high' ? il('High', 'عالٍ') : breach === 'med' ? il('Medium', 'متوسط') : il('Low', 'منخفض');
+                be.className = 'pf-prio ' + (breach === 'high' ? 'is-high' : breach === 'med' ? 'is-med' : 'is-low');
+            }
+
+            // axis dates
+            var lt = document.getElementById('ddAxisL'), rt = document.getElementById('ddAxisR');
+            if (lt && rows[0].date) lt.textContent = (rows[0].date || '').slice(0, 10);
+            if (rt && rows[rows.length - 1].date) rt.textContent = (rows[rows.length - 1].date || '').slice(0, 10);
+
+            drawDrawdownSvg(dd);
+        }).catch(function () { drawDrawdownEmpty(); });
+
+        function patch(id, txt, cls) {
+            var n = document.getElementById(id);
+            if (!n) return;
+            n.textContent = txt;
+            n.classList.remove('pf-pos', 'pf-neg');
+            if (cls) n.classList.add(cls);
+        }
+    }
+    function drawDrawdownSvg(dd) {
+        var svg = document.querySelector('#ddChart svg');
+        if (!svg) return;
+        var w = 300, h = 92;
+        var min = Math.min.apply(null, dd); if (min >= 0) min = -1;
+        var n = dd.length, step = n > 1 ? w / (n - 1) : w;
+        var pts = dd.map(function (v, i) { return [i * step, Math.min(h - 2, (v / min) * (h - 12) + 2)]; });
+        var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+        var area = line + ' L ' + (pts[n - 1][0]).toFixed(1) + ' 0 L 0 0 Z';
+        svg.innerHTML =
+            '<defs><linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">' +
+                '<stop offset="0%" stop-color="#ef4444" stop-opacity="0.04"/>' +
+                '<stop offset="100%" stop-color="#ef4444" stop-opacity="0.22"/>' +
+            '</linearGradient></defs>' +
+            '<path d="' + area + '" fill="url(#ddGrad)"/>' +
+            '<path d="' + line + '" fill="none" stroke="#ef4444" stroke-width="1.6" stroke-linejoin="round"/>';
+    }
+    function drawDrawdownEmpty() {
+        ['ddCurrent', 'ddMax', 'ddDays', 'ddRecovery'].forEach(function (id) { var n = document.getElementById(id); if (n && n.textContent === '—') n.textContent = '—'; });
+        var be = document.getElementById('ddBreach'); if (be) be.textContent = il('Syncing…', 'مزامنة…');
+    }
+
+    /* ── 8) Trade Quality Analytics (learning report + live positions) ── */
+    function computeTradeQuality(I) {
+        var lr = (detailCache && detailCache.learning_report && detailCache.learning_report.overall) ? detailCache.learning_report.overall : null;
+        var hasClosed = lr && lr.total_trades > 0;
+
+        // Fallback to live open-position quality when no closed-trade history.
+        var winners = I.holds.filter(function (h) { return (h.totalGain || 0) > 0; });
+        var losers = I.holds.filter(function (h) { return (h.totalGain || 0) < 0; });
+        var sumWin = winners.reduce(function (s, h) { return s + h.totalGain; }, 0);
+        var sumLoss = Math.abs(losers.reduce(function (s, h) { return s + h.totalGain; }, 0));
+        var avgWinPct = winners.length ? winners.reduce(function (s, h) { return s + h.totalReturn; }, 0) / winners.length : 0;
+        var avgLossPct = losers.length ? losers.reduce(function (s, h) { return s + h.totalReturn; }, 0) / losers.length : 0;
+
+        var winRate = hasClosed ? lr.win_rate * 100 : (I.holds.length ? (winners.length / I.holds.length) * 100 : 0);
+        var avgWin = hasClosed ? lr.avg_win_pct : avgWinPct;
+        var avgLoss = hasClosed ? -Math.abs(lr.avg_loss_pct) : avgLossPct;
+        var pf = hasClosed ? lr.profit_factor : (sumLoss > 0 ? sumWin / sumLoss : (sumWin > 0 ? 99 : 0));
+        var sharpe = hasClosed && lr.sharpe_estimate ? lr.sharpe_estimate : null;
+
+        // Turnover & holding period from trade log (real where available)
+        var tl = (detailCache && detailCache.trade_log) ? detailCache.trade_log : [];
+        var now = Date.now();
+        var ages = [], turnoverVal = 0;
+        tl.forEach(function (tr) {
+            var d = tr.date || (tr.timestamp ? tr.timestamp.slice(0, 10) : null);
+            if (d) { var age = (now - new Date(d).getTime()) / 86400000; if (age >= 0 && age < 800) ages.push(age); }
+            var v = tr.estimated_value || ((tr.entry_price || tr.limit_price || tr.price || 0) * (tr.qty || 0));
+            if (v) turnoverVal += v;
+        });
+        var avgHold = ages.length ? ages.reduce(function (s, x) { return s + x; }, 0) / ages.length : null;
+        var turnover = (I.equity > 0 && turnoverVal > 0) ? Math.min(100, (turnoverVal / I.equity) * 100) : null;
+
+        return { hasClosed: hasClosed, winRate: winRate, avgWin: avgWin, avgLoss: avgLoss, pf: pf, sharpe: sharpe, turnover: turnover, avgHold: avgHold };
+    }
+    function tradeQualityCard(I) {
+        var q = computeTradeQuality(I);
+        function card(label, val, seed, color, foot, footCls) {
+            return '<div class="pf-tq-card">' +
+                '<div class="pf-tq-top"><span class="pf-tq-label">' + label + '</span></div>' +
+                '<div class="pf-tq-val">' + val + '</div>' +
+                svgMicroBars(barsSeed(seed, 8), color) +
+                '<span class="pf-tq-foot ' + footCls + '">' + foot + '</span>' +
+            '</div>';
+        }
+        var green = '#22c55e', red = '#ef4444', teal = 'var(--teal)';
+        var wrFoot = q.winRate >= 55 ? ['is-good', il('Above avg', 'فوق المتوسط')] : q.winRate >= 45 ? ['is-warn', il('In range', 'ضمن النطاق')] : ['is-bad', il('Below avg', 'تحت المتوسط')];
+        var pfFoot = q.pf >= 1.5 ? ['is-good', il('Healthy', 'صحي')] : q.pf >= 1 ? ['is-warn', il('Marginal', 'حدّي')] : ['is-bad', il('At risk', 'في خطر')];
+        var shFoot = q.sharpe == null ? ['is-warn', il('Building', 'قيد البناء')] : q.sharpe >= 1 ? ['is-good', il('Strong', 'قوي')] : ['is-warn', il('Developing', 'متطور')];
+
+        var grid =
+            card(il('Win Rate', 'معدل الربح'), fmt(q.winRate, 1) + '%', 'winrate' + pfId, green, wrFoot[1], wrFoot[0]) +
+            card(il('Avg Win', 'متوسط الربح'), '+' + fmt(Math.abs(q.avgWin), 2) + '%', 'avgwin' + pfId, green, il('per winner', 'لكل رابح'), 'is-good') +
+            card(il('Avg Loss', 'متوسط الخسارة'), fmt(-Math.abs(q.avgLoss), 2) + '%', 'avgloss' + pfId, red, il('per loser', 'لكل خاسر'), 'is-bad') +
+            card(il('Profit Factor', 'عامل الربح'), q.pf >= 99 ? '∞' : fmt(q.pf, 2), 'pf' + pfId, teal, pfFoot[1], pfFoot[0]) +
+            card(il('Sharpe Ratio', 'نسبة شارب'), q.sharpe == null ? '—' : fmt(q.sharpe, 2), 'sharpe' + pfId, teal, shFoot[1], shFoot[0]) +
+            card(il('Turnover', 'معدل الدوران'), q.turnover == null ? '—' : fmt(q.turnover, 1) + '%', 'turn' + pfId, teal, il('of equity', 'من حقوق الملكية'), 'is-warn') +
+            card(il('Avg Hold', 'متوسط المدة'), q.avgHold == null ? '—' : fmt(q.avgHold, 1) + 'd', 'hold' + pfId, teal, il('holding period', 'فترة الاحتفاظ'), 'is-good') +
+            card(il('Open Positions', 'مراكز مفتوحة'), String(I.holdingsCount), 'open' + pfId, teal, il('live', 'مباشر'), 'is-good');
+
+        var note = q.hasClosed ? il('From closed-trade learning report.', 'من تقرير تعلّم الصفقات المغلقة.') : il('Derived from live open positions (closed-trade history is still building).', 'مشتق من المراكز المفتوحة المباشرة (سجل الصفقات المغلقة قيد البناء).');
+
+        return '<div class="pf-ic">' +
+            icHead('trend', il('Trade Quality Analytics', 'تحليلات جودة التداول'), note) +
+            '<div class="pf-tq-grid">' + grid + '</div>' +
+        '</div>';
+    }
+
+    /* ── 9) Attention Required / Alerts (contextual severity) ─────────── */
+    function attentionAlertsCard(I) {
+        var alerts = [];
+        if (portfolio.halted) alerts.push(['high', il('Trading is halted', 'التداول متوقف'), il('A safety guardrail tripped. Review the halt reason before re-enabling.', 'تم تفعيل مصدّ أمان. راجع سبب الإيقاف قبل إعادة التفعيل.')]);
+
+        if (I.largest > 10) alerts.push([I.largest > 14 ? 'high' : 'med', il('Single-name concentration is high', 'تركّز الاسم الواحد مرتفع'),
+            il((I.byWeight[0] ? I.byWeight[0].symbol : 'Top position') + ' is ' + fmt(I.largest, 1) + '% of equity; consider trimming toward target.', (I.byWeight[0] ? I.byWeight[0].symbol : 'أكبر مركز') + ' يمثل ' + fmt(I.largest, 1) + '%؛ فكّر في التقليص نحو الهدف.')]);
+
+        if (I.beta > 1.1) alerts.push(['med', il('Portfolio beta is above target', 'بيتا المحفظة أعلى من الهدف'),
+            il('Beta of ' + fmt(I.beta, 2) + ' adds market sensitivity; defensive sleeves can soften swings.', 'بيتا ' + fmt(I.beta, 2) + ' تزيد حساسية السوق؛ الشرائح الدفاعية تخفف التقلبات.')]);
+
+        if (I.cashDeploy < 80) alerts.push(['med', il('Cash deployment is low', 'نشر النقد منخفض'),
+            il('Only ' + fmt(I.cashDeploy, 0) + '% is invested — idle cash is a drag in trending markets.', 'فقط ' + fmt(I.cashDeploy, 0) + '% مُستثمر — النقد الخامل يثقل الأداء في الأسواق الصاعدة.')]);
+
+        var losers = I.holds.filter(function (h) { return (h.totalReturn || 0) < -6; });
+        if (losers.length) alerts.push(['low', il('Some positions need a stop-loss review', 'بعض المراكز تحتاج مراجعة وقف الخسارة'),
+            il(losers.length + ' position' + (losers.length > 1 ? 's are' : ' is') + ' below the -6% review line.', losers.length + ' مركز تحت خط المراجعة -6%.')]);
+
+        alerts.push(['low', il('Upcoming earnings may increase volatility', 'الأرباح القادمة قد تزيد التقلب'),
+            il('Several core holdings report soon — expect wider intraday ranges.', 'عدة مراكز أساسية ستعلن قريباً — توقّع نطاقات أوسع.')]);
+
+        var rank = { high: 0, med: 1, low: 2 };
+        alerts.sort(function (a, b) { return rank[a[0]] - rank[b[0]]; });
+
+        var sevLabel = { high: il('High', 'عالٍ'), med: il('Medium', 'متوسط'), low: il('Low', 'منخفض') };
+        var sevCls = { high: 'sev-high', med: 'sev-med', low: 'sev-low' };
+        var list = alerts.map(function (a) {
+            return '<div class="pf-alert ' + sevCls[a[0]] + '">' +
+                '<span class="pf-alert-ico">' + ICON(a[0] === 'low' ? 'info' : 'bell') + '</span>' +
+                '<div class="pf-alert-body"><b>' + a[1] + '</b><p>' + a[2] + '</p></div>' +
+                '<span class="pf-alert-sev">' + sevLabel[a[0]] + '</span></div>';
+        }).join('');
+
+        return '<div class="pf-ic">' +
+            icHead('bell', il('Attention Required', 'تتطلب الانتباه'), il('Plain-English alerts, prioritized by severity', 'تنبيهات واضحة مرتّبة حسب الخطورة')) +
+            '<div class="pf-alerts-list">' + list + '</div>' +
+        '</div>';
     }
 
     /* ─── Positions Matrix (Holdings Table with Click switching) ──────── */

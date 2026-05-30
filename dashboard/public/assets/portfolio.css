@@ -1531,3 +1531,329 @@ body {
     }
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   ADVANCED PORTFOLIO INTELLIGENCE  (9 components, additive block)
+   RiseWealth brand kit — warm solar palette, premium institutional feel.
+   ════════════════════════════════════════════════════════════════════ */
+.pf-intel { display: flex; flex-direction: column; gap: 1.25rem; margin: 0 0 2rem; }
+
+/* ── Section divider band ─────────────────────────────────────────────── */
+.pf-intel-banner {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.2rem 1.4rem;
+    border: 1px solid var(--line);
+    border-radius: var(--pf-radius);
+    background:
+        radial-gradient(120% 160% at 0% 0%, rgba(229,90,31,.10) 0%, rgba(229,90,31,0) 55%),
+        var(--surface);
+    position: relative; overflow: hidden;
+}
+.pf-intel-banner::before {
+    content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, #FF8A3D, var(--teal)); border-radius: 0 3px 3px 0;
+}
+.pf-intel-banner-icon {
+    flex-shrink: 0; width: 2.9rem; height: 2.9rem; border-radius: .75rem;
+    display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, #FF8A3D 0%, var(--teal) 100%);
+    box-shadow: 0 6px 16px rgba(229,90,31,.32);
+}
+.pf-intel-banner-text { min-width: 0; flex: 1; }
+.pf-intel-banner-text h2 {
+    margin: 0; font-family: 'DM Serif Display', serif; font-weight: 400;
+    font-size: 1.5rem; line-height: 1.1; letter-spacing: -.01em; color: var(--ink);
+}
+.pf-intel-banner-text p { margin: .25rem 0 0; font-size: .82rem; color: var(--muted); font-weight: 500; }
+.pf-intel-banner-pill {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: .4rem;
+    padding: .35rem .7rem; border-radius: 999px; font-size: .66rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    background: var(--teal-soft); color: var(--teal); border: 1px solid rgba(229,90,31,.2);
+}
+.pf-intel-banner-pill .pf-live-dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--teal); animation: pf-live-pulse 1.8s infinite; }
+
+/* ── Generic intelligence card + header ───────────────────────────────── */
+.pf-ic {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--pf-radius); padding: 1.25rem 1.35rem;
+    transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+.pf-ic:hover { border-color: rgba(229,90,31,.22); box-shadow: 0 10px 34px rgba(26,15,8,.10); }
+.pf-ic-head {
+    display: flex; align-items: center; gap: .6rem; margin-bottom: 1.05rem;
+}
+.pf-ic-head .pf-ic-ico {
+    width: 1.8rem; height: 1.8rem; border-radius: .5rem; flex-shrink: 0;
+    display: grid; place-items: center; color: var(--teal);
+    background: var(--teal-soft); border: 1px solid rgba(229,90,31,.16);
+}
+.pf-ic-head h3 {
+    margin: 0; font-size: .95rem; font-weight: 800; color: var(--ink);
+    letter-spacing: -.01em; line-height: 1.15;
+}
+.pf-ic-head .pf-ic-sub { font-size: .72rem; color: var(--muted); font-weight: 500; margin-top: .1rem; }
+.pf-ic-head .pf-ic-spacer { flex: 1; }
+
+/* Row layouts */
+.pf-intel-row { display: grid; gap: 1.25rem; }
+.pf-intel-row--health { grid-template-columns: minmax(300px, 360px) 1fr; align-items: stretch; }
+.pf-intel-row--trio  { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+
+/* ── 1) Portfolio Health Score ────────────────────────────────────────── */
+.pf-health { display: flex; flex-direction: column; }
+.pf-health-body { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .65rem; }
+.pf-gauge-wrap { position: relative; width: 168px; height: 168px; }
+.pf-gauge-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.pf-gauge-bg { fill: none; stroke: var(--line); stroke-width: 11; }
+.pf-gauge-val { fill: none; stroke-width: 11; stroke-linecap: round; transition: stroke-dashoffset 1100ms cubic-bezier(.4,0,.2,1); }
+.pf-gauge-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: .1rem;
+}
+.pf-gauge-score { font-family: 'DM Serif Display', serif; font-size: 2.9rem; line-height: 1; color: var(--ink); }
+.pf-gauge-score sub { font-family: var(--pf-mono); font-size: .8rem; color: var(--muted); vertical-align: baseline; }
+.pf-gauge-tag {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .25rem .7rem; border-radius: 999px; font-size: .7rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.pf-gauge-tag.is-good { background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.22); }
+.pf-gauge-tag.is-fair { background: var(--teal-soft); color: var(--teal); border: 1px solid rgba(229,90,31,.2); }
+.pf-gauge-tag.is-weak { background: var(--pf-red-soft); color: var(--pf-red); border: 1px solid rgba(239,68,68,.22); }
+.pf-health-note { font-size: .8rem; color: var(--muted); line-height: 1.55; max-width: 30ch; }
+.pf-health-chips { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; width: 100%; margin-top: .35rem; }
+.pf-chip {
+    display: flex; flex-direction: column; gap: .15rem; padding: .6rem .7rem;
+    background: var(--page); border: 1px solid var(--line); border-radius: var(--pf-radius-sm);
+    text-align: start;
+}
+.pf-chip-label { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+.pf-chip-val { font-size: .82rem; font-weight: 800; display: inline-flex; align-items: center; gap: .35rem; }
+.pf-chip-dot { width: .5rem; height: .5rem; border-radius: 50%; flex-shrink: 0; }
+
+/* ── 2) Risk Exposure Dashboard ──────────────────────────────────────── */
+.pf-risk-exposure-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1.5rem; }
+.pf-rex-block-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; color: var(--muted); margin-bottom: .85rem; }
+.pf-donut-row { display: flex; align-items: center; gap: 1.25rem; }
+.pf-donut2 {
+    width: 132px; height: 132px; border-radius: 50%; flex-shrink: 0; position: relative;
+    -webkit-mask: radial-gradient(circle, transparent 54%, #000 55%);
+            mask: radial-gradient(circle, transparent 54%, #000 55%);
+}
+.pf-donut2-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none; -webkit-mask: none; mask: none;
+}
+.pf-donut2-center strong { font-family: var(--pf-mono); font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+.pf-donut2-center span { font-size: .58rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.pf-donut-legend2 { display: flex; flex-direction: column; gap: .42rem; flex: 1; min-width: 0; }
+.pf-dl2 { display: flex; align-items: center; gap: .5rem; font-size: .76rem; }
+.pf-dl2-dot { width: .6rem; height: .6rem; border-radius: 3px; flex-shrink: 0; }
+.pf-dl2-name { flex: 1; color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-dl2-pct { font-family: var(--pf-mono); font-weight: 700; color: var(--muted); }
+.pf-conc-row { display: flex; align-items: center; gap: .7rem; margin-bottom: .55rem; }
+.pf-conc-sym { width: 3.1rem; font-family: var(--pf-mono); font-size: .76rem; font-weight: 700; color: var(--ink); flex-shrink: 0; }
+.pf-conc-track { flex: 1; height: 8px; background: var(--page); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.pf-conc-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FF8A3D, var(--teal)); transition: width 700ms cubic-bezier(.4,0,.2,1); }
+.pf-conc-pct { width: 3rem; text-align: end; font-family: var(--pf-mono); font-size: .76rem; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.pf-conc-total {
+    display: flex; align-items: center; justify-content: space-between; margin-top: .85rem; padding-top: .7rem;
+    border-top: 1px dashed var(--line); font-size: .74rem; font-weight: 700; color: var(--muted);
+}
+.pf-conc-total strong { font-family: var(--pf-mono); font-size: .92rem; color: var(--teal); }
+.pf-rex-metrics {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
+    margin-top: 1.25rem; border: 1px solid var(--line); border-radius: var(--pf-radius-sm); overflow: hidden;
+}
+.pf-rex-metric { padding: .8rem .85rem; border-inline-end: 1px solid var(--line); background: var(--page); }
+.pf-rex-metric:last-child { border-inline-end: none; }
+.pf-rex-metric label { display: block; font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-bottom: .3rem; line-height: 1.2; }
+.pf-rex-metric .pf-rex-v { font-family: var(--pf-mono); font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+.pf-rex-metric .pf-rex-sub { font-size: .6rem; color: var(--muted); margin-top: .1rem; }
+.pf-rex-insight {
+    display: flex; align-items: flex-start; gap: .55rem; margin-top: 1rem; padding: .75rem .9rem;
+    border-radius: var(--pf-radius-sm); background: var(--teal-soft); border: 1px solid rgba(229,90,31,.16);
+    font-size: .78rem; color: var(--ink); line-height: 1.5;
+}
+.pf-rex-insight svg { flex-shrink: 0; color: var(--teal); margin-top: .1rem; }
+
+/* ── 3) Strategy Attribution table ───────────────────────────────────── */
+.pf-attr-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--pf-radius-sm); }
+.pf-attr-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.pf-attr-table thead th {
+    padding: .65rem .85rem; background: var(--page); border-bottom: 1px solid var(--line);
+    font-size: .64rem; font-weight: 800; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .05em; white-space: nowrap; text-align: end;
+}
+.pf-attr-table thead th:first-child { text-align: start; }
+.pf-attr-table tbody tr { border-bottom: 1px solid var(--line); transition: background 150ms; }
+.pf-attr-table tbody tr:last-child { border-bottom: none; }
+.pf-attr-table tbody tr:hover { background: rgba(229,90,31,.04); }
+.pf-attr-table td { padding: .7rem .85rem; white-space: nowrap; text-align: end; font-family: var(--pf-mono); }
+.pf-attr-table td:first-child { text-align: start; font-family: 'Manrope', sans-serif; }
+.pf-attr-name { display: flex; align-items: center; gap: .6rem; }
+.pf-attr-swatch { width: .7rem; height: .7rem; border-radius: 3px; flex-shrink: 0; }
+.pf-attr-name b { font-weight: 700; color: var(--ink); display: block; font-size: .82rem; }
+.pf-attr-name small { font-size: .66rem; color: var(--muted); font-weight: 500; }
+.pf-attr-status {
+    display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .6rem; border-radius: 999px;
+    font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em;
+    background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2); font-family: 'Manrope', sans-serif;
+}
+.pf-attr-status.is-idle { background: rgba(148,163,184,.1); color: var(--muted); border-color: var(--line); }
+.pf-spark-svg { display: block; }
+
+/* ── 4) AI Decision Insights ─────────────────────────────────────────── */
+.pf-ai-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--pf-radius-sm); }
+.pf-ai-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.pf-ai-table thead th {
+    padding: .65rem .85rem; background: var(--page); border-bottom: 1px solid var(--line);
+    font-size: .64rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; text-align: start; white-space: nowrap;
+}
+.pf-ai-table tbody tr { border-bottom: 1px solid var(--line); }
+.pf-ai-table tbody tr:last-child { border-bottom: none; }
+.pf-ai-table tbody tr:hover { background: rgba(229,90,31,.04); }
+.pf-ai-table td { padding: .7rem .85rem; vertical-align: middle; }
+.pf-ai-sym { font-family: var(--pf-mono); font-weight: 700; color: var(--ink); }
+.pf-pill {
+    display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px;
+    font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;
+}
+.pf-pill.is-buy  { background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2); }
+.pf-pill.is-sell { background: var(--pf-red-soft); color: var(--pf-red); border: 1px solid rgba(239,68,68,.2); }
+.pf-pill.is-hold { background: var(--teal-soft); color: var(--teal); border: 1px solid rgba(229,90,31,.18); }
+.pf-signal-tag { font-size: .74rem; font-weight: 600; color: var(--ink); }
+.pf-conf { display: flex; align-items: center; gap: .5rem; min-width: 110px; }
+.pf-conf-track { flex: 1; height: 6px; background: var(--page); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.pf-conf-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FF8A3D, var(--teal)); }
+.pf-conf-num { font-family: var(--pf-mono); font-size: .72rem; font-weight: 700; color: var(--ink); width: 2.6rem; text-align: end; }
+.pf-risk-dot { display: inline-flex; align-items: center; gap: .35rem; font-size: .74rem; font-weight: 700; }
+.pf-risk-dot::before { content: ''; width: .55rem; height: .55rem; border-radius: 50%; }
+.pf-risk-dot.is-low::before  { background: var(--pf-green); }
+.pf-risk-dot.is-med::before  { background: var(--pf-amber); }
+.pf-risk-dot.is-high::before { background: var(--pf-red); }
+.pf-ai-expl { font-size: .76rem; color: var(--muted); line-height: 1.5; max-width: 30ch; white-space: normal; }
+
+/* ── 5) Recommended Actions ──────────────────────────────────────────── */
+.pf-actions-list { display: flex; flex-direction: column; gap: .55rem; }
+.pf-action-item {
+    display: flex; align-items: center; gap: .8rem; padding: .7rem .85rem;
+    border: 1px solid var(--line); border-radius: var(--pf-radius-sm); background: var(--page);
+    transition: border-color 150ms, background 150ms;
+}
+.pf-action-item:hover { border-color: rgba(229,90,31,.28); background: rgba(229,90,31,.03); }
+.pf-action-check {
+    width: 1.35rem; height: 1.35rem; border-radius: .4rem; flex-shrink: 0; display: grid; place-items: center;
+    border: 1.5px solid var(--line); color: var(--teal); background: var(--surface);
+}
+.pf-action-text { flex: 1; min-width: 0; }
+.pf-action-text b { display: block; font-size: .82rem; font-weight: 700; color: var(--ink); }
+.pf-action-text small { font-size: .7rem; color: var(--muted); line-height: 1.45; }
+.pf-prio { flex-shrink: 0; padding: .22rem .6rem; border-radius: 999px; font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.pf-prio.is-high { background: var(--pf-red-soft); color: var(--pf-red); border: 1px solid rgba(239,68,68,.22); }
+.pf-prio.is-med  { background: rgba(245,158,11,.14); color: #d97706; border: 1px solid rgba(245,158,11,.28); }
+.pf-prio.is-low  { background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2); }
+
+/* ── 6) Advanced Risk Guardrails ─────────────────────────────────────── */
+.pf-guard-list { display: flex; flex-direction: column; gap: .15rem; }
+.pf-guard-row {
+    display: flex; align-items: center; gap: .85rem; padding: .7rem .3rem;
+    border-bottom: 1px solid var(--line);
+}
+.pf-guard-row:last-child { border-bottom: none; }
+.pf-guard-name { flex: 1; min-width: 0; }
+.pf-guard-name b { display: block; font-size: .8rem; font-weight: 700; color: var(--ink); }
+.pf-guard-name small { font-size: .68rem; color: var(--muted); }
+.pf-guard-val { font-family: var(--pf-mono); font-size: .9rem; font-weight: 700; color: var(--ink); flex-shrink: 0; }
+.pf-toggle {
+    flex-shrink: 0; width: 2.6rem; height: 1.45rem; border-radius: 999px; position: relative;
+    background: var(--pf-green); border: none; cursor: default; transition: background 200ms;
+}
+.pf-toggle.is-off { background: var(--line); }
+.pf-toggle::after {
+    content: ''; position: absolute; top: 2px; inset-inline-start: 2px; width: 1.1rem; height: 1.1rem;
+    border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: inset-inline-start 200ms;
+}
+.pf-toggle.is-on::after { inset-inline-start: calc(100% - 1.1rem - 2px); }
+.pf-guard-pill {
+    flex-shrink: 0; padding: .2rem .55rem; border-radius: 999px; font-size: .62rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .03em;
+    background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2);
+}
+
+/* ── 7) Drawdown & Recovery ──────────────────────────────────────────── */
+.pf-dd-stats { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: 1rem; }
+.pf-dd-stat { padding: .65rem .75rem; background: var(--page); border: 1px solid var(--line); border-radius: var(--pf-radius-sm); }
+.pf-dd-stat label { display: block; font-size: .6rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin-bottom: .25rem; }
+.pf-dd-stat .pf-dd-v { font-family: var(--pf-mono); font-size: 1.05rem; font-weight: 700; }
+.pf-dd-chart { width: 100%; height: 92px; display: block; }
+.pf-dd-axis { display: flex; justify-content: space-between; font-family: var(--pf-mono); font-size: .6rem; color: var(--muted); margin-top: .3rem; }
+.pf-dd-risk { display: flex; align-items: center; justify-content: space-between; margin-top: .9rem; padding-top: .8rem; border-top: 1px dashed var(--line); }
+.pf-dd-risk span { font-size: .74rem; font-weight: 700; color: var(--muted); }
+
+/* ── 8) Trade Quality Analytics ──────────────────────────────────────── */
+.pf-tq-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .85rem; }
+.pf-tq-card {
+    padding: .85rem .9rem; border: 1px solid var(--line); border-radius: var(--pf-radius-sm); background: var(--page);
+    display: flex; flex-direction: column; gap: .5rem; transition: border-color 150ms, box-shadow 150ms;
+}
+.pf-tq-card:hover { border-color: rgba(229,90,31,.25); box-shadow: var(--rw-sh-1); }
+.pf-tq-top { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.pf-tq-label { font-size: .64rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 800; }
+.pf-tq-val { font-family: var(--pf-mono); font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+.pf-microbars { width: 100%; height: 30px; display: block; }
+.pf-tq-foot { display: inline-flex; align-items: center; gap: .3rem; font-size: .64rem; font-weight: 700; }
+.pf-tq-foot.is-good { color: var(--pf-green); }
+.pf-tq-foot.is-warn { color: #d97706; }
+.pf-tq-foot.is-bad  { color: var(--pf-red); }
+
+/* ── 9) Attention / Alerts ───────────────────────────────────────────── */
+.pf-alerts-list { display: flex; flex-direction: column; gap: .65rem; }
+.pf-alert {
+    display: flex; align-items: flex-start; gap: .8rem; padding: .85rem .95rem;
+    border: 1px solid var(--line); border-radius: var(--pf-radius-sm); background: var(--page);
+    border-inline-start-width: 3px;
+}
+.pf-alert.sev-high { border-inline-start-color: var(--pf-red); }
+.pf-alert.sev-med  { border-inline-start-color: var(--pf-amber); }
+.pf-alert.sev-low  { border-inline-start-color: var(--pf-green); }
+.pf-alert-ico { flex-shrink: 0; width: 1.7rem; height: 1.7rem; border-radius: .45rem; display: grid; place-items: center; margin-top: .05rem; }
+.pf-alert.sev-high .pf-alert-ico { background: var(--pf-red-soft); color: var(--pf-red); }
+.pf-alert.sev-med  .pf-alert-ico { background: rgba(245,158,11,.14); color: #d97706; }
+.pf-alert.sev-low  .pf-alert-ico { background: var(--pf-green-soft); color: var(--pf-green); }
+.pf-alert-body { flex: 1; min-width: 0; }
+.pf-alert-body b { display: block; font-size: .8rem; font-weight: 700; color: var(--ink); margin-bottom: .12rem; }
+.pf-alert-body p { margin: 0; font-size: .74rem; color: var(--muted); line-height: 1.5; }
+.pf-alert-sev {
+    flex-shrink: 0; padding: .2rem .55rem; border-radius: 999px; font-size: .6rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.pf-alert.sev-high .pf-alert-sev { background: var(--pf-red-soft); color: var(--pf-red); border: 1px solid rgba(239,68,68,.22); }
+.pf-alert.sev-med  .pf-alert-sev { background: rgba(245,158,11,.14); color: #d97706; border: 1px solid rgba(245,158,11,.28); }
+.pf-alert.sev-low  .pf-alert-sev { background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2); }
+
+/* ── Intelligence responsive ─────────────────────────────────────────── */
+@media (max-width: 1100px) {
+    .pf-intel-row--health { grid-template-columns: 1fr; }
+    .pf-intel-row--trio  { grid-template-columns: 1fr; }
+    .pf-risk-exposure-grid { grid-template-columns: 1fr; }
+    .pf-rex-metrics { grid-template-columns: repeat(3, 1fr); }
+    .pf-rex-metric:nth-child(3) { border-inline-end: none; }
+    .pf-rex-metric:nth-child(n+4) { border-top: 1px solid var(--line); }
+    .pf-tq-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .pf-rex-metrics { grid-template-columns: repeat(2, 1fr); }
+    .pf-rex-metric:nth-child(3) { border-inline-end: 1px solid var(--line); }
+    .pf-rex-metric:nth-child(2n) { border-inline-end: none; }
+    .pf-tq-grid { grid-template-columns: 1fr 1fr; }
+    .pf-health-chips { grid-template-columns: 1fr 1fr; }
+    .pf-intel-banner-text h2 { font-size: 1.25rem; }
+}
+
+/* RTL: mirror progress fills / sparkline gradients stay LTR (numeric) */
+html[dir="rtl"] .pf-attr-table td,
+html[dir="rtl"] .pf-attr-table thead th { text-align: start; }
+html[dir="rtl"] .pf-attr-table td:not(:first-child),
+html[dir="rtl"] .pf-attr-table thead th:not(:first-child) { text-align: end; }
+
