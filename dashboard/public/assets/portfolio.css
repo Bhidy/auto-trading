@@ -605,7 +605,32 @@
     cursor: pointer; user-select: none;
 }
 .pf-table thead th.num { text-align: end; }
-.pf-table thead th:hover { color: var(--ink); }
+.pf-table thead th:hover { color: var(--teal); }
+
+/* ── Sort indicators ────────────────────────────────────────────────── */
+.pf-th-sort {
+    display: inline-flex; flex-direction: column; align-items: center;
+    gap: 1px; margin-inline-start: .3rem; vertical-align: middle;
+    opacity: .28; transition: opacity 150ms;
+}
+.pf-th-sort svg { display: block; }
+th:hover .pf-th-sort { opacity: .55; }
+
+/* Ascending — show only the up arrow */
+.pf-th-sorted.pf-th-asc .pf-th-sort  { opacity: 1; color: var(--teal); }
+.pf-th-sorted.pf-th-asc .pf-th-sort svg:last-child  { opacity: .2; }
+
+/* Descending — show only the down arrow */
+.pf-th-sorted.pf-th-desc .pf-th-sort { opacity: 1; color: var(--teal); }
+.pf-th-sorted.pf-th-desc .pf-th-sort svg:first-child { opacity: .2; }
+
+/* Apply same sort styles to attribution + AI tables */
+.pf-attr-table thead th:hover,
+.pf-ai-table thead th:hover { color: var(--teal); cursor: pointer; }
+.pf-attr-table thead th .pf-th-sort,
+.pf-ai-table thead th .pf-th-sort { opacity: .28; }
+.pf-attr-table thead th:hover .pf-th-sort,
+.pf-ai-table thead th:hover .pf-th-sort { opacity: .55; }
 .pf-table tbody tr { border-bottom: 1px solid var(--line); transition: background 150ms; }
 .pf-table tbody tr:last-child { border-bottom: none; }
 .pf-table tbody tr:hover { background: rgba(148,163,184,.05); }

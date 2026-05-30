@@ -1257,6 +1257,9 @@
             });
         });
 
+        // Wire sort on all tables rendered in the hub pane
+        setTimeout(function() { wireAllTables(root); }, 0);
+
         if (intelTab === 'risk') loadDrawdownChart();
     }
 
@@ -1819,6 +1822,9 @@
                 ? '<div class="pf-table-wrap pf-table-scroll">' + tableHtml + '</div>'
                 : '<div class="pf-chart-area">' + chartHtml + '</div>');
 
+        // Wire sort on all tables in this section
+        if (holdingsViewMode === 'table') setTimeout(function() { wireAllTables(sec); }, 0);
+
         sec.querySelectorAll('.pf-tab').forEach(function(tabEl){
             tabEl.addEventListener('click', function(){ holdingsViewMode = 'table'; renderHoldings(tabEl.dataset.tab); });
         });
@@ -2189,6 +2195,66 @@
         return '<table class="pf-table"><thead><tr>' +
             ths.map(function(h, i){ return '<th' + (i > 0 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') +
         '</tr></thead>';
+    }
+
+    /* ─── Universal Table Sort Engine ────────────────────────────────────
+       Wires click-to-sort on any <table> inside a wrapper element.
+       Click header = ascending; click again = descending. Arrow indicator
+       shows active column + direction. Works on any rendered table in the
+       page without re-running data pipelines (pure DOM sort).          */
+    function wireTableSort(table) {
+        if (!table || table.dataset.sortWired) return;
+        table.dataset.sortWired = '1';
+
+        var thead = table.querySelector('thead');
+        var tbody = table.querySelector('tbody');
+        if (!thead || !tbody) return;
+
+        var headers = thead.querySelectorAll('th');
+        var sortCol = -1, sortDir = 1;
+
+        // Inject indicator spans into every <th>
+        headers.forEach(function(th) {
+            var ind = document.createElement('span');
+            ind.className = 'pf-th-sort';
+            ind.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7-7 7 7"/></svg>' +
+                            '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg>';
+            th.appendChild(ind);
+        });
+
+        headers.forEach(function(th, colIdx) {
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', function() {
+                if (sortCol === colIdx) { sortDir = -sortDir; }
+                else { sortCol = colIdx; sortDir = 1; }
+
+                // Update visual state on all headers
+                headers.forEach(function(hh, ii) {
+                    hh.classList.toggle('pf-th-sorted', ii === sortCol);
+                    hh.classList.toggle('pf-th-asc',    ii === sortCol && sortDir > 0);
+                    hh.classList.toggle('pf-th-desc',   ii === sortCol && sortDir < 0);
+                });
+
+                // Sort rows by the clicked column
+                var rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function(a, b) {
+                    var ca = (a.cells[colIdx] || {}).textContent || '';
+                    var cb = (b.cells[colIdx] || {}).textContent || '';
+                    // Strip currency/percent symbols and parse as number if possible
+                    var na = parseFloat(ca.replace(/[^0-9.\-]/g, ''));
+                    var nb = parseFloat(cb.replace(/[^0-9.\-]/g, ''));
+                    if (!isNaN(na) && !isNaN(nb)) return (na - nb) * sortDir;
+                    return ca.localeCompare(cb, undefined, { sensitivity: 'base' }) * sortDir;
+                });
+                rows.forEach(function(r) { tbody.appendChild(r); });
+            });
+        });
+    }
+
+    /* Wire every table inside a root element (skips already-wired ones) */
+    function wireAllTables(root) {
+        if (!root) return;
+        root.querySelectorAll('table').forEach(wireTableSort);
     }
 
     function symChip(h) {
