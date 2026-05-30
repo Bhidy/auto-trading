@@ -658,8 +658,9 @@
 
                 var sign = pnl >= 0 ? '▲' : '▼';
                 var cls = pnl >= 0 ? 'pf-pos' : 'pf-neg';
+                var colorStyle = pnl >= 0 ? 'color: var(--pf-green);' : 'color: var(--pf-red);';
                 var hiddenCls = idx >= 10 ? ' pf-pos-extra' : '';
-                html += '<tr class="' + hiddenCls + '">' +
+                html += '<tr class="' + hiddenCls + '" style="transition: background-color 150ms ease;">' +
                     '<td style="font-weight:800;font-family:var(--pf-mono);cursor:pointer; display:flex; align-items:center; gap:0.45rem;" onclick="document.dispatchEvent(new CustomEvent(\'mp:selectSymbol\',{detail:\'' + sym + '\'}))">' +
                         getLogoHtml(sym, 20) +
                         '<span>' + sym + '</span>' +
@@ -668,8 +669,8 @@
                     '<td style="font-family:var(--pf-mono);">$' + avg.toFixed(2) + '</td>' +
                     '<td class="mp-tick-target" style="font-family:var(--pf-mono);">$' + price.toFixed(2) + '</td>' +
                     '<td style="font-family:var(--pf-mono);">$' + mktVal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
-                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700;">' + sign + ' $' + Math.abs(pnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
-                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700;">' + (pnl >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%</td>' +
+                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700; ' + colorStyle + '">' + sign + ' $' + Math.abs(pnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
+                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700; ' + colorStyle + '">' + (pnl >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%</td>' +
                 '</tr>';
             });
 
