@@ -21,16 +21,32 @@
     var quotesRefreshInterval = null;
     var globalQuotesCache = {};
 
-    var watchlistSymbols = ['NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META'];
-    var allSymbols = ['NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'AMD', 'NFLX', 'INTC', 'SPY', 'QQQ', 'DIA'];
+    // Curated data-feed universe — these are the symbols the system collects
+    // daily bars for (CHART_CORE in scripts/collect_market_history.py, backfilled
+    // ~2y into Supabase) and serves live via the Alpaca quote/chart endpoints.
+    // Crypto pairs are intentionally excluded (handled by the Crypto Terminal).
+    var watchlistSymbols = [
+        'SPY', 'QQQ', 'DIA', 'IWM',
+        'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'AMD', 'NFLX', 'INTC',
+        'XLK', 'XLE', 'XLF', 'XLV', 'XLY', 'XLI', 'XLU', 'XLP', 'XLB', 'XLRE', 'XLC',
+        'TLT', 'GLD', 'SHY', 'BIL'
+    ];
+    var allSymbols = watchlistSymbols.slice();
     var sectorETFs = ['XLK', 'XLF', 'XLE', 'XLV', 'XLY', 'XLI', 'XLC', 'XLB', 'XLU', 'XLRE'];
-    var portfolioHoldings = {}; 
+    var portfolioHoldings = {};
 
     var companyNames = {
         AAPL: 'Apple Inc.', NVDA: 'NVIDIA Corporation', MSFT: 'Microsoft Corporation',
         GOOGL: 'Alphabet Inc.', AMZN: 'Amazon.com, Inc.', TSLA: 'Tesla, Inc.',
         META: 'Meta Platforms, Inc.', AMD: 'Advanced Micro Devices', NFLX: 'Netflix, Inc.',
-        INTC: 'Intel Corporation', SPY: 'SPDR S&P 500 ETF', QQQ: 'Invesco QQQ Trust', DIA: 'SPDR Dow ETF'
+        INTC: 'Intel Corporation', SPY: 'SPDR S&P 500 ETF', QQQ: 'Invesco QQQ Trust', DIA: 'SPDR Dow ETF',
+        IWM: 'iShares Russell 2000 ETF',
+        XLK: 'Technology Select Sector', XLE: 'Energy Select Sector', XLF: 'Financial Select Sector',
+        XLV: 'Health Care Select Sector', XLY: 'Consumer Discretionary', XLI: 'Industrial Select Sector',
+        XLU: 'Utilities Select Sector', XLP: 'Consumer Staples Select', XLB: 'Materials Select Sector',
+        XLRE: 'Real Estate Select Sector', XLC: 'Communication Svcs Select',
+        TLT: 'iShares 20+ Yr Treasury', GLD: 'SPDR Gold Shares',
+        SHY: 'iShares 1-3 Yr Treasury', BIL: 'SPDR 1-3 Mo T-Bill ETF'
     };
 
     /* ─── Nav & Terminal Translations ─────────────────────────────────── */
