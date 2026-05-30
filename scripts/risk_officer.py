@@ -18,7 +18,16 @@ if _REPO_ROOT not in sys.path:
 from shared.alpaca_http import evaluate_asset_gate  # noqa: E402
 
 def load_config():
-    with open(os.path.join(CONFIG_DIR, "risk_limits.json")) as f:
+    """Load risk limits, profile-aware. RISK_PROFILE=live selects the tighter
+    risk_limits.live.json for the fractional live ramp (R4); anything else (the
+    default) uses the paper limits. Falls back to paper if the live file is
+    missing, so a misconfiguration can never silently widen limits."""
+    profile = os.environ.get("RISK_PROFILE", "paper").strip().lower()
+    candidate = "risk_limits.live.json" if profile == "live" else "risk_limits.json"
+    path = os.path.join(CONFIG_DIR, candidate)
+    if not os.path.exists(path):
+        path = os.path.join(CONFIG_DIR, "risk_limits.json")
+    with open(path) as f:
         return json.load(f)
 
 def load_signals():
