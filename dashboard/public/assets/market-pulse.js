@@ -1173,16 +1173,13 @@
                 row.className = 'mp-list-item ' + selectedCls;
                 row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.55rem 0.65rem;';
                 row.innerHTML = `
-                    <div class="mp-list-info" style="width:75px; flex-shrink:0;">
-                        <span class="mp-list-symbol">${sym}</span>
-                        <span class="mp-list-name">${companyNames[sym] || sym}</span>
+                    <div class="mp-list-info" style="flex:1; min-width:0;">
+                        <span class="mp-list-symbol" style="display:block;">${sym}</span>
+                        <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem;">${companyNames[sym] || sym}</span>
                     </div>
-                    <div class="mp-spark-holder" style="flex:1; display:flex; justify-content:center; align-items:center; min-width:55px; opacity:0.8;">
-                        ${getSvgSparkline(sym, isPos)}
-                    </div>
-                    <div style="display:flex; align-items:center; gap:0.55rem; justify-content:flex-end; width:104px; flex-shrink:0;">
+                    <div style="display:flex; align-items:center; gap:0.55rem; justify-content:flex-end; flex-shrink:0;">
                         <span class="pf-num" style="font-size:0.76rem; font-weight:700; color:var(--ink);">${db.price ? '$' + db.price.toFixed(2) : '—'}</span>
-                        <span class="pf-num ${cls}" style="font-size:0.68rem; font-weight:600; width:48px; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
+                        <span class="pf-num ${cls}" style="font-size:0.68rem; font-weight:600; min-width:52px; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
                     </div>
                 `;
                 row.addEventListener('click', function () { loadStockDetails(sym); });
@@ -1238,9 +1235,9 @@
             itemEl.className = 'mp-list-item';
             itemEl.style.padding = '0.45rem 0.65rem';
             itemEl.innerHTML = `
-                <div style="display:flex;align-items:center;gap:0.55rem;min-width:0;">
-                    <span class="pf-sym-badge" style="font-size:0.62rem;padding:0.1rem 0.35rem;border-radius:4px;flex-shrink:0;">${sym}</span>
-                    <span style="font-size:0.72rem;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${companyNames[sym] || sym}</span>
+                <div class="mp-list-info" style="flex:1; min-width:0;">
+                    <span class="mp-list-symbol" style="display:block;">${sym}</span>
+                    <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem;">${companyNames[sym] || sym}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
                     <span class="pf-num" style="font-size:0.78rem;font-weight:700;">$${q.price.toFixed(2)}</span>
@@ -1680,31 +1677,51 @@
             });
         }
 
-        // Add stock to watchlist
+        // Add stock to watchlist (Toggle inline search input row)
         var addBtn = document.getElementById('btnAddStock');
-        if (addBtn) addBtn.addEventListener('click', function() {
-            var q = (searchInput && searchInput.value.trim().toUpperCase()) || '';
-            if (!q) q = prompt(lang === 'ar' ? 'أدخل رمز السهم للإضافة:' : 'Enter symbol to add to watchlist:');
-            if (q && q.length > 0) {
-                q = q.toUpperCase();
-                if (watchlistSymbols.indexOf(q) === -1) {
-                    watchlistSymbols.push(q);
-                    companyNames[q] = q;
-                    loadRealQuotes([q]).then(function() { renderWatchlistPane(); renderTopLists(); });
-                }
-            }
-        });
+        var searchRow = document.getElementById('watchlistSearchRow');
+        var searchInputWl = document.getElementById('watchlistSearchInput');
+        var cancelSearchBtn = document.getElementById('btnCancelWatchlistSearch');
 
-        // Watchlist settings = clear watchlist and open add
-        var wsBtn = document.getElementById('btnWatchlistSettings');
-        if (wsBtn) wsBtn.addEventListener('click', function() {
-            var q = prompt(lang === 'ar' ? 'أضف رمزًا أو اتركه فارغًا لإعادة التعيين:' : 'Add symbol or leave empty to reset:');
-            if (q && q.trim().length > 0) {
-                var sym = q.trim().toUpperCase();
-                if (watchlistSymbols.indexOf(sym) === -1) { watchlistSymbols.push(sym); companyNames[sym] = sym; }
-                loadRealQuotes([sym]).then(function() { renderWatchlistPane(); });
+        if (addBtn && searchRow && searchInputWl) {
+            addBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (searchRow.style.display === 'none' || !searchRow.style.display) {
+                    searchRow.style.display = 'flex';
+                    searchInputWl.value = '';
+                    searchInputWl.focus();
+                } else {
+                    searchRow.style.display = 'none';
+                }
+            });
+
+            // Enter key listener on the inline input to submit & add the symbol
+            searchInputWl.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    var q = searchInputWl.value.trim().toUpperCase();
+                    if (q.length > 0) {
+                        if (watchlistSymbols.indexOf(q) === -1) {
+                            watchlistSymbols.push(q);
+                            companyNames[q] = q;
+                            loadRealQuotes([q]).then(function() {
+                                renderWatchlistPane();
+                                renderTopLists();
+                            });
+                        }
+                        searchInputWl.value = '';
+                        searchRow.style.display = 'none';
+                    }
+                }
+            });
+
+            // Cancel click handler to hide inline row
+            if (cancelSearchBtn) {
+                cancelSearchBtn.addEventListener('click', function() {
+                    searchRow.style.display = 'none';
+                });
             }
-        });
+        }
 
         // Toggle favorite
         var favBtn = document.getElementById('btnToggleFavorite');
