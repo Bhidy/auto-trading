@@ -1545,6 +1545,22 @@ body {
 .pf-terminal-side { display: flex; flex-direction: column; gap: 1.25rem; }
 
 /* Quick-risk sidebar card rows */
+/* Sidebar two-tab card */
+.pf-sidebar-card { overflow: hidden; }
+.pf-sidebar-tabs {
+    display: flex; border-bottom: 1px solid var(--line);
+}
+.pf-sidebar-tab {
+    flex: 1; padding: .65rem .5rem; border: none; background: transparent;
+    font-size: .74rem; font-weight: 700; color: var(--muted);
+    cursor: pointer; transition: all 150ms; text-align: center;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.pf-sidebar-tab:hover:not(.active) { color: var(--teal); }
+.pf-sidebar-tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--teal-soft); }
+.pf-sidebar-pane { padding: 1.1rem; }
+
+/* Quick-risk status rows */
 .pf-qrisk { display: flex; flex-direction: column; }
 .pf-qrisk-row {
     display: flex; align-items: center; justify-content: space-between;

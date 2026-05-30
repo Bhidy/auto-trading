@@ -1166,11 +1166,13 @@
     }
 
     /* ── Tier 2 Sidebar: Contributors + Quick Risk Status ─────────────── */
+    var sidebarTab = 'contributors'; // 'contributors' | 'risk'
+
     function renderSidebar() {
         var sb = document.getElementById('terminalSidebar');
         if (!sb) return;
 
-        // Quick Risk panel (compact rows, no SVG circles)
+        // Build risk rows
         var tradesToday = detailCache ? (detailCache.trade_log || []).length : 0;
         var signalCount = detailCache ? ((detailCache.signals || {}).signals || []).length : 0;
         var halted = portfolio.halted;
@@ -1186,16 +1188,34 @@
             qrow(il('Kill Switch', 'مفتاح الإيقاف'), il('Armed', 'مُفعّل'), 'pf-pos') +
             qrow(il('Kill Threshold', 'عتبة الإيقاف'), '18% DD', '');
 
+        var isContrib = sidebarTab === 'contributors';
+        var tabBar =
+            '<button class="pf-sidebar-tab' + (isContrib ? ' active' : '') + '" data-stab="contributors">' +
+                il('Contributors', 'المساهمون') +
+            '</button>' +
+            '<button class="pf-sidebar-tab' + (!isContrib ? ' active' : '') + '" data-stab="risk">' +
+                il('Risk Status', 'حالة المخاطر') +
+            '</button>';
+
+        var paneContent = isContrib
+            ? '<div id="contribPanel">' + renderContrib() + '</div>'
+            : '<div class="pf-qrisk">' + qrisk + '</div>';
+
         sb.innerHTML =
-            '<div class="pf-card pf-contrib-panel" id="contribPanel" style="padding:1.1rem;">' +
-                renderContrib() +
-            '</div>' +
-            '<div class="pf-card pf-panel" style="padding:1.1rem;">' +
-                '<div class="pf-panel__title">' + il('System Risk Status', 'حالة مخاطر النظام') + '</div>' +
-                '<div class="pf-qrisk">' + qrisk + '</div>' +
+            '<div class="pf-card pf-sidebar-card">' +
+                '<div class="pf-sidebar-tabs">' + tabBar + '</div>' +
+                '<div class="pf-sidebar-pane">' + paneContent + '</div>' +
             '</div>';
 
-        wireContribTabs();
+        // Wire tab switching
+        sb.querySelectorAll('.pf-sidebar-tab').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                sidebarTab = btn.dataset.stab;
+                renderSidebar();
+            });
+        });
+
+        if (isContrib) wireContribTabs();
     }
 
     /* ── Tier 3 Intelligence Hub Orchestrator (tabbed card) ───────────── */
