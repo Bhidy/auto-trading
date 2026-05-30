@@ -224,15 +224,6 @@
         window.addEventListener('offline', function () { setLiveState(false); });
     }
 
-    // Kept for compatibility (manual partial refresh of header/holdings/orders)
-    function refreshLiveData() {
-        safeSegment('header', renderHeader);
-        var hRoot = document.getElementById('pf-detail-holdings-root');
-        if (hRoot) safeSegment('holdings', function () { renderHoldingsTable(hRoot); });
-        var ordersEl = document.getElementById('pfDetailOrders');
-        if (ordersEl) safeSegment('orders', function () { renderOrdersWidget(ordersEl); });
-    }
-
     function renderNotFound() {
         document.getElementById('pfDashBody').innerHTML =
             '<div class="pf-empty"><p>' + t('noPortfolio') + '</p>' +
@@ -852,177 +843,6 @@
         return result;
     }
 
-    /* ─── Portfolio Smart Panels (Advanced Tuners, watchlists) ───────── */
-    function renderSmartPanels() {
-        var grid = document.getElementById('smartPanelsGrid');
-        if (!grid) return;
-
-        if (!portfolio.isServer || !detailCache) {
-            grid.style.display = 'none';
-            return;
-        }
-        grid.style.display = 'grid';
-
-        var leftPanel = '';
-        var rightPanel = '';
-
-        if (pfId === 'all') {
-            var sourceLabels = detailCache ? (detailCache.source_labels || ['Self Improving Brain', 'Capitol Shadow', 'Cautious Sniper']) : ['Self Improving Brain', 'Capitol Shadow', 'Cautious Sniper'];
-            var sourceCount = detailCache ? (detailCache.source_count || 3) : 3;
-            leftPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">Aggregated Portfolio Overview</div>
-                <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--page); border:1px solid var(--line); padding:0.65rem 0.85rem; border-radius:var(--pf-radius-sm);">
-                        <span style="font-weight:700; color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.04em;">Portfolios Included</span>
-                        <span class="pf-num pf-pos" style="font-weight:800; font-size:1.05rem; color:var(--teal);">${sourceCount}</span>
-                    </div>
-                    ${sourceLabels.map(function(label, i){
-                        var colors = ['#FF8A3D', '#14b8a6', '#8b5cf6'];
-                        return `<div style="display:flex; align-items:center; justify-content:space-between; background:var(--page); border:1px solid var(--line); padding:0.55rem 0.85rem; border-radius:var(--pf-radius-sm);">
-                            <div style="display:flex; align-items:center; gap:0.55rem;">
-                                <span style="width:8px; height:8px; border-radius:50%; background:${colors[i]}; display:inline-block;"></span>
-                                <span style="font-weight:600; font-size:0.8rem; color:var(--ink);">${escHtml(label)}</span>
-                            </div>
-                            <span class="pf-num" style="font-size:0.72rem; color:var(--muted);">$100K Paper</span>
-                        </div>`;
-                    }).join('')}
-                </div>
-            </div>`;
-
-            rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">Combined Trading Strategies</div>
-                <div style="display:flex; flex-direction:column; gap:0.55rem; max-height:260px; overflow-y:auto;">
-                    <div style="border-bottom:1px dashed var(--line); padding-bottom:0.45rem; font-size:0.75rem; line-height:1.5; color:var(--muted);">
-                        <strong style="color:var(--teal);">Self Improving Brain</strong>: Multi-factor scoring, regime detection, adaptive self-learning parameters
-                    </div>
-                    <div style="border-bottom:1px dashed var(--line); padding-bottom:0.45rem; font-size:0.75rem; line-height:1.5; color:var(--muted);">
-                        <strong style="color:var(--teal);">Capitol Shadow</strong>: Copy top-performing US politicians via Capitol Trades data
-                    </div>
-                    <div style="font-size:0.75rem; line-height:1.5; color:var(--muted);">
-                        <strong style="color:var(--teal);">Cautious Sniper</strong>: Institutional multi-factor, ATR-based risk, 60/20/20 capital tranches
-                    </div>
-                </div>
-            </div>`;
-        } else if (pfId === 'portfolio_1') {
-            // QUANT MULTI-FACTOR SPECIFIC PANELS (Adaptive Tuners + Heatmap Scorecard)
-            var params = detailCache.strategy_params || {};
-            leftPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">Adaptive Parameters (Self-Learning)</div>
-                <div class="pf-params-grid">
-                    <div class="pf-param-item"><label>Buy Score Threshold</label><span class="pf-num">${params.confidence_buy_threshold || 0.50}</span></div>
-                    <div class="pf-param-item"><label>Short Score Threshold</label><span class="pf-num">-${params.confidence_short_threshold || 0.50}</span></div>
-                    <div class="pf-param-item"><label>Stop ATR Multiplier</label><span class="pf-num">${params.trailing_stop_atr_mult || 2.50}</span></div>
-                    <div class="pf-param-item"><label>Take Profit ATR Mult</label><span class="pf-num">${params.take_profit_atr_mult || 4.00}</span></div>
-                    <div class="pf-param-item"><label>Position Size Mult</label><span class="pf-num">${params.position_size_multiplier || 1.00}</span></div>
-                    <div class="pf-param-item"><label>Daily Trades Target</label><span class="pf-num">${params.max_trades_per_day || 12}</span></div>
-                </div>
-            </div>`;
-            
-            var rollingRank = (detailCache.signals || {}).relative_strength_ranking || [
-                { symbol: 'GOOGL', percentile: 100.0, percentile_label: 'BULL' },
-                { symbol: 'NVDA', percentile: 95.0, percentile_label: 'BULL' },
-                { symbol: 'AMZN', percentile: 90.0, percentile_label: 'BULL' },
-                { symbol: 'QQQ', percentile: 85.0, percentile_label: 'BULL' },
-                { symbol: 'AAPL', percentile: 80.0, percentile_label: 'NEUTRAL' }
-            ];
-            var heatMapRows = rollingRank.slice(0, 5).map(h => {
-                var rating = h.percentile >= 80 ? 'BULL' : h.percentile <= 40 ? 'BEAR' : 'NEUTRAL';
-                var badgeCls = rating === 'BULL' ? 'bull' : rating === 'BEAR' ? 'bear' : 'neutral';
-                return `<div class="pf-heatmap-item">
-                    <span class="pf-heatmap-sym">${h.symbol}</span>
-                    <span style="color:var(--muted); font-size:0.7rem;">Percentile: ${h.percentile}%</span>
-                    <span class="pf-heatmap-badge ${badgeCls}">${rating}</span>
-                </div>`;
-            }).join('');
-
-            rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">Multi-Factor Technical Scorecard Matrix</div>
-                <div class="pf-heatmap-grid">${heatMapRows}</div>
-            </div>`;
-
-        } else if (pfId === 'portfolio_2') {
-            // GOVERNMENT COPY BOT PANELS — real data from P2 API
-            var p2Trades = detailCache ? (detailCache.trade_log || []) : [];
-            var p2Latest = p2Trades.slice().reverse().slice(0, 5);
-            
-            var leaderRows = p2Latest.length > 0 ? p2Latest.map(function(t){
-                var cls = t.side === 'buy' ? 'pf-pos' : 'pf-neg';
-                var price = t.limit_price || (t.estimated_value && t.qty ? t.estimated_value / t.qty : 0) || t.price || 0;
-                var tradeVal = t.estimated_value || (price > 0 && t.qty ? price * t.qty : 0);
-                var politician = t.politician || t.source || '';
-                return '<div style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div>' +
-                        '<strong style="font-family:var(--pf-mono);font-size:0.82rem;">' + escHtml(t.symbol) + '</strong>' +
-                        (politician ? '<span style="display:block;font-size:0.68rem;color:var(--muted);margin-top:1px;">' + escHtml(politician) + '</span>' : '') +
-                    '</div>' +
-                    '<div style="text-align:right;">' +
-                        '<span class="pf-num ' + cls + '" style="font-size:0.75rem;font-weight:700;">' + t.side.toUpperCase() + (tradeVal > 0 ? ' · $' + fmt(tradeVal, 0) : '') + '</span>' +
-                        '<span class="pf-num" style="font-size:0.68rem;color:var(--muted);display:block;">' + (t.timestamp || t.date || '').slice(0,10) + '</span>' +
-                    '</div>' +
-                '</div>';
-            }).join('') : '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang==='ar'?'لا توجد صفقات حتى الآن':'No copy-trades executed yet.') + '</div>';
-
-            leftPanel = '<div class="pf-card pf-panel" style="max-height:280px; overflow-y:auto;">' +
-                '<div class="pf-panel__title">Copy-Trade Leaderboard</div>' +
-                '<div style="display:flex;flex-direction:column;">' + leaderRows + '</div>' +
-            '</div>';
-
-            var p2Signals = detailCache ? (detailCache.signals || {}) : {};
-            // research_results.json uses { stats: [{politician, total, buys, sells, ratio, top_assets}] }
-            var p2Stats = p2Signals.stats || [];
-            var watchRows = p2Stats.length > 0 ? p2Stats.slice(0, 6).map(function(s){
-                var ratioColor = (s.ratio || 0) >= 2 ? 'var(--teal)' : (s.ratio || 0) >= 1 ? 'var(--ink)' : 'var(--muted)';
-                var topAssets = (s.top_assets || []).slice(0, 3).map(function(a) {
-                    if (!a) return '';
-                    if (typeof a === 'string') return a;
-                    return (a.ticker && a.ticker !== 'N/A') ? a.ticker : (a.issuer || '').slice(0, 14);
-                }).filter(Boolean).join(', ');
-                return '<div style="padding:0.45rem 0.75rem;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">' +
-                    '<div style="min-width:0;">' +
-                        '<span style="font-weight:700;font-size:0.78rem;color:var(--ink);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(s.politician || '') + '</span>' +
-                        (topAssets ? '<span style="font-family:var(--pf-mono);font-size:0.65rem;color:var(--muted);">' + escHtml(topAssets) + '</span>' : '') +
-                    '</div>' +
-                    '<div style="text-align:right;flex-shrink:0;">' +
-                        '<span class="pf-num" style="font-size:0.72rem;font-weight:700;color:' + ratioColor + ';">' + (s.buys || 0) + 'B / ' + (s.sells || 0) + 'S</span>' +
-                        '<span style="display:block;font-size:0.65rem;color:var(--muted);">ratio ' + ((s.ratio || 0).toFixed(1)) + 'x</span>' +
-                    '</div>' +
-                '</div>';
-            }).join('') : '<div style="padding:1rem;color:var(--muted);font-size:0.78rem;">' + (lang==='ar'?'لا توجد إشارات نشطة':'No active signals. Capitol Trades data will appear after next scan.') + '</div>';
-
-            rightPanel = '<div class="pf-card pf-panel">' +
-                '<div class="pf-panel__title">Capitol Trades Watchlist</div>' +
-                '<div style="display:flex; flex-direction:column;max-height:280px;overflow-y:auto;">' + watchRows + '</div>' +
-            '</div>';
-
-        } else {
-            // EVENT DRIVEN BOT PANELS (Signal scorecard + news catalyst terminal scanner)
-            var signalsList = (detailCache.signals || {}).signals || [
-                { symbol: 'PANW', score: 9.85, reasons: ['Cybersecurity contract rumors win', 'AI Cloud platform scale expansion'] },
-                { symbol: 'CSCO', score: 8.42, reasons: ['Server networking architecture contract', 'Margin scale beat guidance'] }
-            ];
-            var signalRows = signalsList.slice(0, 3).map(s => `
-                <div class="pf-pol-row" style="grid-template-columns:1fr 2fr; padding:0.65rem 0.85rem;">
-                    <span class="pf-num pf-pos" style="font-weight:800; font-size:0.95rem;">+${fmt(s.score, 2)}</span>
-                    <div style="text-align:left;">
-                        <strong style="color:var(--ink); font-family:var(--pf-mono); font-size:0.85rem; display:block;">${s.symbol}</strong>
-                        <span style="font-size:0.68rem; color:var(--muted);">${s.reasons?.slice(0,1).join(', ')}</span>
-                    </div>
-                </div>
-            `).join('');
-
-            leftPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">Sniper Breakout Catalyst Scorecard</div>
-                <div style="display:flex; flex-direction:column; gap:0.45rem;">${signalRows || '<div class="pf-empty-inline">No signals loaded</div>'}</div>
-            </div>`;
-
-            rightPanel = `<div class="pf-card pf-panel">
-                <div class="pf-panel__title">News Catalyst & Sentiment Terminal</div>
-                <div style="padding:1rem;color:var(--muted);font-size:0.78rem;">` + (lang === 'ar' ? 'بيانات المحفزات الإخبارية قيد التحميل...' : 'News catalyst data pending refresh...') + `</div>
-            </div>`;
-        }
-
-        grid.innerHTML = leftPanel + rightPanel;
-    }
 
     /* ════════════════════════════════════════════════════════════════════
        ADVANCED PORTFOLIO INTELLIGENCE
@@ -1297,9 +1117,6 @@
         '</div>' +
         attentionAlertsCard(I);
     }
-    function hubPaneQuality(I) {
-        return tradeQualityCard(I) + recommendedActionsCard(I);
-    }
 
     /* ── 1) Portfolio Health Score ────────────────────────────────────── */
     function healthScoreCard(I) {
@@ -1529,42 +1346,6 @@
             '<div class="pf-ai-table-wrap"><table class="pf-ai-table"><thead><tr>' +
                 ths.map(function (h) { return '<th>' + h + '</th>'; }).join('') +
             '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
-        '</div>';
-    }
-
-    /* ── 5) Recommended Actions (contextual, priority-sorted) ─────────── */
-    function recommendedActionsCard(I) {
-        var actions = [];
-        var topSym = I.byWeight[0] ? I.byWeight[0].symbol : null;
-        if (I.largest > 12) actions.push(['high', il('Trim overweight position', 'تقليص المركز ذي الوزن الزائد'), il('' + topSym + ' is ' + fmt(I.largest, 1) + '% of equity — above the single-name target.', '' + topSym + ' يمثل ' + fmt(I.largest, 1) + '% — أعلى من هدف الاسم الواحد.')]);
-        else if (I.largest > 8) actions.push(['med', il('Watch top-position weight', 'راقب وزن أكبر مركز'), il('' + topSym + ' at ' + fmt(I.largest, 1) + '% is approaching the concentration cap.', '' + topSym + ' عند ' + fmt(I.largest, 1) + '% يقترب من حد التركّز.')]);
-
-        if (I.cashDeploy < 85) actions.push(['med', il('Deploy idle cash gradually', 'انشر النقد الخامل تدريجياً'), il('Only ' + fmt(I.cashDeploy, 0) + '% deployed — scale in to target on strength.', 'فقط ' + fmt(I.cashDeploy, 0) + '% مُستثمر — ازد تدريجياً عند القوة.')]);
-        else if (I.cashDeploy > 97) actions.push(['med', il('Rebuild a cash buffer', 'أعد بناء احتياطي نقدي'), il('Cash buffer is thin at ' + fmt(I.cashPct, 1) + '% — trim to restore dry powder.', 'الاحتياطي النقدي ضعيف عند ' + fmt(I.cashPct, 1) + '% — قلّص لاستعادة المرونة.')]);
-
-        var losers = I.holds.filter(function (h) { return (h.totalReturn || 0) < -8; }).sort(function (a, b) { return a.totalReturn - b.totalReturn; });
-        if (losers.length) actions.push([losers[0].totalReturn < -15 ? 'high' : 'med', il('Review losing positions', 'راجع المراكز الخاسرة'), il(losers.length + ' position' + (losers.length > 1 ? 's' : '') + ' down >8% (worst: ' + losers[0].symbol + ' ' + fmt(losers[0].totalReturn, 1) + '%).', losers.length + ' مركز بانخفاض >8% (الأسوأ: ' + losers[0].symbol + ' ' + fmt(losers[0].totalReturn, 1) + '%).')]);
-
-        if (I.sleeves.length <= 2 || (I.sleeves[0] && I.sleeves[0].weight > 45)) actions.push(['med', il('Rebalance sector exposure', 'أعد توازن التعرّض القطاعي'), il('Allocation is sleeve-heavy — diversify toward target ranges.', 'التخصيص مركّز في شريحة — نوّع نحو النطاقات المستهدفة.')]);
-
-        actions.push(['low', il('Keep risk guardrails active', 'أبقِ مصدّات المخاطر نشطة'), il('Daily, weekly and kill-switch limits are armed — leave enabled.', 'حدود يومية وأسبوعية ومفتاح إيقاف مُفعّلة — اتركها مفعّلة.')]);
-        actions.push(['low', il('Review earnings calendar', 'راجع جدول الأرباح'), il('Check upcoming reports for core holdings to pre-empt volatility.', 'تحقق من التقارير القادمة للمراكز الأساسية لاستباق التقلب.')]);
-
-        var rank = { high: 0, med: 1, low: 2 };
-        actions.sort(function (a, b) { return rank[a[0]] - rank[b[0]]; });
-        actions = actions.slice(0, 6);
-
-        var prioLabel = { high: il('High', 'عالٍ'), med: il('Medium', 'متوسط'), low: il('Low', 'منخفض') };
-        var prioCls = { high: 'is-high', med: 'is-med', low: 'is-low' };
-        var list = actions.map(function (a) {
-            return '<div class="pf-action-item"><span class="pf-action-check">' + ICON('check') + '</span>' +
-                '<div class="pf-action-text"><b>' + a[1] + '</b><small>' + a[2] + '</small></div>' +
-                '<span class="pf-prio ' + prioCls[a[0]] + '">' + prioLabel[a[0]] + '</span></div>';
-        }).join('');
-
-        return '<div class="pf-ic">' +
-            icHead('check', il('Recommended Actions', 'إجراءات موصى بها')) +
-            '<div class="pf-actions-list">' + list + '</div>' +
         '</div>';
     }
 
@@ -2350,27 +2131,6 @@
     }
 
     /* ─── Bottom Panels (Risk circle SVGs, Contributors, Executions) ───── */
-    function renderBottomGrid() {
-        var bg = document.getElementById('bottomGrid');
-        if (!bg) return;
-
-        bg.innerHTML =
-            '<div class="pf-card pf-contrib-panel" id="contribPanel">' + renderContrib() + '</div>' +
-            '<div class="pf-card pf-risk-panel" style="padding:1.15rem;">' + renderRiskPanel() + '</div>' +
-            '<div class="pf-card pf-tx-panel">' + renderTxPanel() + '</div>' +
-            '<div class="pf-card pf-div-panel">' + renderLiveOrdersPanel() + '</div>';
-
-        bg.querySelectorAll('.pf-contrib-tab').forEach(function(tab){
-            tab.addEventListener('click', function(){
-                contribTab = tab.dataset.tab;
-                document.getElementById('contribPanel').innerHTML = renderContrib();
-                wireContribTabs();
-            });
-        });
-
-        wireCancelButtons();
-    }
-
     function wireContribTabs() {
         var panel = document.getElementById('contribPanel');
         if (!panel) return;
@@ -2500,93 +2260,6 @@
                 }
             }
         });
-    }
-
-    function makeGauge(label, valStr, pct, smallText) {
-        var offset = 226 - (226 * Math.min(Math.max(pct, 0), 100)) / 100;
-        return '<div class="pf-risk-gauge-container">' +
-            '<div class="pf-risk-gauge-svg">' +
-                '<svg viewBox="0 0 80 80">' +
-                    '<circle class="pf-risk-gauge-circle-bg" cx="40" cy="40" r="36" />' +
-                    '<circle class="pf-risk-gauge-circle-val" cx="40" cy="40" r="36" style="stroke-dashoffset:' + offset + 'px;" />' +
-                '</svg>' +
-                '<span class="pf-risk-gauge-text pf-num">' + valStr + '</span>' +
-            '</div>' +
-            '<span class="pf-risk-gauge-label">' + label + '</span>' +
-            (smallText ? '<span style="font-size:0.65rem;color:var(--muted);">' + smallText + '</span>' : '') +
-        '</div>';
-    }
-
-    function renderRiskPanel() {
-        var limits = detailCache ? detailCache.strategy_params || {} : {};
-        var tradesToday = detailCache ? (detailCache.trade_log || []).length : 0;
-        var signalCount = detailCache ? ((detailCache.signals || {}).signals || []).length : 0;
-        return '<div class="pf-panel__title">' + t('riskMetrics') + '</div>' +
-            '<div class="pf-risk-status" style="display:flex;flex-direction:column;gap:0.75rem;padding-top:0.45rem;">' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
-                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'حالة النظام' : 'System Status') + '</span>' +
-                    '<span class="pf-pos" style="font-size:0.75rem;font-weight:800;">' + (portfolio.halted ? (lang === 'ar' ? 'متوقف' : 'HALTED') : (lang === 'ar' ? 'نشط' : 'ACTIVE')) + '</span>' +
-                '</div>' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
-                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'صفقات اليوم' : 'Trades Today') + '</span>' +
-                    '<span class="pf-num" style="font-size:0.9rem;font-weight:800;color:var(--ink);">' + tradesToday + '</span>' +
-                '</div>' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
-                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'إشارات نشطة' : 'Active Signals') + '</span>' +
-                    '<span class="pf-num" style="font-size:0.9rem;font-weight:800;color:var(--teal);">' + signalCount + '</span>' +
-                '</div>' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.65rem;background:var(--page);border:1px solid var(--line);border-radius:var(--pf-radius-sm);">' +
-                    '<span style="font-size:0.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;">' + (lang === 'ar' ? 'حد الخسارة اليومي' : 'Daily Loss Limit') + '</span>' +
-                    '<span style="font-size:0.9rem;font-weight:800;color:var(--ink);font-family:var(--pf-mono);">4.0%</span>' +
-                '</div>' +
-            '</div>';
-    }
-
-    function renderTxPanel() {
-        var txs = portfolio.transactions.slice().reverse().slice(0, 5);
-        var rows = txs.map(function(tx){
-            var iconCls = tx.type === 'buy' ? 'buy' : 'sell';
-            var iconChar = tx.type === 'buy' ? '↑' : '↓';
-            var amount = tx.quantity * tx.price;
-            var amtCls = tx.type === 'sell' ? 'pf-pos' : 'pf-neg';
-            var sign   = tx.type === 'sell' ? '+' : '-';
-            
-            return '<div class="pf-tx-row">' +
-                '<div class="pf-tx-icon pf-tx-icon--' + iconCls + '">' + iconChar + '</div>' +
-                '<div class="pf-tx-info"><strong>' + tx.symbol + '</strong>' +
-                    '<span>' + tx.type.toUpperCase() + ' · ' + tx.date + '</span></div>' +
-                '<div class="pf-tx-amount pf-num ' + amtCls + '">' + sign + '$' + fmt(amount, 0) + '</div>' +
-            '</div>';
-        }).join('');
-
-        return '<div class="pf-panel__title">' + t('recentTx') + '</div>' +
-            '<div class="pf-tx-list">' + (rows || '<div class="pf-empty-inline">No transactions log yet.</div>') + '</div>';
-    }
-
-    function renderLiveOrdersPanel() {
-        if (!portfolio.isServer || !detailCache) {
-            return '<div class="pf-panel__title">Live Action Hub</div><div class="pf-empty-inline">Add transactions manually above for sandbox portfolios.</div>';
-        }
-
-        var orders = detailCache.orders || [];
-        var rows = orders.map(o => `
-            <div class="pf-order-row" style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--line);">
-                <div style="display:flex; flex-direction:column;">
-                    <strong class="pf-num">${o.symbol} <span class="pf-mock-badge-chip ${o.side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg'}" style="font-size:0.6rem; padding:0.1rem 0.45rem;">${o.side.toUpperCase()}</span></strong>
-                    <span style="font-size:0.68rem; color:var(--muted); font-family:var(--pf-mono);">${o.type.toUpperCase()} · ${o.time_in_force.toUpperCase()}</span>
-                </div>
-                <div style="text-align:end; display:flex; align-items:center; gap:0.5rem;">
-                    <div style="font-family:var(--pf-mono); font-size:0.75rem;">
-                        <div>${o.qty} shares</div>
-                        <div style="color:var(--teal); font-weight:700;">$${fmt(parseFloat(o.limit_price || o.price || 0))}</div>
-                    </div>
-                    <button class="pf-btn pf-btn--sm pf-btn--outline pf-btn--danger-ghost cancel-order-btn" data-order-id="${o.id}" style="padding:0.22rem 0.55rem; font-size:0.65rem;">Cancel</button>
-                </div>
-            </div>
-        `).join('');
-
-        return '<div class="pf-panel__title">Live Open Orders (Alpaca)</div>' +
-            '<div class="pf-tx-list">' + (rows || '<div class="pf-empty-inline">No active open orders on Alpaca.</div>') + '</div>';
     }
 
     function wireCancelButtons() {

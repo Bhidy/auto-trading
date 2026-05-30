@@ -64,7 +64,8 @@
             lbl_key_fin: 'Key Financials',
             lbl_largecap: 'Large Cap',
             lbl_orderbook: 'Order Book',
-            lbl_signals: 'Portfolio Signals'
+            lbl_signals: 'Portfolio Signals',
+            lbl_52week: '52 Week Range', lbl_dayrange: 'Day Range', lbl_spread: 'Spread'
         },
         ar: {
             title_pulse: 'نبض السوق الأمريكي', title_desc: 'لوحة معلومات المحطة المؤسسية',
@@ -90,7 +91,8 @@
             lbl_key_fin: 'البيانات المالية الرئيسية',
             lbl_largecap: 'قيمة سوقية كبرى',
             lbl_orderbook: 'دفتر الأوامر',
-            lbl_signals: 'إشارات المحفظة الذكية'
+            lbl_signals: 'إشارات المحفظة الذكية',
+            lbl_52week: 'نطاق 52 أسبوعاً', lbl_dayrange: 'نطاق اليوم', lbl_spread: 'الفارق'
         }
     };
 
@@ -138,6 +140,15 @@
         if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
         if (Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
         return '$' + n.toFixed(2);
+    }
+    // A bid/ask is only shown when it forms a sane NBBO. The free IEX feed can
+    // return a stale/crossed ask (e.g. a 7%+ spread on a liquid name); we never
+    // surface that as if it were a real two-sided market.
+    function plausibleQuote(db, ref) {
+        if (!db || !db.bid || !db.ask || db.ask < db.bid) return false;
+        var mid = ref || db.price || ((db.bid + db.ask) / 2);
+        if (!mid) return false;
+        return (db.ask - db.bid) <= mid * 0.02;
     }
 
     /* ─── Fetch Utilities ────────────────────────────────────────────── */
@@ -228,11 +239,12 @@
         });
     }
 
-    /* ─── Load Sector Performance Heatmap ───────────────────────────── */
+    /* ─── Load Sector Performance Heatmap (flicker-free in-place updates) ── */
+    var _sectorsBuilt = false;
     async function loadAndRenderSectors() {
         var container = document.getElementById('sectorContainer');
         if (!container) return;
-        container.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:0.5rem;">' + t('loading') + '</div>';
+        if (!_sectorsBuilt) container.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:0.5rem;">' + t('loading') + '</div>';
 
         var data = await apiFetch('/api/market/sectors');
         if (!data) return;
@@ -240,22 +252,85 @@
         var sorted = Object.entries(data).sort(function (a, b) { return b[1].changePct - a[1].changePct; });
         var maxAbs = Math.max(...sorted.map(function (e) { return Math.abs(e[1].changePct); }), 1);
 
-        container.innerHTML = '';
+        // Build the row skeletons once; subsequent refreshes patch values in
+        // place (no innerHTML clear) so the panel never blinks.
+        if (!_sectorsBuilt) {
+            container.innerHTML = '';
+            sorted.forEach(function ([sym]) {
+                var row = document.createElement('div');
+                row.setAttribute('data-sym', sym);
+                row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;';
+                row.innerHTML =
+                    '<span class="mp-sec-name" style="font-family:var(--pf-ui);font-size:0.7rem;font-weight:700;color:var(--ink);min-width:105px;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>' +
+                    '<div style="flex:1;height:12px;background:rgba(148,163,184,0.08);border-radius:4px;overflow:hidden;position:relative;"><div class="mp-sec-bar" style="height:100%;width:0%;border-radius:4px;transition:width 0.5s ease;"></div></div>' +
+                    '<span class="mp-sec-pct pf-num" style="font-family:var(--pf-mono);font-size:0.7rem;font-weight:700;min-width:52px;text-align:end;"></span>';
+                container.appendChild(row);
+            });
+            _sectorsBuilt = true;
+        }
+
         sorted.forEach(function ([sym, sec]) {
+            var row = container.querySelector('[data-sym="' + sym + '"]');
+            if (!row) return;
             var pct = parseFloat(sec.changePct) || 0;
             var isPos = pct >= 0;
-            var barWidth = Math.min(Math.abs(pct) / maxAbs * 100, 100);
-            var barColor = isPos ? 'rgba(46,204,113,0.7)' : 'rgba(231,76,60,0.7)';
-            var row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;';
-            row.innerHTML = `
-                <span style="font-family:var(--pf-ui);font-size:0.7rem;font-weight:700;color:var(--ink);min-width:105px;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sec.name || sym}</span>
-                <div style="flex:1;height:12px;background:rgba(148,163,184,0.08);border-radius:4px;overflow:hidden;position:relative;">
-                    <div style="height:100%;width:${barWidth}%;background:${barColor};border-radius:4px;transition:width 0.5s ease;"></div>
-                </div>
-                <span style="font-family:var(--pf-mono);font-size:0.7rem;font-weight:700;min-width:52px;text-align:end;" class="${isPos ? 'pf-pos' : 'pf-neg'}">${(isPos ? '+' : '') + pct.toFixed(2) + '%'}</span>
-            `;
-            container.appendChild(row);
+            row.querySelector('.mp-sec-name').textContent = sec.name || sym;
+            var bar = row.querySelector('.mp-sec-bar');
+            bar.style.width = Math.min(Math.abs(pct) / maxAbs * 100, 100) + '%';
+            bar.style.background = isPos ? 'rgba(46,204,113,0.7)' : 'rgba(231,76,60,0.7)';
+            var pe = row.querySelector('.mp-sec-pct');
+            pe.textContent = (isPos ? '+' : '') + pct.toFixed(2) + '%';
+            pe.className = 'mp-sec-pct pf-num ' + (isPos ? 'pf-pos' : 'pf-neg');
+            container.appendChild(row); // reorder to match live ranking
+        });
+
+        // Real market-breadth insight derived from live sector data.
+        var insightEl = document.getElementById('marketInsightsText');
+        if (insightEl && sorted.length) {
+            var pos = sorted.filter(function (e) { return e[1].changePct >= 0; }).length;
+            var lead = sorted[0], lag = sorted[sorted.length - 1];
+            var leadN = lead[1].name || lead[0], lagN = lag[1].name || lag[0];
+            var leadP = (lead[1].changePct >= 0 ? '+' : '') + lead[1].changePct.toFixed(2) + '%';
+            var lagP = lag[1].changePct.toFixed(2) + '%';
+            insightEl.textContent = (lang === 'ar'
+                ? (pos + ' من ' + sorted.length + ' قطاعات أمريكية مرتفعة اليوم. يتصدّر ' + leadN + ' (' + leadP + ') ويتراجع ' + lagN + ' (' + lagP + ').')
+                : (pos + ' of ' + sorted.length + ' US sectors advancing today. ' + leadN + ' leads (' + leadP + ') while ' + lagN + ' lags (' + lagP + ').'));
+        }
+    }
+
+    /* ─── Portfolio Signals — real engine output from P1 ─────────────── */
+    async function loadPortfolioSignals() {
+        var c = document.getElementById('portfolioSignalsContainer');
+        if (!c) return;
+        var data = await apiFetch('/api/portfolio/portfolio_1/details');
+        var sigs = (data && data.signals && Array.isArray(data.signals.signals)) ? data.signals.signals : [];
+        var actionable = sigs.filter(function (s) { return s.signal === 'BUY' || s.signal === 'SELL'; })
+            .sort(function (a, b) { return Math.abs(b.score || 0) - Math.abs(a.score || 0); }).slice(0, 5);
+        if (!actionable.length) actionable = sigs.slice().sort(function (a, b) { return Math.abs(b.score || 0) - Math.abs(a.score || 0); }).slice(0, 4);
+        if (!actionable.length) {
+            c.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.75rem 0.25rem;">' + (lang === 'ar' ? 'لا توجد إشارات نشطة من المحرك حالياً.' : 'No active engine signals right now.') + '</div>';
+            return;
+        }
+        c.innerHTML = actionable.map(function (s) {
+            var sc = s.score || 0, mag = Math.abs(sc);
+            var conv = mag >= 0.7 ? 'high' : mag >= 0.4 ? 'med' : 'low';
+            var convLabel = lang === 'ar'
+                ? (conv === 'high' ? 'قناعة عالية' : conv === 'med' ? 'قناعة متوسطة' : 'قناعة منخفضة')
+                : (conv === 'high' ? 'High Conviction' : conv === 'med' ? 'Medium Conviction' : 'Low Conviction');
+            var sideCls = s.signal === 'BUY' ? 'pf-pos' : 'pf-neg';
+            var sideTxt = s.signal === 'BUY' ? (lang === 'ar' ? 'شراء' : 'BUY') : (lang === 'ar' ? 'بيع' : 'SELL');
+            var reason = (s.reasons && s.reasons[0]) ? String(s.reasons[0]) : '';
+            return '<div class="ai-signal-card" style="cursor:pointer;" data-sym="' + s.symbol + '">' +
+                '<div>' +
+                    '<span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">' + s.symbol + '</span>' +
+                    '<span class="' + sideCls + '" style="font-size:0.62rem;font-weight:800;margin-inline-start:0.4rem;">' + sideTxt + ' · ' + sc.toFixed(2) + '</span>' +
+                    '<p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">' + reason + '</p>' +
+                '</div>' +
+                '<span class="ai-badge ' + conv + '">' + convLabel + '</span>' +
+            '</div>';
+        }).join('');
+        c.querySelectorAll('.ai-signal-card').forEach(function (card) {
+            card.addEventListener('click', function () { var sym = card.getAttribute('data-sym'); if (sym) loadStockDetails(sym); });
         });
     }
 
@@ -311,75 +386,127 @@
             var data = await apiFetch('/api/stock/' + activeSymbol + '/details');
             if (!data) throw new Error('No data');
 
+            // Ensure a full live quote (OHLC / bid / ask / volume) from /api/market/quotes.
+            // The /details endpoint carries no OHLC and (on the free tier) no bars,
+            // so the quotes feed is the real source for the stat row.
+            var qdb = stockPriceDatabase[activeSymbol];
+            if (!qdb || qdb.open === undefined) {
+                await loadRealQuotes([activeSymbol]);
+                qdb = stockPriceDatabase[activeSymbol];
+            }
+            var profile = data.profile || {};
+
             document.getElementById('heroSymbol').textContent = data.symbol;
-            document.getElementById('heroName').textContent = data.profile.name;
-            document.getElementById('heroSub').textContent = (data.profile.sector || '') + (data.profile.CEO ? ' · CEO: ' + data.profile.CEO : '');
-
-            var price = data.quote ? parseFloat(data.quote.price) : 150.0;
-            var bars = data.bars || [];
-            var prev = price;
-            if (bars.length >= 2) {
-                prev = parseFloat(bars[bars.length - 2].c);
+            document.getElementById('heroName').textContent = (profile.name || data.symbol)
+                .replace(/\s+(Class [A-C] )?Common (Stock|Shares)$/i, '').trim() || data.symbol;
+            var exEl = document.getElementById('heroExchange');
+            if (exEl) exEl.textContent = profile.exchange || '';
+            var subTxt = profile.sector || '';
+            if (!subTxt && profile.asset_class) {
+                subTxt = profile.asset_class === 'us_equity' ? 'US Equity'
+                       : profile.asset_class === 'crypto' ? 'Crypto'
+                       : String(profile.asset_class).replace(/_/g, ' ');
             }
-            var change = price - prev;
-            var changePct = prev > 0 ? (change / prev) * 100 : 0;
+            document.getElementById('heroSub').textContent = subTxt;
 
-            document.getElementById('heroPrice').textContent = fmtPrice(price);
+            var price = (qdb && qdb.price) ? qdb.price
+                       : (data.quote && data.quote.price ? parseFloat(data.quote.price) : 0);
+            var prevClose = (qdb && qdb.close) ? qdb.close
+                       : (data.quote && data.quote.prev ? parseFloat(data.quote.prev) : price);
+            var change = (qdb && qdb.change !== undefined) ? qdb.change : (price - prevClose);
+            var changePct = (qdb && qdb.changePct !== undefined) ? qdb.changePct
+                       : (prevClose > 0 ? (change / prevClose) * 100 : 0);
+
+            document.getElementById('heroPrice').textContent = price ? fmtPrice(price) : '—';
             chgEl.className = 'mp-hero-price-chg pf-num ' + (change >= 0 ? 'pf-pos' : 'pf-neg');
-            chgEl.textContent = (change >= 0 ? '▲ +' : '▼ ') + Math.abs(change).toFixed(2) + ' (' + Math.abs(changePct).toFixed(2) + '%)';
+            chgEl.textContent = price ? ((change >= 0 ? '▲ +' : '▼ ') + Math.abs(change).toFixed(2) + ' (' + Math.abs(changePct).toFixed(2) + '%)') : '';
 
-            if (bars.length > 0) {
-                var lastBar = bars[bars.length - 1];
-                document.getElementById('statOpen').textContent = fmtPrice(lastBar.o);
-                document.getElementById('statHigh').textContent = fmtPrice(lastBar.h);
-                document.getElementById('statLow').textContent = fmtPrice(lastBar.l);
-                document.getElementById('statClose').textContent = fmtPrice(lastBar.c);
-                document.getElementById('statVolume').textContent = fmtVol(lastBar.v);
+            // Live stat row — real Alpaca quote fields only (no fabricated fallbacks).
+            function setStat(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+            if (qdb && qdb.open !== undefined) {
+                setStat('statOpen',  qdb.open  ? fmtPrice(qdb.open)  : '—');
+                setStat('statHigh',  qdb.high  ? fmtPrice(qdb.high)  : '—');
+                setStat('statLow',   qdb.low   ? fmtPrice(qdb.low)   : '—');
+                setStat('statClose', qdb.close ? fmtPrice(qdb.close) : '—');
+                setStat('statVolume', qdb.volume ? fmtVol(qdb.volume) : '—');
+                var sane = plausibleQuote(qdb, price);
+                setStat('statBid', sane ? fmtPrice(qdb.bid) : '—');
+                setStat('statAsk', sane ? fmtPrice(qdb.ask) : '—');
+                setStat('statSpread', sane ? '$' + (qdb.ask - qdb.bid).toFixed(2) : '—');
             } else {
-                document.getElementById('statOpen').textContent = fmtPrice(price);
-                document.getElementById('statHigh').textContent = fmtPrice(price);
-                document.getElementById('statLow').textContent = fmtPrice(price);
-                document.getElementById('statClose').textContent = fmtPrice(price);
-                document.getElementById('statVolume').textContent = '—';
+                ['statOpen','statHigh','statLow','statClose','statVolume','statBid','statAsk','statSpread']
+                    .forEach(function (id) { setStat(id, '—'); });
             }
 
-            // Sync with Tactical Order Entry Form Limit input
+            // Sync the order-form limit price with the live last price.
             var orderLimit = document.getElementById('orderLimitPriceInput');
-            if (orderLimit) {
-                orderLimit.value = price.toFixed(2);
-                orderLimit.placeholder = price.toFixed(2);
-            }
+            if (orderLimit && price) { orderLimit.value = price.toFixed(2); orderLimit.placeholder = price.toFixed(2); }
 
-            // Update Key Stats Bar
-            if (document.getElementById('statAvgVolume')) document.getElementById('statAvgVolume').textContent = data.profile.avgVol || '48.2M';
-            if (document.getElementById('statMarketCap')) document.getElementById('statMarketCap').textContent = data.profile.cap || '2.70T';
-            if (document.getElementById('statPE')) document.getElementById('statPE').textContent = data.profile.pe || '72.45';
-
-            // Day range label updates
-            var dayLow = price * 0.98, dayHigh = price * 1.02;
-            if (bars.length > 0) {
-                dayLow = lastBar.l; dayHigh = lastBar.h;
-            }
-            if (document.getElementById('dayRangeLabel')) {
-                document.getElementById('dayRangeLabel').textContent = '$' + dayLow.toFixed(2) + ' - $' + dayHigh.toFixed(2);
-            }
-            if (document.getElementById('dayRangeHandle')) {
-                var dayPercent = ((price - dayLow) / (dayHigh - dayLow)) * 100;
-                document.getElementById('dayRangeHandle').style.left = Math.min(100, Math.max(0, dayPercent)) + '%';
+            // Day range (real) — from the quote's session high/low.
+            var dayLow = (qdb && qdb.low) ? qdb.low : null;
+            var dayHigh = (qdb && qdb.high) ? qdb.high : null;
+            var drLabel = document.getElementById('dayRangeLabel');
+            var drHandle = document.getElementById('dayRangeHandle');
+            var drFill = document.getElementById('dayRangeFill');
+            if (dayLow && dayHigh && dayHigh > dayLow) {
+                if (drLabel) drLabel.textContent = '$' + dayLow.toFixed(2) + ' - $' + dayHigh.toFixed(2);
+                var dp = Math.max(0, Math.min(100, ((price - dayLow) / (dayHigh - dayLow)) * 100));
+                if (drHandle) drHandle.style.left = dp + '%';
+                if (drFill) { drFill.style.left = '0%'; drFill.style.right = (100 - dp) + '%'; }
+            } else if (drLabel) {
+                drLabel.textContent = '—';
             }
 
             document.getElementById('l2TickerName').textContent = activeSymbol;
             renderOrderBook(price);
-            renderKeyFinancials(activeSymbol, data.profile);
+            renderKeyFinancials(activeSymbol, profile);
             renderPositionsTable();
+            loadFiftyTwoWeekRange(activeSymbol);
 
-            stockPriceDatabase[activeSymbol] = { price: price, changePct: changePct, prev: prev };
+            // Merge (never replace) so OHLC / bid / ask survive for live ticks.
+            stockPriceDatabase[activeSymbol] = Object.assign(stockPriceDatabase[activeSymbol] || {}, { price: price, changePct: changePct, prev: prevClose });
             updateSelectedListStyles();
 
             if (window.loadChartForPeriod) loadChartForPeriod('1D');
         } catch (e) {
             console.error('Error loading stock details for ' + activeSymbol, e);
         }
+    }
+
+    /* ─── 52-Week Range — real, from 1Y daily bars (Supabase fallback) ──── */
+    async function loadFiftyTwoWeekRange(symbol) {
+        var block = document.getElementById('week52Block');
+        var label = document.getElementById('week52Label');
+        var fill = document.getElementById('week52Fill');
+        var handle = document.getElementById('week52Handle');
+        if (!label) return;
+
+        var d = new Date(); d.setFullYear(d.getFullYear() - 1);
+        var start = d.toISOString().slice(0, 10);
+
+        var bars = await apiFetch('/api/market/bars/' + symbol + '?timeframe=1Day&limit=400&start=' + start);
+        var lows = [], highs = [], lastClose = null;
+        if (bars && bars.length) {
+            bars.forEach(function (b) { lows.push(parseFloat(b.l)); highs.push(parseFloat(b.h)); lastClose = parseFloat(b.c); });
+        } else {
+            var rows = await apiFetch('/api/supabase/market?symbol=' + symbol + '&start=' + start + '&limit=400');
+            if (rows && rows.length) {
+                rows.forEach(function (r) { lows.push(parseFloat(r.low_price)); highs.push(parseFloat(r.high_price)); lastClose = parseFloat(r.close_price); });
+            }
+        }
+        lows = lows.filter(isFinite); highs = highs.filter(isFinite);
+        if (!lows.length || !highs.length) {
+            // No real history available → hide the block (never show fabricated range).
+            if (block) block.style.display = 'none';
+            return;
+        }
+        if (block) block.style.display = '';
+        var lo = Math.min.apply(null, lows), hi = Math.max.apply(null, highs);
+        var cur = (stockPriceDatabase[symbol] && stockPriceDatabase[symbol].price) ? stockPriceDatabase[symbol].price : lastClose;
+        label.textContent = '$' + lo.toFixed(2) + ' - $' + hi.toFixed(2);
+        var pct = hi > lo ? Math.max(0, Math.min(100, ((cur - lo) / (hi - lo)) * 100)) : 50;
+        if (handle) handle.style.left = pct + '%';
+        if (fill) { fill.style.left = '0%'; fill.style.right = (100 - pct) + '%'; }
     }
 
     function renderKeyFinancials(symbol, profile) {
@@ -570,52 +697,31 @@
             return;
         }
 
-        // Fetch stock details if we have a profile cached from loadStockDetails
+        // Specs tab — only fields Alpaca actually returns (no fabricated fundamentals).
         var symbol = activeSymbol;
-        if (tab === 'Financials' || tab === 'Profile' || tab === 'Fundamentals') {
+        if (tab === 'Profile' || tab === 'Specs') {
+            contentPane.innerHTML = '<div style="color:var(--muted);padding:1rem;">' + (lang === 'ar' ? 'جارٍ التحميل…' : 'Loading…') + '</div>';
             apiFetch('/api/stock/' + symbol + '/details').then(function(data) {
-                if (!data) { contentPane.innerHTML = '<div style="color:var(--muted);padding:1rem;">Unable to load data.</div>'; return; }
+                if (!data) { contentPane.innerHTML = '<div style="color:var(--muted);padding:1rem;">' + (lang === 'ar' ? 'تعذّر تحميل البيانات.' : 'Unable to load data.') + '</div>'; return; }
                 var profile = data.profile || {};
-                if (tab === 'Financials') {
-                    contentPane.innerHTML = `
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem 1.25rem;padding:0.5rem 0;">
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Market Cap:</span> <strong style="color:var(--ink);">${profile.cap || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">P/E (TTM):</span> <strong style="color:var(--ink);">${profile.pe || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Beta (5Y):</span> <strong style="color:var(--ink);">${profile.beta || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Dividend Yield:</span> <strong style="color:var(--ink);">${profile.yield || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">EPS (TTM):</span> <strong style="color:var(--ink);">${profile.eps || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Revenue:</span> <strong style="color:var(--ink);">${profile.rev || '—'}</strong></div>
-                        </div>
-                    `;
-                } else if (tab === 'Fundamentals') {
-                    contentPane.innerHTML = `
-                        <div style="display:flex;flex-direction:column;gap:1rem;">
-                            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--ink);letter-spacing:0.04em;padding-bottom:0.45rem;border-bottom:1px solid var(--line);">Key Financials — ${symbol}</div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem 2rem;padding:0.5rem 0;">
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Market Cap:</span> <strong style="color:var(--ink);">${profile.cap || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">P/E (TTM):</span> <strong style="color:var(--ink);">${profile.pe || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">EPS (TTM):</span> <strong style="color:var(--ink);">${profile.eps || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Beta (5Y):</span> <strong style="color:var(--ink);">${profile.beta || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Revenue:</span> <strong style="color:var(--ink);">${profile.rev || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Dividend Yield:</span> <strong style="color:var(--ink);">${profile.yield || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Exchange:</span> <strong style="color:var(--ink);">${profile.exchange || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Asset Class:</span> <strong style="color:var(--ink);">${profile.asset_class || '—'}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Tradable:</span> <strong style="color:var(--ink);">${profile.tradable === undefined ? '—' : (profile.tradable ? 'Yes' : 'No')}</strong></div>
-                                <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Shortable:</span> <strong style="color:var(--ink);">${profile.shortable === undefined ? '—' : (profile.shortable ? 'Yes' : 'No')}</strong></div>
-                            </div>
-                        </div>
-                    `;
-                } else if (tab === 'Profile') {
-                    contentPane.innerHTML = `
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem 1.25rem;padding:0.5rem 0;">
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">CEO:</span> <strong style="color:var(--ink);">${profile.CEO || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Sector:</span> <strong style="color:var(--ink);">${profile.sector || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Market Cap:</span> <strong style="color:var(--ink);">${profile.cap || '—'}</strong></div>
-                            <div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">Employees:</span> <strong style="color:var(--ink);">${profile.employees || '—'}</strong></div>
-                        </div>
-                        <p style="color:var(--muted);margin:0.5rem 0 0;line-height:1.55;font-size:0.82rem;">${profile.desc || 'No description available.'}</p>
-                    `;
+                function ynOrDash(v) { return v === undefined || v === null ? '—' : (v ? (lang === 'ar' ? 'نعم' : 'Yes') : (lang === 'ar' ? 'لا' : 'No')); }
+                function cell(label, val) {
+                    return '<div><span style="color:var(--muted);font-weight:600;font-size:0.8rem;">' + label + ':</span> <strong style="color:var(--ink);">' + (val || '—') + '</strong></div>';
                 }
+                contentPane.innerHTML =
+                    '<div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--ink);letter-spacing:0.04em;padding-bottom:0.45rem;border-bottom:1px solid var(--line);margin-bottom:0.85rem;">' +
+                        (lang === 'ar' ? 'مواصفات الأصل — ' : 'Asset Specs — ') + symbol + '</div>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem 1.5rem;padding:0.25rem 0;">' +
+                        cell(lang === 'ar' ? 'الاسم' : 'Name', profile.name) +
+                        cell(lang === 'ar' ? 'البورصة' : 'Exchange', profile.exchange) +
+                        cell(lang === 'ar' ? 'فئة الأصل' : 'Asset Class', profile.asset_class) +
+                        cell(lang === 'ar' ? 'قابل للتداول' : 'Tradable', ynOrDash(profile.tradable)) +
+                        cell(lang === 'ar' ? 'قابل للبيع على المكشوف' : 'Shortable', ynOrDash(profile.shortable)) +
+                        cell(lang === 'ar' ? 'قابل للتجزئة' : 'Fractionable', ynOrDash(profile.fractionable)) +
+                    '</div>' +
+                    '<p style="color:var(--muted);margin:0.85rem 0 0;line-height:1.5;font-size:0.72rem;">' +
+                        (lang === 'ar' ? 'البيانات الأساسية من Alpaca للتداول الورقي. لا تُعرض أي مقاييس مالية غير متوفرة من المصدر.' : 'Reference data from the Alpaca trading API. Metrics not provided by the source are intentionally omitted.') +
+                    '</p>';
             });
         }
     }
@@ -911,43 +1017,54 @@
     }
 
     /* ─── Level 2 Order Book — Real NBBO from Alpaca ────────────────── */
+    // Real NBBO only. Builds the skeleton once and patches values in place
+    // (no flicker on the 5s tick). Synthetic spreads are never fabricated.
+    var _obBuilt = false;
     function renderOrderBook(price) {
         var container = document.getElementById('l2OrderBookList');
         if (!container || !activeSymbol) return;
 
-        var db = stockPriceDatabase[activeSymbol];
-        if (!db) return;
+        var db = stockPriceDatabase[activeSymbol] || {};
+        var bid = db.bid || 0, ask = db.ask || 0;
+        var bidSize = db.bidSize || 0, askSize = db.askSize || 0;
+        var hasReal = plausibleQuote(db, price || db.price);
 
-        container.innerHTML = '';
-        var bid = db.bid || (price - 0.05);
-        var ask = db.ask || (price + 0.05);
-        var bidSize = db.bidSize || 0;
-        var askSize = db.askSize || 0;
-        var spread = (ask - bid).toFixed(2);
+        var spreadEl = document.getElementById('obSpreadVal');
+        if (spreadEl) {
+            if (hasReal) {
+                var sp = ask - bid, spPct = bid > 0 ? (sp / bid) * 100 : 0;
+                spreadEl.textContent = '$' + sp.toFixed(2) + ' (' + spPct.toFixed(2) + '%)';
+            } else { spreadEl.textContent = '—'; }
+        }
 
-        var headerRow = document.createElement('div');
-        headerRow.style.cssText = 'display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; text-align:center; padding:0.3rem 0.35rem; font-family:var(--pf-mono); font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--line); margin-bottom:0.25rem;';
-        headerRow.innerHTML = '<span>BID SIZE</span><span>BID</span><span>ASK</span><span>ASK SIZE</span>';
-        container.appendChild(headerRow);
+        if (!hasReal) {
+            container.innerHTML = '<div style="color:var(--muted);font-size:0.72rem;padding:0.75rem 0.35rem;text-align:center;">' +
+                (lang === 'ar' ? 'لا توجد بيانات NBBO مباشرة حالياً.' : 'Live NBBO quote unavailable right now.') + '</div>';
+            _obBuilt = false;
+            return;
+        }
 
-        var row = document.createElement('div');
-        row.className = 'mp-l2-row';
-        row.style.cssText = 'display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; align-items:center; text-align:center; padding:0.4rem 0.35rem; border-radius:4px; font-family:var(--pf-mono); font-size:0.78rem; position:relative; overflow:hidden; margin-bottom:0.15rem;';
+        if (!_obBuilt || !container.querySelector('.mp-l2-row')) {
+            container.innerHTML =
+                '<div style="display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; text-align:center; padding:0.3rem 0.35rem; font-family:var(--pf-mono); font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--line); margin-bottom:0.25rem;"><span>BID SIZE</span><span>BID</span><span>ASK</span><span>ASK SIZE</span></div>' +
+                '<div class="mp-l2-row" style="display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; align-items:center; text-align:center; padding:0.4rem 0.35rem; border-radius:4px; font-family:var(--pf-mono); font-size:0.78rem; position:relative; overflow:hidden;">' +
+                    '<span class="ob-bidsize" style="text-align:start; color:var(--muted); z-index:1; padding-inline-start:0.15rem; font-weight:700;"></span>' +
+                    '<span class="ob-bid" style="text-align:end; color:#2ecc71; font-weight:700; z-index:1; padding-inline-end:0.45rem;"></span>' +
+                    '<span class="ob-ask" style="text-align:start; color:#e74c3c; font-weight:700; z-index:1; padding-inline-start:0.45rem;"></span>' +
+                    '<span class="ob-asksize" style="text-align:end; color:var(--muted); z-index:1; padding-inline-end:0.15rem; font-weight:700;"></span>' +
+                    '<div class="ob-bidbar" style="position:absolute; top:0; bottom:0; left:0; background:rgba(46,204,113,0.08); z-index:0;"></div>' +
+                    '<div class="ob-askbar" style="position:absolute; top:0; bottom:0; right:0; background:rgba(231,76,60,0.08); z-index:0;"></div>' +
+                '</div>';
+            _obBuilt = true;
+        }
         var bidPct = Math.min(100, (bidSize / Math.max(bidSize, askSize, 1)) * 100);
         var askPct = Math.min(100, (askSize / Math.max(bidSize, askSize, 1)) * 100);
-        row.innerHTML =
-            '<span style="text-align:start; color:var(--muted); z-index:1; padding-inline-start:0.15rem; font-weight:700;">' + bidSize + '</span>' +
-            '<span style="text-align:end; color:#2ecc71; font-weight:700; z-index:1; padding-inline-end:0.45rem;">' + bid.toFixed(2) + '</span>' +
-            '<span style="text-align:start; color:#e74c3c; font-weight:700; z-index:1; padding-inline-start:0.45rem;">' + ask.toFixed(2) + '</span>' +
-            '<span style="text-align:end; color:var(--muted); z-index:1; padding-inline-end:0.15rem; font-weight:700;">' + askSize + '</span>' +
-            '<div style="position:absolute; top:0; bottom:0; left:0; width:' + (bidPct / 2.2) + '%; background:rgba(46,204,113,0.08); z-index:0;"></div>' +
-            '<div style="position:absolute; top:0; bottom:0; right:0; width:' + (askPct / 2.2) + '%; background:rgba(231,76,60,0.08); z-index:0;"></div>';
-        container.appendChild(row);
-
-        var spreadRow = document.createElement('div');
-        spreadRow.style.cssText = 'text-align:center; font-family:var(--pf-mono); font-size:0.7rem; color:var(--muted); padding:0.3rem 0; border-top:1px dashed var(--line); margin-top:0.25rem;';
-        spreadRow.textContent = 'SPREAD: $' + spread + ' | NBBO LIVE';
-        container.appendChild(spreadRow);
+        container.querySelector('.ob-bidsize').textContent = bidSize;
+        container.querySelector('.ob-bid').textContent = bid.toFixed(2);
+        container.querySelector('.ob-ask').textContent = ask.toFixed(2);
+        container.querySelector('.ob-asksize').textContent = askSize;
+        container.querySelector('.ob-bidbar').style.width = (bidPct / 2.2) + '%';
+        container.querySelector('.ob-askbar').style.width = (askPct / 2.2) + '%';
     }
 
     function getSvgSparkline(sym, isPos) {
@@ -987,7 +1104,26 @@
                 .catch(function() {});
         });
         await Promise.all(promises);
-        renderWatchlistPane();
+        // Patch sparklines in place (no full rebuild → no flicker on refresh).
+        if (document.getElementById('watchlistContainer') && document.querySelector('#watchlistContainer .mp-list-item')) {
+            updateWatchlistSparklines();
+        } else {
+            renderWatchlistPane();
+        }
+    }
+
+    // In-place sparkline refresh — swaps only the SVG, never the whole row.
+    function updateWatchlistSparklines() {
+        var c = document.getElementById('watchlistContainer');
+        if (!c || activeListTab !== 'Watchlist') return;
+        c.querySelectorAll('.mp-list-item').forEach(function (row) {
+            var symEl = row.querySelector('.mp-list-symbol');
+            if (!symEl) return;
+            var sym = symEl.textContent.trim().toUpperCase();
+            var db = stockPriceDatabase[sym];
+            var holder = row.querySelector('.mp-spark-holder');
+            if (db && holder) holder.innerHTML = getSvgSparkline(sym, (db.changePct || 0) >= 0);
+        });
     }
 
     /* ─── Watchlist & Tabbed Portfolios List ─────────────────────────── */
@@ -998,7 +1134,7 @@
 
         if (activeListTab === 'Watchlist') {
             watchlistSymbols.forEach(function (sym) {
-                var db = stockPriceDatabase[sym] || { price: 150.0, changePct: 0 };
+                var db = stockPriceDatabase[sym] || { price: 0, changePct: 0 };
                 var isPos = db.changePct >= 0;
                 var cls = isPos ? 'pf-pos' : 'pf-neg';
                 var sign = isPos ? '▲' : '▼';
@@ -1012,11 +1148,11 @@
                         <span class="mp-list-symbol">${sym}</span>
                         <span class="mp-list-name">${companyNames[sym] || sym}</span>
                     </div>
-                    <div style="flex:1; display:flex; justify-content:center; align-items:center; min-width:55px; opacity:0.8;">
+                    <div class="mp-spark-holder" style="flex:1; display:flex; justify-content:center; align-items:center; min-width:55px; opacity:0.8;">
                         ${getSvgSparkline(sym, isPos)}
                     </div>
                     <div style="display:flex; align-items:center; gap:0.6rem; justify-content:flex-end; width:110px; flex-shrink:0;">
-                        <span class="pf-num" style="font-size:0.85rem; font-weight:700; color:var(--ink);">$${db.price.toFixed(2)}</span>
+                        <span class="pf-num" style="font-size:0.85rem; font-weight:700; color:var(--ink);">${db.price ? '$' + db.price.toFixed(2) : '—'}</span>
                         <span class="pf-num ${cls}" style="font-size:0.75rem; font-weight:600; width:52px; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
                     </div>
                 `;
@@ -1088,13 +1224,19 @@
     }
 
     /* ─── News & Catalysts feed with image thumbnails ────────────────── */
+    var _newsKey = null;
     async function loadUSNews() {
         try {
             var container = document.getElementById('newsContainer');
             if (!container) return;
-            container.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:0.75rem;">' + t('loading') + '</div>';
+            var built = container.querySelector('.mp-news-card');
+            if (!built) container.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:0.75rem;">' + t('loading') + '</div>';
             var data = await apiFetch('/api/market-news');
             if (!data || !Array.isArray(data)) return;
+            // Skip the rebuild when the feed is unchanged → no periodic flicker.
+            var key = data.slice(0, 6).map(function (i) { return i.id || i.headline || i.title || ''; }).join('|');
+            if (built && key === _newsKey) return;
+            _newsKey = key;
             container.innerHTML = '';
 
             data.slice(0, 6).forEach(function (item, idx) {
@@ -1250,7 +1392,11 @@
                         if (!db) continue;
                         db.price = q.price;
                         db.changePct = q.changePct || 0;
-                        db.prev = q.price - (q.change || 0);
+                        if (q.change !== undefined) db.change = q.change;
+                        db.prev = (q.close) ? q.close : (q.price - (q.change || 0));
+                        ['open','high','low','close','volume','bid','ask','bidSize','askSize'].forEach(function (k) {
+                            if (q[k] !== undefined) db[k] = q[k];
+                        });
                     }
                     if (activeSymbol && stockPriceDatabase[activeSymbol]) {
                         var db = stockPriceDatabase[activeSymbol];
@@ -1261,8 +1407,16 @@
                             cEl.className = 'mp-hero-price-chg pf-num ' + (db.changePct >= 0 ? 'pf-pos' : 'pf-neg');
                             cEl.textContent = (db.changePct >= 0 ? '▲ +' : '▼ ') + Math.abs(db.price - db.prev).toFixed(2) + ' (' + Math.abs(db.changePct).toFixed(2) + '%)';
                         }
-                        var scEl = document.getElementById('statClose');
-                        if (scEl) scEl.textContent = fmtPrice(db.price);
+                        // Live stat patches — real fields only. Prev Close = prior session close (not the live price).
+                        function setS(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
+                        if (db.high) setS('statHigh', fmtPrice(db.high));
+                        if (db.low) setS('statLow', fmtPrice(db.low));
+                        if (db.volume) setS('statVolume', fmtVol(db.volume));
+                        if (db.close) setS('statClose', fmtPrice(db.close));
+                        var saneT = plausibleQuote(db, db.price);
+                        setS('statBid', saneT ? fmtPrice(db.bid) : '—');
+                        setS('statAsk', saneT ? fmtPrice(db.ask) : '—');
+                        setS('statSpread', saneT ? '$' + (db.ask - db.bid).toFixed(2) : '—');
                         renderOrderBook(db.price);
                     }
                     tickPriceUpdates();
@@ -1362,6 +1516,8 @@
         loadStockDetails(activeSymbol);
         loadUSNews();
         loadMarketClock();
+        loadPortfolioSignals();
+        loadAndRenderSectors();
     }
 
     /* ─── Order Form Increment/Decrement and Place Order logic ───────── */
@@ -1545,7 +1701,7 @@
         });
 
         // Chart pane tabs
-        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabFinancialsTab', 'tabProfileTab', 'tabFundamentals'];
+        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabProfileTab'];
         detailTabIds.forEach(function(tabId) {
             var btn = document.getElementById(tabId);
             if (!btn) return;
@@ -1572,15 +1728,9 @@
                     } else if (tabId === 'tabNews') {
                         activeDetailTab = 'News';
                         showNewsForSymbol(activeSymbol);
-                    } else if (tabId === 'tabFinancialsTab') {
-                        activeDetailTab = 'Financials';
-                        renderDetailTabs('Financials');
                     } else if (tabId === 'tabProfileTab') {
-                        activeDetailTab = 'Profile';
-                        renderDetailTabs('Profile');
-                    } else if (tabId === 'tabFundamentals') {
-                        activeDetailTab = 'Fundamentals';
-                        renderDetailTabs('Fundamentals');
+                        activeDetailTab = 'Specs';
+                        renderDetailTabs('Specs');
                     }
                 }
             });
@@ -1704,6 +1854,7 @@
         loadAndRenderSectors();
         updateTickerRibbon();
         updateHeaderWidget();
+        loadPortfolioSignals();
 
         runMicroTicks();
 
@@ -1713,6 +1864,7 @@
             loadAndRenderSectors();
             loadSparklineData(watchlistSymbols);
             loadMarketClock();
+            loadPortfolioSignals();
         }, 30000);
     }
 

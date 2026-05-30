@@ -4,7 +4,7 @@
     <script src="/assets/starta-theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High-Fidelity Market Pulse Terminal | Starta Markets</title>
+    <title>Market Pulse Terminal | Auto Trading</title>
     <meta name="description" content="US Market Pulse financial terminal — real-time watchlists, interactive charts, stock profiles, sentiment news, and top lists.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,14 +15,39 @@
         /* US Market Pulse Custom Styles (World-Class Terminal density) */
         .mp-grid {
             display: grid;
-            grid-template-columns: 310px 1fr 340px;
+            grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(300px, 360px);
             gap: 1.25rem;
+            width: 100%;
             max-width: 1650px;
             margin: 0 auto;
             padding: 1.5rem;
+            box-sizing: border-box;
         }
-        @media (max-width: 1200px) {
+        /* Critical: grid items default to min-width:auto (min-content), which lets
+           wide children (tables, nowrap text, canvases) force tracks past the
+           viewport and clip the side columns — in both LTR and RTL. Allow shrink. */
+        .mp-grid > * { min-width: 0; }
+        .mp-grid > * > * { min-width: 0; }
+        body { overflow-x: hidden; }
+        /* Tablet: collapse to two columns (workspace + right rail), watchlist on top */
+        @media (max-width: 1320px) {
             .mp-grid {
+                grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
+            }
+            .mp-grid > :first-child {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 1.25rem;
+            }
+        }
+        /* Mobile: single column */
+        @media (max-width: 960px) {
+            .mp-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            .mp-grid > :first-child {
                 grid-template-columns: 1fr;
             }
         }
@@ -702,12 +727,6 @@
             </div>
 
             <div class="mp-header-item">
-                <span class="mp-header-label" id="spyHeaderLabel">S&P 500 (SPY)</span>
-                <span class="mp-header-val pf-num" id="spyHeaderPrice">—</span>
-                <span class="mp-header-meta pf-num" id="spyHeaderChg" style="font-size:0.68rem;">—</span>
-            </div>
-
-            <div class="mp-header-item">
                 <span class="mp-header-label">Nasdaq 100 (QQQ)</span>
                 <span class="mp-header-val pf-num" id="qqqHeaderPrice">—</span>
                 <span class="mp-header-meta pf-num" id="qqqHeaderChg" style="font-size:0.68rem;">—</span>
@@ -786,9 +805,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
                     <h4 style="font-weight:800;color:var(--teal);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;">Market Insights</h4>
                 </div>
-                <p style="font-size:0.72rem;line-height:1.5;color:var(--ink);margin-bottom:0.85rem;">
-                    Market breadth remains positive with 61% of S&P 500 stocks trading above their 50-day moving average. AI catalysts represent the highest concentration flows in technical buy triggers.
-                </p>
+                <p id="marketInsightsText" style="font-size:0.72rem;line-height:1.5;color:var(--ink);margin-bottom:0.85rem;">Computing live market breadth…</p>
                 <a href="/research.html" class="pf-btn pf-btn--primary" style="width:100%;font-size:0.7rem;padding:0.45rem;text-decoration:none;display:block;text-align:center;">Open Insights</a>
             </div>
         </div>
@@ -802,18 +819,17 @@
                         <span class="mp-hero-symbol-badge" id="heroSymbol">NVDA</span>
                         <div>
                             <div style="display:flex;align-items:center;gap:0.55rem;">
-                                <h3 class="mp-hero-title" id="heroName">NVIDIA Corporation</h3>
-                                <span style="font-size:0.58rem;font-weight:700;background:rgba(255,255,255,0.06);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);">NASDAQ</span>
-                                <span style="font-size:0.58rem;font-weight:700;background:var(--teal-soft);color:var(--teal);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);" data-key="lbl_largecap">Large Cap</span>
+                                <h3 class="mp-hero-title" id="heroName">—</h3>
+                                <span id="heroExchange" style="font-size:0.58rem;font-weight:700;background:rgba(255,255,255,0.06);color:var(--muted);padding:0.1rem 0.4rem;border-radius:4px;font-family:var(--pf-mono);"></span>
                             </div>
-                            <p class="mp-hero-sub" id="heroSub">Technology | Semiconductors</p>
+                            <p class="mp-hero-sub" id="heroSub"></p>
                         </div>
                     </div>
                     
                     <div style="display:flex;align-items:flex-start;gap:1.5rem;">
                         <div class="mp-hero-price">
-                            <div class="mp-hero-price-val pf-num" id="heroPrice">$1,087.31</div>
-                            <div class="mp-hero-price-chg pf-pos pf-num" id="heroPriceChg">▲ +2.40% (25.53)</div>
+                            <div class="mp-hero-price-val pf-num" id="heroPrice">—</div>
+                            <div class="mp-hero-price-chg pf-num" id="heroPriceChg"></div>
                         </div>
                         <div style="display:flex;gap:0.35rem;">
                             <button class="control-btn" style="width:2.2rem;height:2.2rem;" id="btnToggleFavorite" title="Toggle watchlist favorite">
@@ -832,35 +848,35 @@
                 <div class="mp-stats-row" style="margin-top:1.25rem;">
                     <div class="mp-stat-item">
                         <span class="mp-stat-label" data-key="stat_open">Open</span>
-                        <span class="mp-stat-val pf-num" id="statOpen">$1,063.25</span>
+                        <span class="mp-stat-val pf-num" id="statOpen">—</span>
                     </div>
                     <div class="mp-stat-item">
                         <span class="mp-stat-label" data-key="stat_high">High</span>
-                        <span class="mp-stat-val pf-num" id="statHigh">$1,097.48</span>
+                        <span class="mp-stat-val pf-num" id="statHigh">—</span>
                     </div>
                     <div class="mp-stat-item">
                         <span class="mp-stat-label" data-key="stat_low">Low</span>
-                        <span class="mp-stat-val pf-num" id="statLow">$1,058.11</span>
+                        <span class="mp-stat-val pf-num" id="statLow">—</span>
                     </div>
                     <div class="mp-stat-item">
                         <span class="mp-stat-label" data-key="stat_close">Prev Close</span>
-                        <span class="mp-stat-val pf-num" id="statClose">$1,061.78</span>
+                        <span class="mp-stat-val pf-num" id="statClose">—</span>
                     </div>
                     <div class="mp-stat-item">
                         <span class="mp-stat-label">Volume</span>
-                        <span class="mp-stat-val pf-num" id="statVolume">41.6M</span>
+                        <span class="mp-stat-val pf-num" id="statVolume">—</span>
                     </div>
                     <div class="mp-stat-item">
-                        <span class="mp-stat-label">Avg Volume</span>
-                        <span class="mp-stat-val pf-num" id="statAvgVolume">48.2M</span>
+                        <span class="mp-stat-label">Bid</span>
+                        <span class="mp-stat-val pf-num" id="statBid">—</span>
                     </div>
                     <div class="mp-stat-item">
-                        <span class="mp-stat-label">Market Cap</span>
-                        <span class="mp-stat-val pf-num" id="statMarketCap">2.70T</span>
+                        <span class="mp-stat-label">Ask</span>
+                        <span class="mp-stat-val pf-num" id="statAsk">—</span>
                     </div>
                     <div class="mp-stat-item">
-                        <span class="mp-stat-label">P/E (TTM)</span>
-                        <span class="mp-stat-val pf-num" id="statPE">72.45</span>
+                        <span class="mp-stat-label">Spread</span>
+                        <span class="mp-stat-val pf-num" id="statSpread">—</span>
                     </div>
                 </div>
             </div>
@@ -872,11 +888,9 @@
                         <button class="mp-tab active" id="tabOverview" data-key="pane_overview">Chart</button>
                         <button class="mp-tab" id="tabOptions" data-key="pane_options">Options</button>
                         <button class="mp-tab" id="tabNews" data-key="pane_news">News</button>
-                        <button class="mp-tab" id="tabFinancialsTab" data-key="pane_financials_tab">Financials</button>
-                        <button class="mp-tab" id="tabProfileTab" data-key="pane_profile_tab">Profile</button>
-                        <button class="mp-tab" id="tabFundamentals" data-key="pane_fundamentals">Fundamentals</button>
+                        <button class="mp-tab" id="tabProfileTab" data-key="pane_profile_tab">Specs</button>
                     </div>
-                    
+
                     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
                         <div class="pf-chart-toggles" style="display:flex;gap:0.2rem;background:rgba(255,255,255,0.02);padding:0.15rem;border-radius:4px;border:1px solid var(--line);" id="chartPeriodToggles">
                             <button class="pf-btn pf-btn--sm active" data-range="1D" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1D</button>
@@ -886,7 +900,6 @@
                             <button class="pf-btn pf-btn--sm" data-range="6M" style="padding:0.25rem 0.5rem;font-size:0.65rem;">6M</button>
                             <button class="pf-btn pf-btn--sm" data-range="1Y" style="padding:0.25rem 0.5rem;font-size:0.65rem;">1Y</button>
                         </div>
-                        <button class="pf-btn pf-btn--sm" style="font-size:0.68rem;padding:0.35rem 0.65rem;" id="btnCompare">Comparisons ▾</button>
                     </div>
                 </div>
 
@@ -896,37 +909,26 @@
                     </div>
 
                     <!-- Sliders Panel -->
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:2rem; margin-top:1.5rem; border-top:1px solid var(--line); padding-top:1.25rem;">
-                        <div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; margin-top:1.5rem; border-top:1px solid var(--line); padding-top:1.25rem;">
+                        <div id="week52Block">
                             <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                                <span style="color:var(--muted);">52 Week Range</span>
-                                <span style="color:var(--muted); font-weight:700;">$392.30 - $1,153.13</span>
+                                <span style="color:var(--muted);" data-key="lbl_52week">52 Week Range</span>
+                                <span style="color:var(--ink); font-weight:700;" id="week52Label">—</span>
                             </div>
                             <div class="range-slider-bar">
-                                <div class="range-slider-fill" style="left:15%; right:20%;"></div>
-                                <div class="range-slider-handle" style="left:72%;"></div>
+                                <div class="range-slider-fill" id="week52Fill" style="left:0%; right:100%;"></div>
+                                <div class="range-slider-handle" id="week52Handle" style="left:50%;"></div>
                             </div>
                         </div>
 
                         <div>
                             <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                                <span style="color:var(--muted);">Day Range</span>
-                                <span style="color:var(--muted); font-weight:700;" id="dayRangeLabel">$1,058.11 - $1,097.48</span>
+                                <span style="color:var(--muted);" data-key="lbl_dayrange">Day Range</span>
+                                <span style="color:var(--ink); font-weight:700;" id="dayRangeLabel">—</span>
                             </div>
                             <div class="range-slider-bar">
-                                <div class="range-slider-fill" style="left:20%; right:10%;"></div>
-                                <div class="range-slider-handle" style="left:78%;" id="dayRangeHandle"></div>
-                            </div>
-                        </div>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr; text-align:center;">
-                            <div>
-                                <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Beta (5Y)</span>
-                                <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">1.05</div>
-                            </div>
-                            <div>
-                                <span style="font-size:0.68rem; text-transform:uppercase; color:var(--muted); font-family:var(--pf-mono);">Yield</span>
-                                <div style="font-size:1.15rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono); margin-top:0.15rem;">0.03%</div>
+                                <div class="range-slider-fill" id="dayRangeFill" style="left:0%; right:100%;"></div>
+                                <div class="range-slider-handle" style="left:50%;" id="dayRangeHandle"></div>
                             </div>
                         </div>
                     </div>
@@ -988,8 +990,8 @@
                     <!-- Managed via market-pulse.js -->
                 </div>
                 <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--muted); font-family:var(--pf-mono); border-top:1px solid var(--line); padding-top:0.45rem; margin-top:0.45rem;">
-                    <span>Spread</span>
-                    <span style="color:var(--ink); font-weight:700;">0.20 (0.02%)</span>
+                    <span data-key="lbl_spread">Spread</span>
+                    <span style="color:var(--ink); font-weight:700;" id="obSpreadVal">—</span>
                 </div>
             </div>
 
@@ -1054,33 +1056,8 @@
                     <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink);" data-key="lbl_signals">Portfolio Signals</span>
                     <a href="/research.html" style="font-size:0.62rem; color:var(--teal); font-weight:700; text-decoration:none;">View All</a>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:0.55rem;">
-                    <div class="ai-signal-card">
-                        <div>
-                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">NVDA</span>
-                            <span style="font-size:0.65rem; color:var(--muted); margin-inline-start:0.35rem;">Bullish Momentum</span>
-                            <p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">Strong uptrend with high volume support and positive earnings revision trend.</p>
-                        </div>
-                        <span class="ai-badge high">High Conviction</span>
-                    </div>
-
-                    <div class="ai-signal-card">
-                        <div>
-                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">MSFT</span>
-                            <span style="font-size:0.65rem; color:var(--muted); margin-inline-start:0.35rem;">Breakout Watch</span>
-                            <p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">Approaching resistance level with increasing volume. Watch for breakout confirmation.</p>
-                        </div>
-                        <span class="ai-badge med">Medium Conviction</span>
-                    </div>
-
-                    <div class="ai-signal-card">
-                        <div>
-                            <span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">AAPL</span>
-                            <span style="font-size:0.65rem; color:var(--muted); margin-inline-start:0.35rem;">Support Zone</span>
-                            <p style="font-size:0.68rem; color:var(--muted); margin-top:0.35rem; line-height:1.45;">Holding key support level. Monitor for bounce or breakdown confirmation.</p>
-                        </div>
-                        <span class="ai-badge low">Low Conviction</span>
-                    </div>
+                <div id="portfolioSignalsContainer" style="display:flex; flex-direction:column; gap:0.55rem;">
+                    <div style="color:var(--muted);font-size:0.75rem;padding:0.75rem 0.25rem;">Loading engine signals…</div>
                 </div>
             </div>
 
