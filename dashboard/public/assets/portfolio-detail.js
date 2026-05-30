@@ -260,8 +260,8 @@
 
         var kpis = [
             kpi(t('totalValue'),  '$' + fmt(metrics.totalValue), null),
-            kpi(t('todayPL'),     (metrics.todayGain >= 0 ? '+' : '') + '$' + fmt(metrics.todayGain), pct(metrics.todayPct), todayClass),
-            kpi(t('totalGain'),   (metrics.totalGain >= 0 ? '+' : '') + '$' + fmt(metrics.totalGain), null, gainClass),
+            kpi(t('todayPL'),     (metrics.todayGain >= 0 ? '+$' : '-$') + fmt(Math.abs(metrics.todayGain)), pct(metrics.todayPct), todayClass),
+            kpi(t('totalGain'),   (metrics.totalGain >= 0 ? '+$' : '-$') + fmt(Math.abs(metrics.totalGain)), null, gainClass),
             kpi(t('totalReturn'), pct(metrics.totalReturn), null, retClass),
             kpi(t('cashBal'),     '$' + fmt(metrics.cashBalance), null),
             kpi(t('invested'),    '$' + fmt(metrics.invested), null),
@@ -1196,7 +1196,7 @@
         }
         var qrisk =
             qrow(il('Status', 'الحالة'), halted ? 'HALTED' : 'ACTIVE', halted ? 'pf-neg' : 'pf-pos') +
-            qrow(il('Trades Today', 'صفقات اليوم'), tradesToday, '') +
+            qrow(il('Trades Logged', 'الصفقات المُسجّلة'), tradesToday, '') +
             qrow(il('Active Signals', 'إشارات نشطة'), signalCount, signalCount ? 'pf-pos' : '') +
             qrow(il('Daily Loss Limit', 'حد الخسارة اليومي'), '4.0%', '') +
             qrow(il('Kill Switch', 'مفتاح الإيقاف'), il('Armed', 'مُفعّل'), 'pf-pos') +
@@ -1686,8 +1686,35 @@
     }
 
     /* ── 8) Trade Quality Analytics (learning report + live positions) ── */
+    // Aggregate per-portfolio learning reports (the `all` view delivers an
+    // array of { id, label, report }) into a single overall block, or return
+    // the single portfolio's overall block directly. Real closed-trade data
+    // only — no fabrication.
+    function resolveLearningOverall(lrRaw) {
+        if (!lrRaw) return null;
+        if (!Array.isArray(lrRaw)) return lrRaw.overall || null;
+        var totalTrades = 0, wins = 0, losses = 0, winPctSum = 0, lossPctSum = 0;
+        lrRaw.forEach(function (item) {
+            var o = item && item.report && item.report.overall;
+            if (!o || !o.total_trades) return;
+            totalTrades += o.total_trades;
+            wins += (o.wins || 0);
+            losses += (o.losses || 0);
+            winPctSum  += Math.abs(o.avg_win_pct  || 0) * (o.wins   || 0);
+            lossPctSum += Math.abs(o.avg_loss_pct || 0) * (o.losses || 0);
+        });
+        if (totalTrades <= 0) return null;
+        return {
+            total_trades: totalTrades,
+            win_rate: wins / totalTrades,
+            avg_win_pct: wins ? winPctSum / wins : 0,
+            avg_loss_pct: losses ? lossPctSum / losses : 0,
+            profit_factor: lossPctSum > 0 ? winPctSum / lossPctSum : (winPctSum > 0 ? 99 : 0),
+            sharpe_estimate: null
+        };
+    }
     function computeTradeQuality(I) {
-        var lr = (detailCache && detailCache.learning_report && detailCache.learning_report.overall) ? detailCache.learning_report.overall : null;
+        var lr = (detailCache) ? resolveLearningOverall(detailCache.learning_report) : null;
         var hasClosed = lr && lr.total_trades > 0;
 
         // Fallback to live open-position quality when no closed-trade history.
@@ -1770,8 +1797,8 @@
         if (losers.length) alerts.push(['low', il('Some positions need a stop-loss review', 'بعض المراكز تحتاج مراجعة وقف الخسارة'),
             il(losers.length + ' position' + (losers.length > 1 ? 's are' : ' is') + ' below the -6% review line.', losers.length + ' مركز تحت خط المراجعة -6%.')]);
 
-        alerts.push(['low', il('Upcoming earnings may increase volatility', 'الأرباح القادمة قد تزيد التقلب'),
-            il('Several core holdings report soon — expect wider intraday ranges.', 'عدة مراكز أساسية ستعلن قريباً — توقّع نطاقات أوسع.')]);
+        if (!alerts.length) alerts.push(['low', il('No critical alerts', 'لا توجد تنبيهات حرجة'),
+            il('Concentration, beta, cash deployment and open P/L are all within target ranges.', 'التركّز والبيتا ونشر النقد والأرباح المفتوحة جميعها ضمن النطاقات المستهدفة.')]);
 
         var rank = { high: 0, med: 1, low: 2 };
         alerts.sort(function (a, b) { return rank[a[0]] - rank[b[0]]; });
@@ -1821,8 +1848,7 @@
                                                           holdingsDividendsChart();
 
         var viewLabel = holdingsViewMode === 'table' ? (lang==='ar' ? 'عرض رسم بياني' : 'Chart View') : (lang==='ar' ? 'عرض جدول' : 'Table View');
-        var viewIcon = holdingsViewMode === 'table' ? '&#9776;' : '&#9776;'; // gonna use a better icon pair
-        var toggleIcon = holdingsViewMode === 'table' 
+        var toggleIcon = holdingsViewMode === 'table'
             ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
             : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" opacity="0.3"/><polyline points="5,17 8,14 11,17 14,12 17,15 19,10"/></svg>';
 
@@ -1879,6 +1905,20 @@
                     if (sym) window.location.href = '/stock-detail.html?symbol=' + encodeURIComponent(sym);
                 });
             });
+            // Per-row action button: trade the symbol (individual portfolio) or
+            // drill into stock detail (read-only aggregate view).
+            sec.querySelectorAll('.pf-row-action').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var sym = btn.getAttribute('data-symbol');
+                    if (!sym) return;
+                    if (pfId === 'all' || !portfolio.isServer) {
+                        window.location.href = '/stock-detail.html?symbol=' + encodeURIComponent(sym);
+                    } else {
+                        openOrderModal(sym);
+                    }
+                });
+            });
         }
     }
 
@@ -1903,7 +1943,7 @@
                 '</td>' +
                 '<td class="num"><span class="' + plClass + ' pf-num">' + (h.totalGain >= 0 ? '+' : '') + fmt(h.totalGain) + '</span>' +
                     '<br><span class="' + plClass + ' pf-num" style="font-size:.7rem;">' + pct(h.totalReturn) + '</span></td>' +
-                '<td><button class="pf-action-btn" title="Actions" onclick="event.stopPropagation(); alert(\'Trade terminal execution: Scale position or close out options contract.\')">⋮</button></td>' +
+                '<td><button class="pf-action-btn pf-row-action" data-symbol="' + escHtml(h.symbol) + '" title="' + (pfId === 'all' ? il('Open ' + h.symbol + ' detail', 'فتح تفاصيل ' + h.symbol) : il('Trade ' + h.symbol, 'تداول ' + h.symbol)) + '">⋮</button></td>' +
             '</tr>';
         }).join('');
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
@@ -1959,7 +1999,7 @@
     function holdingsDividendsTable() {
         if (!portfolio.transactions.length) return '<div class="pf-empty">' + (lang==='ar'?'لا توجد معاملات مسجلة.':'No transactions recorded.') + '</div>';
         
-        var ths = [t('txDate'), t('symbol'), 'Type', t('txQty'), t('txPrice'), 'Cost Basis', 'Description'];
+        var ths = [il('Date', 'التاريخ'), t('symbol'), il('Type', 'النوع'), il('Qty', 'الكمية'), il('Price', 'السعر'), il('Cost Basis', 'تكلفة المركز'), il('Description', 'الوصف')];
         var rows = portfolio.transactions.slice().reverse().slice(0, 20).map(function(tx){
             var cls = tx.type === 'buy' ? 'pf-neg' : 'pf-pos';
             var activeClass = tx.symbol === selectedSymbol ? 'style="background:rgba(229,90,31,0.06); font-weight:bold;"' : '';
@@ -2155,7 +2195,11 @@
                 cutout: '60%',
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: function(c){ return c.label+': '+c.parsed.toFixed(1)+'% ($'+fmt(c.raw,2)+')'; } } }
+                    tooltip: { callbacks: { label: function(c){
+                        var tot = c.dataset.data.reduce(function(s,v){ return s + v; }, 0) || 1;
+                        var wPct = (c.raw / tot) * 100;
+                        return c.label+': '+wPct.toFixed(1)+'% ($'+fmt(c.raw,2)+')';
+                    } } }
                 }
             }
         });
@@ -2570,7 +2614,8 @@
     }
 
     /* ─── Order Placing Modal ─────────────────────────────────────────── */
-    function openOrderModal() {
+    function openOrderModal(prefillSymbol) {
+        var sym = (typeof prefillSymbol === 'string') ? prefillSymbol : '';
         if (pfId === 'all') {
             alert('All Portfolios is a read-only aggregated view. Select an individual portfolio to place trades.');
             return;
@@ -2623,6 +2668,11 @@
         `;
 
         overlay.classList.add('open');
+
+        if (sym) {
+            var symInput = body.querySelector('#orderSymbol');
+            if (symInput) symInput.value = sym;
+        }
 
         const typeSelect = body.querySelector('#orderType');
         const priceField = body.querySelector('#limitPriceField');
