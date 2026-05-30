@@ -1539,9 +1539,36 @@ body {
     grid-template-columns: 1fr 296px;
     gap: 1.25rem;
     margin-bottom: 1.25rem;
-    align-items: start;
+    align-items: stretch;   /* both columns same height */
 }
-.pf-terminal-main { min-width: 0; }
+.pf-terminal-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+/* Holdings section stretches to fill full column height */
+.pf-terminal-main .pf-holdings-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+/* Table wrapper fills remaining space after the tab bar */
+.pf-terminal-main .pf-table-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+/* Scroll area grows to fill — no fixed max-height cap, no visible scrollbar */
+.pf-terminal-main .pf-table-scroll {
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* IE/Edge */
+}
+.pf-terminal-main .pf-table-scroll::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
 .pf-terminal-side { display: flex; flex-direction: column; gap: 1.25rem; }
 
 /* Quick-risk sidebar card rows */
