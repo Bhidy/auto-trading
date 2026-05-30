@@ -1579,26 +1579,38 @@ body {
     grid-template-columns: 1fr 296px;
     gap: 1.25rem;
     margin-bottom: 1.25rem;
-    align-items: stretch;   /* both columns same height */
+    align-items: start;     /* left side governs height */
 }
 .pf-terminal-main { min-width: 0; }
 
-/* Sidebar column fills full height of the grid row */
+/* Table scroll: ~6 rows visible, rest scrollable, scrollbar hidden */
+.pf-terminal-main .pf-table-scroll {
+    max-height: 23rem;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.pf-terminal-main .pf-table-scroll::-webkit-scrollbar { display: none; }
+
+/* Sidebar: capped to same visual height as holdings (head ~3.5rem + table 23rem) */
 .pf-terminal-side {
-    display: flex; flex-direction: column;
-    min-height: 0;          /* allow shrink in flex context */
+    display: flex;
+    flex-direction: column;
+    max-height: 26.5rem;    /* matches holdings tab-bar + 6-row table */
 }
 
-/* Sidebar card stretches to fill the column, tabs fixed, pane scrolls */
+/* Sidebar card: flex-column so tab bar stays fixed, pane scrolls */
 .pf-sidebar-card {
     flex: 1;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     min-height: 0;
 }
 .pf-sidebar-tabs {
-    display: flex; border-bottom: 1px solid var(--line);
-    flex-shrink: 0;         /* tab bar never shrinks */
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;         /* tab bar always visible */
 }
 .pf-sidebar-tab {
     flex: 1; padding: .65rem .5rem; border: none; background: transparent;
@@ -1609,7 +1621,7 @@ body {
 .pf-sidebar-tab:hover:not(.active) { color: var(--teal); }
 .pf-sidebar-tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--teal-soft); }
 
-/* Pane fills remaining height and scrolls silently */
+/* Pane scrolls silently within the capped card height */
 .pf-sidebar-pane {
     flex: 1;
     padding: 1.1rem;
@@ -1619,15 +1631,6 @@ body {
     -ms-overflow-style: none;
 }
 .pf-sidebar-pane::-webkit-scrollbar { display: none; }
-
-/* Table scroll: ~6 rows visible, rest scrollable, scrollbar hidden */
-.pf-terminal-main .pf-table-scroll {
-    max-height: 23rem;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-.pf-terminal-main .pf-table-scroll::-webkit-scrollbar { display: none; }
 
 /* Quick-risk status rows */
 .pf-qrisk { display: flex; flex-direction: column; }
