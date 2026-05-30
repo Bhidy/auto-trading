@@ -497,6 +497,35 @@
             box-shadow: 0 0 0 3px rgba(229,90,31,0.12);
         }
 
+        /* Place Order CTA — RiseWealth solar gradient (matches homepage cta-btn) */
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%);
+            color: #FFF7EE;
+            font-family: var(--pf-font, 'Manrope', sans-serif);
+            font-weight: 700;
+            font-size: 0.92rem;
+            padding: 0.85rem 1.5rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(229, 90, 31, 0.30);
+            transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(229, 90, 31, 0.42);
+        }
+        .cta-btn:active { transform: translateY(0); }
+        .cta-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 8px 18px rgba(229, 90, 31, 0.18);
+        }
+
         /* Custom alert notification toast */
         .order-toast {
             position: fixed;
