@@ -1,3 +1,11 @@
+/* Global UI scale — render the entire site 10% smaller by default (equivalent
+   to a browser "zoom out" of 10%), scaling layout AND type uniformly, not just
+   fonts. `zoom` reflows like native browser zoom (keeps fixed/sticky elements
+   correct), unlike transform:scale. Applied site-wide via this shared stylesheet. */
+html {
+    zoom: 0.9;
+}
+
 :root {
     --page: #FFF7F0;
     --surface: #ffffff;
