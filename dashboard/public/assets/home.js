@@ -494,7 +494,7 @@ async function initScene(canvas, animate) {
       s.p += (target - s.p) * 0.12;
       const e = s.p < 0.003 ? 0 : s.p * s.p * (3 - 2 * s.p);
       if (s.core) {
-        const tx = (act === 1 && s.els.length > 1) ? 0 : coreXTarget;   // centre at the closing
+        const tx = (act === 1 && s.els.length > 1) ? 0 : coreXTarget * rtl;   // flip to the open side in RTL; centre at the closing
         group.position.x += (tx - group.position.x) * 0.06;
         group.position.y += (baseY - group.position.y) * 0.06;
         group.visible = e > 0.01;
