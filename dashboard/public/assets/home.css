@@ -17,6 +17,8 @@
   --ease-out-quint: cubic-bezier(.22,1,.36,1);
   background: var(--page);
 }
+/* Footer sits flush at the page end (override portfolio.css body{padding-bottom:32px}). */
+body.home { padding-bottom: 0; }
 
 /* The site already renders a fixed nav (5rem). Give the page a clean top. */
 .home main, .home header, .home section, .home footer { position: relative; z-index: 1; }
@@ -29,6 +31,10 @@
   inset: 0;                 /* fills the visual viewport (robust to html zoom) */
   z-index: 0;
   pointer-events: none;
+  /* Fade the very bottom edge so the scene blends into the page colour there and
+     no sliver of canvas peeks below the footer at absolute max-scroll. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 95%, transparent 100%);
   /* fade the whole field in once the scene is ready (set by JS) */
   opacity: 0;
   transition: opacity 1.2s var(--ease-out-expo);
@@ -409,7 +415,7 @@ html[dir="rtl"] .markets-marquee { animation-direction: reverse; }
 /* ---------------------------------------------------------------------------
    CLOSING CTA
    ------------------------------------------------------------------------- */
-.home-closing { text-align: center; padding-block: clamp(6rem, 16vh, 12rem); }
+.home-closing { text-align: center; padding: clamp(5rem, 11vh, 8rem) 0 clamp(2.5rem, 6vh, 4rem); }
 .home-closing__title { font-family:'DM Serif Display', serif; font-size: clamp(2.6rem, 6.5vw, 5.6rem); line-height:1.02; letter-spacing:-.03em; color: var(--ink); margin:0; text-wrap: balance; }
 html[dir="rtl"] .home-closing__title { font-family:"IBM Plex Sans Arabic", sans-serif; line-height:1.25; letter-spacing:0; }
 .home-closing__title em { color: var(--teal); font-style: italic; }
@@ -421,7 +427,7 @@ html[dir="rtl"] .home-closing__note { font-family:"IBM Plex Sans Arabic", sans-s
 /* ---------------------------------------------------------------------------
    FOOTER
    ------------------------------------------------------------------------- */
-.home-footer { border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 92%, transparent); }
+.home-footer { border-top: 1px solid var(--line); background: var(--surface); }
 .home-footer__inner { width: min(var(--home-maxw), 100% - var(--gutter)*2); margin-inline:auto; padding-block: clamp(3rem,6vh,4.5rem); display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2.5rem; }
 .home-footer__brand { display:flex; flex-direction:column; gap:1rem; }
 .home-foot-word { font-family:'DM Serif Display', serif; font-size: 1.5rem; display:inline-flex; }
