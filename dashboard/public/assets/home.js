@@ -178,6 +178,45 @@ void main(){
   gl_FragColor = vec4(col, a * tw * uAlpha);
 }`;
 
+/* Shared fresnel material for the station meshes (crystal / rings / knot). */
+const MESH_VERT = `
+varying vec3 vN; varying vec3 vView; varying vec3 vPos;
+void main(){
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vN = normalize(normalMatrix * normal);
+  vView = normalize(-mv.xyz);
+  vPos = position;
+  gl_Position = projectionMatrix * mv;
+}`;
+const MESH_FRAG = `
+precision highp float;
+uniform vec3 uLow; uniform vec3 uHigh; uniform vec3 uRim; uniform float uTime; uniform float uFlow;
+varying vec3 vN; varying vec3 vView; varying vec3 vPos;
+void main(){
+  vec3 N = normalize(vN);
+  float fres = pow(1.0 - max(dot(N, normalize(vView)), 0.0), 2.2);
+  float flow = 0.5 + 0.5 * sin(vPos.y * 3.2 + vPos.x * 1.5 - uTime * 1.8);
+  vec3 col = mix(uLow, uHigh, flow * uFlow + (1.0 - uFlow) * 0.35);
+  col += uRim * fres * 1.45;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+/* Additive round points for the data globe. */
+const GLOBE_VERT = `
+uniform float uPix; uniform float uSize; attribute float aS;
+void main(){
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_PointSize = aS * uSize * uPix * (1.0 / -mv.z) * 34.0;
+  gl_Position = projectionMatrix * mv;
+}`;
+const GLOBE_FRAG = `
+precision highp float;
+uniform vec3 uCol; uniform float uAlpha;
+void main(){
+  vec2 u = gl_PointCoord - 0.5; float d = length(u);
+  if (d > 0.5) discard;
+  gl_FragColor = vec4(uCol, smoothstep(0.5, 0.0, d) * uAlpha);
+}`;
+
 async function initScene(canvas, animate) {
   const THREE = await import('three');
 
@@ -263,16 +302,100 @@ async function initScene(canvas, animate) {
   }));
   glow.scale.setScalar(5.4);
 
-  // Responsive placement of the core/camera
+  // Core group, hosted inside a "world" group that tilts gently with the pointer.
   const group = new THREE.Group();
   group.add(glow); group.add(core); group.add(shell);
-  scene.add(group);
-  let coreXTarget = 0, coreScaleTarget = 1, baseY = 0.18;
+  const world = new THREE.Group();
+  world.add(group);
+  scene.add(world);
+
+  // ---- Station objects: one shared renderer; only the in-view object draws ----
+  const objMats = [], globeMats = [], wireMats = [];
+  function fresnelMat(flow) {
+    const m = new THREE.ShaderMaterial({
+      vertexShader: MESH_VERT, fragmentShader: MESH_FRAG,
+      uniforms: {
+        uTime: { value: 0 }, uFlow: { value: flow },
+        uLow: { value: new THREE.Color(pal.mid) },
+        uHigh: { value: new THREE.Color(pal.high) },
+        uRim: { value: new THREE.Color(pal.rim) },
+      },
+    });
+    objMats.push(m); return m;
+  }
+  function wireMesh(geo) {
+    const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(pal.rim), wireframe: true, transparent: true, opacity: 0.12 });
+    wireMats.push(m); return new THREE.Mesh(geo, m);
+  }
+  function buildCrystal() {                       // A — faceted molten crystal
+    const g = new THREE.IcosahedronGeometry(1.05, 1); g.computeVertexNormals();   // flat-faceted
+    const mesh = new THREE.Mesh(g, fresnelMat(0.4));
+    const wire = wireMesh(new THREE.IcosahedronGeometry(1.22, 1));
+    const grp = new THREE.Group(); grp.add(mesh); grp.add(wire);
+    grp.userData.update = (t) => { mesh.rotation.set(t * 0.12, t * 0.24, 0); wire.rotation.set(-t * 0.06, -t * 0.1, 0); mesh.material.uniforms.uTime.value = t; };
+    return grp;
+  }
+  function buildRings() {                          // B — gyroscope rings
+    const grp = new THREE.Group();
+    const rs = [[0, 0, 0], [Math.PI / 2, 0, 0], [0, 0, Math.PI / 2]].map((r) => {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.03, 10, IS_SMALL ? 80 : 140), fresnelMat(0.6));
+      ring.rotation.set(r[0], r[1], r[2]); grp.add(ring); return ring;
+    });
+    const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, 2), fresnelMat(0.85)); grp.add(ball);
+    grp.userData.update = (t) => {
+      rs[0].rotation.x = t * 0.5; rs[0].rotation.z = t * 0.2;
+      rs[1].rotation.y = t * 0.62; rs[2].rotation.z = t * 0.44; rs[2].rotation.x = t * 0.2; ball.rotation.y = t * 0.5;
+      grp.children.forEach((c) => { if (c.material && c.material.uniforms) c.material.uniforms.uTime.value = t; });
+    };
+    return grp;
+  }
+  function buildGlobe() {                          // C — data globe (points + wire)
+    const N = IS_SMALL ? 700 : 1300;
+    const pos = new Float32Array(N * 3), sz = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(Math.max(0, 1 - y * y)), th = i * 2.399963;
+      pos[i * 3] = Math.cos(th) * r; pos[i * 3 + 1] = y; pos[i * 3 + 2] = Math.sin(th) * r;
+      sz[i] = 0.5 + Math.random() * 1.3;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('aS', new THREE.BufferAttribute(sz, 1));
+    const m = new THREE.ShaderMaterial({
+      vertexShader: GLOBE_VERT, fragmentShader: GLOBE_FRAG, transparent: true, depthWrite: false,
+      blending: pal.particleBlend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending,
+      uniforms: { uPix: { value: dpr }, uSize: { value: 1 }, uCol: { value: new THREE.Color(pal.particleBlend === 'add' ? pal.high : pal.mid) }, uAlpha: { value: pal.particleAlpha } },
+    });
+    globeMats.push(m);
+    const pts = new THREE.Points(geo, m); pts.scale.setScalar(1.15);
+    const wire = wireMesh(new THREE.IcosahedronGeometry(1.05, 2));
+    const grp = new THREE.Group(); grp.add(pts); grp.add(wire);
+    grp.userData.update = (t) => { pts.rotation.y = t * 0.16; wire.rotation.set(0.3, t * 0.16, 0); };
+    return grp;
+  }
+  function buildKnot() {                           // D — torus knot
+    const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(0.74, 0.23, IS_SMALL ? 90 : 150, 16), fresnelMat(1.0));
+    const grp = new THREE.Group(); grp.add(mesh);
+    grp.userData.update = (t) => { mesh.rotation.set(t * 0.16, t * 0.26, 0); mesh.material.uniforms.uTime.value = t; };
+    return grp;
+  }
+  const crystal = buildCrystal(), rings = buildRings(), globe = buildGlobe(), knot = buildKnot();
+  [crystal, rings, globe, knot].forEach((o) => { o.visible = false; world.add(o); });
+
+  const byId = (id) => document.getElementById(id);
+  const stations = [
+    { root: group, core: true, els: ['hero', 'closing'].map(byId).filter(Boolean) },
+    { root: crystal, side: 1, els: [byId('sec-risk')].filter(Boolean) },
+    { root: rings, side: -1, els: [byId('sec-auto')].filter(Boolean) },
+    { root: globe, side: 1, els: [byId('sec-record')].filter(Boolean) },
+    { root: knot, side: -1, els: [byId('sec-eng')].filter(Boolean) },
+  ];
+  stations.forEach((s) => { s.p = 0; });
+  let coreXTarget = 0, coreScaleTarget = 1, baseY = 0.18, objX = 1.55, objScale = 1.05;
   function layout() {
     const w = window.innerWidth;
-    if (w > 1080) { coreXTarget = 1.55; coreScaleTarget = 1.12; baseY = -0.15; }
-    else if (w > 820) { coreXTarget = 0.95; coreScaleTarget = 0.96; baseY = 0.1; }
-    else { coreXTarget = 0.1; coreScaleTarget = 0.66; baseY = 1.4; }
+    if (w > 1080) { coreXTarget = 1.55; coreScaleTarget = 1.12; baseY = -0.15; objX = 1.55; objScale = 1.05; }
+    else if (w > 820) { coreXTarget = 0.95; coreScaleTarget = 0.96; baseY = 0.1; objX = 1.0; objScale = 0.9; }
+    else { coreXTarget = 0.1; coreScaleTarget = 0.66; baseY = 1.4; objX = 0.0; objScale = 0.66; }
   }
   layout();
   group.position.set(coreXTarget, baseY, 0);
@@ -322,6 +445,13 @@ async function initScene(canvas, animate) {
     partMat.blending = pal.particleBlend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending;
     partMat.needsUpdate = true;
     glow.material.opacity = pal.glow;
+    objMats.forEach((m) => { m.uniforms.uLow.value.set(pal.mid); m.uniforms.uHigh.value.set(pal.high); m.uniforms.uRim.value.set(pal.rim); });
+    wireMats.forEach((m) => m.color.set(pal.rim));
+    globeMats.forEach((m) => {
+      m.uniforms.uCol.value.set(pal.particleBlend === 'add' ? pal.high : pal.mid);
+      m.uniforms.uAlpha.value = pal.particleAlpha;
+      m.blending = pal.particleBlend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending; m.needsUpdate = true;
+    });
     if (!animate) renderer.render(scene, camera);
   }
   document.addEventListener('starta:themechange', applyTheme);
@@ -344,35 +474,60 @@ async function initScene(canvas, animate) {
     shell.rotation.copy(core.rotation);
     particles.rotation.y = t * 0.025;
 
-    // ease the core toward centre and let it sink as the visitor reaches the
-    // closing, so headlines never sit on the hottest part of the glow
-    const xNow = coreXTarget * (1 - scrollProg * 0.9);
-    const yNow = baseY - scrollProg * scrollProg * 2.4;
-    group.position.x += (xNow - group.position.x) * 0.06;
-    group.position.y += (yNow - group.position.y) * 0.06;
-    group.scale.setScalar(coreScaleTarget * (1 + scrollProg * 0.06));
+    // gentle pointer parallax on the whole station world
+    world.rotation.y += (pointer.x * 0.12 - world.rotation.y) * 0.05;
+    world.rotation.x += (-pointer.y * 0.08 - world.rotation.x) * 0.05;
+
+    // Station crossfade: each object scales in only while its section is centred;
+    // everything else is hidden (no draw call). One object active at a time.
+    const rtl = document.documentElement.dir === 'rtl' ? -1 : 1;
+    const vh = window.innerHeight, reach = vh * 0.62;
+    for (let i = 0; i < stations.length; i++) {
+      const s = stations[i];
+      let target = 0, act = 0;
+      for (let c = 0; c < s.els.length; c++) {
+        const r = s.els[c].getBoundingClientRect();
+        const center = r.top + r.height * 0.5;        // px from viewport top (zoom-consistent)
+        const pp = Math.max(0, 1 - Math.abs(center - vh * 0.5) / reach);
+        if (pp > target) { target = pp; act = c; }
+      }
+      s.p += (target - s.p) * 0.12;
+      const e = s.p < 0.003 ? 0 : s.p * s.p * (3 - 2 * s.p);
+      if (s.core) {
+        const tx = (act === 1 && s.els.length > 1) ? 0 : coreXTarget;   // centre at the closing
+        group.position.x += (tx - group.position.x) * 0.06;
+        group.position.y += (baseY - group.position.y) * 0.06;
+        group.visible = e > 0.01;
+        group.scale.setScalar(Math.max(0.0001, coreScaleTarget * e));
+      } else {
+        s.root.visible = e > 0.02;
+        if (s.root.visible) {
+          s.root.position.set(s.side * rtl * objX, 0, 0);
+          s.root.scale.setScalar(Math.max(0.0001, objScale * e));
+          s.root.userData.update(t);
+        }
+      }
+    }
 
     renderer.render(scene, camera);
   }
 
-  let last = 0;
-  function loop(t) {
+  function loop() {
     if (!running) return;
     frame = requestAnimationFrame(loop);
-    // Frame-pace by scroll: full rate while the core is the hero, then ease off
-    // to ~30fps once it sinks behind content. Motion speed is time-based, so
-    // pacing changes density, not speed.
-    const cap = scrollProg < 0.45 ? 0 : 33;
-    if (t - last < cap) return;
-    last = t;
-    renderFrame();
+    renderFrame();   // frames are cheap (one cull-gated object active at a time)
   }
 
   window.addEventListener('resize', resize, { passive: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { running = false; cancelAnimationFrame(frame); }
-    else if (animate) { running = true; last = 0; frame = requestAnimationFrame(loop); }
+    else if (animate) { running = true; frame = requestAnimationFrame(loop); }
   });
+
+  // Pre-compile every station shader up front so a first reveal never stalls.
+  [crystal, rings, globe, knot].forEach((o) => (o.visible = true));
+  renderer.compile(scene, camera);
+  [crystal, rings, globe, knot].forEach((o) => (o.visible = false));
 
   requestAnimationFrame(() => canvas.parentElement.classList.add('is-ready'));
 

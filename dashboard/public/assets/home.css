@@ -262,7 +262,11 @@ html[dir="rtl"] .home-stat__label { font-family: "IBM Plex Sans Arabic", sans-se
   transition: opacity .5s ease;
 }
 .pf-tile:hover::after { opacity: .9; }
-.pf-tile--feature { grid-column: span 3; grid-row: span 2; }
+.pf-tile--feature {
+  grid-column: span 3; grid-row: span 2;
+  align-self: center;            /* size to content + centre between the two right tiles */
+  background: color-mix(in srgb, var(--surface) 84%, transparent);  /* ~10% more transparent */
+}
 .pf-tile--a { grid-column: span 3; }
 .pf-tile--b { grid-column: span 3; }
 .pf-tile__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -325,6 +329,52 @@ html[dir="rtl"] .spine-step__n { left:auto; right: clamp(1.1rem,2vw,1.5rem); }
 .spine-step__t { font-family:'DM Serif Display', serif; font-size: clamp(1.2rem,1.9vw,1.6rem); color: var(--ink); margin: 0 0 .5rem; letter-spacing:-.01em; }
 html[dir="rtl"] .spine-step__t { font-family:"IBM Plex Sans Arabic", sans-serif; }
 .spine-step__d { color: var(--muted); font-size: .94rem; line-height: 1.65; margin:0; max-width: 54ch; }
+
+/* ---------------------------------------------------------------------------
+   OBJECT SHOWCASE SECTIONS — 3D station objects render in the open side
+   ------------------------------------------------------------------------- */
+.obj-sec { position: relative; overflow: hidden; }
+/* Directional scrim keeps copy legible; clears the open side for the 3D object. */
+.obj-sec::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(90deg, var(--page) 0%, color-mix(in srgb, var(--page) 70%, transparent) 34%, transparent 62%);
+}
+.obj-sec[data-side="left"]::before,
+html[dir="rtl"] .obj-sec[data-side="right"]::before {
+  background: linear-gradient(270deg, var(--page) 0%, color-mix(in srgb, var(--page) 70%, transparent) 34%, transparent 62%);
+}
+html[dir="rtl"] .obj-sec[data-side="left"]::before {
+  background: linear-gradient(90deg, var(--page) 0%, color-mix(in srgb, var(--page) 70%, transparent) 34%, transparent 62%);
+}
+.obj-grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center; min-height: 76vh;
+}
+.obj-sec[data-side="left"] .obj-copy { order: 2; }
+.obj-sec[data-side="left"] .obj-stage { order: 1; }
+.obj-copy { max-width: 34rem; }
+.obj-stage { min-height: 46vh; }   /* leaves the 3D object room; canvas shows through */
+.obj-chips { list-style: none; margin: 1.9rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .7rem; }
+.obj-chips li {
+  display: flex; flex-direction: column; gap: .22rem; padding: .75rem 1.05rem;
+  border: 1px solid var(--line); border-radius: .85rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+.obj-chips b { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--ink); line-height: 1; }
+.obj-chips span { font-family: var(--pf-mono, monospace); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+html[dir="rtl"] .obj-chips span { font-family: "IBM Plex Sans Arabic", sans-serif; letter-spacing: 0; }
+@media (max-width: 860px) {
+  .obj-grid { grid-template-columns: 1fr; gap: 1rem; min-height: auto; }
+  .obj-sec[data-side="left"] .obj-copy, .obj-sec[data-side="left"] .obj-stage { order: 0; }
+  .obj-stage { min-height: 52vh; order: -1; }    /* object sits above the copy on phones */
+  .obj-sec::before,
+  .obj-sec[data-side="left"]::before,
+  html[dir="rtl"] .obj-sec[data-side="right"]::before,
+  html[dir="rtl"] .obj-sec[data-side="left"]::before {
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--page) 68%, transparent) 46%, var(--page) 100%);
+  }
+}
 
 /* ---------------------------------------------------------------------------
    MARKETS — drenched solar band, live prices
