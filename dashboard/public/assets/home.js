@@ -372,14 +372,53 @@ async function initScene(canvas, animate) {
     grp.userData.update = (t) => { pts.rotation.y = t * 0.16; wire.rotation.set(0.3, t * 0.16, 0); };
     return grp;
   }
-  function buildKnot() {                           // D — torus knot
-    const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(0.74, 0.23, IS_SMALL ? 90 : 150, 16), fresnelMat(1.0));
-    const grp = new THREE.Group(); grp.add(mesh);
-    grp.userData.update = (t) => { mesh.rotation.set(t * 0.16, t * 0.26, 0); mesh.material.uniforms.uTime.value = t; };
+  function buildCandles() {                        // D — 3D candlestick chart (trading)
+    const grp = new THREE.Group();
+    const mkMat = (low, high, rim, flow) => new THREE.ShaderMaterial({
+      vertexShader: MESH_VERT, fragmentShader: MESH_FRAG,
+      uniforms: { uTime: { value: 0 }, uFlow: { value: flow },
+        uLow: { value: new THREE.Color(low) }, uHigh: { value: new THREE.Color(high) }, uRim: { value: new THREE.Color(rim) } },
+    });
+    const upMat = mkMat('#E0571C', '#FFD2A0', '#FF8A3D', 0.5);     // bright / hot = up bar
+    const downMat = mkMat('#9A3A12', '#D9601F', '#C9461A', 0.5);   // cooler mid = down bar
+    const lineMat = mkMat('#FFC79A', '#FFF1E0', '#FF8A3D', 0.95);  // glowing price line + marker
+    const mats = [upMat, downMat, lineMat];
+    const N = IS_SMALL ? 11 : 15, W = 2.6, gap = W / N;
+    let price = -0.55; const closes = []; let minY = 1e9, maxY = -1e9;
+    for (let i = 0; i < N; i++) {
+      const open = price;
+      price += 0.05 + (Math.random() - 0.5) * 0.5 - price * 0.06;   // uptrend + volatility, gently bounded
+      const close = price;
+      const hi = Math.max(open, close) + Math.random() * 0.16 + 0.05;
+      const lo = Math.min(open, close) - Math.random() * 0.16 - 0.05;
+      const mat = close >= open ? upMat : downMat;
+      const bt = Math.max(open, close), bb = Math.min(open, close);
+      const x = (i - (N - 1) / 2) * gap;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(gap * 0.56, Math.max(0.1, bt - bb), gap * 0.56), mat);
+      body.position.set(x, (bt + bb) / 2, 0); grp.add(body);
+      const wick = new THREE.Mesh(new THREE.BoxGeometry(gap * 0.12, hi - lo, gap * 0.12), mat);
+      wick.position.set(x, (hi + lo) / 2, 0); grp.add(wick);
+      closes.push(new THREE.Vector3(x, close, 0));
+      minY = Math.min(minY, lo); maxY = Math.max(maxY, hi);
+    }
+    const cy = (minY + maxY) / 2;
+    const curve = new THREE.CatmullRomCurve3(closes);
+    const line = new THREE.Mesh(new THREE.TubeGeometry(curve, 100, 0.026, 7, false), lineMat);
+    grp.add(line);
+    const marker = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), lineMat);
+    grp.add(marker);
+    grp.children.forEach((c) => { c.position.y -= cy; });          // vertically centre the chart
+    grp.userData.update = (t) => {
+      grp.rotation.y = Math.sin(t * 0.25) * 0.42;                  // keep it mostly face-on, gently swaying
+      grp.rotation.x = -0.08 + Math.sin(t * 0.18) * 0.05;
+      mats.forEach((m) => (m.uniforms.uTime.value = t));
+      const u = (t * 0.11) % 1;                                    // live marker travels the price line
+      const p = curve.getPointAt(u); marker.position.set(p.x, p.y - cy, p.z);
+    };
     return grp;
   }
-  const crystal = buildCrystal(), rings = buildRings(), globe = buildGlobe(), knot = buildKnot();
-  [crystal, rings, globe, knot].forEach((o) => { o.visible = false; world.add(o); });
+  const crystal = buildCrystal(), rings = buildRings(), globe = buildGlobe(), candles = buildCandles();
+  [crystal, rings, globe, candles].forEach((o) => { o.visible = false; world.add(o); });
 
   const byId = (id) => document.getElementById(id);
   const stations = [
@@ -387,7 +426,7 @@ async function initScene(canvas, animate) {
     { root: crystal, side: 1, els: [byId('sec-risk')].filter(Boolean) },
     { root: rings, side: -1, els: [byId('sec-auto')].filter(Boolean) },
     { root: globe, side: 1, els: [byId('sec-record')].filter(Boolean) },
-    { root: knot, side: -1, els: [byId('sec-eng')].filter(Boolean) },
+    { root: candles, side: -1, els: [byId('sec-eng')].filter(Boolean) },
   ];
   stations.forEach((s) => { s.p = 0; });
   let coreXTarget = 0, coreScaleTarget = 1, baseY = 0.18, objX = 1.55, objScale = 1.05;
@@ -525,9 +564,9 @@ async function initScene(canvas, animate) {
   });
 
   // Pre-compile every station shader up front so a first reveal never stalls.
-  [crystal, rings, globe, knot].forEach((o) => (o.visible = true));
+  [crystal, rings, globe, candles].forEach((o) => (o.visible = true));
   renderer.compile(scene, camera);
-  [crystal, rings, globe, knot].forEach((o) => (o.visible = false));
+  [crystal, rings, globe, candles].forEach((o) => (o.visible = false));
 
   requestAnimationFrame(() => canvas.parentElement.classList.add('is-ready'));
 
