@@ -28,6 +28,24 @@ function scenePalette() {
       };
 }
 
+/* Premium, theme-aware green/red for the candlestick chart. Up = emerald,
+   down = crimson (realistic), price line stays brand gold so it reads as an
+   overlay. Brighter/more saturated on dark, slightly deeper on light. */
+function candlePalette() {
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  return light
+    ? {
+        up: { low: '#0E7A3A', high: '#79E6A4', rim: '#16A34A' },
+        down: { low: '#9C1325', high: '#FF7C8A', rim: '#DC2626' },
+        line: { low: '#E55A1F', high: '#FFC79A', rim: '#FF8A3D' },
+      }
+    : {
+        up: { low: '#0C5E2F', high: '#8AF7B9', rim: '#22C55E' },
+        down: { low: '#7E1020', high: '#FF8B97', rim: '#EF4444' },
+        line: { low: '#FF8A3D', high: '#FFE7CC', rim: '#FFB877' },
+      };
+}
+
 /* ---------------------------------------------------------------------------
    GSAP choreography — reveals + hero load. Content stays visible if GSAP fails.
    ------------------------------------------------------------------------- */
@@ -310,7 +328,7 @@ async function initScene(canvas, animate) {
   scene.add(world);
 
   // ---- Station objects: one shared renderer; only the in-view object draws ----
-  const objMats = [], globeMats = [], wireMats = [];
+  const objMats = [], globeMats = [], wireMats = [], candleSet = [];
   function fresnelMat(flow) {
     const m = new THREE.ShaderMaterial({
       vertexShader: MESH_VERT, fragmentShader: MESH_FRAG,
@@ -374,14 +392,18 @@ async function initScene(canvas, animate) {
   }
   function buildCandles() {                        // D — 3D candlestick chart (trading)
     const grp = new THREE.Group();
-    const mkMat = (low, high, rim, flow) => new THREE.ShaderMaterial({
-      vertexShader: MESH_VERT, fragmentShader: MESH_FRAG,
-      uniforms: { uTime: { value: 0 }, uFlow: { value: flow },
-        uLow: { value: new THREE.Color(low) }, uHigh: { value: new THREE.Color(high) }, uRim: { value: new THREE.Color(rim) } },
-    });
-    const upMat = mkMat('#E0571C', '#FFD2A0', '#FF8A3D', 0.5);     // bright / hot = up bar
-    const downMat = mkMat('#9A3A12', '#D9601F', '#C9461A', 0.5);   // cooler mid = down bar
-    const lineMat = mkMat('#FFC79A', '#FFF1E0', '#FF8A3D', 0.95);  // glowing price line + marker
+    const cp = candlePalette();
+    const mkMat = (c, flow, role) => {
+      const m = new THREE.ShaderMaterial({
+        vertexShader: MESH_VERT, fragmentShader: MESH_FRAG,
+        uniforms: { uTime: { value: 0 }, uFlow: { value: flow },
+          uLow: { value: new THREE.Color(c.low) }, uHigh: { value: new THREE.Color(c.high) }, uRim: { value: new THREE.Color(c.rim) } },
+      });
+      candleSet.push({ mat: m, role }); return m;
+    };
+    const upMat = mkMat(cp.up, 0.45, 'up');       // emerald = up bar
+    const downMat = mkMat(cp.down, 0.45, 'down'); // crimson = down bar
+    const lineMat = mkMat(cp.line, 0.9, 'line');  // gold glowing price line + marker
     const mats = [upMat, downMat, lineMat];
     const N = IS_SMALL ? 11 : 15, W = 2.6, gap = W / N;
     let price = -0.55; const closes = []; let minY = 1e9, maxY = -1e9;
@@ -490,6 +512,11 @@ async function initScene(canvas, animate) {
       m.uniforms.uCol.value.set(pal.particleBlend === 'add' ? pal.high : pal.mid);
       m.uniforms.uAlpha.value = pal.particleAlpha;
       m.blending = pal.particleBlend === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending; m.needsUpdate = true;
+    });
+    const cp = candlePalette();
+    candleSet.forEach(({ mat, role }) => {
+      const c = cp[role];
+      mat.uniforms.uLow.value.set(c.low); mat.uniforms.uHigh.value.set(c.high); mat.uniforms.uRim.value.set(c.rim);
     });
     if (!animate) renderer.render(scene, camera);
   }
