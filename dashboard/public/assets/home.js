@@ -270,8 +270,8 @@ async function initScene(canvas, animate) {
   let coreXTarget = 0, coreScaleTarget = 1, baseY = 0.18;
   function layout() {
     const w = window.innerWidth;
-    if (w > 1080) { coreXTarget = 1.55; coreScaleTarget = 1.12; baseY = 0.18; }
-    else if (w > 820) { coreXTarget = 0.95; coreScaleTarget = 0.96; baseY = 0.4; }
+    if (w > 1080) { coreXTarget = 1.55; coreScaleTarget = 1.12; baseY = -0.15; }
+    else if (w > 820) { coreXTarget = 0.95; coreScaleTarget = 0.96; baseY = 0.1; }
     else { coreXTarget = 0.1; coreScaleTarget = 0.66; baseY = 1.4; }
   }
   layout();
