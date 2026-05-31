@@ -415,7 +415,12 @@ html[dir="rtl"] .markets-marquee { animation-direction: reverse; }
 /* ---------------------------------------------------------------------------
    CLOSING CTA
    ------------------------------------------------------------------------- */
-.home-closing { text-align: center; padding: clamp(5rem, 11vh, 8rem) 0 clamp(2.5rem, 6vh, 4rem); }
+.home-closing {
+  text-align: center;
+  min-height: 90vh;                          /* grand, full-presence finale */
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(5rem, 10vh, 8rem) 0;
+}
 .home-closing__title { font-family:'DM Serif Display', serif; font-size: clamp(2.6rem, 6.5vw, 5.6rem); line-height:1.02; letter-spacing:-.03em; color: var(--ink); margin:0; text-wrap: balance; }
 html[dir="rtl"] .home-closing__title { font-family:"IBM Plex Sans Arabic", sans-serif; line-height:1.25; letter-spacing:0; }
 .home-closing__title em { color: var(--teal); font-style: italic; }
@@ -427,7 +432,7 @@ html[dir="rtl"] .home-closing__note { font-family:"IBM Plex Sans Arabic", sans-s
 /* ---------------------------------------------------------------------------
    FOOTER
    ------------------------------------------------------------------------- */
-.home-footer { border-top: 1px solid var(--line); background: var(--surface); }
+.home-footer { border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 48%, transparent); }
 .home-footer__inner { width: min(var(--home-maxw), 100% - var(--gutter)*2); margin-inline:auto; padding-block: clamp(3rem,6vh,4.5rem); display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2.5rem; }
 .home-footer__brand { display:flex; flex-direction:column; gap:1rem; }
 .home-foot-word { font-family:'DM Serif Display', serif; font-size: 1.5rem; display:inline-flex; }
