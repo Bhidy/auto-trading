@@ -21,6 +21,7 @@ from pathlib import Path
 import requests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))  # allow importing shared.* (pure-Python) for tail risk
 
 # Each portfolio's freshest "activity" timestamp lives in a state file written
 # on every run. Map: label -> (relative path, timestamp field).
@@ -187,6 +188,61 @@ def assess_integrity(reports: dict, today=None):
     return False, "Execution integrity & conformance: all clear."
 
 
+# --- Tail risk surfacing (advisory) -----------------------------------------
+# Surface per-book VaR/CVaR on the watchdog using the canonical pure-Python math
+# in shared/portfolio_risk.py (single source of truth). Advisory by default: it
+# only ALERTS if HEARTBEAT_VAR_CEILING_PCT is set AND a book breaches it — the
+# risk_officer kill-switch remains the sole authority that liquidates.
+
+def read_equity_returns_alpaca(api_key, api_secret, period="3M", timeframe="1D"):
+    """Daily equity returns from Alpaca's portfolio-history endpoint. Best-effort:
+    returns [] on missing keys or any error (never breaks the watchdog)."""
+    if not api_key or not api_secret:
+        return []
+    try:
+        r = requests.get(
+            "https://paper-api.alpaca.markets/v2/account/portfolio/history",
+            headers={"APCA-API-KEY-ID": api_key, "APCA-API-SECRET-KEY": api_secret},
+            params={"period": period, "timeframe": timeframe,
+                    "intraday_reporting": "market_hours", "pnl_reset": "per_day"},
+            timeout=15,
+        )
+        r.raise_for_status()
+        eq = [e for e in (r.json().get("equity") or []) if e]
+        return [eq[i] / eq[i - 1] - 1.0 for i in range(1, len(eq)) if eq[i - 1]]
+    except Exception as e:
+        print(f"[heartbeat] portfolio-history fetch failed ({e}); skipping tail risk")
+        return []
+
+
+def assess_tail_risk(returns_by_book, confidence=0.99, var_ceiling_pct=None):
+    """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
+
+    Computes per-book VaR/CVaR (% loss) at `confidence` via shared.portfolio_risk.
+    Advisory: alerts only when `var_ceiling_pct` is set AND a book's VaR exceeds it.
+    """
+    try:
+        from shared.portfolio_risk import conditional_var, value_at_risk
+    except Exception:
+        return False, "Tail risk: module unavailable."
+    lines, breaches = [], []
+    for label, rets in (returns_by_book or {}).items():
+        if not rets or len(rets) < 20:
+            lines.append(f"{label}: insufficient history ({len(rets or [])} obs)")
+            continue
+        v = value_at_risk(rets, confidence=confidence) * 100
+        c = conditional_var(rets, confidence=confidence) * 100
+        lines.append(f"{label}: {confidence:.0%} VaR {v:.2f}% / CVaR {c:.2f}% (n={len(rets)})")
+        if var_ceiling_pct is not None and v > var_ceiling_pct:
+            breaches.append(f"{label} VaR {v:.2f}% > ceiling {var_ceiling_pct:.2f}%")
+    if not lines:
+        return False, "Tail risk: no data."
+    summary = "Tail risk (advisory):\n" + "\n".join(f"  - {ln}" for ln in lines)
+    if breaches:
+        return True, summary + "\n  BREACH: " + "; ".join(breaches)
+    return False, summary
+
+
 def is_trading_day(api_key, api_secret, today: str) -> bool:
     """True if `today` is a market session day per Alpaca's calendar.
     Fails OPEN (returns True) on API error so we'd rather alert than miss."""
@@ -243,6 +299,20 @@ def main():
     if integ_alert:
         alert = True
         summary = f"{summary}\n\n{integ_summary}"
+
+    # Tail-risk surfacing (advisory). Best-effort: uses P1's keys (already in env)
+    # and never affects the staleness/reconciliation/integrity alerts on failure.
+    try:
+        ceiling = os.environ.get("HEARTBEAT_VAR_CEILING_PCT")
+        ceiling = float(ceiling) if ceiling else None
+        p1_returns = read_equity_returns_alpaca(api_key, api_secret)
+        tail_alert, tail_summary = assess_tail_risk(
+            {"P1 Self Improving Brain": p1_returns}, var_ceiling_pct=ceiling)
+        summary = f"{summary}\n\n{tail_summary}"
+        if tail_alert:
+            alert = True
+    except Exception as e:
+        print(f"[heartbeat] tail-risk surfacing skipped ({e})")
 
     print(f"[heartbeat] {summary}")
     _emit_output(alert, summary)

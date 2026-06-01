@@ -1646,6 +1646,60 @@ app.get('/api/supabase/equity', async (req, res) => {
     res.json(rows || []);
 });
 
+// 11b-2. Tail risk (read-only): historical VaR/CVaR from the equity series.
+//   /api/portfolio/:id/tail-risk?start=2025-01-01   (id = portfolio_1.. or 'all')
+// Advisory observability only — mirrors shared/portfolio_risk.py (positive % loss
+// of equity). Returns n_obs:0 when no equity history is available.
+function _quantileSorted(sorted, q) {
+    if (!sorted.length) return 0;
+    if (q <= 0) return sorted[0];
+    if (q >= 1) return sorted[sorted.length - 1];
+    const pos = q * (sorted.length - 1), lo = Math.floor(pos), frac = pos - lo;
+    return lo + 1 < sorted.length ? sorted[lo] * (1 - frac) + sorted[lo + 1] * frac : sorted[lo];
+}
+function tailRisk(returns, confidence) {
+    const rs = returns.filter(r => Number.isFinite(r));
+    if (rs.length < 2) return { var_pct: 0, cvar_pct: 0, n: rs.length };
+    const sorted = [...rs].sort((a, b) => a - b);
+    const alpha = 1 - confidence;
+    const q = _quantileSorted(sorted, alpha);
+    const tail = sorted.filter(r => r <= q);
+    const t = tail.length ? tail : [sorted[0]];
+    return {
+        var_pct: +Math.max(0, -q * 100).toFixed(4),
+        cvar_pct: +Math.max(0, -(t.reduce((a, b) => a + b, 0) / t.length) * 100).toFixed(4),
+        n: rs.length,
+    };
+}
+function equityToReturns(rows) {
+    const eq = (rows || []).map(r => parseFloat(r.equity)).filter(Number.isFinite);
+    const out = [];
+    for (let i = 1; i < eq.length; i++) if (eq[i - 1]) out.push(eq[i] / eq[i - 1] - 1);
+    return out;
+}
+app.get('/api/portfolio/:id/tail-risk', async (req, res) => {
+    const id = req.params.id;
+    const start = req.query.start || '2025-01-01';
+    let rows;
+    if (id === 'all') {
+        const [p1, p2, p3] = await Promise.all(['portfolio_1', 'portfolio_2', 'portfolio_3'].map(
+            pid => supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${pid}`, date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 })));
+        const map = {};
+        for (const r of [...p1, ...p2, ...p3]) { if (r.date) map[r.date] = (map[r.date] || 0) + parseFloat(r.equity || 0); }
+        rows = Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).map(([date, equity]) => ({ date, equity }));
+    } else {
+        rows = await supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${id}`, date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 });
+    }
+    const returns = equityToReturns(rows);
+    res.json({
+        portfolio_id: id,
+        n_obs: returns.length,
+        var_95: tailRisk(returns, 0.95),
+        var_99: tailRisk(returns, 0.99),
+        note: 'Historical VaR/CVaR as a positive % loss of equity (advisory observability).',
+    });
+});
+
 // 11c. Supabase market history — /api/supabase/market?symbol=SPY&start=2025-06-01&limit=30
 app.get('/api/supabase/market', async (req, res) => {
     const symbol = (req.query.symbol || 'SPY').toUpperCase();
