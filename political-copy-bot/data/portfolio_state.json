@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-06-01T19:29:58.497436",
+  "timestamp": "2026-06-01T19:59:12.921715",
   "account": {
-    "equity": "100207.88",
+    "equity": "100207.77",
     "cash": "89907.83",
-    "buying_power": "190115.71",
-    "portfolio_value": "100207.88",
+    "buying_power": "190115.6",
+    "portfolio_value": "100207.77",
     "daily_pnl_pct": 0.09
   },
   "positions": [
@@ -12,57 +12,57 @@
       "symbol": "HD",
       "qty": "4",
       "avg_entry": "317.0925",
-      "market_value": "1237.84",
-      "unrealized_pl": "-30.53",
-      "unrealized_plpc": "-0.02407"
+      "market_value": "1242.52",
+      "unrealized_pl": "-25.85",
+      "unrealized_plpc": "-0.02038"
     },
     {
       "symbol": "INTU",
       "qty": "4",
       "avg_entry": "312.62",
-      "market_value": "1424.88",
-      "unrealized_pl": "174.4",
-      "unrealized_plpc": "0.13947"
+      "market_value": "1415.48",
+      "unrealized_pl": "165",
+      "unrealized_plpc": "0.13195"
     },
     {
       "symbol": "MEDP",
       "qty": "3",
       "avg_entry": "448.17",
-      "market_value": "1352.73",
-      "unrealized_pl": "8.22",
-      "unrealized_plpc": "0.00611"
+      "market_value": "1355.91",
+      "unrealized_pl": "11.4",
+      "unrealized_plpc": "0.00848"
     },
     {
       "symbol": "PG",
       "qty": "10",
       "avg_entry": "147.36",
-      "market_value": "1400.6",
-      "unrealized_pl": "-73",
-      "unrealized_plpc": "-0.04954"
+      "market_value": "1403.9",
+      "unrealized_pl": "-69.7",
+      "unrealized_plpc": "-0.0473"
     },
     {
       "symbol": "PH",
       "qty": "1",
       "avg_entry": "852.09",
-      "market_value": "826.2325",
-      "unrealized_pl": "-25.8575",
-      "unrealized_plpc": "-0.03035"
+      "market_value": "823.785",
+      "unrealized_pl": "-28.305",
+      "unrealized_plpc": "-0.03322"
     },
     {
       "symbol": "T",
       "qty": "60",
       "avg_entry": "24.76",
-      "market_value": "1475.82",
-      "unrealized_pl": "-9.78",
-      "unrealized_plpc": "-0.00658"
+      "market_value": "1470.06",
+      "unrealized_pl": "-15.54",
+      "unrealized_plpc": "-0.01046"
     },
     {
       "symbol": "TER",
       "qty": "7",
       "avg_entry": "368.88",
-      "market_value": "2581.95",
-      "unrealized_pl": "-0.21",
-      "unrealized_plpc": "-0.00008"
+      "market_value": "2587.9",
+      "unrealized_pl": "5.74",
+      "unrealized_plpc": "0.00222"
     }
   ],
   "open_orders": 0,
