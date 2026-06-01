@@ -831,6 +831,8 @@
         bmSetText('kpiMaxDD', fmt(maxDD, 2) + '%', maxDD < 0 ? 'pf-neg' : '');
 
         // ── Insight badge ──
+        // Threshold: ±0.25% is the minimum meaningful outperform/underperform signal.
+        // Below that, the portfolio is tracking SPY — but we always show the exact figure.
         var insightEl = document.getElementById('benchInsight');
         var insightTxt = document.getElementById('benchInsightText');
         if (insightTxt && insightEl) {
@@ -838,15 +840,39 @@
             if (relative === null) {
                 insightEl.classList.add('is-neutral');
                 insightTxt.textContent = bl('Benchmark data unavailable for this period', 'بيانات المقارنة غير متوفرة لهذه الفترة');
-            } else if (relative < -0.05) {
+            } else if (relative < -0.25) {
                 insightEl.classList.add('is-neg');
-                insightTxt.textContent = bl('Portfolio underperformed S&P 500 by ' + fmt(Math.abs(relative), 2) + '%', 'تراجعت المحفظة عن مؤشر S&P 500 بنسبة ' + fmt(Math.abs(relative), 2) + '%');
-            } else if (relative > 0.05) {
+                insightTxt.textContent = bl(
+                    'Portfolio underperformed S&P 500 by ' + fmt(Math.abs(relative), 2) + '%',
+                    'تراجعت المحفظة عن مؤشر S&P 500 بنسبة ' + fmt(Math.abs(relative), 2) + '%'
+                );
+            } else if (relative > 0.25) {
                 insightEl.classList.add('is-pos');
-                insightTxt.textContent = bl('Portfolio outperformed S&P 500 by ' + fmt(relative, 2) + '%', 'تفوقت المحفظة على مؤشر S&P 500 بنسبة ' + fmt(relative, 2) + '%');
+                insightTxt.textContent = bl(
+                    'Portfolio outperformed S&P 500 by ' + fmt(relative, 2) + '%',
+                    'تفوقت المحفظة على مؤشر S&P 500 بنسبة ' + fmt(relative, 2) + '%'
+                );
             } else {
-                insightEl.classList.add('is-neutral');
-                insightTxt.textContent = bl('Portfolio is tracking the S&P 500', 'المحفظة تواكب مؤشر S&P 500');
+                // Within ±0.25% — tracking, but always display the actual relative value
+                insightEl.classList.add(relative >= 0 ? 'is-pos' : 'is-neg');
+                var relSign = relative > 0 ? '+' : '';
+                insightTxt.textContent = bl(
+                    'Closely tracking S&P 500 (' + relSign + fmt(relative, 2) + '% relative)',
+                    'تتتبع S&P 500 عن كثب (' + relSign + fmt(relative, 2) + '% نسبياً)'
+                );
+            }
+        }
+
+        // ── Data-window note: warn when short history makes all periods look identical ──
+        if (!intraday && equityRows.length < 15) {
+            var subEl = document.querySelector('.pf-bench-sub');
+            if (subEl) {
+                var d0 = equityRows[0] ? (equityRows[0].date || '').slice(0, 10) : '';
+                var dN = equityRows[equityRows.length - 1] ? (equityRows[equityRows.length - 1].date || '').slice(0, 10) : '';
+                subEl.textContent = bl(
+                    'Normalized performance · ' + equityRows.length + ' trading days (' + d0 + ' → ' + dN + ')',
+                    'أداء مُطبَّع · ' + equityRows.length + ' أيام تداول (' + d0 + ' → ' + dN + ')'
+                );
             }
         }
 
@@ -2509,7 +2535,7 @@
         }
 
         var html =
-            '<div class="pf-panel__title">' + t('topContrib') + '</div>' +
+            '<div class="pf-panel__title" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">' + t('topContrib') + '</div>' +
 
             // Donut chart
             '<div class="pf-contrib-donut-wrap">' +
