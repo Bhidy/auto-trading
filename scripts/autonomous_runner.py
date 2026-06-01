@@ -116,7 +116,11 @@ class AlpacaClient:
             raise
 
     def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
-        params = {"timeframe": timeframe, "limit": limit, "feed": "sip"}
+        # adjustment=split so MA50/MA200, momentum, ATR and Bollinger never see a false
+        # jump across a stock split. Matches fetch_bars.py and the accounting ledger
+        # (shared/accounting.apply_split / apply_cash_dividend handles dividends as cash,
+        # so split-only keeps price series and ledger consistent).
+        params = {"timeframe": timeframe, "limit": limit, "feed": "sip", "adjustment": "split"}
         if start:
             params["start"] = start
         return self._get(f"{self.data_url}/v2/stocks/{symbol}/bars", params)
