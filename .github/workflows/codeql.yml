@@ -31,10 +31,12 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          language: ${{ matrix.language }}
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+          # Action v3 expects the plural `languages` input. The previous
+          # `language` key was silently ignored → CodeQL auto-detected and every
+          # run failed (0/31). Python and JS/TS are interpreted, so use buildless
+          # extraction (`build-mode: none`) and drop the autobuild step.
+          languages: ${{ matrix.language }}
+          build-mode: none
 
       - name: Analyze
         uses: github/codeql-action/analyze@v3
