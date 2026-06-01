@@ -39,14 +39,14 @@ jobs:
           P1_API_SECRET: ${{ secrets.P1_API_SECRET }}
         run: python3 scripts/heartbeat.py
 
-      - name: Raise GitHub issue on stale portfolio
+      - name: Raise GitHub issue on stale portfolio or reconciliation drift
         if: steps.hb.outputs.alert == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SUMMARY: ${{ steps.hb.outputs.summary }}
         run: |
           TODAY=$(date -u +%Y-%m-%d)
-          TITLE="🚨 Heartbeat: portfolio automation stale on ${TODAY}"
+          TITLE="🚨 Heartbeat alert on ${TODAY}"
           # Avoid duplicate issues for the same day.
           EXISTING=$(gh issue list --state open --search "in:title ${TITLE}" --json number --jq 'length')
           if [ "$EXISTING" = "0" ]; then

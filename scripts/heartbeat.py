@@ -30,6 +30,15 @@ FRESHNESS_SOURCES = {
     "P3 Cautious Sniper": ("event-driven-bot/data/bot_state.json", "last_updated"),
 }
 
+# Portfolios that run the EOD broker-vs-ledger reconciliation audit (P1 + P3;
+# P2 uses a working-orders report, not drift). If a report says in_sync=false,
+# the broker and the trade log have diverged — a money-correctness signal that
+# must never sit silent. P2 has no drift report, so it's intentionally absent.
+RECONCILE_SOURCES = {
+    "P1 Self Improving Brain": "data/reconciliation_report.json",
+    "P3 Cautious Sniper": "event-driven-bot/data/reconciliation_report.json",
+}
+
 
 def _date_of(ts):
     """Extract YYYY-MM-DD from an ISO timestamp string, or None."""
@@ -75,6 +84,50 @@ def assess(today: str, freshness: dict):
     return False, f"All 3 portfolios ran on {today}: {', '.join(ok)}"
 
 
+def read_reconciliation(root: Path):
+    """Return {label: report_dict_or_None} for each portfolio that reconciles."""
+    out = {}
+    for label, rel in RECONCILE_SOURCES.items():
+        path = root / rel
+        try:
+            with open(path) as f:
+                out[label] = json.load(f)
+        except Exception:
+            out[label] = None
+    return out
+
+
+def assess_reconciliation(reports: dict):
+    """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
+
+    Flags any portfolio whose latest reconciliation shows OPEN drift
+    (`in_sync` is False) — a broker-vs-ledger divergence (orphan open trades,
+    unlogged positions, or qty/cost-basis drift) that must not stay silent.
+    A missing report is not drift (returns no alert for it).
+    """
+    drifting = []
+    for label, rep in reports.items():
+        if not isinstance(rep, dict) or rep.get("in_sync") is not False:
+            continue
+        parts = []
+        for key, human in (
+            ("orphan_open_trades", "orphan open trades"),
+            ("unlogged_positions", "unlogged positions"),
+            ("qty_drift", "qty drift"),
+            ("cost_basis_drift", "cost-basis drift"),
+        ):
+            vals = rep.get(key) or []
+            if vals:
+                parts.append(f"{human}: {', '.join(str(v) for v in vals)}")
+        drifting.append(f"{label} — {'; '.join(parts) if parts else 'in_sync=false'}")
+    if drifting:
+        return True, (
+            "RECONCILIATION DRIFT — broker vs ledger out of sync:\n"
+            + "\n".join(f"  - {d}" for d in drifting)
+        )
+    return False, "Reconciliation: all books in sync."
+
+
 def is_trading_day(api_key, api_secret, today: str) -> bool:
     """True if `today` is a market session day per Alpaca's calendar.
     Fails OPEN (returns True) on API error so we'd rather alert than miss."""
@@ -118,6 +171,13 @@ def main():
 
     freshness = read_freshness(REPO_ROOT)
     alert, summary = assess(today, freshness)
+
+    # Operational drift check (M1): broker-vs-ledger divergence on P1/P3.
+    recon_alert, recon_summary = assess_reconciliation(read_reconciliation(REPO_ROOT))
+    if recon_alert:
+        alert = True
+        summary = f"{summary}\n\n{recon_summary}"
+
     print(f"[heartbeat] {summary}")
     _emit_output(alert, summary)
     return 0
