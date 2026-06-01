@@ -196,5 +196,104 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-01",
+    "timestamp": "2026-06-01T22:53:03.764091+00:00",
+    "audit": {
+      "equity": 104823.23,
+      "cash": 8095.6,
+      "daily_pnl": 2663.34,
+      "daily_pnl_pct": 2.607,
+      "total_open_exposure": 96727.63,
+      "exposure_pct": 92.3,
+      "position_count": 6,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 34329.94,
+        "Energy": 30708.2,
+        "Financials": 16247.77,
+        "Consumer": 15441.72
+      }
+    },
+    "positions": [
+      {
+        "symbol": "CSCO",
+        "qty": "129",
+        "entry": "119.399922",
+        "current": "122",
+        "market_value": "15738",
+        "unrealized_pl": "335.410062",
+        "pnl_pct": 2.18,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "258.66",
+        "market_value": "15260.94",
+        "unrealized_pl": "287.92",
+        "pnl_pct": 1.92,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MS",
+        "qty": "77",
+        "entry": "200.681558",
+        "current": "211.01",
+        "market_value": "16247.77",
+        "unrealized_pl": "795.290034",
+        "pnl_pct": 5.15,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "OXY",
+        "qty": "262",
+        "entry": "57.519046",
+        "current": "58.959",
+        "market_value": "15447.258",
+        "unrealized_pl": "377.267948",
+        "pnl_pct": 2.5,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "62",
+        "entry": "249.54",
+        "current": "299.87",
+        "market_value": "18591.94",
+        "unrealized_pl": "3120.46",
+        "pnl_pct": 20.17,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "114.3831",
+        "market_value": "15441.7185",
+        "unrealized_pl": "-93.121515",
+        "pnl_pct": -0.6,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "WMT",
+        "side": "buy",
+        "qty": 135,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.65,
+        "reasons": [
+          "Breaking upper BB ($134.19)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
