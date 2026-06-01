@@ -106,9 +106,23 @@ def validate_trade(signal, portfolio, limits, asset_info=None):
             rejections.extend(gate_reasons)
 
     rm = signal.get("risk_management", {})
-    suggested_pct = rm.get("suggested_position_pct") or signal.get("suggested_position_size_pct") or 1.0
+    suggested_pct = rm.get("suggested_position_pct")
     stop_loss = rm.get("stop_loss")
     take_profit = rm.get("take_profit")
+
+    # A missing/degenerate size means the analyst could not produce a
+    # volatility-based size (e.g. ATR unavailable). shared.sizing returns 0.0
+    # (and analyst_v2 emits None) to mean "no trade"; honor that contract
+    # FAIL-CLOSED and LOUD. The previous `... or 1.0` silently sized such a
+    # signal at a flat 1% on no volatility info — the exact silent-failure class
+    # this hardening targets (None and 0.0 are both falsy, so `or 1.0` hid them).
+    if suggested_pct is None or suggested_pct <= 0:
+        return {"approved": False, "symbol": symbol, "signal": sig,
+                "rejections": [
+                    f"No valid position size for {symbol} "
+                    f"(suggested_position_pct={suggested_pct}); analyst could not "
+                    f"size — missing ATR? (fail-closed, not defaulted to 1%)"
+                ]}
 
     equity = portfolio["equity"]
 
@@ -165,9 +179,21 @@ def validate_trade(signal, portfolio, limits, asset_info=None):
         if suggested_pct > max_pct:
             suggested_pct = max_pct
 
-    approved = len(rejections) == 0
     dollar_amount = round(equity * suggested_pct / 100, 2)
     qty = int(dollar_amount / price) if price > 0 else 0
+
+    # A BUY/SHORT that cleared every guardrail but sizes to <1 share is a
+    # silent-failure trap (the 2026-06-01 incident): the executor skips on
+    # qty<=0 while the order still looks "approved", so a run reports success
+    # while placing nothing. Reject it LOUDLY with a precise reason so it
+    # surfaces in validated_orders.summary and the logs — never approve qty<=0.
+    if qty <= 0:
+        rejections.append(
+            f"computed_qty=0 (size {suggested_pct}% x ${equity:,.0f} / ${price} "
+            f"< 1 share) — position size too small or price too high"
+        )
+
+    approved = len(rejections) == 0
 
     result = {
         "approved": approved,

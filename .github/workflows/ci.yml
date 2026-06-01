@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - "scripts/**"
+      - "shared/**"
       - "event-driven-bot/scripts/**"
       - "political-copy-bot/scripts/**"
       - "tests/**"
@@ -36,7 +37,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Ruff lint (real-bug codes)
-        run: python3 -m ruff check scripts/ event-driven-bot/scripts/ political-copy-bot/scripts/
+        run: python3 -m ruff check scripts/ shared/ event-driven-bot/scripts/ political-copy-bot/scripts/
 
       - name: Pytest
         run: python3 -m pytest tests/ -v

@@ -5,8 +5,14 @@ Multi-timeframe, regime-aware, adaptive, with relative strength ranking.
 """
 import json
 import os
+import sys
 import math
 from datetime import datetime, timezone
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+from shared.sizing import volatility_position_pct  # noqa: E402
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "..", "config")
@@ -369,11 +375,16 @@ def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params):
     trailing_stop_pct = None
 
     if atr_val and price > 0:
-        risk_per_share = atr_val * params["trailing_stop_atr_mult"]
-        risk_pct = risk_per_share / price
-        if risk_pct > 0:
-            raw_size = params["atr_risk_target_pct"] / (risk_pct * 100)
-            position_size_pct = round(min(raw_size * params["position_size_multiplier"], 12.0), 2)
+        # Canonical, unit-safe risk-parity sizing (shared.sizing) — the SINGLE
+        # source of truth. The previous inline formula had a stray *100 that made
+        # every size 100x too small, silently zeroing P1 order quantities
+        # (2026-06-01 incident). Never re-inline this math.
+        position_size_pct = volatility_position_pct(
+            atr_val, price,
+            params["atr_risk_target_pct"],
+            params["trailing_stop_atr_mult"],
+            params["position_size_multiplier"],
+        )
 
         if signal == "BUY":
             stop_loss_price = round(price - atr_val * params["trailing_stop_atr_mult"], 2)

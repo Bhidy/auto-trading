@@ -103,3 +103,48 @@ def test_penny_stock_outside_price_band_rejected(limits, portfolio):
     sig = _buy(symbol="PENNY", price=0.40, itype="stock", pct=1.0)
     result = ro.validate_trade(sig, portfolio, limits)
     assert result["approved"] is False
+
+
+# --- Silent-failure guards (2026-06-01 incident) ----------------------------
+
+def test_approved_order_never_has_zero_qty(limits, portfolio):
+    """A BUY that clears every guardrail but sizes to <1 share must be REJECTED,
+    not approved with qty=0 (the executor silently skips qty<=0). This is the
+    exact symptom that hid the *100 sizing bug."""
+    sig = _buy(symbol="BRKA", price=600_000.0, itype="stock", pct=5.0)
+    result = ro.validate_trade(sig, portfolio, limits)
+    assert result["approved"] is False
+    assert any("computed_qty" in r for r in result["rejections"])
+
+
+def test_missing_position_size_fails_closed_not_defaulted(limits, portfolio):
+    """A signal with no suggested_position_pct (analyst could not size) must be
+    rejected fail-closed — never silently defaulted to a flat 1% position. The
+    old `... or 1.0` masked this."""
+    sig = _buy()
+    del sig["risk_management"]["suggested_position_pct"]
+    result = ro.validate_trade(sig, portfolio, limits)
+    assert result["approved"] is False
+    assert "position size" in result["rejections"][0].lower()
+
+
+def test_zero_position_size_rejected(limits, portfolio):
+    """sizing returns 0.0 to mean 'no trade'; the risk officer must honor that
+    (0.0 is falsy — the old `or 1.0` turned it into a live 1% position)."""
+    result = ro.validate_trade(_buy(pct=0.0), portfolio, limits)
+    assert result["approved"] is False
+    assert "position size" in result["rejections"][0].lower()
+
+
+def test_all_approved_orders_have_positive_qty_invariant(limits, portfolio):
+    """Cross-cutting invariant: scan a basket; ANY approved order must carry a
+    strictly positive qty. Guards the contradiction 'approved but qty<=0'."""
+    basket = [
+        _buy(symbol="SPY", price=500.0, itype="etf", pct=5.0),
+        _buy(symbol="NVDA", price=220.0, itype="stock", pct=8.0),
+        _buy(symbol="BRKA", price=600_000.0, itype="stock", pct=5.0),  # -> qty 0 -> rejected
+    ]
+    for sig in basket:
+        result = ro.validate_trade(sig, portfolio, limits)
+        if result["approved"]:
+            assert result["approved_qty"] > 0
