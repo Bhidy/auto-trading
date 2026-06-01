@@ -87,12 +87,12 @@ static artifact) · **REJECT** (conflicts with an invariant or the data we have)
 | Probability of Backtest Overfitting (PBO) | **HAVE** | `metrics.probability_of_backtest_overfitting` |
 | No-look-ahead backtest (signal t → fill t+1, costs) | **HAVE** | `backtest/multifactor.py` |
 | Walk-forward OOS gate + naive challenger | **HAVE (better than asked)** | `walk_forward.gate_param_change`, `challenger.py` — already fails-closed on noise-fitting |
-| Purging + **Embargo**, then **CPCV** (combinatorial paths) | **ADD-T1** | Pure-Python upgrade of the current *sequential* walk-forward; report a path distribution, feed Sharpes to DSR |
-| Triple-Barrier labeling (EWMA-vol barriers + time) | **ADD-T1** | Absent; formalizes the research label; consistent with live ATR exits |
+| Purging + **Embargo**, then **CPCV** (combinatorial paths) | **DONE-T1** | `scripts/backtest/cpcv.py` (+ `tests/test_cpcv.py`): split generator with purge+embargo; feed path Sharpes to DSR |
+| Triple-Barrier labeling (EWMA-vol barriers + time) | **DONE-T1** | `scripts/backtest/labeling.py` (+ `tests/test_labeling.py`): EWMA-vol barriers + vertical; consistent with live ATR exits |
 | Alpha orthogonalization vs. style factors | **ADD-T1 (partial)** | OLS residualization feasible vs. market/momentum/vol/reversal; **Size/Value need fundamentals we don't ingest — don't claim FF5** |
 | Almgren-Chriss non-linear market impact | **ADD-T1 (backtest cost model)** | Matters for penny-lab + capital scaling; ≈0 effect on $100k in liquid ETFs — model it honestly |
-| VaR / CVaR / Marginal-Contribution-to-Risk | **ADD-T1 (advisory)** | Extend `shared/portfolio_risk.py`; layered *inside* hardcoded caps, never replacing them |
-| VaR/drawdown circuit breaker (independent monitor) | **ADD-T1** | Alongside the existing 18% kill-switch; fail-closed |
+| VaR / CVaR / Marginal-Contribution-to-Risk | **DONE-T1 (advisory)** | `shared/portfolio_risk.py` (+ tests): historical+parametric VaR, CVaR, Euler MCR — inside the hardcoded caps |
+| VaR/drawdown circuit breaker (independent monitor) | **DONE-T1 (advisory)** | `portfolio_risk.var_circuit_breaker` — recommends FLATTEN, places NO orders; kill-switch stays sole liquidator |
 | Fractional Differentiation (ADF d-optimization) | **ADD-T2** | FFD kernel is pure-Python, but **ADF needs statsmodels** → sweep offline, commit `data/fracdiff_params.json`, apply kernel on-path |
 | Hierarchical Risk Parity + Ledoit-Wolf shrinkage | **ADD-T2** | Cleanest with scipy/sklearn → compute weekly offline, commit `data/hrp_weights.json` as target tilts inside caps |
 | Unsupervised regime (HMM/GMM over vol+macro) | **ADD-T2** | Fit offline → commit `data/regime_state.json`; keep the existing rule-based SPY regime on-path |
@@ -138,11 +138,14 @@ built.
   mostly **T2** and need the offline research lane + artifact wiring agreed first.
 
 ## 7. Recommended next moves (in order)
-1. **Fix the `adjustment` flaw** (T0, 1 line) — correctness before cleverness.
+1. ~~**Fix the `adjustment` flaw**~~ ✅ **DONE 2026-06-02** (`autonomous_runner.get_stock_bars` now sends
+   `adjustment=split`; verified vs. NVDA's 10:1 split — raw showed a phantom −89.9% gap, split +0.7%).
 2. **Wire the trial ledger + DSR/PBO into EOD self-learning** (T1) — we already own the math;
    make it gate live param changes and refuse on small N.
-3. **CPCV + triple-barrier in research** (T1) — strengthen the OOS distribution we report.
-4. **VaR/CVaR/MCR advisory + VaR circuit breaker** (T1) — extend `portfolio_risk.py` inside caps.
+3. ~~**CPCV + triple-barrier in research**~~ ✅ **DONE 2026-06-02** (`scripts/backtest/cpcv.py`,
+   `labeling.py` + tests). Next: wire CPCV path-Sharpes into the self-learning gate's DSR call.
+4. ~~**VaR/CVaR/MCR advisory + VaR circuit breaker**~~ ✅ **DONE 2026-06-02** (`shared/portfolio_risk.py`
+   + tests). Advisory only — next: surface on heartbeat/dashboard, then (separately approved) wire to alerting.
 5. **Stand up the T2 research lane** (`requirements-research.txt` + a manual `research` CI job) →
    then frac-diff `d`, HRP weights, regime labels, and a calibrated meta-label table as committed
    artifacts the cloud path reads. **No heavy import ever touches the trading path.**

@@ -10,8 +10,13 @@ for _p in (REPO_ROOT, os.path.join(REPO_ROOT, "scripts")):
 
 from shared.portfolio_risk import (  # noqa: E402
     aggregate_exposure,
+    conditional_var,
+    covariance_matrix,
     exceeds_aggregate_cap,
+    marginal_risk_contributions,
     portfolio_heat,
+    value_at_risk,
+    var_circuit_breaker,
 )
 
 
@@ -133,3 +138,81 @@ def test_load_config_live_profile(monkeypatch):
     monkeypatch.setenv("RISK_PROFILE", "live")
     cfg = risk_officer.load_config()
     assert cfg["max_daily_loss_pct"] == 2.0  # live value
+
+
+# --- Tail risk: VaR / CVaR --------------------------------------------------
+
+_RETS = [-0.10, -0.05, -0.02, 0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06]
+
+
+def test_historical_var_matches_interpolated_quantile():
+    # alpha = 1 - 0.90 = 0.10; pos = 0.1*9 = 0.9 -> -0.10*0.1 + -0.05*0.9 = -0.055.
+    assert value_at_risk(_RETS, confidence=0.90, method="historical") == 0.055
+
+
+def test_historical_cvar_is_tail_mean_and_ge_var():
+    # Tail at/below the 0.10 quantile (-0.055) is just {-0.10} -> CVaR 0.10.
+    cvar = conditional_var(_RETS, confidence=0.90)
+    assert cvar == 0.1
+    assert cvar >= value_at_risk(_RETS, confidence=0.90, method="historical")
+
+
+def test_parametric_var_positive_and_loss_orientation():
+    v = value_at_risk(_RETS, confidence=0.99, method="parametric")
+    assert v > 0  # reported as a positive loss fraction
+
+
+def test_var_insufficient_data_is_zero():
+    assert value_at_risk([0.01], confidence=0.99) == 0.0
+    assert conditional_var([], confidence=0.99) == 0.0
+
+
+# --- Marginal contribution to risk ------------------------------------------
+
+def test_marginal_contributions_sum_to_portfolio_vol():
+    # Two uncorrelated assets, vols 0.2 and 0.3, equal weight.
+    cov = [[0.04, 0.0], [0.0, 0.09]]
+    res = marginal_risk_contributions([0.5, 0.5], cov)
+    # sigma_p = sqrt(0.5^2*0.04 + 0.5^2*0.09) = sqrt(0.0325) ~ 0.180278
+    assert round(res["portfolio_vol"], 6) == 0.180278
+    assert round(sum(res["component"]), 6) == res["portfolio_vol"]  # Euler identity
+    assert round(sum(res["pct"]), 6) == 1.0
+    # Higher-vol asset contributes more risk.
+    assert res["component"][1] > res["component"][0]
+
+
+def test_marginal_contributions_zero_vol_safe():
+    res = marginal_risk_contributions([0.5, 0.5], [[0.0, 0.0], [0.0, 0.0]])
+    assert res["portfolio_vol"] == 0.0
+    assert res["component"] == [0.0, 0.0]
+
+
+def test_covariance_matrix_symmetric_with_positive_diagonal():
+    syms, cov = covariance_matrix({"B": [0.01, -0.01, 0.02, -0.02],
+                                   "A": [0.02, -0.02, 0.01, -0.01]})
+    assert syms == ["A", "B"]            # sorted
+    assert cov[0][1] == cov[1][0]        # symmetric
+    assert cov[0][0] > 0 and cov[1][1] > 0
+
+
+# --- Advisory circuit breaker (no orders) -----------------------------------
+
+def test_circuit_breaker_flags_breach_but_only_recommends():
+    # VaR(90%) ~ 5.5%; a 5% ceiling is breached.
+    res = var_circuit_breaker(_RETS, confidence=0.90, max_var_pct=5.0)
+    assert res["breach"] is True
+    assert res["recommended_action"] == "FLATTEN"
+    assert res["reasons"]
+
+
+def test_circuit_breaker_ok_when_within_limits():
+    res = var_circuit_breaker(_RETS, confidence=0.90, max_var_pct=10.0)
+    assert res["breach"] is False
+    assert res["recommended_action"] == "OK"
+
+
+def test_circuit_breaker_drawdown_ceiling():
+    res = var_circuit_breaker(_RETS, confidence=0.90, max_var_pct=99.0,
+                              current_drawdown_pct=16.0, max_drawdown_pct=15.0)
+    assert res["breach"] is True
+    assert any("drawdown" in r for r in res["reasons"])
