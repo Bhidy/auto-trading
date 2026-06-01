@@ -2545,7 +2545,7 @@
         }
 
         var html =
-            '<div class="pf-panel__title" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">' + t('topContrib') + '</div>' +
+            '<div class="pf-panel__title" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;text-transform:none;">' + t('topContrib') + '</div>' +
 
             // Donut chart
             '<div class="pf-contrib-donut-wrap">' +
