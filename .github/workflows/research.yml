@@ -1,0 +1,60 @@
+name: "Research (T2, manual) — HRP artifact"
+
+# OFFLINE T2 research lane. MANUAL ONLY (workflow_dispatch) — deliberately NO
+# cron, so it can never interfere with the 14 trading/monitor/EOD workflows or
+# consume schedule budget. Installs the heavy scientific stack
+# (requirements-research.txt) — which is NEVER installed on the trading path —
+# computes a STATIC ARTIFACT (data/hrp_weights.json) and commits it for the
+# pure-Python trading path to read. Places no orders; touches no live state.
+on:
+  workflow_dispatch:
+    inputs:
+      no_shrink:
+        description: "Disable Ledoit-Wolf shrinkage (use raw sample covariance)"
+        type: boolean
+        default: false
+      min_obs:
+        description: "Minimum aligned observations required"
+        default: "60"
+
+concurrency:
+  group: research
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  hrp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install research dependencies (T2 only — not the trading path)
+        run: pip install -r requirements-research.txt
+
+      - name: Compute HRP weights -> data/hrp_weights.json
+        run: |
+          python3 scripts/research/run_hrp.py \
+            --min-obs "${{ github.event.inputs.min_obs }}" \
+            ${{ github.event.inputs.no_shrink == 'true' && '--no-shrink' || '' }}
+
+      - name: Commit artifact if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/hrp_weights.json; then
+            echo "No change to data/hrp_weights.json — nothing to commit."
+            exit 0
+          fi
+          git add data/hrp_weights.json
+          git commit -m "research(T2): refresh HRP weights artifact [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin main && break
+            echo "push attempt $i failed; retrying..."; sleep 5
+          done

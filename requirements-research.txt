@@ -1,0 +1,15 @@
+# T2 RESEARCH LANE ONLY — heavy scientific stack for OFFLINE research jobs
+# (.github/workflows/research.yml, workflow_dispatch / manual).
+#
+# This file is NEVER installed on the trading path. The cloud trading/EOD path
+# keeps requirements.txt = 'requests' only (the cloud-only, single-dependency
+# hardening invariant). Research jobs run these libs OFFLINE and emit STATIC
+# ARTIFACTS (e.g. data/hrp_weights.json, data/fracdiff_params.json) that the
+# pure-Python trading path then READS — see docs/QUANT_BLUEPRINT_EVALUATION.md
+# and .claude/skills/portfolio-optimizer/SKILL.md (the dependency-tiering law).
+-r requirements.txt
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
+scikit-learn>=1.3
+statsmodels>=0.14

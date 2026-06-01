@@ -94,7 +94,7 @@ static artifact) · **REJECT** (conflicts with an invariant or the data we have)
 | VaR / CVaR / Marginal-Contribution-to-Risk | **DONE-T1 (advisory)** | `shared/portfolio_risk.py` (+ tests): historical+parametric VaR, CVaR, Euler MCR — inside the hardcoded caps |
 | VaR/drawdown circuit breaker (independent monitor) | **DONE-T1 (advisory)** | `portfolio_risk.var_circuit_breaker` — recommends FLATTEN, places NO orders; kill-switch stays sole liquidator |
 | Fractional Differentiation (ADF d-optimization) | **ADD-T2** | FFD kernel is pure-Python, but **ADF needs statsmodels** → sweep offline, commit `data/fracdiff_params.json`, apply kernel on-path |
-| Hierarchical Risk Parity + Ledoit-Wolf shrinkage | **ADD-T2** | Cleanest with scipy/sklearn → compute weekly offline, commit `data/hrp_weights.json` as target tilts inside caps |
+| Hierarchical Risk Parity + Ledoit-Wolf shrinkage | **DONE-T2** | `scripts/research/hrp.py` + `run_hrp.py` (numpy-only LW2004); artifact `data/hrp_weights.json`; advisory tilts inside caps, not yet wired live |
 | Unsupervised regime (HMM/GMM over vol+macro) | **ADD-T2** | Fit offline → commit `data/regime_state.json`; keep the existing rule-based SPY regime on-path |
 | Meta-labeling (LightGBM/XGBoost) + Platt/Isotonic → Kelly | **ADD-T2 (advisory cap only)** | Boosting + calibration are T2; emit a calibrated probability table; size **inside** caps. **Kelly must be fractional/capped — never raw Kelly on paper noise** |
 | Multi-agent committee (CIO/CRO/Quant/Risk/PM personas) | **HAVE** | `world-class-auto-trading-investment-committee` skill (qualitative); this skill is its quantitative complement |
@@ -146,8 +146,14 @@ built.
    `labeling.py` + tests). Next: wire CPCV path-Sharpes into the self-learning gate's DSR call.
 4. ~~**VaR/CVaR/MCR advisory + VaR circuit breaker**~~ ✅ **DONE 2026-06-02** (`shared/portfolio_risk.py`
    + tests). Advisory only — next: surface on heartbeat/dashboard, then (separately approved) wire to alerting.
-5. **Stand up the T2 research lane** (`requirements-research.txt` + a manual `research` CI job) →
-   then frac-diff `d`, HRP weights, regime labels, and a calibrated meta-label table as committed
-   artifacts the cloud path reads. **No heavy import ever touches the trading path.**
+5. ~~**Stand up the T2 research lane**~~ ✅ **DONE 2026-06-02** — `requirements-research.txt` +
+   manual `.github/workflows/research.yml` (workflow_dispatch, no cron) + first artifact
+   `data/hrp_weights.json` via `scripts/research/run_hrp.py`. **No heavy import touches the trading
+   path.** Next artifacts on the same lane: frac-diff `d`, regime labels, calibrated meta-label table.
+
+> **Status 2026-06-02:** items 1, 3, 4, 5 landed (split-adjust fix; CPCV+triple-barrier; VaR/CVaR/MCR
+> +advisory breaker; T2 lane + HRP artifact). Open: item 2 (wire trial-ledger/DSR into the live
+> self-learning gate) and the remaining T2 artifacts — plus wiring any advisory output into live
+> decisions, which is a separate, explicitly-approved step.
 
 Everything above is paper-only and sits inside the immutable risk limits and live-readiness gates.
