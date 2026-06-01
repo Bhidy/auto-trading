@@ -127,5 +127,31 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-06-01T14:23:57.761709+00:00",
+    "date": "2026-06-01",
+    "symbol": "WMT",
+    "side": "buy",
+    "qty": 135,
+    "entry_price": 115.0729,
+    "stop_loss": 111.01,
+    "take_profit_1": 123.11,
+    "atr": 2.69,
+    "trade_value": 15530.4,
+    "order_id": "9fed6ce4-2439-43af-937d-e5d8a859aa55",
+    "order_status": "filled",
+    "filled_qty": 135.0,
+    "sector": "Consumer",
+    "tranche": "core_swing",
+    "signal_score": 0.65,
+    "reasons": [
+      "Breaking upper BB ($134.19)",
+      "MACD bullish crossover",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (63)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
