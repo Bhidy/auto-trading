@@ -603,7 +603,21 @@
                     '<p class="pf-bench-sub">' + bl('Normalized performance, indexed to 100 at start date', 'أداء مُطبَّع، مُرتكز على 100 من تاريخ البداية') + '</p>' +
                 '</div>' +
                 ChartControls() +
-                LivePill() +
+                '<a href="/portfolio.html" style="' +
+                    'display:inline-flex;align-items:center;gap:.4rem;' +
+                    'padding:.35rem .9rem;border-radius:999px;' +
+                    'border:1px solid var(--line);background:var(--surface);' +
+                    'color:var(--ink);font-family:Manrope,sans-serif;font-size:.72rem;font-weight:700;' +
+                    'text-decoration:none;white-space:nowrap;flex-shrink:0;cursor:pointer;' +
+                    'transition:border-color .18s,background .18s,color .18s;' +
+                    '" onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\';this.style.background=\'var(--teal-soft)\';" ' +
+                    'onmouseout="this.style.borderColor=\'\';this.style.color=\'\';this.style.background=\'\'">' +
+                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+                        '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>' +
+                        '<rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' +
+                    '</svg>' +
+                    bl('Portfolios List', 'قائمة المحافظ') +
+                '</a>' +
             '</div>' +
             '<div class="pf-bench-kpis">' +
                 PerformanceKpiCard(bl('Portfolio Return', 'عائد المحفظة'), 'kpiPReturn') +
