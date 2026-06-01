@@ -179,6 +179,23 @@ System is **PAPER ONLY**. The doc defines the engineering + strategy + ops gates
 ## Still open (deliberate, not bugs)
 Full sole-source migration (retire git-JSON state in favor of Supabase); P2/P3 active fill-backfill (currently read-only audits); time-on-paper to meet live-readiness gates.
 
+## Quant research standards & the dependency-tiering law (2026-06)
+Institutional quant-validation/portfolio-construction standards live in the **`portfolio-optimizer`
+skill** (`.claude/skills/portfolio-optimizer/SKILL.md`); the evaluation of the external "Institutional
+Blueprint" against this system is `docs/QUANT_BLUEPRINT_EVALUATION.md`. **Before adding any quant
+module, obey the dependency-tiering law:**
+- **T0/T1 (on the cloud path):** stdlib / pure-Python ONLY. The backtest+metrics stack is pure-Python
+  by design (hand-rolled `_mean`/`_std`/`normal_cdf`) so it runs in the `requests`-only runtime.
+  Deflated Sharpe / PSR / PBO already live here (`scripts/backtest/metrics.py`) — use, don't rebuild.
+- **T2 (offline research only):** `numpy`/`pandas`/`scipy`/`sklearn`/`statsmodels`/boosting allowed,
+  but they **NEVER import on the trading path**. They emit **static artifacts** (e.g. HRP weights,
+  frac-diff `d`, regime labels, calibrated probabilities) committed for the cloud path to *read* —
+  exactly how the walk-forward gate already feeds `data/strategy_params.json`.
+- New risk math (VaR/CVaR/HRP/meta-label sizing) is **advisory inside the hardcoded caps** in
+  `config/risk_limits.json` — it never relaxes a limit. DSR/VaR on live P&L is invalid until the
+  sample is large enough (refuse on small N). Microstructure/tick/order-book/RL items are out of
+  scope — the data and runtime do not support them.
+
 ---
 
 # TRADING SYSTEM ARCHITECTURE
