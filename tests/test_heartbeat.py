@@ -94,3 +94,57 @@ def test_reconciliation_surfaces_qty_and_cost_basis_drift():
     assert alert is True
     assert "qty drift: AAPL" in summary
     assert "cost-basis drift: MSFT" in summary
+
+
+# --- Execution integrity / conformance / preflight surfacing (Phase F) ------
+
+def _wrap(integrity=None, conformance=None, preflight=None):
+    return {"integrity": integrity, "conformance": conformance, "preflight": preflight}
+
+
+def test_integrity_all_clear_no_alert():
+    reports = {label: _wrap() for label in (
+        "P1 Self Improving Brain", "P2 Capitol Shadow", "P3 Cautious Sniper")}
+    alert, summary = hb.assess_integrity(reports, TODAY)
+    assert alert is False
+    assert "all clear" in summary
+
+
+def test_integrity_execution_anomaly_alerts():
+    reports = {"P1 Self Improving Brain": _wrap(integrity={
+        "timestamp": f"{TODAY}T14:00:00+00:00", "anomalous": True,
+        "anomaly_reason": "7 approved, 0 submitted"})}
+    alert, summary = hb.assess_integrity(reports, TODAY)
+    assert alert is True
+    assert "EXECUTION ANOMALY" in summary and "P1 Self Improving Brain" in summary
+
+
+def test_integrity_stale_anomaly_does_not_alert():
+    """A yesterday-dated anomaly file must not raise a perpetual alert."""
+    reports = {"P1 Self Improving Brain": _wrap(integrity={
+        "timestamp": "2026-05-28T14:00:00+00:00", "anomalous": True,
+        "anomaly_reason": "stale"})}
+    alert, _ = hb.assess_integrity(reports, TODAY)
+    assert alert is False
+
+
+def test_integrity_preflight_failure_alerts():
+    reports = {"P3 Cautious Sniper": _wrap(preflight={
+        "ok": False, "hard_failures": ["SIZING CANARY FAILED: ..."]})}
+    alert, summary = hb.assess_integrity(reports, TODAY)
+    assert alert is True
+    assert "PREFLIGHT FAILED" in summary
+
+
+def test_integrity_conformance_violation_alerts():
+    reports = {"P3 Cautious Sniper": _wrap(conformance={
+        "timestamp": f"{TODAY}T16:00:00+00:00", "conformant": False,
+        "violations": [{"name": "complete_bracket"}]})}
+    alert, summary = hb.assess_integrity(reports, TODAY)
+    assert alert is True
+    assert "CONFORMANCE" in summary and "complete_bracket" in summary
+
+
+def test_integrity_missing_reports_no_alert():
+    alert, _ = hb.assess_integrity({"P1 Self Improving Brain": _wrap()}, TODAY)
+    assert alert is False

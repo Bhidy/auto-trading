@@ -128,6 +128,65 @@ def assess_reconciliation(reports: dict):
     return False, "Reconciliation: all books in sync."
 
 
+# Each portfolio's data dir, where the trading session writes the execution-
+# integrity, strategy-conformance, and preflight reports (Phases C/D/E).
+PORTFOLIO_DATA_DIRS = {
+    "P1 Self Improving Brain": "data",
+    "P2 Capitol Shadow": "political-copy-bot/data",
+    "P3 Cautious Sniper": "event-driven-bot/data",
+}
+
+
+def _read_json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def read_integrity(root: Path):
+    """Return {label: {integrity, conformance, preflight}} for each portfolio."""
+    out = {}
+    for label, d in PORTFOLIO_DATA_DIRS.items():
+        base = root / d
+        out[label] = {
+            "integrity": _read_json(base / "execution_integrity.json"),
+            "conformance": _read_json(base / "strategy_conformance.json"),
+            "preflight": _read_json(base / "preflight_report.json"),
+        }
+    return out
+
+
+def assess_integrity(reports: dict, today=None):
+    """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
+
+    Flags, per portfolio: an execution anomaly (approved>0 & placed==0 with no
+    benign reason — the 2026-06-01 silent no-op), a preflight HARD failure (trading
+    was refused), or a strategy-conformance violation. Today-dated reports only for
+    integrity/conformance (a stale file must not alert forever); a failed preflight
+    is surfaced regardless since it is overwritten on the next successful run. A
+    missing report is never an alert.
+    """
+    issues = []
+    for label, rep in reports.items():
+        integ, conf, pre = rep.get("integrity"), rep.get("conformance"), rep.get("preflight")
+        if (isinstance(integ, dict) and integ.get("anomalous")
+                and (today is None or _date_of(integ.get("timestamp")) == today)):
+            issues.append(f"{label} — EXECUTION ANOMALY: {integ.get('anomaly_reason')}")
+        if isinstance(pre, dict) and pre.get("ok") is False:
+            hard = pre.get("hard_failures") or []
+            issues.append(f"{label} — PREFLIGHT FAILED: {'; '.join(hard) or 'see report'}")
+        if (isinstance(conf, dict) and conf.get("conformant") is False
+                and (today is None or _date_of(conf.get("timestamp")) == today)):
+            viol = [v.get("name") for v in (conf.get("violations") or [])]
+            issues.append(f"{label} — CONFORMANCE: {', '.join(viol)}")
+    if issues:
+        return True, ("EXECUTION INTEGRITY / CONFORMANCE issues:\n"
+                      + "\n".join(f"  - {i}" for i in issues))
+    return False, "Execution integrity & conformance: all clear."
+
+
 def is_trading_day(api_key, api_secret, today: str) -> bool:
     """True if `today` is a market session day per Alpaca's calendar.
     Fails OPEN (returns True) on API error so we'd rather alert than miss."""
@@ -177,6 +236,13 @@ def main():
     if recon_alert:
         alert = True
         summary = f"{summary}\n\n{recon_summary}"
+
+    # Execution integrity / conformance / preflight surfacing (Phase F): the
+    # 2026-06-01 silent no-op, a refused preflight, or a mandate violation.
+    integ_alert, integ_summary = assess_integrity(read_integrity(REPO_ROOT), today)
+    if integ_alert:
+        alert = True
+        summary = f"{summary}\n\n{integ_summary}"
 
     print(f"[heartbeat] {summary}")
     _emit_output(alert, summary)
