@@ -150,6 +150,7 @@ jobs:
               sleep 5
             done
             if [ "$PUSHED" -ne 0 ]; then
-              echo "WARNING: All push attempts failed — state saved locally but not synced to remote"
+              echo "::error::All push attempts failed after retries — state NOT synced to remote; failing the run so the failure-alert watchdog fires (idempotent client_order_ids + EOD reconciliation keep the broker safe)."
+              exit 1
             fi
           fi
