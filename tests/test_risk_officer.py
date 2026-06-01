@@ -5,6 +5,8 @@ These directly cover the bug class that silently broke P1 trading on
 guarding signal type, crashing the entire session on an INSUFFICIENT_DATA
 signal that carries no "indicators" key.
 """
+import pytest
+
 import risk_officer as ro
 
 
@@ -148,3 +150,30 @@ def test_all_approved_orders_have_positive_qty_invariant(limits, portfolio):
         result = ro.validate_trade(sig, portfolio, limits)
         if result["approved"]:
             assert result["approved_qty"] > 0
+
+
+# --- Crypto fractional sizing (F1 — P1's 10% crypto bucket never filled) -----
+
+def _crypto_buy(symbol="BTC/USD", price=100_000.0, pct=5.0):
+    return {
+        "symbol": symbol, "signal": "BUY", "instrument_type": "crypto",
+        "indicators": {"price": price},
+        "risk_management": {"suggested_position_pct": pct, "stop_loss": price * 0.9,
+                            "take_profit": price * 1.2},
+    }
+
+
+def test_crypto_sized_fractionally_and_approved(limits, portfolio):
+    """A crypto BUY must size in FRACTIONAL units, not int() (which zeroed P1's
+    10% crypto bucket forever). 5% of $100k at $100k/BTC = 0.05 BTC."""
+    result = ro.validate_trade(_crypto_buy(pct=5.0), portfolio, limits)
+    assert result["approved"] is True
+    assert 0 < result["approved_qty"] < 1                       # fractional, not int-zeroed
+    assert result["approved_qty"] == pytest.approx(0.05, abs=1e-6)
+
+
+def test_crypto_dust_order_rejected_by_min_notional(limits, portfolio):
+    """A sub-$1 crypto notional is rejected (dust guard), not approved at qty~0."""
+    result = ro.validate_trade(_crypto_buy(pct=0.0005), portfolio, limits)  # ~$0.50
+    assert result["approved"] is False
+    assert any("notional" in r.lower() for r in result["rejections"])

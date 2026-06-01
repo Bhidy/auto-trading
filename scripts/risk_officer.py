@@ -61,6 +61,13 @@ def save_portfolio_state(state):
     with open(os.path.join(DATA_DIR, "portfolio_state.json"), "w") as f:
         json.dump(state, f, indent=2)
 
+# Minimum crypto order notional (USD). Crypto sizes fractionally, so the
+# "qty < 1 share" reject used for equities does not apply — gate on notional
+# instead. Alpaca's real per-asset minimums are far below realistic P1 sizing;
+# this is a dust guard, not a binding constraint.
+MIN_CRYPTO_NOTIONAL_USD = 1.0
+
+
 def validate_trade(signal, portfolio, limits, asset_info=None):
     """Validate a single signal against hardcoded limits.
 
@@ -180,14 +187,26 @@ def validate_trade(signal, portfolio, limits, asset_info=None):
             suggested_pct = max_pct
 
     dollar_amount = round(equity * suggested_pct / 100, 2)
-    qty = int(dollar_amount / price) if price > 0 else 0
+    # Crypto trades in FRACTIONAL units (a 5% BTC position is ~0.05 BTC); equities
+    # trade in whole shares. Using int() for crypto silently zeroed every crypto
+    # order, so P1's 10% crypto bucket never filled (2026-06-01 audit). Size
+    # crypto fractionally and gate on a minimum notional rather than int(qty)>=1.
+    if instrument_type == "crypto":
+        qty = round(dollar_amount / price, 6) if price > 0 else 0
+    else:
+        qty = int(dollar_amount / price) if price > 0 else 0
 
-    # A BUY/SHORT that cleared every guardrail but sizes to <1 share is a
-    # silent-failure trap (the 2026-06-01 incident): the executor skips on
-    # qty<=0 while the order still looks "approved", so a run reports success
-    # while placing nothing. Reject it LOUDLY with a precise reason so it
-    # surfaces in validated_orders.summary and the logs — never approve qty<=0.
-    if qty <= 0:
+    # An order that cleared every guardrail but sizes to nothing is a silent-
+    # failure trap (the 2026-06-01 incident): the executor skips qty<=0 while the
+    # order still looks "approved", so a run reports success while placing nothing.
+    # Reject it LOUDLY with a precise reason — never approve a no-op order.
+    if instrument_type == "crypto":
+        if dollar_amount < MIN_CRYPTO_NOTIONAL_USD or qty <= 0:
+            rejections.append(
+                f"crypto notional ${dollar_amount:,.2f} (size {suggested_pct}% x "
+                f"${equity:,.0f}) below ${MIN_CRYPTO_NOTIONAL_USD:.0f} minimum"
+            )
+    elif qty <= 0:
         rejections.append(
             f"computed_qty=0 (size {suggested_pct}% x ${equity:,.0f} / ${price} "
             f"< 1 share) — position size too small or price too high"

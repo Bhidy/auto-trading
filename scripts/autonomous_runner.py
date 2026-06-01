@@ -390,6 +390,7 @@ def run_trading_session(alpaca: AlpacaClient):
         signal = order["signal"]
         qty = order.get("approved_qty", 0)
         price = order.get("price", 0)
+        itype = get_instrument_type(symbol)
 
         if qty <= 0 or price <= 0:
             continue
@@ -397,7 +398,6 @@ def run_trading_session(alpaca: AlpacaClient):
         existing = alpaca.get_position(symbol)
         if existing and signal == "BUY":
             existing_pct = abs(float(existing["market_value"])) / equity * 100
-            itype = get_instrument_type(symbol)
             max_pct = limits["max_single_position_pct"].get(itype, 8)
             if existing_pct >= max_pct * 0.85:
                 log.info(f"  Already hold {existing_pct:.1f}% of {symbol}, skipping")
@@ -405,12 +405,12 @@ def run_trading_session(alpaca: AlpacaClient):
 
         dollar_amount = order.get("approved_dollar_amount", qty * price)
         if dollar_amount > cash * 0.95:
-            qty = int(cash * 0.90 / price)
+            # Crypto sizes fractionally; equities in whole shares.
+            qty = round(cash * 0.90 / price, 6) if itype == "crypto" else int(cash * 0.90 / price)
             if qty <= 0:
                 log.warning(f"  Insufficient cash for {symbol}")
                 continue
 
-        itype = get_instrument_type(symbol)
         side = "buy" if signal == "BUY" else "sell"
 
         # Money-path re-check: borrow status changes daily, so re-confirm ETB
