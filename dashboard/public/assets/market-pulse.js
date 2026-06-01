@@ -2065,7 +2065,7 @@
                 '<select id="mpAoStatus" style="'+selStyle+'">'+stOpts+'</select></div>' +
                 '<div style="display:flex;align-items:center;gap:.35rem;"><span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Portfolio</span>' +
                 '<select id="mpAoPf" style="'+selStyle+'">'+pfOpts+'</select></div>' +
-                '<span class="pf-live-pill" style="margin-inline-start:auto;font-size:.64rem;"><span class="pf-live-dot"></span><span id="mpAoTs">Loading…</span></span>' +
+                '<span class="pf-live-pill" style="margin-inline-start:auto;font-size:.64rem;" title="Auto-refresh every 30s"><span class="pf-live-dot"></span><span id="mpAoTs" style="display:none;"></span></span>' +
             '</div>';
 
             // Wire period buttons
@@ -2103,6 +2103,21 @@
         function mpFmt(n, d) { return (parseFloat(n)||0).toFixed(d===undefined?2:d).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
         function mpEsc(s) { return String(s||'').replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
+        function mpNormOrder(o) {
+            return {
+                dateStr: o.date || (o.timestamp ? o.timestamp.slice(0,10) : '') || (o.created_at ? o.created_at.slice(0,10) : ''),
+                symbol:  o.symbol || '',
+                side:    o.side || o.type || 'buy',
+                qty:     parseFloat(o.qty || o.quantity || o.filled_qty || 0),
+                price:   parseFloat(o.entry_price || o.filled_avg_price || o.limit_price || o.stop_price || o.price || 0),
+                label:   (o._portfolio_label || o.source_label || '').split(' ').slice(0,2).join(' '),
+                desc:    o.reason || (Array.isArray(o.reasons) ? o.reasons.join(', ') : (o.reasons || '')) || '',
+                orderStatus: o.order_status || o.status || '',
+                orderType:   o.order_type || o.type || '',
+                tif:     o.time_in_force || '',
+            };
+        }
+
         function mpRenderAoTable() {
             var body = document.getElementById('mpAoTableBody');
             if (!body) return;
@@ -2118,40 +2133,46 @@
 
             var status = _mpAo.status;
             var rows = [];
+            var totalCount=0, execCount=0, openCount=0, totalBuy=0, totalSell=0, totalOpen=0;
 
             if (status==='all'||status==='executed') {
                 (d.executed||[]).forEach(function(tr) {
-                    var dateStr = tr.date||(tr.timestamp?tr.timestamp.slice(0,10):'');
-                    if (!dateStr||new Date(dateStr)<cutoff) return;
-                    var side=tr.side||tr.type||'buy', qty=parseFloat(tr.qty||tr.quantity||0);
-                    var price=parseFloat(tr.entry_price||tr.filled_avg_price||tr.limit_price||tr.price||0);
-                    var cost=qty*price, sc=side==='buy'?'pf-badge-pos':'pf-badge-neg';
-                    rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(dateStr)+'</td>'+
-                        '<td style="font-weight:700;font-family:var(--pf-mono,monospace);">'+mpEsc(tr.symbol||'')+'</td>'+
-                        '<td><span class="pf-mock-badge-chip '+sc+'" style="font-size:.6rem;">'+side.toUpperCase()+'</span></td>'+
-                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(qty>0?qty.toLocaleString():'—')+'</td>'+
-                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(price>0?'$'+mpFmt(price):'—')+'</td>'+
+                    var n=mpNormOrder(tr);
+                    if (!n.dateStr||new Date(n.dateStr)<cutoff) return;
+                    var cost=n.qty*n.price, sc=n.side==='buy'?'pf-badge-pos':'pf-badge-neg';
+                    totalCount++; execCount++;
+                    if (n.side==='buy') totalBuy+=cost; else totalSell+=cost;
+                    rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(n.dateStr)+'</td>'+
+                        '<td style="font-weight:700;font-family:var(--pf-mono,monospace);">'+mpEsc(n.symbol)+'</td>'+
+                        '<td><span class="pf-mock-badge-chip '+sc+'" style="font-size:.6rem;">'+n.side.toUpperCase()+'</span></td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(n.qty>0?n.qty.toLocaleString():'—')+'</td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(n.price>0?'$'+mpFmt(n.price):'—')+'</td>'+
                         '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(cost>0?'$'+mpFmt(cost):'—')+'</td>'+
-                        '<td><span style="font-size:.6rem;padding:.12rem .4rem;border-radius:999px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);">Executed</span></td>'+
-                        '<td style="font-size:.66rem;color:var(--muted);">'+mpEsc((tr._portfolio_label||'').split(' ').slice(0,2).join(' '))+'</td>'+
-                        '<td style="font-size:.68rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+mpEsc((tr.reason||'').slice(0,60))+'</td></tr>');
+                        '<td><span style="font-size:.6rem;padding:.12rem .4rem;border-radius:999px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);">Filled</span></td>'+
+                        '<td style="font-size:.66rem;color:var(--muted);">'+mpEsc(n.label)+'</td>'+
+                        '<td style="font-size:.68rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+mpEsc(n.desc.slice(0,60))+'</td></tr>');
                 });
             }
             if (status==='all'||status==='open') {
                 (d.open||[]).forEach(function(o) {
-                    var created=(o.created_at||'').slice(0,10);
-                    if (created&&new Date(created)<cutoff) return;
-                    var side=o.side||'buy', qty=parseFloat(o.qty||0), price=parseFloat(o.limit_price||0);
-                    var sc=side==='buy'?'pf-badge-pos':'pf-badge-neg';
-                    rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(created||'—')+'</td>'+
-                        '<td style="font-weight:700;font-family:var(--pf-mono,monospace);">'+mpEsc(o.symbol||'')+'</td>'+
-                        '<td><span class="pf-mock-badge-chip '+sc+'" style="font-size:.6rem;">'+side.toUpperCase()+'</span></td>'+
-                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(qty>0?qty.toLocaleString():'—')+'</td>'+
-                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(price>0?'$'+mpFmt(price):'—')+'</td>'+
+                    var n=mpNormOrder(o);
+                    if (!n.dateStr||new Date(n.dateStr)<cutoff) return;
+                    var sc=n.side==='buy'?'pf-badge-pos':'pf-badge-neg';
+                    var isBracket = n.orderStatus==='held';
+                    var sBg=isBracket?'rgba(245,158,11,.12)':'rgba(59,130,246,.12)';
+                    var sCol=isBracket?'#f59e0b':'#3b82f6';
+                    var sBorder=isBracket?'rgba(245,158,11,.25)':'rgba(59,130,246,.25)';
+                    var desc = (n.orderType.replace(/_/g,' ')||'')+(n.tif?' · '+n.tif:'');
+                    totalCount++; openCount++; totalOpen+=n.qty*n.price;
+                    rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(n.dateStr||'—')+'</td>'+
+                        '<td style="font-weight:700;font-family:var(--pf-mono,monospace);">'+mpEsc(n.symbol)+'</td>'+
+                        '<td><span class="pf-mock-badge-chip '+sc+'" style="font-size:.6rem;">'+n.side.toUpperCase()+'</span></td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(n.qty>0?n.qty.toLocaleString():'—')+'</td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(n.price>0?'$'+mpFmt(n.price):'—')+'</td>'+
                         '<td style="text-align:right;">—</td>'+
-                        '<td><span style="font-size:.6rem;padding:.12rem .4rem;border-radius:999px;font-weight:700;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.25);">'+mpEsc((o.status||'open').replace(/_/g,' '))+'</span></td>'+
-                        '<td style="font-size:.66rem;color:var(--muted);">'+mpEsc((o._portfolio_label||'').split(' ').slice(0,2).join(' '))+'</td>'+
-                        '<td style="font-size:.68rem;color:var(--muted);">'+mpEsc(((o.type||'')+' · '+(o.time_in_force||'')).replace(/^ · | · $/g,''))+'</td></tr>');
+                        '<td><span style="font-size:.6rem;padding:.12rem .4rem;border-radius:999px;font-weight:700;background:'+sBg+';color:'+sCol+';border:1px solid '+sBorder+';">'+mpEsc((n.orderStatus||'open').replace(/_/g,' '))+'</span></td>'+
+                        '<td style="font-size:.66rem;color:var(--muted);">'+mpEsc(n.label)+'</td>'+
+                        '<td style="font-size:.68rem;color:var(--muted);">'+mpEsc(desc.replace(/^ · | · $/g,''))+'</td></tr>');
                 });
             }
 
@@ -2159,11 +2180,30 @@
                 body.innerHTML = '<div class="pf-empty" style="padding:1.5rem;">No orders match the selected filters.</div>';
                 return;
             }
+
+            // Summary footer
+            var sumParts = ['<strong>'+totalCount+'</strong> orders'];
+            if (execCount>0) {
+                sumParts.push('<span style="color:#22c55e;font-weight:700;">'+execCount+' Filled</span>'+
+                    (totalBuy>0?' <span style="color:var(--muted);">(Bought $'+mpFmt(totalBuy)+(totalSell>0?' · Sold $'+mpFmt(totalSell):'')+')':'')+'</span>');
+            }
+            if (openCount>0) {
+                sumParts.push('<span style="color:#3b82f6;font-weight:700;">'+openCount+' Open</span>'+
+                    (totalOpen>0?' <span style="color:var(--muted);">($'+mpFmt(totalOpen)+' exposure)</span>':''));
+            }
+            var tfoot = '<tfoot><tr style="background:var(--surface);border-top:2px solid var(--line);">'+
+                '<td colspan="9" style="padding:.55rem .75rem;font-size:.73rem;font-family:Manrope,sans-serif;">'+
+                    sumParts.join(' &nbsp;·&nbsp; ')+
+                '</td></tr></tfoot>';
+
             var thead = '<thead><tr>' +
                 ['Date','Symbol','Side','Qty','Price','Cost Basis','Status','Portfolio','Description']
                 .map(function(h,i) { return '<th'+(i>2?' style="text-align:right;"':'')+'>'+h+'</th>'; }).join('') +
                 '</tr></thead>';
-            body.innerHTML = '<div style="overflow-x:auto;"><table class="pf-table" style="font-size:.76rem;">'+thead+'<tbody>'+rows.join('')+'</tbody></table></div>';
+            // scrollbar-width:none hides in Firefox; ao-noscroll-wrap class handles webkit via CSS
+            body.innerHTML = '<div style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;" class="ao-noscroll-wrap">'+
+                '<table class="pf-table" style="font-size:.76rem;">'+thead+'<tbody>'+rows.join('')+'</tbody>'+tfoot+'</table>'+
+                '</div>';
         }
 
     // Opens the live options-chain pane (used by the order panel's Options tab

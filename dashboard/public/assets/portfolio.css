@@ -2040,3 +2040,7 @@ html[dir="rtl"] .pf-attr-table thead th { text-align: start; }
 html[dir="rtl"] .pf-attr-table td:not(:first-child),
 html[dir="rtl"] .pf-attr-table thead th:not(:first-child) { text-align: end; }
 
+
+/* All Orders tab — hide horizontal scrollbar cross-browser */
+.ao-noscroll-wrap { overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.ao-noscroll-wrap::-webkit-scrollbar { display: none; }

@@ -1926,8 +1926,10 @@ app.delete('/api/portfolio/:id/orders', async (req, res) => {
     }
 });
 
-// B6-pre. Unified orders — all portfolios' trade_log (executed) + live open orders
-// Used by the "All Orders" tab on portfolio-detail and market-pulse pages.
+// B6-pre. Unified orders — authoritative real-time view across all portfolios.
+// Uses status=all from Alpaca so bracket stop/take-profit legs (status=held/new)
+// and same-day fills not yet committed to trade_log are never missed.
+// trade_log provides descriptions + historical coverage beyond Alpaca's 500-order window.
 // ?portfolio_id=all|portfolio_1|portfolio_2|portfolio_3
 app.get('/api/orders/unified', async (req, res) => {
     loadConfig();
@@ -1935,6 +1937,13 @@ app.get('/api/orders/unified', async (req, res) => {
     const ids = (portfolio_id && portfolio_id !== 'all')
         ? [portfolio_id]
         : Object.keys(portfoliosConfig);
+
+    // Non-terminal Alpaca statuses → shown as "Open"
+    const OPEN_STATUSES = new Set([
+        'new', 'partially_filled', 'held', 'pending_new', 'pending_cancel',
+        'pending_replace', 'accepted', 'accepted_for_bidding', 'calculated',
+        'done_for_day', 'stopped', 'suspended'
+    ]);
 
     const executed = [];
     const open = [];
@@ -1944,19 +1953,88 @@ app.get('/api/orders/unified', async (req, res) => {
         if (!cfg) continue;
         const paths = getPortfolioPaths(id);
         const tradeLog = readJsonFile(paths.tradeLog, []);
+
+        // Build trade_log description map (symbol|date|side|qty → reason)
+        // and a set of keys covered by trade_log for dedup later
+        const tlDescMap = {};
         tradeLog.forEach(t => {
-            executed.push({ ...t, _portfolio_id: id, _portfolio_label: cfg.label });
+            const d = t.date || (t.timestamp || '').slice(0, 10);
+            const qty = Math.round(parseFloat(t.qty || t.quantity || 0));
+            const key = `${t.symbol}|${d}|${t.side || t.type}|${qty}`;
+            tlDescMap[key] = t.reason
+                || (Array.isArray(t.reasons) ? t.reasons.join(', ') : (t.reasons || ''))
+                || '';
         });
+
+        // Fetch ALL Alpaca orders: filled + open + held (bracket legs) + canceled
+        let alpacaOrders = [];
         try {
-            const liveOrders = await alpacaRequest(
+            const resp = await alpacaRequest(
                 'GET',
-                `${cfg.base_url}/v2/orders?status=open&limit=500`,
+                `${cfg.base_url}/v2/orders?status=all&limit=500&direction=desc`,
                 cfg.api_key, cfg.api_secret
             );
-            if (Array.isArray(liveOrders)) {
-                liveOrders.forEach(o => open.push({ ...o, _portfolio_id: id, _portfolio_label: cfg.label }));
-            }
+            if (Array.isArray(resp)) alpacaOrders = resp;
         } catch (_) {}
+
+        // Track the date range Alpaca data covers + filled keys for dedup
+        let alpacaOldestDate = null;
+        const alpacaFilledKeys = new Set();
+
+        alpacaOrders.forEach(o => {
+            const dateStr = (o.filled_at || o.submitted_at || '').slice(0, 10);
+            if (dateStr && (!alpacaOldestDate || dateStr < alpacaOldestDate)) alpacaOldestDate = dateStr;
+
+            const qty = parseFloat(o.filled_qty || o.qty || 0);
+            const price = parseFloat(o.filled_avg_price || o.limit_price || o.stop_price || 0);
+
+            // Enrich with description from trade_log if available
+            const qtyRounded = Math.round(qty);
+            const descKey = `${o.symbol}|${dateStr}|${o.side}|${qtyRounded}`;
+            const reason = tlDescMap[descKey] || `${(o.type || 'market').replace(/_/g, ' ')} order`;
+
+            const norm = {
+                _source: 'alpaca',
+                _portfolio_id: id,
+                _portfolio_label: cfg.label,
+                date: dateStr,
+                timestamp: o.filled_at || o.submitted_at,
+                symbol: o.symbol,
+                side: o.side,
+                qty: qty,
+                entry_price: price,
+                filled_avg_price: parseFloat(o.filled_avg_price || 0),
+                limit_price: parseFloat(o.limit_price || 0),
+                stop_price: parseFloat(o.stop_price || 0),
+                order_type: o.type,
+                order_status: o.status,
+                order_id: o.id,
+                time_in_force: o.time_in_force,
+                reason,
+            };
+
+            if (o.status === 'filled') {
+                executed.push(norm);
+                alpacaFilledKeys.add(descKey);
+            } else if (OPEN_STATUSES.has(o.status)) {
+                open.push(norm);
+            }
+            // canceled/expired/rejected: omitted to keep the view clean
+        });
+
+        // Add trade_log entries NOT already covered by Alpaca filled data.
+        // Alpaca covers up to 500 recent orders; trade_log fills gaps for older history.
+        tradeLog.forEach(t => {
+            const d = t.date || (t.timestamp || '').slice(0, 10);
+            if (!d) return;
+            // Within Alpaca's date window → dedup by composite key
+            if (alpacaOldestDate && d >= alpacaOldestDate) {
+                const qty = Math.round(parseFloat(t.qty || t.quantity || 0));
+                const key = `${t.symbol}|${d}|${t.side || t.type}|${qty}`;
+                if (alpacaFilledKeys.has(key)) return; // already in Alpaca
+            }
+            executed.push({ ...t, _source: 'tradelog', _portfolio_id: id, _portfolio_label: cfg.label });
+        });
     }
 
     // Sort executed newest-first

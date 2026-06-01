@@ -1896,9 +1896,9 @@
                     '<span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">' + il('Portfolio', 'المحفظة') + '</span>' +
                     '<select id="aoPfSel" style="' + selStyle + '">' + pfOptions + '</select>' +
                 '</div>' +
-                '<span class="pf-live-pill" style="margin-inline-start:auto;font-size:.64rem;">' +
+                '<span class="pf-live-pill" style="margin-inline-start:auto;font-size:.64rem;" title="' + il('Auto-refresh every 30s', 'تحديث تلقائي كل 30 ثانية') + '">' +
                     '<span class="pf-live-dot"></span>' +
-                    '<span id="aoLiveTs">' + il('Loading…', 'جارٍ التحميل…') + '</span>' +
+                    '<span id="aoLiveTs" style="display:none;"></span>' +
                 '</span>' +
             '</div>' +
             '<div id="aoTableBody">' +
@@ -1980,7 +1980,7 @@
             return;
         }
 
-        // Period cutoff (client-side)
+        // Period cutoff (client-side filter)
         var cutoff = new Date(); cutoff.setHours(0, 0, 0, 0);
         var period = _aoState.period;
         if      (period === '1D') cutoff.setDate(cutoff.getDate() - 1);
@@ -1990,58 +1990,82 @@
 
         var status = _aoState.status;
         var rows = [];
+        // Summary accumulators
+        var totalCount = 0, execCount = 0, openCount = 0;
+        var totalBuyCost = 0, totalSellCost = 0, totalOpenExposure = 0;
 
-        // ── Executed trades from trade_log ───────────────────────────────
+        // Helper: normalize any order object into display fields
+        function normOrder(o) {
+            return {
+                dateStr: o.date || (o.timestamp ? o.timestamp.slice(0, 10) : '') || (o.created_at ? o.created_at.slice(0, 10) : ''),
+                symbol:  o.symbol || '',
+                side:    o.side || o.type || 'buy',
+                qty:     parseFloat(o.qty || o.quantity || o.filled_qty || 0),
+                price:   parseFloat(o.entry_price || o.filled_avg_price || o.limit_price || o.stop_price || o.price || 0),
+                label:   o._portfolio_label || o.source_label || '',
+                desc:    o.reason || (Array.isArray(o.reasons) ? o.reasons.join(', ') : (o.reasons || '')) || '',
+                orderType: o.order_type || o.type || '',
+                tif:     o.time_in_force || o.tif || '',
+                orderStatus: o.order_status || o.status || '',
+            };
+        }
+
+        // ── Executed orders (Alpaca filled + historical trade_log) ────────
         if (status === 'all' || status === 'executed') {
             (d.executed || []).forEach(function(tr) {
-                var dateStr = tr.date || (tr.timestamp ? tr.timestamp.slice(0, 10) : '');
-                if (!dateStr || new Date(dateStr) < cutoff) return;
-                var side = tr.side || tr.type || 'buy';
-                var qty  = parseFloat(tr.qty || tr.quantity || 0);
-                var price = parseFloat(tr.entry_price || tr.filled_avg_price || tr.limit_price || tr.price || 0);
-                var costBasis = qty * price;
-                var label = tr._portfolio_label || tr.source_label || '';
-                var desc  = tr.reason || (Array.isArray(tr.reasons) ? tr.reasons.join(', ') : (tr.reasons || '')) || '';
-                var sideCls = side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
-                var costCls = side === 'buy' ? 'pf-neg' : 'pf-pos';
+                var n = normOrder(tr);
+                if (!n.dateStr || new Date(n.dateStr) < cutoff) return;
+                var costBasis = n.qty * n.price;
+                var sideCls = n.side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
+                var costCls = n.side === 'buy' ? 'pf-neg' : 'pf-pos';
+                // Accumulate summary
+                totalCount++; execCount++;
+                if (n.side === 'buy') totalBuyCost += costBasis;
+                else totalSellCost += costBasis;
+
                 rows.push(
-                    '<tr data-symbol="' + escHtml(tr.symbol || '') + '">' +
-                    '<td class="pf-num" style="white-space:nowrap;">' + escHtml(dateStr) + '</td>' +
-                    '<td>' + symChipBySymbol(tr.symbol || '') + '</td>' +
-                    '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.62rem;">' + side.toUpperCase() + '</span></td>' +
-                    '<td class="num pf-num">' + (qty > 0 ? qty.toLocaleString() : '—') + '</td>' +
-                    '<td class="num pf-num">' + (price > 0 ? '$' + fmt(price) : '—') + '</td>' +
+                    '<tr data-symbol="' + escHtml(n.symbol) + '">' +
+                    '<td class="pf-num" style="white-space:nowrap;">' + escHtml(n.dateStr) + '</td>' +
+                    '<td>' + symChipBySymbol(n.symbol) + '</td>' +
+                    '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.62rem;">' + n.side.toUpperCase() + '</span></td>' +
+                    '<td class="num pf-num">' + (n.qty > 0 ? n.qty.toLocaleString() : '—') + '</td>' +
+                    '<td class="num pf-num">' + (n.price > 0 ? '$' + fmt(n.price) : '—') + '</td>' +
                     '<td class="num pf-num ' + costCls + '">' + (costBasis > 0 ? '$' + fmt(costBasis) : '—') + '</td>' +
-                    '<td><span style="font-size:.62rem;padding:.15rem .45rem;border-radius:999px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);">' + il('Executed', 'منفّذ') + '</span></td>' +
-                    '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(label) + '</td>' +
-                    '<td style="font-size:.7rem;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(desc) + '">' + escHtml(desc.slice(0, 70)) + '</td>' +
+                    '<td><span style="font-size:.62rem;padding:.15rem .45rem;border-radius:999px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);">' + il('Filled', 'منفّذ') + '</span></td>' +
+                    '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(n.label) + '</td>' +
+                    '<td style="font-size:.7rem;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(n.desc) + '">' + escHtml(n.desc.slice(0, 80)) + '</td>' +
                     '</tr>'
                 );
             });
         }
 
-        // ── Live open orders from Alpaca ─────────────────────────────────
+        // ── Open / held orders (Alpaca live) ────────────────────────────
         if (status === 'all' || status === 'open') {
             (d.open || []).forEach(function(o) {
-                var created = (o.created_at || '').slice(0, 10);
-                if (created && new Date(created) < cutoff) return;
-                var side = o.side || 'buy';
-                var qty  = parseFloat(o.qty || o.filled_qty || 0);
-                var price = parseFloat(o.limit_price || o.stop_price || 0);
-                var label = o._portfolio_label || '';
-                var sideCls = side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
-                var statusTxt = (o.status || 'pending').replace(/_/g,' ');
+                var n = normOrder(o);
+                if (!n.dateStr || new Date(n.dateStr) < cutoff) return;
+                var exposure = n.qty * n.price;
+                var sideCls = n.side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
+                var statusBg = n.orderStatus === 'held' ? 'rgba(245,158,11,.12)' : 'rgba(59,130,246,.12)';
+                var statusCol = n.orderStatus === 'held' ? '#f59e0b' : '#3b82f6';
+                var statusBorder = n.orderStatus === 'held' ? 'rgba(245,158,11,.25)' : 'rgba(59,130,246,.25)';
+                var statusTxt = (n.orderStatus || 'pending').replace(/_/g, ' ');
+                var orderDesc = (n.orderType ? n.orderType.replace(/_/g,' ') : '') + (n.tif ? ' · ' + n.tif : '');
+                // Accumulate summary
+                totalCount++; openCount++;
+                totalOpenExposure += exposure;
+
                 rows.push(
-                    '<tr data-symbol="' + escHtml(o.symbol || '') + '">' +
-                    '<td class="pf-num" style="white-space:nowrap;">' + escHtml(created || '—') + '</td>' +
-                    '<td>' + symChipBySymbol(o.symbol || '') + '</td>' +
-                    '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.62rem;">' + side.toUpperCase() + '</span></td>' +
-                    '<td class="num pf-num">' + (qty > 0 ? qty.toLocaleString() : '—') + '</td>' +
-                    '<td class="num pf-num">' + (price > 0 ? '$' + fmt(price) : '—') + '</td>' +
+                    '<tr data-symbol="' + escHtml(n.symbol) + '">' +
+                    '<td class="pf-num" style="white-space:nowrap;">' + escHtml(n.dateStr || '—') + '</td>' +
+                    '<td>' + symChipBySymbol(n.symbol) + '</td>' +
+                    '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.62rem;">' + n.side.toUpperCase() + '</span></td>' +
+                    '<td class="num pf-num">' + (n.qty > 0 ? n.qty.toLocaleString() : '—') + '</td>' +
+                    '<td class="num pf-num">' + (n.price > 0 ? '$' + fmt(n.price) : '—') + '</td>' +
                     '<td class="num pf-num">—</td>' +
-                    '<td><span style="font-size:.62rem;padding:.15rem .45rem;border-radius:999px;font-weight:700;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.25);">' + escHtml(statusTxt) + '</span></td>' +
-                    '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(label) + '</td>' +
-                    '<td style="font-size:.7rem;color:var(--muted);">' + escHtml(((o.type||'') + ' · ' + (o.time_in_force||'')).replace(/^ · | · $/,'')) + '</td>' +
+                    '<td><span style="font-size:.62rem;padding:.15rem .45rem;border-radius:999px;font-weight:700;background:' + statusBg + ';color:' + statusCol + ';border:1px solid ' + statusBorder + ';">' + escHtml(statusTxt) + '</span></td>' +
+                    '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(n.label) + '</td>' +
+                    '<td style="font-size:.7rem;color:var(--muted);">' + escHtml(orderDesc.replace(/^ · | · $/g,'')) + '</td>' +
                     '</tr>'
                 );
             });
@@ -2053,10 +2077,34 @@
             return;
         }
 
+        // ── Summary footer row ───────────────────────────────────────────
+        var summaryParts = [
+            '<strong>' + totalCount + '</strong> ' + il('orders', 'أمر'),
+        ];
+        if (execCount > 0) {
+            summaryParts.push(
+                '<span style="color:#22c55e;font-weight:700;">' + execCount + ' ' + il('Filled', 'منفّذ') + '</span>' +
+                (totalBuyCost > 0 ? ' <span style="color:var(--muted);">(' + il('Bought', 'شراء') + ' $' + fmt(totalBuyCost) + (totalSellCost > 0 ? ' · ' + il('Sold', 'بيع') + ' $' + fmt(totalSellCost) : '') + ')</span>' : '')
+            );
+        }
+        if (openCount > 0) {
+            summaryParts.push(
+                '<span style="color:#3b82f6;font-weight:700;">' + openCount + ' ' + il('Open', 'مفتوح') + '</span>' +
+                (totalOpenExposure > 0 ? ' <span style="color:var(--muted);">($' + fmt(totalOpenExposure) + ' ' + il('exposure', 'تعرّض') + ')</span>' : '')
+            );
+        }
+        var summaryHtml =
+            '<tfoot><tr style="background:var(--surface);border-top:2px solid var(--line);">' +
+            '<td colspan="9" style="padding:.65rem .85rem;font-size:.74rem;font-family:Manrope,sans-serif;">' +
+                summaryParts.join(' &nbsp;·&nbsp; ') +
+            '</td></tr></tfoot>';
+
         var ths = [il('Date', 'التاريخ'), il('Symbol', 'الرمز'), il('Side', 'الجهة'), il('Qty', 'الكمية'), il('Price', 'السعر'), il('Cost Basis', 'التكلفة'), il('Status', 'الحالة'), il('Portfolio', 'المحفظة'), il('Description', 'الوصف')];
-        body.innerHTML = '<div class="pf-table-wrap pf-table-scroll">' +
-            thTable(ths) + '<tbody>' + rows.join('') + '</tbody></table>' +
-        '</div>';
+        // scrollbar-width:none hides Firefox/IE scrollbar; webkit handled by inline style override
+        body.innerHTML =
+            '<div style="overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;" class="ao-noscroll-wrap">' +
+            thTable(ths) + '<tbody>' + rows.join('') + '</tbody>' + summaryHtml + '</table>' +
+            '</div>';
 
         // Wire sort + row drill-down
         setTimeout(function() { wireAllTables(body); }, 0);
