@@ -807,14 +807,60 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: isDark ? '#1a0f08' : '#fff', borderColor: gridColor, borderWidth: 1,
-                        titleFont: { family: 'Manrope', size: 11, weight: '700' }, bodyFont: { family: 'IBM Plex Mono', size: 11 },
-                        titleColor: isDark ? '#fff1e8' : '#1a0f08', bodyColor: isDark ? '#a39a92' : '#7a6b5e', padding: 10,
+                        backgroundColor: isDark ? '#1C1008' : '#FFFFFF',
+                        borderColor: isDark ? 'rgba(255,241,232,0.12)' : 'rgba(26,15,8,0.10)',
+                        borderWidth: 1,
+                        cornerRadius: 10,
+                        padding: { top: 11, bottom: 11, left: 14, right: 16 },
+                        titleFont:  { family: 'Manrope', size: 12, weight: '800' },
+                        bodyFont:   { family: 'IBM Plex Mono', size: 11, weight: '500' },
+                        footerFont: { family: 'Manrope', size: 10, weight: '700' },
+                        titleColor:  isDark ? '#FFF1E8' : '#1A0F08',
+                        bodyColor:   isDark ? '#E8DDD6' : '#2D1F14',
+                        footerColor: isDark ? '#A39A92' : '#7A6B5E',
+                        multiKeyBackground: 'transparent',
+                        boxWidth: 8, boxHeight: 8, boxPadding: 4,
                         callbacks: {
-                            label: function (c) {
+                            title: function(items) {
+                                return items.length ? items[0].label : '';
+                            },
+                            labelColor: function(c) {
+                                var col = c.dataset.borderColor || '#888';
+                                return { borderColor: col, backgroundColor: col, borderWidth: 0, borderRadius: 2 };
+                            },
+                            label: function(c) {
                                 var v = c.raw;
-                                if (chartMode === 'index') return ' ' + c.dataset.label + ': ' + v.toFixed(2);
-                                return ' ' + c.dataset.label + ': ' + (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+                                if (typeof v !== 'number' || isNaN(v)) return '';
+                                var name = c.dataset.label || '';
+                                // Pad to 11 chars (monospace font → values align)
+                                var padded = name; while (padded.length < 11) padded += ' ';
+                                if (chartMode === 'index') {
+                                    // Convert rebased index (100 = start) → % return from start date
+                                    var ret = v - 100;
+                                    return '  ' + padded + (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
+                                }
+                                return '  ' + padded + (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+                            },
+                            afterBody: function(items) {
+                                if (items.length < 2) return [];
+                                var pfVal = null, spyVal = null;
+                                items.forEach(function(item) {
+                                    var lbl = (item.dataset.label || '').toLowerCase();
+                                    if (lbl.indexOf('portfolio') !== -1 || lbl.indexOf('محفظة') !== -1) pfVal = item.raw;
+                                    else spyVal = item.raw;
+                                });
+                                if (pfVal === null || spyVal === null) return [];
+                                var rel = chartMode === 'index'
+                                    ? (pfVal - 100) - (spyVal - 100)
+                                    : pfVal - spyVal;
+                                var sign = rel >= 0 ? '+' : '';
+                                var arrow = rel > 0.25 ? '↑' : rel < -0.25 ? '↓' : '≈';
+                                var verdict = rel > 0.25
+                                    ? bl(' Outperforming', ' متفوق')
+                                    : rel < -0.25
+                                    ? bl(' Underperforming', ' متأخر')
+                                    : bl(' Tracking', ' متتبع');
+                                return ['', '  vs S&P 500    ' + sign + rel.toFixed(2) + '%  ' + arrow + verdict];
                             }
                         }
                     }
