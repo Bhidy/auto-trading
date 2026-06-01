@@ -168,6 +168,56 @@ def compute_rebalance_orders(positions, equity, regime):
         "adjusted_targets": {k: round(v*100, 1) for k, v in adjusted_targets.items()},
         "regime": regime,
         "rebalance_actions": rebalance_actions,
+        # ADVISORY HRP tilts — OFF by default (see hrp_advisory_tilts); a disabled
+        # stub here changes nothing, it only exposes the integration point.
+        "hrp_advisory": hrp_advisory_tilts(),
+    }
+
+# ---------------------------------------------------------------------------
+# HRP ADVISORY TILTS (T2 artifact consumer — OFF by default, never auto-trades)
+# ---------------------------------------------------------------------------
+
+def load_hrp_weights(path=None):
+    """Load the T2 HRP artifact (data/hrp_weights.json) or None if absent."""
+    path = path or os.path.join(DATA_DIR, "hrp_weights.json")
+    art = load_json(path, None)
+    return art if isinstance(art, dict) else None
+
+
+def hrp_advisory_tilts(*, enabled=None, hrp_path=None, limits=None):
+    """ADVISORY HRP target weights, clamped inside the hardcoded single-name caps.
+
+    Gated by HRP_TILTS_ENABLED (default OFF). When off (or the artifact is
+    missing) it returns a disabled stub with weights=None and has ZERO effect on
+    allocation. When on, each weight is clamped to the single-name cap and the
+    uninvested remainder is routed to cash (NOT renormalized — renormalizing would
+    re-inflate a name back over its cap). Never relaxes a cap; never places an
+    order. Wiring these into live orders is a separate, explicitly-approved step.
+    """
+    if enabled is None:
+        enabled = os.environ.get("HRP_TILTS_ENABLED", "").strip().lower() in ("1", "true", "yes", "on")
+    if not enabled:
+        return {"enabled": False, "weights": None,
+                "note": "HRP tilts OFF (set HRP_TILTS_ENABLED=1) — no effect on allocation."}
+    art = load_hrp_weights(hrp_path)
+    if not art or not isinstance(art.get("weights"), dict) or not art["weights"]:
+        return {"enabled": True, "weights": None,
+                "note": "HRP enabled but artifact missing/empty — no effect on allocation."}
+    if limits is None:
+        limits = load_json(os.path.join(CONFIG_DIR, "risk_limits.json"))
+    caps = (limits or {}).get("max_single_position_pct", {}) or {}
+    cap = float(caps.get("stock", 8)) / 100.0          # conservative single-name cap
+    clamped = {s: min(float(w), cap) for s, w in art["weights"].items()
+               if isinstance(w, (int, float))}
+    invested = sum(clamped.values())
+    return {
+        "enabled": True,
+        "source_generated_at": art.get("generated_at"),
+        "shrinkage_delta": art.get("shrinkage_delta"),
+        "single_name_cap_pct": round(cap * 100, 2),
+        "weights": {s: round(w, 6) for s, w in clamped.items()},
+        "cash_residual": round(max(0.0, 1.0 - invested), 6),
+        "note": "ADVISORY only — clamped to the single-name cap; NOT applied to live orders.",
     }
 
 # ---------------------------------------------------------------------------
