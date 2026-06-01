@@ -21,6 +21,12 @@
     var quotesRefreshInterval = null;
     var globalQuotesCache = {};
 
+    /* ── Countdown state ─────────────────────────────────────────── */
+    var _cdTarget = null;      // Date: target timestamp (next open or next close)
+    var _cdIsOpen = false;     // true = market currently open (counting down to close)
+    var _cdInitialSec = 0;     // seconds remaining when countdown was last set from API
+    var _cdInterval = null;    // setInterval handle
+
     function getLogoHtml(sym, size = 28) {
         if (!sym) return '';
         var ticker = sym.toUpperCase().trim();
@@ -39,6 +45,23 @@
             'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
             'onmouseover="this.style.transform=\'scale(1.08)\'" ' +
             'onmouseout="this.style.transform=\'scale(1)\'" />';
+    }
+
+    function getPortfolioLogoHtml(id, size = 28) {
+        var initials = 'PF';
+        var grad = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
+        if (id === 'portfolio_1') {
+            initials = 'SIB';
+            grad = 'linear-gradient(135deg, #7c3aed, #2563eb)'; // Purple to Blue
+        } else if (id === 'portfolio_2') {
+            initials = 'CSH';
+            grad = 'linear-gradient(135deg, #ea580c, #f97316)'; // Dark Orange to Light Orange
+        } else if (id === 'portfolio_3') {
+            initials = 'CSN';
+            grad = 'linear-gradient(135deg, #0d9488, #10b981)'; // Teal to Emerald Green
+        }
+        return '<div style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; background:' + grad + '; display:flex; align-items:center; justify-content:center; color:#fff; font-size:' + (size * 0.38) + 'px; font-weight:800; font-family:var(--pf-mono); flex-shrink:0; border:1px solid rgba(255,255,255,0.15); box-shadow:0 2px 8px rgba(0,0,0,0.2); transition:transform 0.2s;" ' +
+            'onmouseover="this.style.transform=\'scale(1.08)\'" onmouseout="this.style.transform=\'scale(1)\'">' + initials + '</div>';
     }
 
     // Curated data-feed universe — these are the symbols the system collects
@@ -660,7 +683,7 @@
                 var cls = pnl >= 0 ? 'pf-pos' : 'pf-neg';
                 var colorStyle = pnl >= 0 ? 'color: var(--pf-green);' : 'color: var(--pf-red);';
                 var hiddenCls = idx >= 10 ? ' pf-pos-extra' : '';
-                html += '<tr class="' + hiddenCls + '" style="transition: background-color 150ms ease;">' +
+                html += '<tr class="' + hiddenCls + '" data-qty="' + qty + '" data-avg="' + avg + '" data-cost-basis="' + costBasis + '" style="transition: background-color 150ms ease;">' +
                     '<td style="font-weight:800;font-family:var(--pf-mono);cursor:pointer; display:flex; align-items:center; gap:0.45rem;" onclick="document.dispatchEvent(new CustomEvent(\'mp:selectSymbol\',{detail:\'' + sym + '\'}))">' +
                         getLogoHtml(sym, 20) +
                         '<span>' + sym + '</span>' +
@@ -1245,21 +1268,28 @@
                 container.appendChild(row);
             });
         } else {
-            // Render custom portfolio cards inside list tab
+            // Render custom portfolio cards inside list tab (compact premium symbols rows)
             Object.values(portfolioHoldings).forEach(function (pf) {
+                var sym = pf.id === 'portfolio_1' ? 'SIB' : pf.id === 'portfolio_2' ? 'CSH' : 'CSN';
+                var name = pf.label;
                 var pctClass = pf.dayPnlPct >= 0 ? 'pf-pos' : 'pf-neg';
                 var arrow = pf.dayPnlPct >= 0 ? '▲' : '▼';
+                var sign = pf.dayPnlPct >= 0 ? '+' : '';
+
                 var card = document.createElement('div');
                 card.className = 'mp-list-item';
-                card.style.padding = '0.55rem 0.75rem';
+                card.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.55rem 0.65rem; cursor:pointer;';
                 card.innerHTML = `
-                    <div class="mp-list-info" style="flex:1;">
-                        <span class="mp-list-symbol" style="font-size:0.72rem; color:var(--teal); text-transform:uppercase;">${pf.label}</span>
-                        <span class="mp-list-name" style="font-size:0.64rem;">${pf.positions} positions · ${pf.strategy}</span>
+                    <div style="display:flex; align-items:center; gap:0.55rem; flex:1; min-width:0;">
+                        ${getPortfolioLogoHtml(pf.id, 28)}
+                        <div class="mp-list-info" style="flex:1; min-width:0;">
+                            <span class="mp-list-symbol" style="display:block; font-weight:700; color:var(--ink);">${sym}</span>
+                            <span class="mp-list-name" style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem; color:var(--muted);">${name}</span>
+                        </div>
                     </div>
-                    <div style="text-align:end;">
-                        <div style="font-size:0.82rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono);">${fmtMoney(pf.equity)}</div>
-                        <span class="pf-num ${pctClass}" style="font-size:0.65rem; font-weight:700;">${arrow} ${Math.abs(pf.dayPnlPct).toFixed(2)}%</span>
+                    <div style="text-align:end; flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end;">
+                        <span style="font-size:0.75rem; font-weight:700; color:var(--ink); font-family:var(--pf-mono);">${fmtMoney(pf.equity)}</span>
+                        <span class="pf-num ${pctClass}" style="font-size:0.64rem; font-weight:700;">${arrow} ${sign}${Math.abs(pf.dayPnlPct).toFixed(2)}%</span>
                     </div>
                 `;
                 card.addEventListener('click', function() { window.location.href = '/portfolio-detail.html?id=' + pf.id; });
@@ -1399,7 +1429,102 @@
                 var nextOpenEl = document.getElementById('nextOpenTime');
                 if (nextOpenEl) { nextOpenEl.textContent = nextOpen.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }); }
             }
+
+            /* ── Set countdown target from API data ── */
+            var now = data.timestamp ? new Date(data.timestamp) : new Date();
+            _cdIsOpen = !!data.is_open;
+            if (_cdIsOpen && data.next_close) {
+                _cdTarget = new Date(data.next_close);
+            } else if (!_cdIsOpen && data.next_open) {
+                _cdTarget = new Date(data.next_open);
+            } else {
+                _cdTarget = null;
+            }
+            if (_cdTarget) {
+                var secRemaining = Math.max(0, (_cdTarget - now) / 1000);
+                /* Only reset initial seconds when the phase changes or on first load */
+                if (_cdInitialSec === 0 || Math.abs(secRemaining - _cdInitialSec) > 120) {
+                    _cdInitialSec = secRemaining;
+                }
+                startCountdownTick();
+            }
         } catch (e) { console.error('Market clock error:', e); }
+    }
+
+    /* ─── Live Countdown Ticker ──────────────────────────────────────── */
+    function startCountdownTick() {
+        if (_cdInterval) return; /* already running */
+        _cdInterval = setInterval(tickCountdown, 1000);
+        tickCountdown(); /* paint immediately */
+    }
+
+    function tickCountdown() {
+        if (!_cdTarget) return;
+        var now = new Date();
+        var diffMs = _cdTarget - now;
+
+        if (diffMs <= 0) {
+            /* Countdown expired — reload clock data to get updated target */
+            clearInterval(_cdInterval);
+            _cdInterval = null;
+            _cdInitialSec = 0;
+            var cdTime = document.getElementById('cdTime');
+            if (cdTime) cdTime.textContent = '00:00:00';
+            setTimeout(loadMarketClock, 2000);
+            return;
+        }
+
+        var totalSec = Math.floor(diffMs / 1000);
+        var h = Math.floor(totalSec / 3600);
+        var m = Math.floor((totalSec % 3600) / 60);
+        var s = totalSec % 60;
+        var hh = String(h).padStart(2, '0');
+        var mm = String(m).padStart(2, '0');
+        var ss = String(s).padStart(2, '0');
+
+        /* Update time display */
+        var cdTime = document.getElementById('cdTime');
+        if (cdTime) {
+            cdTime.textContent = hh + ':' + mm + ':' + ss;
+            /* Colour cues: imminent open (< 5 min) = green; closing soon (< 15 min) = amber */
+            cdTime.classList.remove('cd-imminent', 'cd-closing-soon');
+            if (!_cdIsOpen && totalSec < 300) cdTime.classList.add('cd-imminent');
+            else if (_cdIsOpen && totalSec < 900) cdTime.classList.add('cd-closing-soon');
+        }
+
+        /* Update label + sub-text */
+        var cdLabel = document.getElementById('cdLabel');
+        var cdSub   = document.getElementById('cdSub');
+        if (cdLabel) cdLabel.textContent = _cdIsOpen ? 'TIME UNTIL CLOSE' : 'TIME UNTIL OPEN';
+        if (cdSub) {
+            if (_cdIsOpen) {
+                cdSub.textContent = totalSec < 900 ? 'Closing soon — wrap up!' : 'Market is open';
+            } else {
+                cdSub.textContent = totalSec < 300 ? 'Opening imminently!' : 'US Equities — NYSE/NASDAQ';
+            }
+        }
+
+        /* Update ring icon: open market → clock, closed → hourglass */
+        var cdRingIcon = document.getElementById('cdRingIcon');
+        if (cdRingIcon) {
+            if (_cdIsOpen) {
+                cdRingIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+            } else {
+                cdRingIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>';
+            }
+        }
+
+        /* Update SVG ring: fill = fraction of time elapsed since countdown started */
+        var ring = document.getElementById('cdRingFill');
+        if (ring && _cdInitialSec > 0) {
+            var circumference = 113.1; /* 2π × 18 */
+            var elapsed = _cdInitialSec - totalSec;
+            var progress = Math.min(1, Math.max(0, elapsed / _cdInitialSec));
+            var offset = circumference * (1 - progress);
+            ring.style.strokeDashoffset = offset.toFixed(2);
+            /* Swap stroke colour: open = teal, closed = muted orange */
+            ring.style.stroke = _cdIsOpen ? 'var(--teal)' : 'rgba(229,90,31,0.55)';
+        }
     }
 
     /* ─── Update Ticker Ribbon with Live Data ────────────────────────── */
@@ -1552,18 +1677,48 @@
             });
         }
 
-        // Update positions table prices in-place (no DOM rebuild)
+        // Update positions table prices, values, and P&L in-place dynamically (no DOM rebuild)
         var posBody = document.getElementById('myPositionsBody');
         if (posBody) {
-            var targets = posBody.querySelectorAll('.mp-tick-target');
-            targets.forEach(function(td) {
-                var tr = td.parentElement;
-                if (!tr) return;
+            var rows = posBody.querySelectorAll('tr:not(#showMoreRow)');
+            rows.forEach(function(tr) {
                 var symCell = tr.cells[0];
                 if (!symCell) return;
                 var sym = symCell.textContent.trim().toUpperCase();
                 var db = stockPriceDatabase[sym];
-                if (db) td.textContent = '$' + db.price.toFixed(2);
+                if (!db) return;
+
+                // Update market price (Column 3)
+                var mktPriceTd = tr.cells[3];
+                if (mktPriceTd) mktPriceTd.textContent = '$' + db.price.toFixed(2);
+
+                // Read quantities and cost basis
+                var qty = parseFloat(tr.getAttribute('data-qty')) || 0;
+                var avg = parseFloat(tr.getAttribute('data-avg')) || 0;
+                var costBasis = parseFloat(tr.getAttribute('data-cost-basis')) || (qty * avg);
+
+                var mktVal = qty * db.price;
+                var pnl = mktVal - costBasis;
+                var pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
+
+                // Update Market Value (Column 4)
+                var mktValTd = tr.cells[4];
+                if (mktValTd) mktValTd.textContent = '$' + mktVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+                // Update P&L (Column 5)
+                var pnlTd = tr.cells[5];
+                if (pnlTd) {
+                    var sign = pnl >= 0 ? '▲' : '▼';
+                    pnlTd.textContent = sign + ' $' + Math.abs(pnl).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+                    pnlTd.className = pnl >= 0 ? 'pf-pos' : 'pf-neg';
+                }
+
+                // Update P&L% (Column 6)
+                var pnlPctTd = tr.cells[6];
+                if (pnlPctTd) {
+                    pnlPctTd.textContent = (pnl >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%';
+                    pnlPctTd.className = pnl >= 0 ? 'pf-pos' : 'pf-neg';
+                }
             });
         }
     }
@@ -2083,6 +2238,18 @@ window.loadChartForPeriod = loadChartForPeriod;
         loadUSNews();
 
         await loadRealQuotes(allSymbols);
+
+        // Pre-fetch portfolios overview
+        try {
+            var pfData = await apiFetch('/api/portfolios/overview');
+            if (pfData && Array.isArray(pfData)) {
+                pfData.forEach(function (pf) {
+                    portfolioHoldings[pf.id] = pf;
+                });
+            }
+        } catch(e) {
+            console.error('Failed to pre-fetch portfolios overview:', e);
+        }
 
         renderWatchlistPane();
         renderTopLists();

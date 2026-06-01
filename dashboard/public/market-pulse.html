@@ -845,6 +845,188 @@
         [data-theme="light"] .mp-search-input { background: var(--surface); }
         [data-theme="light"] .order-control { background: var(--surface); }
         [data-theme="light"] .qty-adjust-btn { background: var(--surface); }
+
+        /* High-specificity, ultra-premium green/red styling for profit/loss numbers */
+        .pos-table td.pf-pos, .pf-pos, [data-theme] .pos-table td.pf-pos {
+            color: var(--pf-green) !important;
+        }
+        .pos-table td.pf-neg, .pf-neg, [data-theme] .pos-table td.pf-neg {
+            color: var(--pf-red) !important;
+        }
+
+        /* ── Collapsible Search ─────────────────────────────────────── */
+        .mp-search-bar {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex: none;
+            max-width: none;
+        }
+        .mp-search-icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--page);
+            color: var(--muted);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: color 160ms ease, border-color 160ms ease, background 160ms ease, transform 160ms ease;
+            z-index: 2;
+        }
+        .mp-search-icon-btn:hover {
+            color: var(--teal);
+            border-color: rgba(229,90,31,0.35);
+            background: var(--teal-soft);
+            transform: scale(1.06);
+        }
+        .mp-search-icon-btn.active {
+            color: var(--teal);
+            border-color: rgba(229,90,31,0.40);
+            background: var(--teal-soft);
+        }
+        .mp-search-expand-wrap {
+            width: 0;
+            overflow: hidden;
+            transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease, margin 300ms ease;
+            opacity: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .mp-search-expand-wrap.open {
+            width: 254px;
+            opacity: 1;
+            margin-inline-start: 0.5rem;
+        }
+        .mp-search-input {
+            width: 254px;
+            background: var(--page);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 0.5rem 2.2rem 0.5rem 1rem;
+            color: var(--ink);
+            font-size: 0.82rem;
+            font-family: var(--pf-mono);
+            transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+        .mp-search-input:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 10px rgba(229,90,31,0.15);
+        }
+        .mp-search-close-btn {
+            position: absolute;
+            right: 0.65rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0.1rem;
+            border-radius: 50%;
+            transition: color 150ms ease;
+        }
+        .mp-search-close-btn:hover { color: var(--teal); }
+
+        /* ── Countdown Card ─────────────────────────────────────────── */
+        .mp-countdown-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, rgba(229,90,31,0.07) 0%, rgba(255,138,61,0.03) 100%);
+            border: 1px solid rgba(229,90,31,0.22);
+            border-radius: 0.85rem;
+            padding: 0.55rem 1rem;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .mp-countdown-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(229,90,31,0.40), transparent);
+            pointer-events: none;
+        }
+        .mp-cd-ring-wrap {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+        }
+        .mp-cd-ring-svg {
+            width: 42px;
+            height: 42px;
+            transform: rotate(-90deg);
+        }
+        .mp-cd-ring-track {
+            fill: none;
+            stroke: rgba(229,90,31,0.12);
+            stroke-width: 3;
+        }
+        .mp-cd-ring-fill {
+            fill: none;
+            stroke: var(--teal);
+            stroke-width: 3;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .mp-cd-ring-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--teal);
+        }
+        .mp-cd-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.08rem;
+            min-width: 0;
+        }
+        .mp-cd-label {
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .mp-cd-time {
+            font-family: var(--pf-mono);
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: var(--ink);
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            white-space: nowrap;
+            transition: color 400ms ease;
+        }
+        .mp-cd-time.cd-imminent {
+            color: var(--pf-green);
+        }
+        .mp-cd-time.cd-closing-soon {
+            color: var(--pf-amber, #f59e0b);
+        }
+        .mp-cd-sub {
+            font-size: 0.6rem;
+            color: var(--teal);
+            font-weight: 600;
+            white-space: nowrap;
+            margin-top: 0.1rem;
+            opacity: 0.85;
+        }
+        [data-theme="light"] .mp-search-input { background: var(--surface); }
+        [data-theme="light"] .mp-search-icon-btn { background: var(--surface); }
     </style>
 </head>
 <body>
@@ -962,9 +1144,42 @@
                 <span class="mp-header-meta" style="color:var(--muted);font-size:0.68rem;" id="marketClockZone">Eastern Time</span>
             </div>
 
-            <div class="mp-search-bar">
-                <svg class="mp-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" class="mp-search-input" id="stockSearch" placeholder="Search US Symbol (e.g. AAPL, NVDA, TSLA)" data-key="search_placeholder">
+            <!-- ── Live Market Countdown Card ─────────────────────── -->
+            <div class="mp-countdown-card" id="mpCountdownCard">
+                <!-- SVG progress ring -->
+                <div class="mp-cd-ring-wrap">
+                    <svg class="mp-cd-ring-svg" viewBox="0 0 42 42">
+                        <circle class="mp-cd-ring-track" cx="21" cy="21" r="18"/>
+                        <circle class="mp-cd-ring-fill" id="cdRingFill" cx="21" cy="21" r="18"
+                            stroke-dasharray="113.1"
+                            stroke-dashoffset="113.1"/>
+                    </svg>
+                    <!-- Hourglass icon centred inside ring -->
+                    <span class="mp-cd-ring-icon" id="cdRingIcon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                        </svg>
+                    </span>
+                </div>
+                <!-- Text info -->
+                <div class="mp-cd-info">
+                    <span class="mp-cd-label" id="cdLabel">TIME UNTIL OPEN</span>
+                    <span class="mp-cd-time" id="cdTime">--:--:--</span>
+                    <span class="mp-cd-sub" id="cdSub">Calculating…</span>
+                </div>
+            </div>
+
+            <!-- ── Collapsible Symbol Search ─────────────────────── -->
+            <div class="mp-search-bar" id="mpSearchBar">
+                <button class="mp-search-icon-btn" id="mpSearchToggle" aria-label="Search symbol" title="Search symbol">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+                <div class="mp-search-expand-wrap" id="mpSearchExpand">
+                    <input type="text" class="mp-search-input" id="stockSearch" placeholder="Symbol (e.g. AAPL, NVDA)" data-key="search_placeholder" autocomplete="off">
+                    <button class="mp-search-close-btn" id="mpSearchClose" aria-label="Close search">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1324,5 +1539,41 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/assets/market-pulse.js"></script>
+    <script>
+    /* Collapsible header search — wired after market-pulse.js loads */
+    (function () {
+        var toggle = document.getElementById('mpSearchToggle');
+        var expand = document.getElementById('mpSearchExpand');
+        var close  = document.getElementById('mpSearchClose');
+        var input  = document.getElementById('stockSearch');
+        if (!toggle || !expand) return;
+
+        function openSearch() {
+            expand.classList.add('open');
+            toggle.classList.add('active');
+            setTimeout(function () { if (input) input.focus(); }, 310);
+        }
+        function closeSearch() {
+            expand.classList.remove('open');
+            toggle.classList.remove('active');
+            if (input) input.blur();
+        }
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            expand.classList.contains('open') ? closeSearch() : openSearch();
+        });
+        if (close) close.addEventListener('click', function (e) {
+            e.stopPropagation();
+            closeSearch();
+        });
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('mpSearchBar').contains(e.target)) closeSearch();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeSearch();
+        });
+    })();
+    </script>
 </body>
 </html>
