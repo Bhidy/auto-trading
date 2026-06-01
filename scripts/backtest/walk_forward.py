@@ -75,7 +75,7 @@ def walk_forward(symbol_bars, spy_bars, params, test_days=63, warmup=150,
 def evaluate_overfitting_screens(cur_windows, cand_windows, *,
                                  challenger_sharpe=None, cand_sharpe=None,
                                  pbo_reject=0.5, dsr_reject=0.5,
-                                 challenger_margin=0.10):
+                                 challenger_margin=0.10, extra_trial_sharpes=None):
     """Pure overfitting screens (V1/V2) applied on top of the OOS Sharpe test.
 
     Conservative by design: these VETO a clearly overfit / benchmark-losing
@@ -95,13 +95,18 @@ def evaluate_overfitting_screens(cur_windows, cand_windows, *,
     cur_sh = [w.get("sharpe", 0.0) for w in (cur_windows or [])]
     n_windows = len(cand_sh)
 
-    # Deflated Sharpe across the candidate's OOS windows (windows ≈ trials).
+    # Deflated Sharpe across the candidate's OOS windows (windows ≈ trials),
+    # augmented with the cumulative trial history (trial_ledger) so N reflects the
+    # WHOLE search, not one run. More historical trials -> higher expected-max
+    # hurdle -> stricter. Default (no history) reproduces the prior behavior.
     deflated = None
     if n_windows >= 2:
-        deflated = _metrics.deflated_sharpe_ratio(cand_sh, n_obs=n_windows)
+        trial_set = cand_sh + list(extra_trial_sharpes or [])
+        deflated = _metrics.deflated_sharpe_ratio(trial_set, n_obs=n_windows)
         if deflated < dsr_reject:
             reasons.append(f"deflated Sharpe {deflated:.3f} < {dsr_reject} "
-                           f"(not distinguishable from noise)")
+                           f"(not distinguishable from noise across "
+                           f"{len(trial_set)} trials)")
 
     # PBO across the two configurations over the OOS windows.
     pbo = None
@@ -128,7 +133,7 @@ def evaluate_overfitting_screens(cur_windows, cand_windows, *,
 
 
 def gate_param_change(current_params, candidate_params, symbol_bars, spy_bars,
-                      min_sharpe_margin=-0.05, **kw):
+                      min_sharpe_margin=-0.05, extra_trial_sharpes=None, **kw):
     """Return (approved: bool, detail: dict).
 
     Approves the candidate only if it passes ALL gates, fully automatically:
@@ -170,7 +175,8 @@ def gate_param_change(current_params, candidate_params, symbol_bars, spy_bars,
             challenger_sharpe = None
         screens = evaluate_overfitting_screens(
             cur["windows"], cand["windows"],
-            challenger_sharpe=challenger_sharpe, cand_sharpe=cand_sharpe)
+            challenger_sharpe=challenger_sharpe, cand_sharpe=cand_sharpe,
+            extra_trial_sharpes=extra_trial_sharpes)
 
     approved = bool(sharpe_ok and screens["ok"])
     return approved, {

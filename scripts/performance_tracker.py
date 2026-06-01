@@ -316,12 +316,22 @@ def adapt_parameters(validate_with_bars=None):
             params["confidence_buy_threshold"] = min(params["confidence_buy_threshold"] + 0.02, 0.70)
 
     gate_detail = None
+    approved = None
     knobs_changed = any(original.get(k) != params.get(k) for k in _GATED_KNOBS)
     if validate_with_bars is not None and knobs_changed:
+        # Deflate the gate's Sharpe against the CUMULATIVE trial history (not just
+        # this run's windows), so multiple-testing selection bias is corrected.
+        try:
+            from shared.trial_ledger import historical_oos_sharpes
+            hist_sharpes = historical_oos_sharpes(DATA_DIR)
+        except Exception:
+            hist_sharpes = []
         try:
             from backtest.walk_forward import gate_param_change
             symbol_bars, spy_bars = validate_with_bars
-            approved, gate_detail = gate_param_change(original, params, symbol_bars, spy_bars)
+            approved, gate_detail = gate_param_change(
+                original, params, symbol_bars, spy_bars,
+                extra_trial_sharpes=hist_sharpes)
             if not approved:
                 # Revert ONLY the strategy knobs; keep refreshed metric fields.
                 for k in _GATED_KNOBS:
@@ -329,10 +339,26 @@ def adapt_parameters(validate_with_bars=None):
                         params[k] = original[k]
         except Exception as e:
             # Fail closed: an un-validatable change is not applied.
+            approved = False
             gate_detail = {"error": str(e)}
             for k in _GATED_KNOBS:
                 if k in original:
                     params[k] = original[k]
+        # Record this evaluation in the persistent trial ledger (best-effort) so a
+        # future DSR deflates against a truthful N. Never breaks the trading loop.
+        try:
+            from shared.trial_ledger import record_trial
+            gd = gate_detail or {}
+            record_trial(DATA_DIR, {
+                "knobs": {k: params.get(k) for k in _GATED_KNOBS},
+                "n_obs": gd.get("n_windows"),
+                "oos_sharpe": gd.get("candidate_oos_sharpe"),
+                "dsr": gd.get("deflated_sharpe"),
+                "pbo": gd.get("pbo"),
+                "approved": approved,
+            })
+        except Exception:
+            pass
 
     save_json("strategy_params.json", params)
 
