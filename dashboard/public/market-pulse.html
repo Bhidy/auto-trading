@@ -1319,6 +1319,7 @@
                         <button class="mp-tab" id="tabOptions" data-key="pane_options">Options</button>
                         <button class="mp-tab" id="tabNews" data-key="pane_news">News</button>
                         <button class="mp-tab" id="tabProfileTab" data-key="pane_profile_tab">Specs</button>
+                        <button class="mp-tab" id="tabAllOrdersMP" data-key="pane_all_orders">All Orders</button>
                     </div>
 
                     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
@@ -1367,6 +1368,13 @@
                     </div>
                 </div>
                 <div id="detailsContentPane" style="display:none;"></div>
+                <!-- All Orders pane — shows unified orders across all 3 portfolios -->
+                <div id="allOrdersMPPane" style="display:none;">
+                    <!-- Filter bar injected by market-pulse.js -->
+                    <div id="mpAoFilters"></div>
+                    <!-- Table injected by market-pulse.js -->
+                    <div id="mpAoTableBody" style="margin-top:.65rem;"></div>
+                </div>
             </div>
 
             <!-- Positions & Holdings Card (Populated with real loaded configurations) -->

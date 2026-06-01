@@ -1926,6 +1926,49 @@ app.delete('/api/portfolio/:id/orders', async (req, res) => {
     }
 });
 
+// B6-pre. Unified orders — all portfolios' trade_log (executed) + live open orders
+// Used by the "All Orders" tab on portfolio-detail and market-pulse pages.
+// ?portfolio_id=all|portfolio_1|portfolio_2|portfolio_3
+app.get('/api/orders/unified', async (req, res) => {
+    loadConfig();
+    const { portfolio_id } = req.query;
+    const ids = (portfolio_id && portfolio_id !== 'all')
+        ? [portfolio_id]
+        : Object.keys(portfoliosConfig);
+
+    const executed = [];
+    const open = [];
+
+    for (const id of ids) {
+        const cfg = portfoliosConfig[id];
+        if (!cfg) continue;
+        const paths = getPortfolioPaths(id);
+        const tradeLog = readJsonFile(paths.tradeLog, []);
+        tradeLog.forEach(t => {
+            executed.push({ ...t, _portfolio_id: id, _portfolio_label: cfg.label });
+        });
+        try {
+            const liveOrders = await alpacaRequest(
+                'GET',
+                `${cfg.base_url}/v2/orders?status=open&limit=500`,
+                cfg.api_key, cfg.api_secret
+            );
+            if (Array.isArray(liveOrders)) {
+                liveOrders.forEach(o => open.push({ ...o, _portfolio_id: id, _portfolio_label: cfg.label }));
+            }
+        } catch (_) {}
+    }
+
+    // Sort executed newest-first
+    executed.sort((a, b) => {
+        const da = new Date(a.date || (a.timestamp || '').slice(0, 10) || 0);
+        const db = new Date(b.date || (b.timestamp || '').slice(0, 10) || 0);
+        return db - da;
+    });
+
+    res.json({ executed, open, fetched_at: new Date().toISOString() });
+});
+
 // B6. Place crypto order
 app.post('/api/portfolio/:id/crypto-order', async (req, res) => {
     const cfg = portfoliosConfig[req.params.id];

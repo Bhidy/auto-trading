@@ -31,6 +31,9 @@
     var holdingsViewMode = 'table'; // 'table' or 'chart'
     var tabChartInst = null; // Chart.js instance for holdings tab
 
+    // All Orders tab state (period/status/portfolio filter + cached data + refresh timer)
+    var _aoState = { period: '1D', status: 'all', pf: 'all', data: null, timer: null, loading: false };
+
     // Selected stock chart and sidebar states
     var selectedSymbol = null; // first holding — used to highlight the active row
 
@@ -1621,6 +1624,10 @@
 
     /* ─── Positions Matrix (Holdings Table with Click switching) ──────── */
     function renderHoldings(tab) {
+        // Stop the All Orders auto-refresh timer when switching away from that tab
+        if (holdingsTab === 'allOrders' && tab !== 'allOrders') {
+            if (_aoState.timer) { clearInterval(_aoState.timer); _aoState.timer = null; }
+        }
         holdingsTab = tab;
         tabChartInst = null;
         var sec = document.getElementById('holdingsSection');
@@ -1632,6 +1639,7 @@
             { k: 'allocation',  l: t('allocation') },
             { k: 'dividendTab', l: t('dividendTab') },
             { k: 'orders',      l: il('Open Orders', 'الأوامر المفتوحة') },
+            { k: 'allOrders',   l: il('All Orders', 'جميع الأوامر') },
         ];
         var tabs = HTABS.map(function(tb) {
             return '<button class="pf-tab' + (holdingsTab === tb.k ? ' active' : '') + '" data-tab="' + tb.k + '">' + tb.l + '</button>';
@@ -1641,11 +1649,13 @@
                         holdingsTab === 'performance'   ? holdingsPerformanceTable()  :
                         holdingsTab === 'allocation'    ? holdingsAllocationTable()   :
                         holdingsTab === 'orders'        ? holdingsOrdersTable()       :
+                        holdingsTab === 'allOrders'     ? holdingsAllOrdersTable()    :
                                                           holdingsDividendsTable();
         var chartHtml = holdingsTab === 'overview'     ? holdingsOverviewChart()      :
                         holdingsTab === 'performance'   ? holdingsPerformanceChart()   :
                         holdingsTab === 'allocation'    ? holdingsAllocationChart()    :
                         holdingsTab === 'orders'        ? holdingsOrdersTable()        :
+                        holdingsTab === 'allOrders'     ? holdingsAllOrdersTable()     :
                                                           holdingsDividendsChart();
 
         var viewLabel = holdingsViewMode === 'table' ? (lang==='ar' ? 'عرض رسم بياني' : 'Chart View') : (lang==='ar' ? 'عرض جدول' : 'Table View');
@@ -1696,6 +1706,8 @@
         }
         // Orders tab always shows table (no chart variant)
         if (holdingsTab === 'orders') wireCancelButtons();
+        // All Orders tab: async fetch + filter wiring
+        if (holdingsTab === 'allOrders') setTimeout(initAllOrdersTab, 0);
 
         // Bind row clicks → drill into the dedicated stock detail page
         if (holdingsViewMode === 'table') {
@@ -1798,23 +1810,265 @@
     }
 
     function holdingsDividendsTable() {
-        if (!portfolio.transactions.length) return '<div class="pf-empty">' + (lang==='ar'?'لا توجد معاملات مسجلة.':'No transactions recorded.') + '</div>';
-        
-        var ths = [il('Date', 'التاريخ'), t('symbol'), il('Type', 'النوع'), il('Qty', 'الكمية'), il('Price', 'السعر'), il('Cost Basis', 'تكلفة المركز'), il('Description', 'الوصف')];
-        var rows = portfolio.transactions.slice().reverse().slice(0, 20).map(function(tx){
-            var cls = tx.type === 'buy' ? 'pf-neg' : 'pf-pos';
-            var activeClass = tx.symbol === selectedSymbol ? 'style="background:rgba(229,90,31,0.06); font-weight:bold;"' : '';
-            return '<tr data-symbol="' + tx.symbol + '" ' + activeClass + '>' +
-                '<td>' + tx.date + '</td>' +
-                '<td>' + symChipBySymbol(tx.symbol) + '</td>' +
-                '<td><span class="pf-mock-badge-chip ' + (tx.type === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg') + '">' + tx.type.toUpperCase() + '</span></td>' +
-                '<td class="num pf-num">' + tx.quantity + '</td>' +
-                '<td class="num pf-num">$' + fmt(tx.price) + '</td>' +
-                '<td class="num pf-num ' + cls + '">$' + fmt(tx.quantity * tx.price) + '</td>' +
-                '<td style="font-size:0.75rem; color:var(--muted); max-width:200px; overflow:hidden; text-overflow:ellipsis;" title="' + escHtml(tx.notes) + '">' + escHtml(tx.notes) + '</td>' +
+        // Use raw trade_log from server cache (all trades, no entry cap).
+        // Fallback to portfolio.transactions if cache unavailable.
+        var rawTrades = (detailCache && detailCache.trade_log && detailCache.trade_log.length)
+            ? detailCache.trade_log
+            : portfolio.transactions;
+
+        if (!rawTrades || !rawTrades.length) {
+            return '<div class="pf-empty" style="padding:1.5rem;">' + il('No executed trades on record.', 'لا توجد صفقات منفذة مسجّلة.') + '</div>';
+        }
+
+        var ths = [il('Date', 'التاريخ'), t('symbol'), il('Type', 'النوع'), il('Qty', 'الكمية'), il('Price', 'السعر'), il('Cost Basis', 'تكلفة المركز'), il('Portfolio', 'المحفظة'), il('Description', 'الوصف')];
+
+        // Normalize both raw trade_log entries and mapped transaction objects
+        var rows = rawTrades.slice().reverse().map(function(t) {
+            // Raw trade_log entry from server (has timestamp, not date)
+            var dateStr = t.date || (t.timestamp ? t.timestamp.slice(0, 10) : '') || '—';
+            var symbol  = t.symbol || '';
+            var side    = t.side || t.type || 'buy';
+            var qty     = parseFloat(t.qty || t.quantity || 0);
+            var price   = parseFloat(t.entry_price || t.filled_avg_price || t.limit_price || t.price || 0);
+            var costBasis = qty * price;
+            var source  = t._portfolio_label || t.source_label || t.notes && (t.notes.match(/\[([^\]]+)\]/) || [])[1] || '';
+            var desc    = t.reason || (Array.isArray(t.reasons) ? t.reasons.join(', ') : (t.reasons || '')) || t.notes || '';
+            var sideCls = side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
+            var costCls = side === 'buy' ? 'pf-neg' : 'pf-pos';
+            var isActive = symbol === selectedSymbol ? ' style="background:rgba(229,90,31,0.06);"' : '';
+            return '<tr data-symbol="' + escHtml(symbol) + '"' + isActive + '>' +
+                '<td class="pf-num" style="white-space:nowrap;">' + escHtml(dateStr) + '</td>' +
+                '<td>' + symChipBySymbol(symbol) + '</td>' +
+                '<td><span class="pf-mock-badge-chip ' + sideCls + '">' + side.toUpperCase() + '</span></td>' +
+                '<td class="num pf-num">' + (qty > 0 ? qty.toLocaleString() : '—') + '</td>' +
+                '<td class="num pf-num">' + (price > 0 ? '$' + fmt(price) : '—') + '</td>' +
+                '<td class="num pf-num ' + costCls + '">' + (costBasis > 0 ? '$' + fmt(costBasis) : '—') + '</td>' +
+                '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(source) + '</td>' +
+                '<td style="font-size:.72rem;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(desc) + '">' + escHtml(desc.slice(0, 80)) + '</td>' +
             '</tr>';
         }).join('');
+
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
+    }
+
+    /* ─── All Orders tab — unified view across all 3 portfolios ──────── */
+
+    function holdingsAllOrdersTable() {
+        var isDark = document.documentElement.dataset.theme !== 'light';
+        var filterBg = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(26,15,8,0.03)';
+        var periods = ['1D','5D','1M','3M'];
+        var periodBtns = periods.map(function(p) {
+            var isAct = p === _aoState.period;
+            return '<button class="pf-btn pf-btn--sm ao-period-btn' + (isAct ? ' pf-btn--primary' : '') + '" data-ao-period="' + p + '" style="padding:.25rem .6rem;font-size:.68rem;min-width:2.4rem;' + (isAct ? '' : 'opacity:.7;') + '">' + p + '</button>';
+        }).join('');
+
+        var pfOptions = [
+            { v: 'all',         l: il('All Portfolios', 'الكل') },
+            { v: 'portfolio_1', l: 'Self Improving Brain' },
+            { v: 'portfolio_2', l: 'Capitol Shadow' },
+            { v: 'portfolio_3', l: 'Cautious Sniper' }
+        ].map(function(o) {
+            return '<option value="' + o.v + '"' + (o.v === _aoState.pf ? ' selected' : '') + '>' + o.l + '</option>';
+        }).join('');
+
+        var statusOptions = [
+            { v: 'all',      l: il('All Orders', 'الكل') },
+            { v: 'executed', l: il('Executed', 'منفّذة') },
+            { v: 'open',     l: il('Open', 'مفتوحة') }
+        ].map(function(o) {
+            return '<option value="' + o.v + '"' + (o.v === _aoState.status ? ' selected' : '') + '>' + o.l + '</option>';
+        }).join('');
+
+        var selStyle = 'padding:.3rem .55rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-family:Manrope,sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;';
+
+        return '<div style="display:flex;flex-direction:column;gap:.75rem;">' +
+            '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.65rem;padding:.65rem .85rem;background:' + filterBg + ';border:1px solid var(--line);border-radius:.75rem;">' +
+                '<div style="display:flex;align-items:center;gap:.35rem;">' +
+                    '<span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">' + il('Period', 'الفترة') + '</span>' +
+                    '<div style="display:flex;gap:.2rem;">' + periodBtns + '</div>' +
+                '</div>' +
+                '<div style="width:1px;height:20px;background:var(--line);flex-shrink:0;"></div>' +
+                '<div style="display:flex;align-items:center;gap:.35rem;">' +
+                    '<span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">' + il('Status', 'الحالة') + '</span>' +
+                    '<select id="aoStatusSel" style="' + selStyle + '">' + statusOptions + '</select>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:.35rem;">' +
+                    '<span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">' + il('Portfolio', 'المحفظة') + '</span>' +
+                    '<select id="aoPfSel" style="' + selStyle + '">' + pfOptions + '</select>' +
+                '</div>' +
+                '<span class="pf-live-pill" style="margin-inline-start:auto;font-size:.64rem;">' +
+                    '<span class="pf-live-dot"></span>' +
+                    '<span id="aoLiveTs">' + il('Loading…', 'جارٍ التحميل…') + '</span>' +
+                '</span>' +
+            '</div>' +
+            '<div id="aoTableBody">' +
+                '<div class="pf-empty" style="padding:2rem;text-align:center;">' +
+                    '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse-blink 1.2s infinite;margin-inline-end:.5rem;"></span>' +
+                    il('Fetching all orders across all 3 portfolios…', 'جارٍ جلب جميع الأوامر عبر المحافظ الثلاث…') +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function initAllOrdersTab() {
+        // Wire period buttons
+        document.querySelectorAll('[data-ao-period]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (_aoState.period === btn.dataset.aoPeriod) return;
+                _aoState.period = btn.dataset.aoPeriod;
+                document.querySelectorAll('[data-ao-period]').forEach(function(b) {
+                    b.classList.remove('pf-btn--primary');
+                    b.style.opacity = '.7';
+                });
+                btn.classList.add('pf-btn--primary');
+                btn.style.opacity = '1';
+                renderAllOrdersTable(); // period filter is client-side, no refetch needed
+            });
+        });
+        // Wire status select
+        var ss = document.getElementById('aoStatusSel');
+        if (ss) ss.addEventListener('change', function() {
+            _aoState.status = this.value;
+            renderAllOrdersTable();
+        });
+        // Wire portfolio select — triggers a fresh fetch
+        var ps = document.getElementById('aoPfSel');
+        if (ps) ps.addEventListener('change', function() {
+            _aoState.pf = this.value;
+            _aoState.data = null;
+            fetchAndRenderAllOrders();
+        });
+
+        // Initial fetch
+        if (_aoState.data) {
+            renderAllOrdersTable(); // use cached data if available
+        } else {
+            fetchAndRenderAllOrders();
+        }
+        // Auto-refresh every 30 s
+        if (!_aoState.timer) {
+            _aoState.timer = setInterval(fetchAndRenderAllOrders, 30000);
+        }
+    }
+
+    function fetchAndRenderAllOrders() {
+        if (_aoState.loading) return;
+        _aoState.loading = true;
+        var url = '/api/orders/unified?portfolio_id=' + (_aoState.pf || 'all');
+        fetch(url, { cache: 'no-store' })
+            .then(function(r) { return r.ok ? r.json() : { executed: [], open: [] }; })
+            .then(function(d) {
+                _aoState.data = d;
+                _aoState.loading = false;
+                renderAllOrdersTable();
+                var ts = document.getElementById('aoLiveTs');
+                if (ts) {
+                    ts.textContent = il('Updated ', 'تحديث ') +
+                        new Date().toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB',
+                            { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                }
+            })
+            .catch(function() { _aoState.loading = false; });
+    }
+
+    function renderAllOrdersTable() {
+        var body = document.getElementById('aoTableBody');
+        if (!body) return;
+        var d = _aoState.data;
+        if (!d) {
+            body.innerHTML = '<div class="pf-empty" style="padding:1.5rem;">' + il('No data yet.', 'لا توجد بيانات بعد.') + '</div>';
+            return;
+        }
+
+        // Period cutoff (client-side)
+        var cutoff = new Date(); cutoff.setHours(0, 0, 0, 0);
+        var period = _aoState.period;
+        if      (period === '1D') cutoff.setDate(cutoff.getDate() - 1);
+        else if (period === '5D') cutoff.setDate(cutoff.getDate() - 5);
+        else if (period === '1M') cutoff.setMonth(cutoff.getMonth() - 1);
+        else if (period === '3M') cutoff.setMonth(cutoff.getMonth() - 3);
+
+        var status = _aoState.status;
+        var rows = [];
+
+        // ── Executed trades from trade_log ───────────────────────────────
+        if (status === 'all' || status === 'executed') {
+            (d.executed || []).forEach(function(tr) {
+                var dateStr = tr.date || (tr.timestamp ? tr.timestamp.slice(0, 10) : '');
+                if (!dateStr || new Date(dateStr) < cutoff) return;
+                var side = tr.side || tr.type || 'buy';
+                var qty  = parseFloat(tr.qty || tr.quantity || 0);
+                var price = parseFloat(tr.entry_price || tr.filled_avg_price || tr.limit_price || tr.price || 0);
+                var costBasis = qty * price;
+                var label = tr._portfolio_label || tr.source_label || '';
+                var desc  = tr.reason || (Array.isArray(tr.reasons) ? tr.reasons.join(', ') : (tr.reasons || '')) || '';
+                var sideCls = side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
+                var costCls = side === 'buy' ? 'pf-neg' : 'pf-pos';
+                rows.push(
+                    '<tr data-symbol="' + escHtml(tr.symbol || '') + '">' +
+                    '<td class="pf-num" style="white-space:nowrap;">' + escHtml(dateStr) + '</td>' +
+                    '<td>' + symChipBySymbol(tr.symbol || '') + '</td>' +
+                    '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.62rem;">' + side.toUpperCase() + '</span></td>' +
+                    '<td class="num pf-num">' + (qty > 0 ? qty.toLocaleString() : '—') + '</td>' +
+                    '<td class="num pf-num">' + (price > 0 ? '$' + fmt(price) : '—') + '</td>' +
+                    '<td class="num pf-num ' + costCls + '">' + (costBasis > 0 ? '$' + fmt(costBasis) : '—') + '</td>' +
+                    '<td><span style="font-size:.62rem;padding:.15rem .45rem;border-radius:999px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);">' + il('Executed', 'منفّذ') + '</span></td>' +
+                    '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(label) + '</td>' +
+                    '<td style="font-size:.7rem;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escHtml(desc) + '">' + escHtml(desc.slice(0, 70)) + '</td>' +
+                    '</tr>'
+                );
+            });
+        }
+
+        // ── Live open orders from Alpaca ─────────────────────────────────
+        if (status === 'all' || status === 'open') {
+            (d.open || []).forEach(function(o) {
+                var created = (o.created_at || '').slice(0, 10);
+                if (created && new Date(created) < cutoff) return;
+                var side = o.side || 'buy';
+                var qty  = parseFloat(o.qty || o.filled_qty || 0);
+                var price = parseFloat(o.limit_price || o.stop_price || 0);
+                var label = o._portfolio_label || '';
+                var sideCls = side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
+                var statusTxt = (o.status || 'pending').replace(/_/g,' ');
+                rows.push(
+                    '<tr data-symbol="' + escHtml(o.symbol || '') + '">' +
+                    '<td class="pf-num" style="white-space:nowrap;">' + escHtml(created || '—') + '</td>' +
+                    '<td>' + symChipBySymbol(o.symbol || '') + '</td>' +
+                    '<td><span class="pf-mock-badge-chip ' + sideCls + '" style="font-size:.62rem;">' + side.toUpperCase() + '</span></td>' +
+                    '<td class="num pf-num">' + (qty > 0 ? qty.toLocaleString() : '—') + '</td>' +
+                    '<td class="num pf-num">' + (price > 0 ? '$' + fmt(price) : '—') + '</td>' +
+                    '<td class="num pf-num">—</td>' +
+                    '<td><span style="font-size:.62rem;padding:.15rem .45rem;border-radius:999px;font-weight:700;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.25);">' + escHtml(statusTxt) + '</span></td>' +
+                    '<td style="font-size:.68rem;color:var(--muted);white-space:nowrap;">' + escHtml(label) + '</td>' +
+                    '<td style="font-size:.7rem;color:var(--muted);">' + escHtml(((o.type||'') + ' · ' + (o.time_in_force||'')).replace(/^ · | · $/,'')) + '</td>' +
+                    '</tr>'
+                );
+            });
+        }
+
+        if (!rows.length) {
+            body.innerHTML = '<div class="pf-empty" style="padding:1.5rem;">' +
+                il('No orders match the selected filters.', 'لا توجد أوامر تطابق الفلاتر المحددة.') + '</div>';
+            return;
+        }
+
+        var ths = [il('Date', 'التاريخ'), il('Symbol', 'الرمز'), il('Side', 'الجهة'), il('Qty', 'الكمية'), il('Price', 'السعر'), il('Cost Basis', 'التكلفة'), il('Status', 'الحالة'), il('Portfolio', 'المحفظة'), il('Description', 'الوصف')];
+        body.innerHTML = '<div class="pf-table-wrap pf-table-scroll">' +
+            thTable(ths) + '<tbody>' + rows.join('') + '</tbody></table>' +
+        '</div>';
+
+        // Wire sort + row drill-down
+        setTimeout(function() { wireAllTables(body); }, 0);
+        body.querySelectorAll('tr[data-symbol]').forEach(function(row) {
+            var sym = row.getAttribute('data-symbol');
+            if (sym) {
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', function() {
+                    window.location.href = '/stock-detail.html?symbol=' + encodeURIComponent(sym);
+                });
+            }
+        });
     }
 
     /* ─── Open Orders tab (5th Holdings tab) ────────────────────────── */
@@ -2100,9 +2354,14 @@
 
                 // Sort rows by the clicked column
                 var rows = Array.from(tbody.querySelectorAll('tr'));
+                var ISO_DATE = /^\d{4}-\d{2}-\d{2}/;
                 rows.sort(function(a, b) {
-                    var ca = (a.cells[colIdx] || {}).textContent || '';
-                    var cb = (b.cells[colIdx] || {}).textContent || '';
+                    var ca = ((a.cells[colIdx] || {}).textContent || '').trim();
+                    var cb = ((b.cells[colIdx] || {}).textContent || '').trim();
+                    // ISO date columns sort correctly as date objects
+                    if (ISO_DATE.test(ca) && ISO_DATE.test(cb)) {
+                        return (new Date(ca.slice(0, 10)) - new Date(cb.slice(0, 10))) * sortDir;
+                    }
                     // Strip currency/percent symbols and parse as number if possible
                     var na = parseFloat(ca.replace(/[^0-9.\-]/g, ''));
                     var nb = parseFloat(cb.replace(/[^0-9.\-]/g, ''));

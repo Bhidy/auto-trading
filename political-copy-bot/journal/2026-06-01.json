@@ -9,5 +9,75 @@
     },
     "trades_executed": [],
     "trades_count": 0
+  },
+  {
+    "date": "2026-06-01",
+    "timestamp": "2026-06-01T20:35:15.581269",
+    "account_snapshot": {
+      "equity": "100220.26",
+      "cash": "89434.75",
+      "portfolio_value": "100220.26"
+    },
+    "trades_executed": [],
+    "trades_count": 0
+  },
+  {
+    "date": "2026-06-01",
+    "timestamp": "2026-06-01T20:35:15.000000",
+    "cycle": "p2-scan-trade",
+    "summary": "0 new copyable McCaul trades (all disclosures stale). Take-profit limit sell order placed for WDAY (25.0% gain, 3 shares) — order pending fill (1 working order). No new copy entries executed.",
+    "new_signals": 0,
+    "trades_executed_count": 0,
+    "pending_orders": [
+      {
+        "symbol": "WDAY",
+        "action": "sell",
+        "reason": "take_profit",
+        "trigger": "25.0% unrealized gain",
+        "shares": 3,
+        "status": "limit_order_pending"
+      }
+    ],
+    "portfolio_snapshot": {
+      "equity": 100221.82,
+      "cash": 88962.88,
+      "positions_count": 8,
+      "daily_pnl_pct": 0.1,
+      "open_orders": 1
+    },
+    "positions": [
+      {"symbol": "WDAY", "qty": 6, "avg_entry": 125.88, "unrealized_plpc": "25.06%"},
+      {"symbol": "INTU", "qty": 4, "avg_entry": 312.62, "unrealized_plpc": "14.15%"},
+      {"symbol": "TER",  "qty": 7, "avg_entry": 368.88, "unrealized_plpc": "0.31%"},
+      {"symbol": "MEDP", "qty": 3, "avg_entry": 448.17, "unrealized_plpc": "1.05%"},
+      {"symbol": "T",    "qty": 60,"avg_entry": 24.76,  "unrealized_plpc": "-0.51%"},
+      {"symbol": "PH",   "qty": 1, "avg_entry": 852.09, "unrealized_plpc": "-3.34%"},
+      {"symbol": "PG",   "qty": 10,"avg_entry": 147.36, "unrealized_plpc": "-4.94%"},
+      {"symbol": "HD",   "qty": 4, "avg_entry": 317.09, "unrealized_plpc": "-2.61%"}
+    ]
+  },
+  {
+    "date": "2026-06-01",
+    "timestamp": "2026-06-01T21:05:45.000000",
+    "cycle": "p2-monitor",
+    "summary": "WDAY take-profit FILLED at 25.3% gain (1 share sold by monitor). Portfolio healthy: equity $100,232.83, cash $89,434.75, 8 positions. No unfilled working orders.",
+    "stop_losses_triggered": [],
+    "take_profits_triggered": [
+      {
+        "symbol": "WDAY",
+        "action": "sell",
+        "reason": "take_profit",
+        "trigger": "25.3% unrealized gain",
+        "shares": 1,
+        "status": "filled"
+      }
+    ],
+    "portfolio_snapshot": {
+      "equity": 100232.83,
+      "cash": 89434.75,
+      "positions_count": 8,
+      "open_orders": 0
+    },
+    "alerts": []
   }
 ]

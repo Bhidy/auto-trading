@@ -114,7 +114,7 @@
             stat_open: 'Open', stat_high: 'High', stat_low: 'Low', stat_close: 'Close', stat_vol: 'Volume',
             chart_title: '60-Day Technical Close Chart',
             pane_overview: 'Chart', pane_options: 'Options', pane_news: 'News',
-            pane_financials_tab: 'Financials', pane_profile_tab: 'Specs',
+            pane_financials_tab: 'Financials', pane_profile_tab: 'Specs', pane_all_orders: 'All Orders',
             lbl_market_clock: 'Market Clock',
             lbl_realtime: 'Real-Time Feed via Alpaca API', tab_active: 'Most Active',
             tab_gainers: 'Top Gainers', tab_losers: 'Top Losers',
@@ -142,7 +142,7 @@
             stat_open: 'افتتاح', stat_high: 'أعلى', stat_low: 'أدنى', stat_close: 'إغلاق', stat_vol: 'حجم',
             chart_title: 'مخطط الإغلاق الفني لمدة 60 يومًا',
             pane_overview: 'الرسم البياني', pane_options: 'عقود الخيارات', pane_news: 'الأخبار',
-            pane_financials_tab: 'البيانات المالية', pane_profile_tab: 'المواصفات',
+            pane_financials_tab: 'البيانات المالية', pane_profile_tab: 'المواصفات', pane_all_orders: 'جميع الأوامر',
             lbl_market_clock: 'ساعة السوق',
             lbl_realtime: 'تغذية الأسعار الفورية عبر Alpaca', tab_active: 'الأكثر نشاطًا',
             tab_gainers: 'الأعلى ارتفاعًا', tab_losers: 'الأكثر انخفاضًا',
@@ -1974,7 +1974,7 @@
         });
 
         // Chart pane tabs
-        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabProfileTab'];
+        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabProfileTab', 'tabAllOrdersMP'];
         detailTabIds.forEach(function(tabId) {
             var btn = document.getElementById(tabId);
             if (!btn) return;
@@ -1984,16 +1984,30 @@
                 });
                 this.classList.add('active');
 
-                var pane = document.getElementById('detailsContentPane');
-                var chartPane = document.getElementById('chartOverviewPane');
+                var pane         = document.getElementById('detailsContentPane');
+                var chartPane    = document.getElementById('chartOverviewPane');
+                var aoPane       = document.getElementById('allOrdersMPPane');
+                var periodBar    = document.getElementById('chartPeriodToggles');
+                var expandBtn    = document.getElementById('btnExpandChart');
                 if (!pane) return;
 
+                // Reset all panes first
+                pane.style.display      = 'none';
+                if (chartPane) chartPane.style.display = 'none';
+                if (aoPane)    aoPane.style.display    = 'none';
+
+                // Period toggles + expand button are chart-only — hide for all other tabs
+                var isChartTab = (tabId === 'tabOverview');
+                if (periodBar) periodBar.style.display = isChartTab ? '' : 'none';
+                if (expandBtn) expandBtn.style.display = isChartTab ? '' : 'none';
+
                 if (tabId === 'tabOverview') {
-                    pane.style.display = 'none';
                     if (chartPane) chartPane.style.display = 'block';
                     activeDetailTab = 'Chart';
+                } else if (tabId === 'tabAllOrdersMP') {
+                    if (aoPane) { aoPane.style.display = 'block'; mpInitAllOrders(); }
+                    activeDetailTab = 'AllOrders';
                 } else {
-                    if (chartPane) chartPane.style.display = 'none';
                     pane.style.display = 'block';
                     if (tabId === 'tabOptions') {
                         activeDetailTab = 'Options';
@@ -2008,6 +2022,149 @@
                 }
             });
         });
+
+        // ── Market Pulse All Orders module ────────────────────────────────
+        var _mpAo = { period: '1D', status: 'all', pf: 'all', data: null, timer: null, loading: false, inited: false };
+
+        function mpInitAllOrders() {
+            if (!_mpAo.inited) {
+                _mpAo.inited = true;
+                mpRenderAoFilters();
+                mpFetchAndRender();
+                _mpAo.timer = setInterval(mpFetchAndRender, 30000);
+            } else if (_mpAo.data) {
+                mpRenderAoTable();
+            }
+        }
+
+        function mpRenderAoFilters() {
+            var fil = document.getElementById('mpAoFilters');
+            if (!fil) return;
+            var isDark = document.documentElement.dataset.theme !== 'light';
+            var filterBg = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(26,15,8,0.03)';
+            var selStyle = 'padding:.3rem .55rem;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-family:Manrope,sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;';
+
+            var periodBtns = ['1D','5D','1M','3M'].map(function(p) {
+                var isAct = p === _mpAo.period;
+                return '<button class="pf-btn pf-btn--sm mp-ao-pbtn" data-mp-ao-period="' + p + '" style="padding:.25rem .6rem;font-size:.68rem;min-width:2.4rem;' + (isAct ? '' : 'opacity:.65;') + '" ' + (isAct ? 'class="pf-btn pf-btn--sm pf-btn--primary mp-ao-pbtn"' : '') + '>' + p + '</button>';
+            }).join('');
+
+            var pfOpts = [
+                ['all','All Portfolios'],['portfolio_1','Self Improving Brain'],
+                ['portfolio_2','Capitol Shadow'],['portfolio_3','Cautious Sniper']
+            ].map(function(o) { return '<option value="'+o[0]+'"'+(o[0]===_mpAo.pf?' selected':'')+'>'+o[1]+'</option>'; }).join('');
+
+            var stOpts = [['all','All Orders'],['executed','Executed'],['open','Open']]
+                .map(function(o) { return '<option value="'+o[0]+'"'+(o[0]===_mpAo.status?' selected':'')+'>'+o[1]+'</option>'; }).join('');
+
+            fil.innerHTML = '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.65rem;padding:.65rem .85rem;background:'+filterBg+';border:1px solid var(--line);border-radius:.75rem;">' +
+                '<div style="display:flex;align-items:center;gap:.35rem;"><span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Period</span>' +
+                '<div style="display:flex;gap:.2rem;">' + periodBtns + '</div></div>' +
+                '<div style="width:1px;height:20px;background:var(--line);flex-shrink:0;"></div>' +
+                '<div style="display:flex;align-items:center;gap:.35rem;"><span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Status</span>' +
+                '<select id="mpAoStatus" style="'+selStyle+'">'+stOpts+'</select></div>' +
+                '<div style="display:flex;align-items:center;gap:.35rem;"><span style="font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Portfolio</span>' +
+                '<select id="mpAoPf" style="'+selStyle+'">'+pfOpts+'</select></div>' +
+                '<span class="pf-live-pill" style="margin-inline-start:auto;font-size:.64rem;"><span class="pf-live-dot"></span><span id="mpAoTs">Loading…</span></span>' +
+            '</div>';
+
+            // Wire period buttons
+            fil.querySelectorAll('.mp-ao-pbtn').forEach(function(btn) {
+                // Mark active
+                if (btn.dataset.mpAoPeriod === _mpAo.period) btn.classList.add('pf-btn--primary');
+                btn.addEventListener('click', function() {
+                    _mpAo.period = btn.dataset.mpAoPeriod;
+                    fil.querySelectorAll('.mp-ao-pbtn').forEach(function(b) { b.classList.remove('pf-btn--primary'); b.style.opacity = '.65'; });
+                    btn.classList.add('pf-btn--primary'); btn.style.opacity = '1';
+                    mpRenderAoTable();
+                });
+            });
+            // Wire selects
+            var ss = document.getElementById('mpAoStatus');
+            if (ss) ss.addEventListener('change', function() { _mpAo.status = this.value; mpRenderAoTable(); });
+            var ps = document.getElementById('mpAoPf');
+            if (ps) ps.addEventListener('change', function() { _mpAo.pf = this.value; _mpAo.data = null; mpFetchAndRender(); });
+        }
+
+        function mpFetchAndRender() {
+            if (_mpAo.loading) return;
+            _mpAo.loading = true;
+            fetch('/api/orders/unified?portfolio_id=' + (_mpAo.pf || 'all'), { cache: 'no-store' })
+                .then(function(r) { return r.ok ? r.json() : { executed: [], open: [] }; })
+                .then(function(d) {
+                    _mpAo.data = d; _mpAo.loading = false;
+                    mpRenderAoTable();
+                    var ts = document.getElementById('mpAoTs');
+                    if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+                })
+                .catch(function() { _mpAo.loading = false; });
+        }
+
+        function mpFmt(n, d) { return (parseFloat(n)||0).toFixed(d===undefined?2:d).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+        function mpEsc(s) { return String(s||'').replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+        function mpRenderAoTable() {
+            var body = document.getElementById('mpAoTableBody');
+            if (!body) return;
+            var d = _mpAo.data;
+            if (!d) { body.innerHTML = '<div class="pf-empty" style="padding:1.5rem;">No data yet.</div>'; return; }
+
+            var cutoff = new Date(); cutoff.setHours(0,0,0,0);
+            var p = _mpAo.period;
+            if      (p==='1D') cutoff.setDate(cutoff.getDate()-1);
+            else if (p==='5D') cutoff.setDate(cutoff.getDate()-5);
+            else if (p==='1M') cutoff.setMonth(cutoff.getMonth()-1);
+            else if (p==='3M') cutoff.setMonth(cutoff.getMonth()-3);
+
+            var status = _mpAo.status;
+            var rows = [];
+
+            if (status==='all'||status==='executed') {
+                (d.executed||[]).forEach(function(tr) {
+                    var dateStr = tr.date||(tr.timestamp?tr.timestamp.slice(0,10):'');
+                    if (!dateStr||new Date(dateStr)<cutoff) return;
+                    var side=tr.side||tr.type||'buy', qty=parseFloat(tr.qty||tr.quantity||0);
+                    var price=parseFloat(tr.entry_price||tr.filled_avg_price||tr.limit_price||tr.price||0);
+                    var cost=qty*price, sc=side==='buy'?'pf-badge-pos':'pf-badge-neg';
+                    rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(dateStr)+'</td>'+
+                        '<td style="font-weight:700;font-family:var(--pf-mono,monospace);">'+mpEsc(tr.symbol||'')+'</td>'+
+                        '<td><span class="pf-mock-badge-chip '+sc+'" style="font-size:.6rem;">'+side.toUpperCase()+'</span></td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(qty>0?qty.toLocaleString():'—')+'</td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(price>0?'$'+mpFmt(price):'—')+'</td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(cost>0?'$'+mpFmt(cost):'—')+'</td>'+
+                        '<td><span style="font-size:.6rem;padding:.12rem .4rem;border-radius:999px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);">Executed</span></td>'+
+                        '<td style="font-size:.66rem;color:var(--muted);">'+mpEsc((tr._portfolio_label||'').split(' ').slice(0,2).join(' '))+'</td>'+
+                        '<td style="font-size:.68rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+mpEsc((tr.reason||'').slice(0,60))+'</td></tr>');
+                });
+            }
+            if (status==='all'||status==='open') {
+                (d.open||[]).forEach(function(o) {
+                    var created=(o.created_at||'').slice(0,10);
+                    if (created&&new Date(created)<cutoff) return;
+                    var side=o.side||'buy', qty=parseFloat(o.qty||0), price=parseFloat(o.limit_price||0);
+                    var sc=side==='buy'?'pf-badge-pos':'pf-badge-neg';
+                    rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(created||'—')+'</td>'+
+                        '<td style="font-weight:700;font-family:var(--pf-mono,monospace);">'+mpEsc(o.symbol||'')+'</td>'+
+                        '<td><span class="pf-mock-badge-chip '+sc+'" style="font-size:.6rem;">'+side.toUpperCase()+'</span></td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(qty>0?qty.toLocaleString():'—')+'</td>'+
+                        '<td style="text-align:right;font-family:var(--pf-mono,monospace);">'+(price>0?'$'+mpFmt(price):'—')+'</td>'+
+                        '<td style="text-align:right;">—</td>'+
+                        '<td><span style="font-size:.6rem;padding:.12rem .4rem;border-radius:999px;font-weight:700;background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.25);">'+mpEsc((o.status||'open').replace(/_/g,' '))+'</span></td>'+
+                        '<td style="font-size:.66rem;color:var(--muted);">'+mpEsc((o._portfolio_label||'').split(' ').slice(0,2).join(' '))+'</td>'+
+                        '<td style="font-size:.68rem;color:var(--muted);">'+mpEsc(((o.type||'')+' · '+(o.time_in_force||'')).replace(/^ · | · $/g,''))+'</td></tr>');
+                });
+            }
+
+            if (!rows.length) {
+                body.innerHTML = '<div class="pf-empty" style="padding:1.5rem;">No orders match the selected filters.</div>';
+                return;
+            }
+            var thead = '<thead><tr>' +
+                ['Date','Symbol','Side','Qty','Price','Cost Basis','Status','Portfolio','Description']
+                .map(function(h,i) { return '<th'+(i>2?' style="text-align:right;"':'')+'>'+h+'</th>'; }).join('') +
+                '</tr></thead>';
+            body.innerHTML = '<div style="overflow-x:auto;"><table class="pf-table" style="font-size:.76rem;">'+thead+'<tbody>'+rows.join('')+'</tbody></table></div>';
+        }
 
     // Opens the live options-chain pane (used by the order panel's Options tab
     // and the global "Options Lab" nav via ?view=options). Reuses the working
