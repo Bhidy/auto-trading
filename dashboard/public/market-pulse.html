@@ -1316,6 +1316,7 @@
                 <div class="chart-toggle-row" style="margin-bottom:1rem;">
                     <div class="mp-tabs" style="border:none; margin:0;">
                         <button class="mp-tab active" id="tabOverview" data-key="pane_overview">Chart</button>
+                        <button class="mp-tab" id="tabOrderBookTab" data-key="pane_orderbook">Order Book</button>
                         <button class="mp-tab" id="tabOptions" data-key="pane_options">Options</button>
                         <button class="mp-tab" id="tabNews" data-key="pane_news">News</button>
                         <button class="mp-tab" id="tabProfileTab" data-key="pane_profile_tab">Specs</button>
@@ -1375,6 +1376,18 @@
                     <!-- Table injected by market-pulse.js -->
                     <div id="mpAoTableBody" style="margin-top:.65rem;"></div>
                 </div>
+                <!-- Order Book pane — NBBO real-time bid/ask depth -->
+                <div id="orderBookTabPane" style="display:none; padding-top:0.5rem;">
+                    <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);font-family:var(--pf-mono);margin-bottom:0.65rem;padding-bottom:0.45rem;border-bottom:1px solid var(--line);">
+                        <span data-key="lbl_l2_headers">Size · Bid / Ask · Size</span>
+                        <span id="l2TickerName" style="font-weight:700;color:var(--ink);">—</span>
+                    </div>
+                    <div id="l2OrderBookList" style="display:flex;flex-direction:column;gap:0.15rem;overflow-y:auto;padding-inline-end:0.25rem;"></div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);font-family:var(--pf-mono);border-top:1px solid var(--line);padding-top:0.45rem;margin-top:0.65rem;">
+                        <span data-key="lbl_spread">Spread</span>
+                        <span style="color:var(--ink);font-weight:700;" id="obSpreadVal">—</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Positions & Holdings Card (Populated with real loaded configurations) -->
@@ -1415,24 +1428,16 @@
 
         </div>
 
-        <!-- ==================== RIGHT COLUMN: L2 ORDER BOOK, AI SIGNALS, NEWS ==================== -->
+        <!-- ==================== RIGHT COLUMN: NEWS FEED, ORDER FORM, AI SIGNALS ==================== -->
         <div style="display:flex; flex-direction:column; gap:1.25rem; align-self: start;">
-            <!-- Order Book & Level 2 Depth Card -->
+            <!-- Market News Feed -->
             <div class="pf-panel" style="padding:1.25rem;">
-                <div class="mp-tabs" style="margin-bottom:0.75rem;">
-                    <button class="mp-tab" id="tabOrderBookView" data-key="lbl_orderbook">Order Book</button>
-                    <button class="mp-tab active" id="tabL2View" data-key="lbl_l2_title">Level 2</button>
+                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:0.45rem;">
+                    <h4 style="font-family:'DM Serif Display',serif;font-size:1.05rem;margin:0;font-weight:400;" data-key="title_news">Market News Feed</h4>
+                    <a href="/research.html" style="font-size:0.68rem;color:var(--teal);font-weight:700;text-decoration:none;" data-key="lbl_viewall">View All</a>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);font-family:var(--pf-mono);margin-bottom:0.4rem;">
-                    <span data-key="lbl_l2_headers">Size · Bid / Ask · Size</span>
-                    <span id="l2TickerName">NVDA</span>
-                </div>
-                <div id="l2OrderBookList" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-inline-end:0.25rem;">
-                    <!-- Managed via market-pulse.js -->
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--muted); font-family:var(--pf-mono); border-top:1px solid var(--line); padding-top:0.45rem; margin-top:0.45rem;">
-                    <span data-key="lbl_spread">Spread</span>
-                    <span style="color:var(--ink); font-weight:700;" id="obSpreadVal">—</span>
+                <div id="newsContainer" class="scrollable-sidebar mp-loading-container" style="max-height:320px;min-height:180px; margin-top:0.5rem;">
+                    <!-- Managed dynamically -->
                 </div>
             </div>
 
@@ -1502,16 +1507,6 @@
                 </div>
             </div>
 
-            <!-- Market News Feed with Thumbnails -->
-            <div class="pf-panel" style="padding:1.25rem;">
-                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:0.45rem;">
-                    <h4 style="font-family:'DM Serif Display',serif;font-size:1.05rem;margin:0;font-weight:400;" data-key="title_news">Market News Feed</h4>
-                    <a href="/research.html" style="font-size:0.68rem;color:var(--teal);font-weight:700;text-decoration:none;" data-key="lbl_viewall">View All</a>
-                </div>
-                <div id="newsContainer" class="scrollable-sidebar mp-loading-container" style="max-height:280px;min-height:180px; margin-top:0.5rem;">
-                    <!-- Managed dynamically -->
-                </div>
-            </div>
         </div>
 
     </div>

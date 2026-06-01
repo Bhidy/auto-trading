@@ -113,7 +113,7 @@
             scope_desc: 'More listed US tech and growth equities advanced than declined.',
             stat_open: 'Open', stat_high: 'High', stat_low: 'Low', stat_close: 'Close', stat_vol: 'Volume',
             chart_title: '60-Day Technical Close Chart',
-            pane_overview: 'Chart', pane_options: 'Options', pane_news: 'News',
+            pane_overview: 'Chart', pane_orderbook: 'Order Book', pane_options: 'Options', pane_news: 'News',
             pane_financials_tab: 'Financials', pane_profile_tab: 'Specs', pane_all_orders: 'All Orders',
             lbl_market_clock: 'Market Clock',
             lbl_realtime: 'Real-Time Feed via Alpaca API', tab_active: 'Most Active',
@@ -141,7 +141,7 @@
             scope_desc: 'ارتفعت أوراق مالية أمريكية في قطاع التكنولوجيا والنمو أكثر مما تراجعت.',
             stat_open: 'افتتاح', stat_high: 'أعلى', stat_low: 'أدنى', stat_close: 'إغلاق', stat_vol: 'حجم',
             chart_title: 'مخطط الإغلاق الفني لمدة 60 يومًا',
-            pane_overview: 'الرسم البياني', pane_options: 'عقود الخيارات', pane_news: 'الأخبار',
+            pane_overview: 'الرسم البياني', pane_orderbook: 'دفتر الأوامر', pane_options: 'عقود الخيارات', pane_news: 'الأخبار',
             pane_financials_tab: 'البيانات المالية', pane_profile_tab: 'المواصفات', pane_all_orders: 'جميع الأوامر',
             lbl_market_clock: 'ساعة السوق',
             lbl_realtime: 'تغذية الأسعار الفورية عبر Alpaca', tab_active: 'الأكثر نشاطًا',
@@ -1871,14 +1871,6 @@
             });
         });
 
-        // Order Book / L2 toggle
-        var obBtn = document.getElementById('tabOrderBookView');
-        var l2Btn = document.getElementById('tabL2View');
-        if (obBtn && l2Btn) {
-            obBtn.addEventListener('click', function() { obBtn.classList.add('active'); l2Btn.classList.remove('active'); });
-            l2Btn.addEventListener('click', function() { l2Btn.classList.add('active'); obBtn.classList.remove('active'); });
-        }
-
         // Search
         var searchInput = document.getElementById('stockSearch');
         if (searchInput) {
@@ -1974,7 +1966,7 @@
         });
 
         // Chart pane tabs
-        var detailTabIds = ['tabOverview', 'tabOptions', 'tabNews', 'tabProfileTab', 'tabAllOrdersMP'];
+        var detailTabIds = ['tabOverview', 'tabOrderBookTab', 'tabOptions', 'tabNews', 'tabProfileTab', 'tabAllOrdersMP'];
         detailTabIds.forEach(function(tabId) {
             var btn = document.getElementById(tabId);
             if (!btn) return;
@@ -1995,6 +1987,8 @@
                 pane.style.display      = 'none';
                 if (chartPane) chartPane.style.display = 'none';
                 if (aoPane)    aoPane.style.display    = 'none';
+                var obTabPane = document.getElementById('orderBookTabPane');
+                if (obTabPane) obTabPane.style.display = 'none';
 
                 // Period toggles + expand button are chart-only — hide for all other tabs
                 var isChartTab = (tabId === 'tabOverview');
@@ -2004,6 +1998,11 @@
                 if (tabId === 'tabOverview') {
                     if (chartPane) chartPane.style.display = 'block';
                     activeDetailTab = 'Chart';
+                } else if (tabId === 'tabOrderBookTab') {
+                    if (obTabPane) obTabPane.style.display = 'block';
+                    activeDetailTab = 'OrderBook';
+                    var db = stockPriceDatabase[activeSymbol] || {};
+                    renderOrderBook(db.price);
                 } else if (tabId === 'tabAllOrdersMP') {
                     if (aoPane) { aoPane.style.display = 'block'; mpInitAllOrders(); }
                     activeDetailTab = 'AllOrders';
