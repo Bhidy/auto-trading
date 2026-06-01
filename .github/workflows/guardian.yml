@@ -1,0 +1,239 @@
+name: "Guardian — Trading Catch-Up & Self-Heal"
+
+# ───────────────────────────────────────────────────────────────────────────
+# WHY THIS EXISTS (read before editing)
+#
+# GitHub Actions only throttles `schedule:` (cron) triggers — they are
+# best-effort and get delayed (10–40 min) or dropped under platform load. We
+# have observed ALL of a portfolio's staggered morning crons slip together,
+# leaving a trading day un-traded until an operator manually dispatched.
+#
+# `repository_dispatch` / `workflow_dispatch` (API-triggered) runs are NOT
+# subject to that throttle — they start within seconds. Guardian is therefore
+# the single, freshness-aware catch-up that ANY reliable external scheduler can
+# poke via one `repository_dispatch` (event_type: trading-catchup). It checks
+# each portfolio's committed state and, only for the portfolios that have NOT
+# yet run today (and only while the market is open), runs that portfolio's
+# session INLINE using the exact same tested entry points as the native
+# trading workflows. It is fully idempotent:
+#   * a portfolio that already ran today is skipped (freshness gate), and
+#   * every order carries a deterministic client_order_id, so even a race with
+#     a late native cron cannot double-place.
+#
+# Layers of defense (independent failure domains):
+#   L1  native staggered trading crons          (p1/p2/p3-trading.yml)
+#   L2  external scheduler -> repository_dispatch -> THIS workflow   (reliable)
+#   L3  THIS workflow's own backup schedule      (extra native chances, offset)
+#   L4  failure-alert.yml + heartbeat.yml        (alert if anything still slips)
+#
+# This file touches NO existing workflow. Worst case it fails in isolation and
+# the failure watchdog reports it; the money path is untouched.
+# ───────────────────────────────────────────────────────────────────────────
+
+on:
+  # L3 — backup native schedule at minute offsets distinct from the trading
+  # crons, covering ~10:25am–1:25pm ET (EDT & EST). Catch-up never opens NEW
+  # positions in the last hours of the session.
+  schedule:
+    - cron: "25 14 * * 1-5"
+    - cron: "55 14 * * 1-5"
+    - cron: "25 15 * * 1-5"
+    - cron: "55 15 * * 1-5"
+    - cron: "25 16 * * 1-5"
+    - cron: "55 16 * * 1-5"
+    - cron: "25 17 * * 1-5"
+    - cron: "55 17 * * 1-5"
+    # EST winter coverage (one hour later in UTC).
+    - cron: "25 18 * * 1-5"
+    - cron: "55 18 * * 1-5"
+  # L2 — the reliable external trigger pokes exactly this.
+  repository_dispatch:
+    types: [trading-catchup]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: guardian
+  cancel-in-progress: false
+
+jobs:
+  catchup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g @anguslin/mcp-capitol-trades || echo "P2 MCP install failed (P2 catch-up will no-op)"
+
+      - name: Create Alpaca configs (P1/P2/P3)
+        run: |
+          cat > config/alpaca_config.json << 'CONF'
+          {
+            "api_key": "${{ secrets.P1_API_KEY }}",
+            "api_secret": "${{ secrets.P1_API_SECRET }}",
+            "base_url": "https://paper-api.alpaca.markets",
+            "data_url": "https://data.alpaca.markets"
+          }
+          CONF
+          mkdir -p political-copy-bot/config event-driven-bot/config
+          cat > political-copy-bot/config/alpaca_config.json << 'CONF'
+          {
+            "api_key": "${{ secrets.P2_API_KEY }}",
+            "api_secret": "${{ secrets.P2_API_SECRET }}",
+            "base_url": "https://paper-api.alpaca.markets",
+            "data_url": "https://data.alpaca.markets"
+          }
+          CONF
+          cat > event-driven-bot/config/alpaca_config.json << 'CONF'
+          {
+            "api_key": "${{ secrets.P3_API_KEY }}",
+            "api_secret": "${{ secrets.P3_API_SECRET }}",
+            "base_url": "https://paper-api.alpaca.markets",
+            "data_url": "https://data.alpaca.markets"
+          }
+          CONF
+
+      - name: Assess market + per-portfolio freshness
+        id: assess
+        run: |
+          python3 << 'PY'
+          import json, os, datetime, requests
+
+          today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+
+          with open("config/alpaca_config.json") as f:
+              cfg = json.load(f)
+          h = {"APCA-API-KEY-ID": cfg["api_key"], "APCA-API-SECRET-KEY": cfg["api_secret"]}
+          try:
+              clock = requests.get("https://paper-api.alpaca.markets/v2/clock", headers=h, timeout=15).json()
+              is_open = bool(clock.get("is_open", False))
+          except Exception as e:
+              print(f"Clock check failed ({e}) — failing closed: treat market as CLOSED")
+              is_open = False
+
+          def date_in(path, *keys):
+              try:
+                  with open(path) as f:
+                      d = json.load(f)
+              except Exception:
+                  return ""
+              for k in keys:
+                  v = d.get(k)
+                  if v:
+                      return str(v)[:10]
+              return ""
+
+          p1_date = date_in("data/signals.json", "timestamp")
+          p3_date = date_in("event-driven-bot/data/signals.json", "timestamp", "generated_at")
+          p2_date = date_in("political-copy-bot/data/portfolio_state.json", "timestamp")
+
+          p1_stale = p1_date != today
+          p2_stale = p2_date != today
+          p3_stale = p3_date != today
+
+          print(f"today={today} market_open={is_open}")
+          print(f"P1 last={p1_date or 'none'} stale={p1_stale}")
+          print(f"P2 last={p2_date or 'none'} stale={p2_stale}")
+          print(f"P3 last={p3_date or 'none'} stale={p3_stale}")
+
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a") as f:
+              f.write(f"is_open={str(is_open).lower()}\n")
+              f.write(f"p1_stale={str(p1_stale).lower()}\n")
+              f.write(f"p2_stale={str(p2_stale).lower()}\n")
+              f.write(f"p3_stale={str(p3_stale).lower()}\n")
+          PY
+
+      - name: P1 catch-up (only if market open AND not run today)
+        if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p1_stale == 'true'
+        continue-on-error: true
+        run: |
+          echo "::warning::P1 had not run today — Guardian running its morning session now."
+          cd "$GITHUB_WORKSPACE"
+          export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
+          python3 scripts/autonomous_runner.py morning-research
+          python3 scripts/autonomous_runner.py trading-session
+
+      - name: P3 catch-up (only if market open AND not run today)
+        if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p3_stale == 'true'
+        continue-on-error: true
+        run: |
+          echo "::warning::P3 had not run today — Guardian running its pipeline now."
+          cd "$GITHUB_WORKSPACE/event-driven-bot"
+          export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+          DAY=$(date -u +%u)
+          if [ "$DAY" = "1" ]; then
+            python3 scripts/event_driven_bot.py weekly-screen || true
+          fi
+          python3 scripts/event_driven_bot.py morning-scan
+          python3 scripts/event_driven_bot.py trading-session
+          python3 scripts/event_driven_bot.py news-scan || true
+
+      - name: P2 catch-up (only if market open AND not run today)
+        if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p2_stale == 'true'
+        continue-on-error: true
+        run: |
+          echo "::warning::P2 had not run today — Guardian running its scan now."
+          cd "$GITHUB_WORKSPACE/political-copy-bot"
+          export PYTHONPATH="$GITHUB_WORKSPACE/political-copy-bot/scripts"
+          python3 scripts/politician_bot.py scan
+
+      - name: Guardian summary
+        if: always()
+        run: |
+          echo "=== GUARDIAN CATCH-UP SUMMARY ==="
+          echo "Market open: ${{ steps.assess.outputs.is_open }}"
+          echo "P1 stale (ran catch-up): ${{ steps.assess.outputs.p1_stale }}"
+          echo "P2 stale (ran catch-up): ${{ steps.assess.outputs.p2_stale }}"
+          echo "P3 stale (ran catch-up): ${{ steps.assess.outputs.p3_stale }}"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "=== END ==="
+
+      - name: Sync data to dashboard for Vercel deploy
+        if: always()
+        run: |
+          mkdir -p dashboard/data dashboard/event-driven-bot/data dashboard/political-copy-bot/data dashboard/journal dashboard/config
+          cp data/*.json dashboard/data/ 2>/dev/null || true
+          cp event-driven-bot/data/*.json dashboard/event-driven-bot/data/ 2>/dev/null || true
+          cp political-copy-bot/data/*.json dashboard/political-copy-bot/data/ 2>/dev/null || true
+          cp journal/*.json dashboard/journal/ 2>/dev/null || true
+          cp config/risk_limits.json config/watchlist.json dashboard/config/ 2>/dev/null || true
+          echo "Dashboard data synced"
+
+      - name: Commit state
+        if: always()
+        run: |
+          git config user.name "Auto Trading Bot"
+          git config user.email "bot@autotrading.local"
+          git add data/ journal/ -f 2>/dev/null || true
+          git add event-driven-bot/data/ event-driven-bot/journal/ -f 2>/dev/null || true
+          git add political-copy-bot/data/ political-copy-bot/journal/ -f 2>/dev/null || true
+          git add dashboard/data/ dashboard/event-driven-bot/data/ dashboard/political-copy-bot/data/ dashboard/journal/ dashboard/config/ -f 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit (all portfolios already fresh — nothing to catch up)"
+          else
+            git commit -m "Guardian: $(date -u +%Y-%m-%d) catch-up self-heal"
+            PUSHED=1
+            for i in 1 2 3; do
+              if git pull --rebase origin main && git push; then
+                echo "Push succeeded on attempt $i"
+                PUSHED=0
+                break
+              fi
+              echo "Push attempt $i failed, retrying in 5s..."
+              sleep 5
+            done
+            if [ "$PUSHED" -ne 0 ]; then
+              echo "::error::Guardian push failed after retries — state NOT synced; failing so the watchdog fires (idempotent client_order_ids keep the broker safe)."
+              exit 1
+            fi
+          fi
