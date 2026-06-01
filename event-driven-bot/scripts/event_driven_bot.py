@@ -320,6 +320,15 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     cash = float(account["cash"])
     positions = alpaca.get_positions()
 
+    # Preflight self-check — fail closed before sizing/placing any order.
+    from shared.preflight import run_preflight
+    pf_ok, pf = run_preflight(limits=limits, account=account, portfolio_id="portfolio_3")
+    save_json(DATA_DIR / "preflight_report.json", pf)
+    if not pf_ok:
+        for _f in pf["hard_failures"]:
+            log.error(f"::error::PREFLIGHT FAILED (P3): {_f}")
+        return []
+
     tranche_pct = limits["capital_tranches"].get(tranche, 0.20)
     tranche_capital = equity * tranche_pct
     position_symbols = {p["symbol"] for p in positions}

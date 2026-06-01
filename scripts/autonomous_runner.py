@@ -351,6 +351,28 @@ def run_trading_session(alpaca: AlpacaClient):
         log.warning(f"System halted: {portfolio_state.get('halt_reason')}")
         return
 
+    # Preflight self-check — fail CLOSED before any order if the sizing math,
+    # self-learned params, account health, risk limits, or data freshness are off
+    # (the 2026-06-01 class). The canary alone would have caught that incident.
+    from analyst_v2 import load_adaptive_params
+    from shared.preflight import run_preflight
+    _sig_file = DATA_DIR / "signals.json"
+    _data_fresh = _sig_file.exists() and load_json(_sig_file).get("timestamp", "").startswith(
+        datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    pf_ok, pf = run_preflight(
+        limits=limits, account=account, params=load_adaptive_params(),
+        sizing_canary=True, crypto_canary=True, data_fresh=_data_fresh,
+        portfolio_id="portfolio_1",
+    )
+    save_json(DATA_DIR / "preflight_report.json", pf)
+    for _w in pf["warnings"]:
+        log.warning(f"  Preflight: {_w}")
+    if not pf_ok:
+        for _f in pf["hard_failures"]:
+            log.error(f"::error::PREFLIGHT FAILED (P1): {_f}")
+        log.critical("Preflight failed — refusing to trade (fail-closed)")
+        return
+
     # Run risk officer validation
     from risk_officer import run_validation
     # Update portfolio state for risk officer

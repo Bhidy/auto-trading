@@ -715,6 +715,15 @@ class PoliticianBot:
             log.critical("Kill switch active. Halting.")
             return
 
+        # Preflight self-check — fail closed before scanning/placing any order.
+        from shared.preflight import run_preflight
+        pf_ok, pf = run_preflight(limits=self.risk.limits, account=account,
+                                  portfolio_id="portfolio_2")
+        if not pf_ok:
+            for _f in pf["hard_failures"]:
+                log.error(f"::error::PREFLIGHT FAILED (P2): {_f}")
+            return
+
         clock = self.alpaca.get_clock()
         is_open = clock.get("is_open", False)
         log.info(f"Market open: {is_open}")
