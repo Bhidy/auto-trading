@@ -489,6 +489,19 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     if integrity["anomalous"]:
         log.warning(f"::warning::EXECUTION ANOMALY (P3): {integrity['anomaly_reason']}")
 
+    # Strategy conformance — P3 mandate: complete brackets + catalyst time-stop.
+    from shared.integrity import (bracket_conformance, strategy_conformance,
+                                  write_conformance_report)
+    conf = strategy_conformance(portfolio_id="portfolio_3", checks=[
+        bracket_conformance(executed, stop_key="stop_loss", tp_key="take_profit_1"),
+        {"name": "catalyst_decay_configured",
+         "ok": float(limits.get("catalyst_max_hold_days", 0)) > 0,
+         "detail": f"catalyst_max_hold_days={limits.get('catalyst_max_hold_days')}"},
+    ])
+    write_conformance_report(str(DATA_DIR / "strategy_conformance.json"), conf)
+    for _v in conf["violations"]:
+        log.warning(f"::warning::CONFORMANCE (P3): {_v['name']} — {_v['detail']}")
+
     return executed
 
 

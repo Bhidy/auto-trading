@@ -357,7 +357,8 @@ def run_trading_session(alpaca: AlpacaClient):
     from analyst_v2 import load_adaptive_params
     from shared.preflight import run_preflight
     _sig_file = DATA_DIR / "signals.json"
-    _data_fresh = _sig_file.exists() and load_json(_sig_file).get("timestamp", "").startswith(
+    _signals = load_json(_sig_file) if _sig_file.exists() else {}
+    _data_fresh = _signals.get("timestamp", "").startswith(
         datetime.now(timezone.utc).strftime("%Y-%m-%d"))
     pf_ok, pf = run_preflight(
         limits=limits, account=account, params=load_adaptive_params(),
@@ -543,6 +544,19 @@ def run_trading_session(alpaca: AlpacaClient):
     write_integrity_report(str(DATA_DIR / "execution_integrity.json"), integrity)
     if integrity["anomalous"]:
         log.warning(f"::warning::EXECUTION ANOMALY (P1): {integrity['anomaly_reason']}")
+
+    # Strategy conformance — record P1's mandate adherence for the watchdog.
+    from shared.integrity import (bracket_conformance, strategy_conformance,
+                                  write_conformance_report)
+    conf = strategy_conformance(portfolio_id="portfolio_1", checks=[
+        bracket_conformance(approved, stop_key="stop_loss", tp_key="take_profit"),
+        {"name": "regime_applied",
+         "ok": bool(_signals.get("market_regime")) and "regime_modifiers" in _signals,
+         "detail": f"regime={_signals.get('market_regime')}"},
+    ])
+    write_conformance_report(str(DATA_DIR / "strategy_conformance.json"), conf)
+    for _v in conf["violations"]:
+        log.warning(f"::warning::CONFORMANCE (P1): {_v['name']} — {_v['detail']}")
 
     _sync_portfolio_state(alpaca, portfolio_state)
 

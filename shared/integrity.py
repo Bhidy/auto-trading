@@ -96,3 +96,32 @@ def strategy_conformance(*, portfolio_id, checks, now=None):
 def write_conformance_report(path, report):
     """Persist a conformance report as JSON (best-effort; creates parent dir)."""
     return write_integrity_report(path, report)
+
+
+def bracket_conformance(trades, *, stop_key="stop_loss", tp_key="take_profit"):
+    """Mandate: every entry is a complete bracket (stop-loss + take-profit).
+    Returns a conformance check ({name, ok, detail})."""
+    missing = []
+    for t in trades:
+        sym = t.get("symbol", "?")
+        if not t.get(stop_key):
+            missing.append(f"{sym}:no-stop")
+        if not t.get(tp_key):
+            missing.append(f"{sym}:no-TP")
+    return {"name": "complete_bracket", "ok": not missing,
+            "detail": ("all entries carry stop+TP" if not missing
+                       else f"incomplete brackets: {missing}")}
+
+
+def sizing_band_conformance(trades, lo, hi, *, value_key="trade_value"):
+    """Mandate: every executed trade value sits within [lo, hi]."""
+    out = []
+    for t in trades:
+        v = t.get(value_key)
+        if v is None:
+            v = (t.get("qty", 0) or 0) * (t.get("entry_price") or t.get("limit_price") or 0)
+        if v and not (lo <= v <= hi):
+            out.append(f"{t.get('symbol', '?')}:${v:,.0f}")
+    return {"name": "sizing_in_band", "ok": not out,
+            "detail": (f"all within ${lo:,.0f}-${hi:,.0f}" if not out
+                       else f"out of band: {out}")}

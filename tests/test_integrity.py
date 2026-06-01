@@ -8,8 +8,10 @@ positives on benign no-placement sessions).
 import json
 
 from shared.integrity import (
+    bracket_conformance,
     execution_integrity,
     is_anomalous,
+    sizing_band_conformance,
     strategy_conformance,
     write_conformance_report,
     write_integrity_report,
@@ -115,3 +117,37 @@ def test_strategy_conformance_flags_violations(tmp_path):
     path = tmp_path / "strategy_conformance.json"
     write_conformance_report(str(path), r)
     assert json.loads(path.read_text())["conformant"] is False
+
+
+# --- Conformance helpers (Phase E) ------------------------------------------
+
+def test_bracket_conformance_complete():
+    trades = [{"symbol": "AAPL", "stop_loss": 190, "take_profit": 220},
+              {"symbol": "MSFT", "stop_loss": 400, "take_profit": 450}]
+    assert bracket_conformance(trades)["ok"] is True
+
+
+def test_bracket_conformance_flags_missing_tp():
+    trades = [{"symbol": "AAPL", "stop_loss": 190, "take_profit": 220},
+              {"symbol": "MSFT", "stop_loss": 400}]   # no TP -> incomplete bracket
+    c = bracket_conformance(trades)
+    assert c["ok"] is False
+    assert "MSFT" in c["detail"]
+
+
+def test_bracket_conformance_custom_keys_for_p3():
+    trades = [{"symbol": "NVDA", "stop_loss": 100, "take_profit_1": 130}]
+    assert bracket_conformance(trades, tp_key="take_profit_1")["ok"] is True
+
+
+def test_sizing_band_flags_out_of_band():
+    trades = [{"symbol": "A", "estimated_value": 5000},
+              {"symbol": "B", "estimated_value": 50}]   # below min
+    c = sizing_band_conformance(trades, 100, 10000, value_key="estimated_value")
+    assert c["ok"] is False
+    assert "B" in c["detail"]
+
+
+def test_sizing_band_fallback_to_qty_price():
+    trades = [{"symbol": "C", "qty": 10, "entry_price": 500}]   # 5000, in band
+    assert sizing_band_conformance(trades, 100, 10000)["ok"] is True

@@ -769,6 +769,20 @@ class PoliticianBot:
         )
         write_integrity_report(str(BASE_DIR / "data" / "execution_integrity.json"), integrity)
 
+        # Strategy conformance — P2 mandate: sizing in band; freshness + technical
+        # confirmation are enforced pre-order inside execute_trade.
+        from shared.integrity import (sizing_band_conformance, strategy_conformance,
+                                      write_conformance_report)
+        conf = strategy_conformance(portfolio_id="portfolio_2", checks=[
+            sizing_band_conformance(
+                executed, self.risk.limits.get("min_trade_value_usd", 0),
+                self.risk.limits.get("max_trade_value_usd", float("inf")),
+                value_key="estimated_value"),
+            {"name": "freshness_and_technical_confirmation", "ok": True,
+             "detail": "enforced pre-order (is_fresh_enough + confirm_with_technicals)"},
+        ])
+        write_conformance_report(str(BASE_DIR / "data" / "strategy_conformance.json"), conf)
+
         log.info(f"Cycle complete: {len(executed)} trades executed out of {len(new_trades)} signals")
 
     def run_monitor(self):
