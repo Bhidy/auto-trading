@@ -147,6 +147,56 @@
     function money(n) { return fmt(Math.abs(n), 2); }
     function escHtml(s) { return String(s).replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
+    /* ── Shared branded tooltip for non-Chart.js elements ────────────────
+       Usage: add  data-tip="label|body line"  (pipe-separated) to any element.
+       The global delegation below picks it up automatically.                  */
+    var _tip = null;
+    function _ensureTip() {
+        if (_tip) return _tip;
+        _tip = document.createElement('div');
+        _tip.style.cssText = [
+            'position:fixed', 'z-index:99999', 'pointer-events:none',
+            'padding:9px 13px', 'border-radius:10px', 'border:1px solid',
+            'font-size:11px', 'line-height:1.6', 'white-space:nowrap',
+            'transition:opacity .12s', 'opacity:0'
+        ].join(';');
+        document.body.appendChild(_tip);
+        return _tip;
+    }
+    function _tipStyle() {
+        var d = document.documentElement.dataset.theme !== 'light';
+        _tip.style.background   = d ? '#1a0f08' : '#ffffff';
+        _tip.style.borderColor  = d ? 'rgba(255,255,255,0.10)' : 'rgba(26,15,8,0.09)';
+        _tip.style.color        = d ? '#a39a92' : '#7a6b5e';
+        _tip.style.fontFamily   = '"IBM Plex Mono",monospace';
+    }
+    function _showTip(e, parts) {
+        _ensureTip(); _tipStyle();
+        var title = parts[0] ? '<div style="font-family:Manrope,sans-serif;font-weight:700;font-size:11px;color:' + (document.documentElement.dataset.theme !== 'light' ? '#fff1e8' : '#1a0f08') + ';margin-bottom:3px;">' + parts[0] + '</div>' : '';
+        _tip.innerHTML = title + parts.slice(1).map(function(l){ return '<div>' + l + '</div>'; }).join('');
+        _tip.style.opacity = '1';
+        _moveTip(e);
+    }
+    function _moveTip(e) {
+        if (!_tip || _tip.style.opacity === '0') return;
+        var x = e.clientX + 14, y = e.clientY - 8;
+        if (x + _tip.offsetWidth + 20 > window.innerWidth) x = e.clientX - _tip.offsetWidth - 10;
+        if (y + _tip.offsetHeight + 20 > window.innerHeight) y = e.clientY - _tip.offsetHeight - 10;
+        _tip.style.left = x + 'px'; _tip.style.top = y + 'px';
+    }
+    function _hideTip() { if (_tip) _tip.style.opacity = '0'; }
+
+    /* Global event delegation — any element with data-tip="Title|line1|line2" */
+    document.addEventListener('mouseover', function(e) {
+        var el = e.target && e.target.closest && e.target.closest('[data-tip]');
+        if (el) _showTip(e, (el.getAttribute('data-tip') || '').split('|'));
+    });
+    document.addEventListener('mousemove', _moveTip);
+    document.addEventListener('mouseout', function(e) {
+        var el = e.target && e.target.closest && e.target.closest('[data-tip]');
+        if (el && (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('[data-tip]'))) _hideTip();
+    });
+
     /* ─── Initialize Dashboard Async ────────────────────────────────── */
     function init() {
         PFStore.loadPortfolio(pfId)
@@ -1236,15 +1286,17 @@
             : il('Caution warranted. Concentration and/or volatility are elevated — review positioning.',
                  'الحذر مطلوب. التركّز و/أو التقلب مرتفع — راجع المراكز.');
 
-        function chip(label, val, dot) {
-            return '<div class="pf-chip"><span class="pf-chip-label">' + label + '</span>' +
+        function chip(label, val, dot, tipBody) {
+            return '<div class="pf-chip" data-tip="' + escHtml(label) + '|' + escHtml(tipBody || val) + '" style="cursor:default;">' +
+                '<span class="pf-chip-label">' + label + '</span>' +
                 '<span class="pf-chip-val"><span class="pf-chip-dot" style="background:' + dot + '"></span>' + val + '</span></div>';
         }
 
+        var gaugeTip = 'Health Score: ' + score + '/100 — ' + statusLabel + '|Liquidity · Diversification · Concentration · Discipline';
         return '<div class="pf-ic pf-health">' +
             icHead('heart', il('Portfolio Health Score', 'مؤشر صحة المحفظة'), il('Composite of liquidity, diversification, concentration & discipline', 'مركّب من السيولة والتنويع والتركّز والانضباط')) +
             '<div class="pf-health-body">' +
-                '<div class="pf-gauge-wrap">' + gauge +
+                '<div class="pf-gauge-wrap" data-tip="' + escHtml(gaugeTip) + '" style="cursor:default;">' + gauge +
                     '<div class="pf-gauge-center">' +
                         '<span class="pf-gauge-score">' + score + '<sub>/100</sub></span>' +
                         '<span class="pf-gauge-tag ' + tone + '">' + statusLabel + '</span>' +
@@ -1252,10 +1304,10 @@
                 '</div>' +
                 '<p class="pf-health-note">' + note + '</p>' +
                 '<div class="pf-health-chips">' +
-                    chip(il('Volatility', 'التقلب'), volTxt, volDot) +
-                    chip(il('Diversification', 'التنويع'), divTxt, divDot) +
-                    chip(il('Liquidity', 'السيولة'), liqTxt, liqDot) +
-                    chip(il('Discipline', 'الانضباط'), discTxt, discDot) +
+                    chip(il('Volatility', 'التقلب'), volTxt, volDot, 'Annualized: ' + fmt(v, 1) + '%  ·  ' + volTxt) +
+                    chip(il('Diversification', 'التنويع'), divTxt, divDot, I.sleeves.length + ' sleeves  ·  Top-5: ' + fmt(I.top5, 1) + '%') +
+                    chip(il('Liquidity', 'السيولة'), liqTxt, liqDot, 'Cash: ' + fmt(cashPct, 1) + '%  ·  ' + liqTxt) +
+                    chip(il('Discipline', 'الانضباط'), discTxt, discDot, portfolio.halted ? 'System halted — review required' : 'All guardrails armed & active') +
                 '</div>' +
             '</div>' +
         '</div>';
@@ -1277,7 +1329,9 @@
         var donut = '<div class="pf-donut2" style="background:conic-gradient(' + stops + ')">' +
             '<div class="pf-donut2-center"><strong>' + I.holdingsCount + '</strong><span>' + il('Holdings', 'مراكز') + '</span></div></div>';
         var legend = segs.map(function (s) {
-            return '<div class="pf-dl2"><span class="pf-dl2-dot" style="background:' + s.color + '"></span>' +
+            var tipVal = '$' + fmt((s.w / 100) * (I.equity || 0), 0) + '  ·  ' + fmt(s.w, 1) + '% of portfolio';
+            return '<div class="pf-dl2" data-tip="' + escHtml(s.name) + '|' + escHtml(tipVal) + '" style="cursor:default;">' +
+                '<span class="pf-dl2-dot" style="background:' + s.color + '"></span>' +
                 '<span class="pf-dl2-name">' + escHtml(s.name) + '</span>' +
                 '<span class="pf-dl2-pct">' + fmt(s.w, 1) + '%</span></div>';
         }).join('');
@@ -1285,7 +1339,10 @@
         var maxW = I.byWeight[0] ? I.byWeight[0].weight : 1;
         var bars = I.byWeight.slice(0, 5).map(function (h) {
             var rel = maxW > 0 ? (h.weight / maxW) * 100 : 0;
-            return '<div class="pf-conc-row"><span class="pf-conc-sym">' + escHtml(h.symbol) + '</span>' +
+            var mv = '$' + fmt((h.weight / 100) * (I.equity || 0), 0);
+            var tipText = h.symbol + '|' + fmt(h.weight, 1) + '% of portfolio  ·  ' + mv + ' market value';
+            return '<div class="pf-conc-row" data-tip="' + escHtml(tipText) + '" style="cursor:default;">' +
+                '<span class="pf-conc-sym">' + escHtml(h.symbol) + '</span>' +
                 '<span class="pf-conc-track"><span class="pf-conc-fill" style="width:' + rel.toFixed(1) + '%"></span></span>' +
                 '<span class="pf-conc-pct">' + fmt(h.weight, 1) + '%</span></div>';
         }).join('') || ('<div class="pf-ic-sub">' + il('No open positions.', 'لا توجد مراكز مفتوحة.') + '</div>');
@@ -2623,11 +2680,46 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: isDark ? '#1a0f08' : '#fff',
-                        borderColor: 'rgba(0,0,0,.08)', borderWidth: 1,
-                        titleColor: isDark ? '#fff1e8' : '#1a0f08',
-                        bodyColor: isDark ? '#a39a92' : '#7a6b5e',
-                        bodyFont: { family: 'IBM Plex Mono', size: 11 },
+                        // External mode renders the tooltip as a DOM div with z-index
+                        // so it appears above the "46% WIN RATE" center overlay element.
+                        enabled: false,
+                        external: function(ctx) {
+                            var tooltip = ctx.tooltip;
+                            var parent  = ctx.chart.canvas.parentNode;
+                            var el = parent.querySelector('.contrib-ext-tip');
+                            if (!el) {
+                                el = document.createElement('div');
+                                el.className = 'contrib-ext-tip';
+                                el.style.cssText = [
+                                    'position:absolute', 'z-index:999', 'pointer-events:none',
+                                    'border-radius:10px', 'border:1px solid', 'padding:8px 12px',
+                                    'font-family:IBM Plex Mono,monospace', 'font-size:11px',
+                                    'line-height:1.6', 'white-space:nowrap', 'transition:opacity .12s',
+                                    'opacity:0'
+                                ].join(';');
+                                parent.style.position = 'relative';
+                                parent.appendChild(el);
+                            }
+                            if (tooltip.opacity === 0) { el.style.opacity = '0'; return; }
+                            var d = document.documentElement.dataset.theme !== 'light';
+                            el.style.background  = d ? '#1a0f08' : '#fff';
+                            el.style.borderColor = d ? 'rgba(255,255,255,0.10)' : 'rgba(26,15,8,0.09)';
+                            el.style.color       = d ? '#a39a92' : '#7a6b5e';
+                            var titleHtml = tooltip.title && tooltip.title[0]
+                                ? '<div style="font-family:Manrope,sans-serif;font-weight:700;font-size:11px;color:' + (d?'#fff1e8':'#1a0f08') + ';margin-bottom:3px;">' + tooltip.title[0] + '</div>' : '';
+                            var bodyHtml = (tooltip.body || []).map(function(b, i) {
+                                var col = (tooltip.labelColors[i] || {}).backgroundColor || '#888';
+                                return '<div style="display:flex;align-items:center;gap:6px;">' +
+                                    '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + col + ';flex-shrink:0;"></span>' +
+                                    '<span>' + (b.lines[0] || '') + '</span></div>';
+                            }).join('');
+                            el.innerHTML = titleHtml + bodyHtml;
+                            el.style.opacity = '1';
+                            // Position: above the cursor within the parent
+                            var cx = tooltip.caretX, cy = tooltip.caretY;
+                            el.style.left = Math.max(0, cx - el.offsetWidth / 2) + 'px';
+                            el.style.top  = Math.max(0, cy - el.offsetHeight - 10) + 'px';
+                        },
                         callbacks: {
                             label: function(c) {
                                 return ' ' + c.label + ': ' + (c.dataIndex === 0 ? '+' : '-') + '$' + fmt(c.raw, 0);
