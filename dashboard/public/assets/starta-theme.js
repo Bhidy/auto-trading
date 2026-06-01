@@ -66,4 +66,26 @@
     window.addEventListener("storage", function (event) {
         if (event.key === STORAGE_KEY) applyTheme(event.newValue, false);
     });
+
+    // ── Chart.js global tooltip defaults — applied to every chart on every page ──
+    // Per-instance overrides in individual charts still take precedence (Chart.js
+    // merges options in the order: defaults → scale-type → per-instance).
+    function applyChartDefaults() {
+        if (typeof Chart === "undefined") return;
+        var isDark = normalize(document.documentElement.getAttribute("data-theme")) === "dark";
+        var tt = Chart.defaults.plugins.tooltip;
+        tt.backgroundColor    = isDark ? "#1a0f08" : "#ffffff";
+        tt.borderColor        = isDark ? "rgba(255,255,255,0.10)" : "rgba(26,15,8,0.09)";
+        tt.borderWidth        = 1;
+        tt.cornerRadius       = 10;
+        tt.padding            = { top: 9, bottom: 9, left: 13, right: 15 };
+        tt.titleColor         = isDark ? "#fff1e8" : "#1a0f08";
+        tt.bodyColor          = isDark ? "#a39a92" : "#7a6b5e";
+        tt.titleFont          = { family: "Manrope", size: 11, weight: "700" };
+        tt.bodyFont           = { family: "IBM Plex Mono", size: 11 };
+        tt.multiKeyBackground = "transparent";
+    }
+    // Apply once all scripts are loaded, then again on every theme toggle
+    window.addEventListener("load", applyChartDefaults);
+    document.addEventListener("starta:themechange", applyChartDefaults);
 }());

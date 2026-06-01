@@ -2244,7 +2244,7 @@
                 indexAxis: 'y',
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: function(c){ return '$'+fmt(c.raw,2); } } }
+                    tooltip: { backgroundColor: isDark?'#1a0f08':'#fff', borderColor: isDark?'rgba(255,255,255,0.08)':'rgba(26,15,8,0.08)', borderWidth:1, cornerRadius:10, padding:{top:8,bottom:8,left:12,right:12}, titleColor:isDark?'#fff1e8':'#1a0f08', bodyColor:isDark?'#a39a92':'#7a6b5e', titleFont:{family:'Manrope',size:11,weight:'700'}, bodyFont:{family:'IBM Plex Mono',size:11}, callbacks: { label: function(c){ return ' $'+fmt(c.raw,2); } } }
                 },
                 scales: {
                     x: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'}, callback: function(v){ return '$'+fmt(v,0); } } },
@@ -2299,7 +2299,7 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return (c.raw>=0?'+':'')+'$'+fmt(c.raw,2); } } } },
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: isDark?'#1a0f08':'#fff', borderColor: isDark?'rgba(255,255,255,0.08)':'rgba(26,15,8,0.08)', borderWidth:1, cornerRadius:10, padding:{top:8,bottom:8,left:12,right:12}, titleColor:isDark?'#fff1e8':'#1a0f08', bodyColor:isDark?'#a39a92':'#7a6b5e', titleFont:{family:'Manrope',size:11,weight:'700'}, bodyFont:{family:'IBM Plex Mono',size:11}, callbacks: { label: function(c){ return ' '+(c.raw>=0?'+':'')+'$'+fmt(c.raw,2); } } } },
                 scales: {
                     x: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'} } },
                     y: { grid: { color: isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)' }, ticks: { font:{size:9,family:'IBM Plex Mono'}, callback: function(v){ return '$'+fmt(v,0); } } }
