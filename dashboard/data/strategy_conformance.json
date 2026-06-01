@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-06-01T18:11:59.408685+00:00",
+  "portfolio_id": "portfolio_1",
+  "conformant": true,
+  "checks": [
+    {
+      "name": "complete_bracket",
+      "ok": true,
+      "detail": "all entries carry stop+TP"
+    },
+    {
+      "name": "regime_applied",
+      "ok": true,
+      "detail": "regime=STRONG_BULL"
+    }
+  ],
+  "violations": []
+}

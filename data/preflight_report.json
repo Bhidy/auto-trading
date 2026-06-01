@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "portfolio_id": "portfolio_1",
+  "hard_failures": [],
+  "warnings": [],
+  "clamped_params": {
+    "rsi_overbought": 75,
+    "rsi_oversold": 30,
+    "rsi_buy_zone_upper": 50,
+    "momentum_threshold": 0,
+    "confidence_buy_threshold": 0.5,
+    "confidence_short_threshold": 0.5,
+    "position_size_multiplier": 1.0,
+    "ma_fast": 50,
+    "ma_slow": 200,
+    "atr_risk_target_pct": 1.0,
+    "trailing_stop_atr_mult": 2.5,
+    "take_profit_atr_mult": 4.0,
+    "regime_weight": 0.15,
+    "rs_weight": 0.1,
+    "volume_weight": 0.05,
+    "macd_weight": 0.1,
+    "bb_weight": 0.05,
+    "win_rate_7d": 1.0,
+    "win_rate_30d": 1.0,
+    "avg_win_loss_ratio": 1.0,
+    "last_updated": "2026-05-27T14:30:00Z"
+  },
+  "checks": {
+    "account_health": {
+      "ok": true,
+      "issues": []
+    },
+    "risk_limits": {
+      "ok": true,
+      "issues": []
+    },
+    "param_clamps": [],
+    "sizing_canary": {
+      "ok": true,
+      "detail": "$100/$2ATR -> 12.0% (qty 120); expected [0.5,12.0]% and qty>=1"
+    },
+    "crypto_canary": {
+      "ok": true,
+      "detail": "$100k/$3kATR -> 12.0% ($12,000 notional)"
+    },
+    "data_fresh": true
+  }
+}
