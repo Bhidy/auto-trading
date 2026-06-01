@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-29T22:58:10.829397+00:00",
+  "timestamp": "2026-06-01T22:37:57.026285+00:00",
   "overall": {
     "total_trades": 1,
     "wins": 1,
@@ -13,6 +13,7 @@
     "max_loss_pct": 0.42,
     "total_pnl": 29.04,
     "profit_factor": 29.04,
+    "per_trade_sharpe": 0,
     "sharpe_estimate": 0
   },
   "last_7_days": {
@@ -28,6 +29,7 @@
     "max_loss_pct": 0.42,
     "total_pnl": 29.04,
     "profit_factor": 29.04,
+    "per_trade_sharpe": 0,
     "sharpe_estimate": 0
   },
   "last_30_days": {
@@ -43,6 +45,7 @@
     "max_loss_pct": 0.42,
     "total_pnl": 29.04,
     "profit_factor": 29.04,
+    "per_trade_sharpe": 0,
     "sharpe_estimate": 0
   },
   "by_bucket": {
