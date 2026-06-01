@@ -336,6 +336,9 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     trades_today = len([t for t in trade_log if t.get("date", "").startswith(today)])
 
     executed = []
+    placed_count = 0       # bracket orders submitted to the broker (or idempotent dup)
+    filled_count = 0       # confirmed filled this run
+    skips = []             # [{symbol, reason, benign}] for candidates we did not place
 
     for signal in signals:
         if trades_today >= limits["max_trades_per_day"]:
@@ -349,12 +352,14 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
 
         if sym in position_symbols:
             log.info(f"  Already hold {sym}, skipping")
+            skips.append({"symbol": sym, "reason": "already hold", "benign": True})
             continue
 
         # Sector limit check
         sector_val = sector_exposure.get(sector, 0)
         if sector_val / equity * 100 >= limits["max_sector_exposure_pct"]:
             log.info(f"  Sector {sector} at limit ({sector_val/equity*100:.1f}%), skipping {sym}")
+            skips.append({"symbol": sym, "reason": f"sector {sector} at cap", "benign": True})
             continue
 
         try:
@@ -374,10 +379,12 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 atr_val = price * 0.03 if price > 0 else 0
             if atr_val <= 0:
                 log.info(f"  No ATR for {sym}, skipping")
+                skips.append({"symbol": sym, "reason": "no ATR (cannot size)", "benign": True})
                 continue
 
         shares, stop_price, tp1_price = compute_position_size(equity, price, atr_val, limits)
         if shares <= 0:
+            skips.append({"symbol": sym, "reason": "sizing returned 0 shares", "benign": False})
             continue
 
         trade_value = shares * price
@@ -385,12 +392,14 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             shares = int(cash * 0.85 / price)
             if shares <= 0:
                 log.warning(f"  Insufficient cash for {sym}")
+                skips.append({"symbol": sym, "reason": "insufficient cash", "benign": True})
                 continue
             trade_value = shares * price
 
         if trade_value > tranche_capital * 0.30:
             shares = int(tranche_capital * 0.25 / price)
             if shares <= 0:
+                skips.append({"symbol": sym, "reason": "tranche capital exhausted", "benign": True})
                 continue
             trade_value = shares * price
 
@@ -406,10 +415,13 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 client_order_id=coid,
             )
 
+            placed_count += 1
             # Confirm the fill so the trade log records the REAL entry price,
             # not the pre-trade quote.
             status, filled_qty, filled_price = confirm_fill(alpaca, order.get("id"))
             entry_price = filled_price if filled_price else price
+            if filled_qty and float(filled_qty) > 0:
+                filled_count += 1
 
             trade_record = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -446,6 +458,7 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             # Duplicate client_order_id (422) -> already placed today; idempotent skip.
             if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
                 log.info(f"  {sym}: already placed today (idempotent skip)")
+                placed_count += 1  # order exists at broker from a prior fire today
                 continue
             log.error(f"  Order failed for {sym}: {e}")
             if resp is not None:
@@ -454,6 +467,19 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             log.error(f"  Unexpected error for {sym}: {e}")
 
     save_json(DATA_DIR / "trade_log.json", trade_log)
+
+    # Execution-integrity audit — same silent-no-op guard as P1 (2026-06-01).
+    from shared.integrity import execution_integrity, write_integrity_report
+    integrity = execution_integrity(
+        total_signals=len(signals),
+        approved=len(signals), placed=placed_count, filled=filled_count,
+        halted=False, cash_available=cash > 100,
+        skipped=skips, portfolio_id="portfolio_3",
+    )
+    write_integrity_report(str(DATA_DIR / "execution_integrity.json"), integrity)
+    if integrity["anomalous"]:
+        log.warning(f"::warning::EXECUTION ANOMALY (P3): {integrity['anomaly_reason']}")
+
     return executed
 
 

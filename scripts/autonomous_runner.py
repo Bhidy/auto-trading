@@ -379,6 +379,9 @@ def run_trading_session(alpaca: AlpacaClient):
         return
 
     trades_executed = 0
+    placed_count = 0       # orders submitted to the broker (or idempotent dup)
+    filled_count = 0       # orders confirmed filled this run
+    skips = []             # [{symbol, reason}] for approved orders we did not place
     max_trades = limits["max_trades_per_day"] - portfolio_state["trades_today"]
 
     for order in approved:
@@ -393,6 +396,7 @@ def run_trading_session(alpaca: AlpacaClient):
         itype = get_instrument_type(symbol)
 
         if qty <= 0 or price <= 0:
+            skips.append({"symbol": symbol, "reason": "non-positive qty/price", "benign": False})
             continue
 
         existing = alpaca.get_position(symbol)
@@ -401,6 +405,7 @@ def run_trading_session(alpaca: AlpacaClient):
             max_pct = limits["max_single_position_pct"].get(itype, 8)
             if existing_pct >= max_pct * 0.85:
                 log.info(f"  Already hold {existing_pct:.1f}% of {symbol}, skipping")
+                skips.append({"symbol": symbol, "reason": f"already hold {existing_pct:.1f}%", "benign": True})
                 continue
 
         dollar_amount = order.get("approved_dollar_amount", qty * price)
@@ -409,6 +414,7 @@ def run_trading_session(alpaca: AlpacaClient):
             qty = round(cash * 0.90 / price, 6) if itype == "crypto" else int(cash * 0.90 / price)
             if qty <= 0:
                 log.warning(f"  Insufficient cash for {symbol}")
+                skips.append({"symbol": symbol, "reason": "insufficient cash", "benign": True})
                 continue
 
         side = "buy" if signal == "BUY" else "sell"
@@ -422,6 +428,7 @@ def run_trading_session(alpaca: AlpacaClient):
             if not ok_short:
                 log.warning(f"  SHORT {symbol} skipped at execution: "
                             f"{'; '.join(short_reasons)}")
+                skips.append({"symbol": symbol, "reason": "short not ETB at execution", "benign": True})
                 continue
 
         coid = make_client_order_id("p1", symbol, side)
@@ -452,6 +459,7 @@ def run_trading_session(alpaca: AlpacaClient):
                 )
 
             order_id = result.get("id")
+            placed_count += 1
             # Confirm the fill before logging — never record a phantom entry.
             status, filled_qty, filled_price = confirm_fill(alpaca, order_id)
             entry_price = filled_price if filled_price else limit_price
@@ -465,6 +473,7 @@ def run_trading_session(alpaca: AlpacaClient):
                 time.sleep(0.5)
                 continue
 
+            filled_count += 1
             log.info(f"  {side.upper()} {filled_qty:g} x {symbol} @ ${entry_price:.2f} "
                      f"(${filled_qty * entry_price:,.0f}) — {status}")
 
@@ -490,6 +499,7 @@ def run_trading_session(alpaca: AlpacaClient):
             # placed on a prior fire today — idempotent no-op, not an error.
             if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
                 log.info(f"  {symbol}: already placed today (idempotent skip)")
+                placed_count += 1  # order exists at broker from a prior fire today
                 continue
             log.error(f"  Order failed for {symbol}: {e}")
             if resp is not None:
@@ -498,6 +508,20 @@ def run_trading_session(alpaca: AlpacaClient):
             log.error(f"  Unexpected error for {symbol}: {e}")
 
     log.info(f"Trading session complete: {trades_executed} orders placed")
+
+    # Execution-integrity audit — "approved>0 but placed==0" with no error is the
+    # exact symptom that hid the 2026-06-01 incident. Persist it; shout on anomaly.
+    from shared.integrity import execution_integrity, write_integrity_report
+    integrity = execution_integrity(
+        total_signals=validated["summary"]["total_signals"],
+        approved=len(approved), placed=placed_count, filled=filled_count,
+        halted=bool(portfolio_state.get("halted")), cash_available=cash > 100,
+        skipped=skips, portfolio_id="portfolio_1",
+    )
+    write_integrity_report(str(DATA_DIR / "execution_integrity.json"), integrity)
+    if integrity["anomalous"]:
+        log.warning(f"::warning::EXECUTION ANOMALY (P1): {integrity['anomaly_reason']}")
+
     _sync_portfolio_state(alpaca, portfolio_state)
 
 

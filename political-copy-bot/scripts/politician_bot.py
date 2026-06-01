@@ -745,6 +745,21 @@ class PoliticianBot:
         self.save_portfolio_state()
         self.write_journal(executed)
 
+        # Execution-integrity record. P2 filters candidates heavily INSIDE
+        # execute_trade (freshness, technical confirmation, min trade value) and
+        # sizes with max(1, int(...)) — structurally immune to the qty=0 class that
+        # hit P1 (2026-06-01). We record observability counts; a meaningful
+        # approved-but-not-placed anomaly would require splitting execute_trade's
+        # decide/place steps, which P2's immunity does not warrant.
+        from shared.integrity import execution_integrity, write_integrity_report
+        integrity = execution_integrity(
+            total_signals=len(new_trades),
+            approved=len(executed), placed=len(executed), filled=len(executed),
+            halted=False, cash_available=True,
+            skipped=[], portfolio_id="portfolio_2",
+        )
+        write_integrity_report(str(BASE_DIR / "data" / "execution_integrity.json"), integrity)
+
         log.info(f"Cycle complete: {len(executed)} trades executed out of {len(new_trades)} signals")
 
     def run_monitor(self):
