@@ -288,5 +288,150 @@
       }
     },
     "insights": []
+  },
+  {
+    "date": "2026-06-01",
+    "timestamp": "2026-06-01T22:50:57.869327+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 99458.48,
+      "cash": 253.14,
+      "portfolio_value": 99458.48,
+      "daily_pnl": -23.80000000000291,
+      "daily_pnl_pct": -0.024
+    },
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "qty": "25",
+        "market_value": "7641.25",
+        "unrealized_pl": "-123.25",
+        "unrealized_plpc": "-0.01587"
+      },
+      {
+        "symbol": "AMZN",
+        "qty": "52",
+        "market_value": "13482.56",
+        "unrealized_pl": "-321.289956",
+        "unrealized_plpc": "-0.02328"
+      },
+      {
+        "symbol": "BIL",
+        "qty": "218",
+        "market_value": "19925.1564",
+        "unrealized_pl": "-48.0036",
+        "unrealized_plpc": "-0.0024"
+      },
+      {
+        "symbol": "DIA",
+        "qty": "9",
+        "market_value": "4602.96",
+        "unrealized_pl": "27.780003",
+        "unrealized_plpc": "0.00607"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "28",
+        "market_value": "10329.2",
+        "unrealized_pl": "-437.439996",
+        "unrealized_plpc": "-0.04063"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "17",
+        "market_value": "4893.28",
+        "unrealized_pl": "-44.049992",
+        "unrealized_plpc": "-0.00892"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "37",
+        "market_value": "8284.6737",
+        "unrealized_pl": "420.443691",
+        "unrealized_plpc": "0.05346"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "7",
+        "market_value": "5177.55",
+        "unrealized_pl": "74.299995",
+        "unrealized_plpc": "0.01456"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "6",
+        "market_value": "4537.92",
+        "unrealized_pl": "37.62",
+        "unrealized_plpc": "0.00836"
+      },
+      {
+        "symbol": "TSLA",
+        "qty": "13",
+        "market_value": "5382",
+        "unrealized_pl": "-298.990003",
+        "unrealized_plpc": "-0.05263"
+      },
+      {
+        "symbol": "XLI",
+        "qty": "28",
+        "market_value": "4827.2",
+        "unrealized_pl": "-49.84",
+        "unrealized_plpc": "-0.01022"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "27",
+        "market_value": "5275.8",
+        "unrealized_pl": "334.839987",
+        "unrealized_plpc": "0.06777"
+      },
+      {
+        "symbol": "XLY",
+        "qty": "41",
+        "market_value": "4845.79",
+        "unrealized_pl": "-141.68001",
+        "unrealized_plpc": "-0.02841"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate": 1.0,
+        "avg_pnl_pct": 0.42,
+        "avg_win_pct": 0.42,
+        "avg_loss_pct": 0,
+        "win_loss_ratio": 1.0,
+        "max_win_pct": 0.42,
+        "max_loss_pct": 0.42,
+        "total_pnl": 29.04,
+        "profit_factor": 29.04,
+        "per_trade_sharpe": 0,
+        "sharpe_estimate": 0
+      },
+      "metrics_30d": {
+        "total_trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate": 1.0,
+        "avg_pnl_pct": 0.42,
+        "avg_win_pct": 0.42,
+        "avg_loss_pct": 0,
+        "win_loss_ratio": 1.0,
+        "max_win_pct": 0.42,
+        "max_loss_pct": 0.42,
+        "total_pnl": 29.04,
+        "profit_factor": 29.04,
+        "per_trade_sharpe": 0,
+        "sharpe_estimate": 0
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": []
   }
 ]
