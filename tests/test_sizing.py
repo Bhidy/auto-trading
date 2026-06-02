@@ -11,6 +11,7 @@ import pytest
 
 from shared.sizing import (
     MAX_WEIGHT_PCT,
+    position_add_room_qty,
     realized_risk_pct,
     shares_for_dollar_risk,
     volatility_position_pct,
@@ -127,3 +128,39 @@ def test_percent_and_dollar_models_agree_off_cap():
     shares = shares_for_dollar_risk(equity, target, atr, stop)
     dollars_from_shares = shares * price
     assert dollars_from_pct == pytest.approx(dollars_from_shares, rel=0.02)
+
+
+# --- position_add_room_qty: enforce single-position cap on PROPOSED total ----
+# Locks the 2026-06-02 finding: the executor capped the NEW order to max_pct but
+# didn't subtract the existing holding, so an add could land at ~2x the cap.
+
+def test_add_room_caps_to_remaining_headroom():
+    # Hold $6,000 (6%) of a $100/sh name on $100k equity, 8% cap -> $2,000 room
+    # = 20 shares. An "8% order" (80 sh) must be capped to 20.
+    assert position_add_room_qty(6_000, 100.0, 100_000, 8.0) == 20
+
+
+def test_add_room_zero_when_already_at_cap():
+    assert position_add_room_qty(8_000, 100.0, 100_000, 8.0) == 0
+    assert position_add_room_qty(9_500, 100.0, 100_000, 8.0) == 0  # over cap -> 0
+
+
+def test_add_room_full_cap_when_nothing_held():
+    # No existing position -> full 8% = $8,000 = 80 shares.
+    assert position_add_room_qty(0, 100.0, 100_000, 8.0) == 80
+
+
+def test_add_room_fractional_for_crypto():
+    # Crypto sizes fractionally: $5,000 held, 10% cap on $100k -> $5,000 room.
+    qty = position_add_room_qty(5_000, 40_000.0, 100_000, 10.0, fractional=True)
+    assert qty == pytest.approx(5_000 / 40_000.0, rel=1e-6)  # 0.125 BTC, not int(0)=0
+
+
+@pytest.mark.parametrize("args", [
+    (6_000, 0.0, 100_000, 8.0),      # price <= 0
+    (6_000, 100.0, 0.0, 8.0),        # equity <= 0
+    (6_000, 100.0, 100_000, 0.0),    # cap <= 0
+    (None, 100.0, 100_000, 8.0),     # non-numeric
+])
+def test_add_room_zero_on_degenerate(args):
+    assert position_add_room_qty(*args) == 0

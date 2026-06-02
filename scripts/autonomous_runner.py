@@ -427,18 +427,39 @@ def run_trading_session(alpaca: AlpacaClient):
             continue
 
         existing = alpaca.get_position(symbol)
+        max_add_qty = None
         if existing and signal == "BUY":
-            existing_pct = abs(float(existing["market_value"])) / equity * 100
+            existing_val = abs(float(existing["market_value"]))
+            existing_pct = existing_val / equity * 100
             max_pct = limits["max_single_position_pct"].get(itype, 8)
             if existing_pct >= max_pct * 0.85:
                 log.info(f"  Already hold {existing_pct:.1f}% of {symbol}, skipping")
                 skips.append({"symbol": symbol, "reason": f"already hold {existing_pct:.1f}%", "benign": True})
                 continue
+            # Cap the ADD so (existing + new) stays within the single-position cap.
+            # risk_officer caps the NEW order to max_pct of equity but does NOT
+            # subtract the existing holding, so one add to a ~6% name could land at
+            # ~14% (≈2x the cap, observed live: AMZN 13.5%, GOOGL 10.4%). Enforce
+            # the PROPOSED total here, where the live position is known.
+            from shared.sizing import position_add_room_qty
+            max_add_qty = position_add_room_qty(existing_val, price, equity, max_pct,
+                                                fractional=(itype == "crypto"))
+            if max_add_qty <= 0:
+                log.info(f"  {symbol} at {existing_pct:.1f}% leaves no room under {max_pct}% cap, skipping")
+                skips.append({"symbol": symbol, "reason": f"no room under {max_pct}% cap", "benign": True})
+                continue
+            if qty > max_add_qty:
+                log.info(f"  Capping {symbol} add {qty}->{max_add_qty} to respect {max_pct}% cap "
+                         f"(hold {existing_pct:.1f}%)")
+                qty = max_add_qty
+                order["approved_dollar_amount"] = qty * price  # keep cash check in sync
 
         dollar_amount = order.get("approved_dollar_amount", qty * price)
         if dollar_amount > cash * 0.95:
             # Crypto sizes fractionally; equities in whole shares.
             qty = round(cash * 0.90 / price, 6) if itype == "crypto" else int(cash * 0.90 / price)
+            if max_add_qty is not None and qty > max_add_qty:
+                qty = max_add_qty  # a cash-driven refill must not breach the position cap
             if qty <= 0:
                 log.warning(f"  Insufficient cash for {symbol}")
                 skips.append({"symbol": symbol, "reason": "insufficient cash", "benign": True})

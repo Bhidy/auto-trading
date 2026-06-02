@@ -101,3 +101,25 @@ def shares_for_dollar_risk(equity, risk_budget_pct, atr, stop_atr_mult):
     if stop_distance <= 0:
         return 0
     return int((equity * risk_budget_pct / 100.0) / stop_distance)
+
+
+def position_add_room_qty(existing_value, price, equity, max_pct, *, fractional=False):
+    """Max ADDITIONAL quantity addable to an existing position without the
+    resulting total (existing + add) breaching the single-position cap.
+
+    The risk officer caps a NEW order to `max_pct` of equity but does NOT subtract
+    what is already held, so a single add to a partially-filled name can land at
+    up to ~2x the cap (observed live 2026-06-02: P1 AMZN 13.5%, GOOGL 10.4% on an
+    8% stock cap). Callers cap the order qty to this room so a 20%/8% cap means
+    exactly that — not twice the position size. Whole shares unless `fractional`
+    (crypto). Returns 0 when there is no room or on degenerate input."""
+    try:
+        existing_value = float(existing_value); price = float(price)
+        equity = float(equity); max_pct = float(max_pct)
+    except (TypeError, ValueError):
+        return 0.0 if fractional else 0
+    if price <= 0 or equity <= 0 or max_pct <= 0:
+        return 0.0 if fractional else 0
+    room_dollars = max(max_pct / 100.0 * equity - max(existing_value, 0.0), 0.0)
+    qty = room_dollars / price
+    return qty if fractional else int(qty)
