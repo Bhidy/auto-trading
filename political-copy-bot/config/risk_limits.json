@@ -29,6 +29,14 @@
     "500K–1M": 2.0,
     "1M–5M": 2.0
   },
+  "benchmark_sleeve": {
+    "enabled": true,
+    "symbols": ["SPY", "QQQ", "DIA", "IWM", "XLK", "XLF", "XLV", "XLE", "XLY", "XLI"],
+    "per_name_target_pct": 7.0,
+    "min_cash_reserve_pct": 10.0,
+    "rebalance_band_pct": 2.0,
+    "max_orders_per_run": 3
+  },
   "blocked_tickers": [],
   "allowed_asset_types": ["stock", "etf"],
   "require_us_listed": true,

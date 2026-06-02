@@ -119,6 +119,62 @@ def confirm_with_technicals(closes, ma_period=20, min_momentum_pct=0.0):
     return price > ma and momentum_pct >= min_momentum_pct
 
 
+# Broad, liquid ETFs for the benchmark sleeve. Each stays within the 8% single-
+# position cap, so the sleeve is a diversified market-replication basket — NOT a
+# single SPY block that would breach the cap. Political copies are the alpha
+# overlay layered on top of this passive base.
+SLEEVE_SYMBOLS = ["SPY", "QQQ", "DIA", "IWM", "XLK", "XLF", "XLV", "XLE", "XLY", "XLI"]
+
+
+def compute_sleeve_orders(equity, cash, positions, cfg, *, sleeve_symbols=None):
+    """Decide benchmark-sleeve rebalance orders so P2's cash is never fully idle
+    between political disclosures (it sat 90% in cash on 2026-06-02).
+
+    The sleeve is a diversified ETF basket, each name targeted at `per_name_target_pct`
+    (kept under the single-position cap). Idle cash above `min_cash_reserve_pct` is
+    deployed toward the per-name targets; a name held above target is trimmed back.
+    A `rebalance_band_pct` deadband and a `max_orders_per_run` cap prevent churn and
+    keep deployment gradual. Pure function — returns a list of
+    {symbol, side, notional, reason}; the caller converts notionals to qty orders.
+
+    `positions` is the live Alpaca positions list. Sells are returned before buys."""
+    if not cfg or not cfg.get("enabled"):
+        return []
+    syms = sleeve_symbols or cfg.get("symbols") or SLEEVE_SYMBOLS
+    try:
+        equity = float(equity)
+        cash = float(cash)
+    except (TypeError, ValueError):
+        return []
+    if equity <= 0:
+        return []
+
+    per_name_target = equity * float(cfg.get("per_name_target_pct", 7.0)) / 100.0
+    reserve = equity * float(cfg.get("min_cash_reserve_pct", 10.0)) / 100.0
+    band = equity * float(cfg.get("rebalance_band_pct", 2.0)) / 100.0
+    max_orders = int(cfg.get("max_orders_per_run", 3))
+
+    val_by = {p.get("symbol"): abs(float(p.get("market_value", 0) or 0))
+              for p in (positions or []) if p.get("symbol")}
+    investable = max(0.0, cash - reserve)
+
+    buys, sells = [], []
+    for s in syms:
+        cur = val_by.get(s, 0.0)
+        delta = per_name_target - cur
+        if delta > band:
+            amt = min(delta, investable)
+            if amt > band:
+                buys.append({"symbol": s, "side": "buy", "notional": round(amt, 2),
+                             "reason": "benchmark_sleeve: deploy idle cash"})
+                investable -= amt
+        elif delta < -band:
+            sells.append({"symbol": s, "side": "sell", "notional": round(-delta, 2),
+                          "reason": "benchmark_sleeve: trim to target"})
+    # Sells first (free cash), then buys; bounded per run to avoid bursts.
+    return (sells + buys)[:max_orders]
+
+
 class AlpacaClient:
     def __init__(self, config_path: Path):
         with open(config_path) as f:
@@ -666,9 +722,16 @@ class PoliticianBot:
         take_profit_pct = sell_cfg.get("take_profit_pct", 25.0)
         max_hold_days = sell_cfg.get("max_hold_days", 180)
 
+        sleeve_cfg = self.risk.limits.get("benchmark_sleeve", {}) or {}
+        sleeve_syms = set(sleeve_cfg.get("symbols") or SLEEVE_SYMBOLS) if sleeve_cfg.get("enabled") else set()
+
         positions = self.alpaca.get_positions()
         for pos in positions:
             symbol = pos.get("symbol", "")
+            # The passive benchmark sleeve is rebalanced by run_benchmark_sleeve,
+            # not stop-managed — an 8% trailing stop would churn it on every dip.
+            if symbol in sleeve_syms:
+                continue
             unrealized_plpc = float(pos.get("unrealized_plpc", 0)) * 100
             qty = int(float(pos.get("qty", 0)))
             age_days = self._position_age_days(symbol)
@@ -785,6 +848,70 @@ class PoliticianBot:
             with open(journal_path, "w") as f:
                 json.dump([entry], f, indent=2)
 
+    def run_benchmark_sleeve(self):
+        """Deploy idle cash into a diversified ETF sleeve so the book is never fully
+        idle between political disclosures. Each ETF stays within the single-position
+        cap; the political copies are the alpha overlay on top. No-op unless enabled.
+        Runs only with the market open (called from the open branch of the cycle)."""
+        cfg = self.risk.limits.get("benchmark_sleeve", {})
+        if not cfg.get("enabled"):
+            return []
+        account = self.alpaca.get_account()
+        equity = float(account.get("equity", 0))
+        cash = float(account.get("cash", 0))
+        positions = self.alpaca.get_positions()
+        orders = compute_sleeve_orders(equity, cash, positions, cfg)
+        if not orders:
+            log.info("Benchmark sleeve: balanced, no rebalance needed")
+            return []
+
+        executed = []
+        offset = self.risk.limits.get("limit_offset_pct", 0.15)
+        for o in orders:
+            sym, side, notional = o["symbol"], o["side"], o["notional"]
+            try:
+                quote = self.alpaca.get_latest_quote(sym)
+                ask = float(quote.get("quote", {}).get("ap", 0))
+                bid = float(quote.get("quote", {}).get("bp", 0))
+                ref = ask if (side == "buy" and ask > 0) else (bid if bid > 0 else ask)
+                if ref <= 0:
+                    trade = self.alpaca.get_latest_trade(sym)
+                    ref = float(trade.get("trade", {}).get("p", 0))
+                if ref <= 0:
+                    continue
+                qty = int(notional / ref)
+                if qty <= 0:
+                    continue
+                limit_price = round(ref * (1 + offset / 100) if side == "buy"
+                                    else ref * (1 - offset / 100), 2)
+                coid = make_client_order_id("p2sleeve", sym, side)
+                order = self.alpaca.place_order(
+                    symbol=sym, qty=qty, side=side, order_type="limit",
+                    limit_price=limit_price, client_order_id=coid,
+                )
+                log.info(f"SLEEVE {side.upper()} {qty} x {sym} @ ${limit_price:.2f} "
+                         f"(${qty * limit_price:,.0f}) — {o['reason']}")
+                self.risk.log_trade({
+                    "symbol": sym, "side": side, "qty": qty,
+                    "limit_price": limit_price,
+                    "estimated_value": round(qty * limit_price, 2),
+                    "order_id": order.get("id"),
+                    "politician": "BENCHMARK_SLEEVE",
+                    "source": "benchmark_sleeve",
+                    "reason": o["reason"],
+                })
+                executed.append({"symbol": sym, "side": side, "qty": qty})
+                time.sleep(1)
+            except requests.HTTPError as e:
+                resp = getattr(e, "response", None)
+                if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
+                    log.info(f"{sym}: sleeve order already placed today (idempotent skip)")
+                    continue
+                log.error(f"Sleeve order failed for {sym}: {e}")
+            except Exception as e:
+                log.error(f"Sleeve order error for {sym}: {e}")
+        return executed
+
     def run_scan_and_trade(self):
         log.info("=" * 50)
         log.info("POLITICIAN COPY BOT — SCAN & TRADE CYCLE")
@@ -831,6 +958,7 @@ class PoliticianBot:
 
         self._save_processed()
         self.check_stops()
+        self.run_benchmark_sleeve()   # deploy idle cash so the book is never fully idle
         self.save_portfolio_state()
         self.write_journal(executed)
 

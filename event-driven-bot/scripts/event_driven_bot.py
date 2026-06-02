@@ -167,6 +167,57 @@ def diversify_by_sector(items: list, max_per_sector: int) -> list:
     return out
 
 
+def pick_sector_rotation_exit(candidate_rs, held_in_sector, *, edge=10.0):
+    """Pick the weakest current holding in a (capped) sector to exit so a stronger
+    incoming candidate can take its place — a within-sector SWAP instead of a hard
+    skip when the sector is at its 20% exposure cap.
+
+    Returns the weakest holding dict ({symbol, qty, rs}) IFF the candidate beats it
+    by at least `edge` relative-strength points; else None. `held_in_sector` lists
+    the current holdings in that sector with their RS (a name that fell out of the
+    screen carries a very low RS, so it is the natural one to rotate out of). Pure
+    function — the edge gate prevents churning between similar-strength names."""
+    if not held_in_sector:
+        return None
+    try:
+        cand = float(candidate_rs)
+    except (TypeError, ValueError):
+        return None
+    weakest = min(held_in_sector, key=lambda h: h.get("rs", float("-inf")))
+    try:
+        if cand - float(weakest.get("rs", 0)) >= float(edge):
+            return weakest
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
+def _finalize_rotation_exit(symbol, exit_price, *, reason=""):
+    """Mark the open trade-log entry for `symbol` closed after a sector-rotation
+    exit — records exit price + realized P&L so reconciliation stays in sync (the
+    position is gone at the broker, so the log must reflect that, not orphan)."""
+    trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    changed = False
+    for t in trade_log:
+        if t.get("symbol") == symbol and t.get("status") == "open":
+            t["status"] = "closed"
+            t["exit_reason"] = reason
+            t["sector_rotation_exit"] = True
+            try:
+                exit_price = float(exit_price)
+            except (TypeError, ValueError):
+                exit_price = 0.0
+            if exit_price > 0:
+                t["exit_price"] = round(exit_price, 4)
+                entry = float(t.get("entry_price", 0) or 0)
+                qty = float(t.get("qty", 0) or 0)
+                if entry > 0 and qty:
+                    t["pnl"] = round((exit_price - entry) * qty, 2)
+            changed = True
+    if changed:
+        save_json(DATA_DIR / "trade_log.json", trade_log)
+
+
 def generate_signals(watchlist_data: dict, alpaca: AlpacaClient) -> list:
     """Generate technical breakout signals from the fundamental watchlist."""
     universe = watchlist_data.get("universe", [])
@@ -396,6 +447,16 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     filled_count = 0       # confirmed filled this run
     skips = []             # [{symbol, reason, benign}] for candidates we did not place
 
+    # Within-sector rotation setup: RS for held names (a name that dropped out of
+    # the screen carries a very low RS, so it's the first to be swapped out). The
+    # swap is bounded per day so a noisy session can't churn the book.
+    watchlist = load_json(DATA_DIR / "watchlist.json", {})
+    rs_lookup = {w.get("symbol"): w.get("rs_vs_spy_3m", 0)
+                 for w in (watchlist.get("universe", []) if isinstance(watchlist, dict) else [])}
+    sector_rotation_enabled = limits.get("sector_rotation_enabled", True)
+    max_sector_rotations = limits.get("max_sector_rotations_per_day", 2)
+    sector_rotations = 0
+
     for signal in signals:
         if trades_today >= limits["max_trades_per_day"]:
             log.warning("Daily trade limit reached")
@@ -411,12 +472,53 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             skips.append({"symbol": sym, "reason": "already hold", "benign": True})
             continue
 
-        # Sector limit check
+        # Sector limit check — if the sector is full, try a WITHIN-SECTOR swap
+        # (exit the weakest holding in this sector when THIS candidate out-ranks it
+        # by the RS edge) before giving up, so a strong new leader isn't hard-locked
+        # out behind a sector laggard. Otherwise skip as before.
         sector_val = sector_exposure.get(sector, 0)
         if sector_val / equity * 100 >= limits["max_sector_exposure_pct"]:
-            log.info(f"  Sector {sector} at limit ({sector_val/equity*100:.1f}%), skipping {sym}")
-            skips.append({"symbol": sym, "reason": f"sector {sector} at cap", "benign": True})
-            continue
+            swapped = False
+            if sector_rotation_enabled and sector_rotations < max_sector_rotations:
+                held_in_sector = [
+                    {"symbol": p["symbol"], "qty": int(float(p.get("qty", 0) or 0)),
+                     "rs": rs_lookup.get(p["symbol"], -999.0)}
+                    for p in positions
+                    if SECTOR_MAP.get(p["symbol"], "Unknown") == sector
+                ]
+                exit_pick = pick_sector_rotation_exit(
+                    signal.get("rs_vs_spy", 0), held_in_sector,
+                    edge=limits.get("sector_rotation_rs_edge", 10.0))
+                if exit_pick and exit_pick["qty"] > 0:
+                    exit_sym = exit_pick["symbol"]
+                    exit_pos = next((p for p in positions if p["symbol"] == exit_sym), None)
+                    exit_val = abs(float(exit_pos.get("market_value", 0) or 0)) if exit_pos else 0
+                    try:
+                        for o in alpaca.get_orders(status="open"):
+                            if o.get("symbol") == exit_sym and o.get("id"):
+                                try:
+                                    alpaca.cancel_order(o["id"])
+                                except Exception as e:
+                                    log.warning(f"    could not cancel {o.get('id')} for {exit_sym}: {e}")
+                        close_res = alpaca.close_position(exit_sym)
+                        _, _exit_qty, exit_price = confirm_fill(alpaca, close_res.get("id"))
+                        _finalize_rotation_exit(exit_sym, exit_price or 0,
+                                                reason=f"sector rotation -> {sym}")
+                        # Free the room in-memory so the candidate can proceed.
+                        sector_exposure[sector] = max(0.0, sector_val - exit_val)
+                        cash += exit_val
+                        positions = [p for p in positions if p["symbol"] != exit_sym]
+                        position_symbols.discard(exit_sym)
+                        sector_rotations += 1
+                        swapped = True
+                        log.info(f"  SECTOR ROTATE: exited {exit_sym} (RS {exit_pick['rs']:.1f}) "
+                                 f"to make room for {sym} (RS {signal.get('rs_vs_spy', 0):.1f})")
+                    except Exception as e:
+                        log.error(f"  Sector rotation exit failed for {exit_sym}: {e}")
+            if not swapped:
+                log.info(f"  Sector {sector} at limit ({sector_val/equity*100:.1f}%), skipping {sym}")
+                skips.append({"symbol": sym, "reason": f"sector {sector} at cap", "benign": True})
+                continue
 
         try:
             live_trade = alpaca.get_latest_trade(sym)
