@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-06-02T14:10:38.736391+00:00",
+  "portfolio_id": "portfolio_3",
+  "total_signals": 8,
+  "approved": 8,
+  "placed": 0,
+  "filled": 0,
+  "unexplained": 0,
+  "skipped": [
+    {
+      "symbol": "VLO",
+      "reason": "sector Energy at cap",
+      "benign": true
+    },
+    {
+      "symbol": "EOG",
+      "reason": "sector Energy at cap",
+      "benign": true
+    },
+    {
+      "symbol": "XOM",
+      "reason": "sector Energy at cap",
+      "benign": true
+    },
+    {
+      "symbol": "WMT",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "CSCO",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "MU",
+      "reason": "sector Tech at cap",
+      "benign": true
+    },
+    {
+      "symbol": "HAL",
+      "reason": "sector Energy at cap",
+      "benign": true
+    },
+    {
+      "symbol": "OXY",
+      "reason": "already hold",
+      "benign": true
+    }
+  ],
+  "halted": false,
+  "cash_available": true,
+  "anomalous": false,
+  "anomaly_reason": null
+}

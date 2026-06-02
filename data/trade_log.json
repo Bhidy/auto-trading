@@ -384,5 +384,43 @@
     "status": "open",
     "stop_loss": 674.21,
     "take_profit": 745.24
+  },
+  {
+    "id": 18,
+    "schema_version": 2,
+    "timestamp": "2026-06-02T14:10:37.204422+00:00",
+    "symbol": "XLE",
+    "side": "buy",
+    "qty": 3.0,
+    "entry_price": 57.67,
+    "intended_price": 57.75,
+    "slippage_pct": -0.1385,
+    "bucket": "sector_momentum",
+    "signal_score": 0.886,
+    "reasons": [
+      "Uptrend: price above MA50 & MA200",
+      "Positive momentum (1M:9.7% 3M:11.1%)",
+      "RSI neutral (66)",
+      "MACD bullish",
+      "Price above upper Bollinger Band \u2014 stretched",
+      "Volume declining -34% \u2014 weak confirmation",
+      "Regime (STRONG_BULL) adjusting score x1.2",
+      "Top 10% relative strength (rank #3)"
+    ],
+    "borrow_status": null,
+    "order_class": "simple",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": null,
+    "exit_timestamp": null,
+    "gross_pnl": null,
+    "fees": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "realized_pnl": null,
+    "hold_days": null,
+    "status": "open",
+    "stop_loss": 57.93,
+    "take_profit": 66.66
   }
 ]

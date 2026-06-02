@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-02T14:10:38.014671+00:00",
-  "portfolio_id": "portfolio_1",
+  "timestamp": "2026-06-02T14:10:38.736662+00:00",
+  "portfolio_id": "portfolio_3",
   "conformant": true,
   "checks": [
     {
@@ -9,9 +9,9 @@
       "detail": "all entries carry stop+TP"
     },
     {
-      "name": "regime_applied",
+      "name": "catalyst_decay_configured",
       "ok": true,
-      "detail": "regime=STRONG_BULL"
+      "detail": "catalyst_max_hold_days=2"
     }
   ],
   "violations": []

@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-06-01T18:11:59.408437+00:00",
+  "timestamp": "2026-06-02T14:10:38.014271+00:00",
   "portfolio_id": "portfolio_1",
   "total_signals": 23,
-  "approved": 7,
-  "placed": 3,
-  "filled": 3,
+  "approved": 9,
+  "placed": 1,
+  "filled": 1,
   "unexplained": 0,
   "skipped": [
     {
       "symbol": "NVDA",
-      "reason": "already hold 8.3%",
+      "reason": "already hold 8.5%",
       "benign": true
     },
     {
@@ -18,7 +18,27 @@
       "benign": true
     },
     {
+      "symbol": "AMZN",
+      "reason": "already hold 13.4%",
+      "benign": true
+    },
+    {
+      "symbol": "GOOGL",
+      "reason": "already hold 10.3%",
+      "benign": true
+    },
+    {
+      "symbol": "XLK",
+      "reason": "insufficient cash",
+      "benign": true
+    },
+    {
       "symbol": "SPY",
+      "reason": "insufficient cash",
+      "benign": true
+    },
+    {
+      "symbol": "QQQ",
       "reason": "insufficient cash",
       "benign": true
     },
@@ -29,7 +49,7 @@
     }
   ],
   "halted": false,
-  "cash_available": true,
+  "cash_available": false,
   "anomalous": false,
   "anomaly_reason": null
 }

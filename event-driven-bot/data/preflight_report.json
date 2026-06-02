@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "portfolio_id": "portfolio_3",
+  "hard_failures": [],
+  "warnings": [],
+  "clamped_params": {},
+  "checks": {
+    "account_health": {
+      "ok": true,
+      "issues": []
+    },
+    "risk_limits": {
+      "ok": true,
+      "issues": []
+    },
+    "param_clamps": [],
+    "data_fresh": null
+  }
+}
