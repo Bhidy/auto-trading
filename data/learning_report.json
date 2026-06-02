@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-02T22:28:36.949158+00:00",
+  "timestamp": "2026-06-02T22:33:53.095878+00:00",
   "overall": {
     "total_trades": 8,
     "wins": 4,
@@ -49,12 +49,6 @@
     "sharpe_estimate": 0.23
   },
   "by_bucket": {
-    "core_equity": {
-      "trades": 3,
-      "win_rate": 0.667,
-      "total_pnl": 38.72,
-      "avg_pnl_pct": 0.34
-    },
     "aggressive_growth": {
       "trades": 1,
       "win_rate": 1.0,
@@ -66,26 +60,26 @@
       "win_rate": 0.25,
       "total_pnl": 206.32,
       "avg_pnl_pct": 1.05
+    },
+    "core_equity": {
+      "trades": 3,
+      "win_rate": 0.667,
+      "total_pnl": 38.72,
+      "avg_pnl_pct": 0.34
     }
   },
   "by_symbol": {
+    "QQQ": {
+      "trades": 2,
+      "win_rate": 0.5,
+      "total_pnl": 1.41,
+      "avg_pnl_pct": 0.1
+    },
     "XLI": {
       "trades": 1,
       "win_rate": 0.0,
       "total_pnl": -16.38,
       "avg_pnl_pct": -0.34
-    },
-    "XLK": {
-      "trades": 2,
-      "win_rate": 0.5,
-      "total_pnl": 381.51,
-      "avg_pnl_pct": 3.87
-    },
-    "DIA": {
-      "trades": 1,
-      "win_rate": 1.0,
-      "total_pnl": 37.31,
-      "avg_pnl_pct": 0.82
     },
     "NVDA": {
       "trades": 1,
@@ -93,17 +87,23 @@
       "total_pnl": 29.04,
       "avg_pnl_pct": 0.42
     },
+    "DIA": {
+      "trades": 1,
+      "win_rate": 1.0,
+      "total_pnl": 37.31,
+      "avg_pnl_pct": 0.82
+    },
+    "XLK": {
+      "trades": 2,
+      "win_rate": 0.5,
+      "total_pnl": 381.51,
+      "avg_pnl_pct": 3.87
+    },
     "XLY": {
       "trades": 1,
       "win_rate": 0.0,
       "total_pnl": -158.81,
       "avg_pnl_pct": -3.18
-    },
-    "QQQ": {
-      "trades": 2,
-      "win_rate": 0.5,
-      "total_pnl": 1.41,
-      "avg_pnl_pct": 0.1
     }
   },
   "insights": [
