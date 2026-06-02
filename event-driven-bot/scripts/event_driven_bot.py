@@ -83,6 +83,19 @@ def is_catalyst_trade(trade):
     return "NEWS" in sig or "CATALYST" in sig
 
 
+def sector_cap_breached(current_sector_value, trade_value, equity, max_sector_pct):
+    """True if adding `trade_value` to a sector's CURRENT exposure would push the
+    sector past its cap. Checks PROPOSED exposure (current + new order), not just
+    current — a single tranche-sized entry must not be allowed to vault a sector
+    far past the cap (P3 reached ~33% on a 20% cap because only `current` was
+    checked). Mirrors risk_officer's proposed-exposure pattern (P1). Fails closed
+    on non-positive equity. Pure + unit-tested."""
+    if equity <= 0:
+        return True
+    proposed_pct = (current_sector_value + trade_value) / equity * 100
+    return proposed_pct > max_sector_pct
+
+
 def trade_age_days(trade, now=None):
     """Calendar days since entry, from the trade's timestamp (or date)."""
     now = now or datetime.now(timezone.utc)
@@ -411,6 +424,21 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 skips.append({"symbol": sym, "reason": "tranche capital exhausted", "benign": True})
                 continue
             trade_value = shares * price
+
+        # Enforce the sector cap on the PROPOSED exposure (current + THIS order),
+        # not just current. The early >= check above only blocks adding to a
+        # sector already at the cap; a single tranche-sized entry could still
+        # vault a sector far past it (P3 reached ~33% on a 20% cap, holding 2
+        # names per sector). This makes a 20% cap mean 20%, not 2x position size.
+        current_sector_val = sector_exposure.get(sector, 0)
+        if sector_cap_breached(current_sector_val, trade_value, equity,
+                               limits["max_sector_exposure_pct"]):
+            proposed_pct = (current_sector_val + trade_value) / equity * 100
+            log.info(f"  Sector {sector} would reach {proposed_pct:.1f}% "
+                     f"(cap {limits['max_sector_exposure_pct']}%), skipping {sym}")
+            skips.append({"symbol": sym,
+                          "reason": f"sector {sector} would breach cap", "benign": True})
+            continue
 
         try:
             log.info(f"  BUYING {shares} x {sym} @ ~${price:.2f} "
