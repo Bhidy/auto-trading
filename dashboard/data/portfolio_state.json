@@ -1,7 +1,7 @@
 {
-  "equity": 99647.33,
+  "equity": 99659.35,
   "starting_equity": 100000.0,
-  "day_start_equity": 99481.41,
+  "day_start_equity": 99661.66,
   "week_start_equity": 99481.41,
   "positions": {
     "AAPL": {
@@ -55,24 +55,24 @@
       "bucket": "sector_momentum"
     },
     "XLK": {
-      "qty": 5,
+      "qty": 3,
       "avg_price": 191.342616,
       "bucket": "sector_momentum"
     }
   },
-  "trades_today": 1,
-  "total_exposure": 83275.38,
-  "long_market_value": 83275.38,
+  "trades_today": 0,
+  "total_exposure": 82890.4851,
+  "long_market_value": 82890.4851,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 16372.5,
-  "day_pnl": 165.92,
-  "day_pnl_pct": 0.001668,
-  "week_pnl": 165.92,
-  "week_pnl_pct": 0.001668,
+  "cash": 16768.86,
+  "day_pnl": -2.31,
+  "day_pnl_pct": -2.3e-05,
+  "week_pnl": 177.94,
+  "week_pnl_pct": 0.001789,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-02T19:56:38.943669+00:00"
+  "last_updated": "2026-06-02T22:28:37.042508+00:00"
 }
