@@ -37,6 +37,21 @@
     "rebalance_band_pct": 2.0,
     "max_orders_per_run": 3
   },
+  "conviction": {
+    "enabled": true,
+    "cluster_step": 0.25,
+    "min_multiplier": 0.75,
+    "max_multiplier": 1.5,
+    "politician_tiers": {
+      "Nancy Pelosi": 1.4,
+      "Michael McCaul": 1.2,
+      "Dan Crenshaw": 1.15,
+      "Josh Gottheimer": 1.15,
+      "Ro Khanna": 1.1,
+      "Tommy Tuberville": 1.1,
+      "Marjorie Taylor Greene": 1.05
+    }
+  },
   "blocked_tickers": [],
   "allowed_asset_types": ["stock", "etf"],
   "require_us_listed": true,

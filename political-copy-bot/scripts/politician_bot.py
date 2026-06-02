@@ -175,6 +175,51 @@ def compute_sleeve_orders(equity, cash, positions, cfg, *, sleeve_symbols=None):
     return (sells + buys)[:max_orders]
 
 
+# ---------------------------------------------------------------------------
+# CONVICTION MODEL — politician track-record weighting + cluster-buy detection
+# ---------------------------------------------------------------------------
+
+def count_cluster_buys(pairs):
+    """`pairs`: iterable of (ticker, politician). Returns {ticker: count of DISTINCT
+    politicians buying it}. Two or more politicians into the same name in one scan
+    is a 'cluster' — a materially stronger copy signal than a lone disclosure."""
+    from collections import defaultdict
+    seen = defaultdict(set)
+    for tk, pol in pairs:
+        if tk and pol:
+            seen[tk].add(pol)
+    return {tk: len(s) for tk, s in seen.items()}
+
+
+def politician_weight(name, tiers, *, default=1.0):
+    """Track-record / credibility tier for a politician (config-driven, reputation-
+    seeded). 1.0 for anyone not explicitly tiered. A later layer can blend the bot's
+    own realized P&L per politician once the closed-trade sample is large enough."""
+    try:
+        if not tiers or not name:
+            return float(default)
+        return float(tiers.get(name, default))
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def compute_conviction_multiplier(pol_weight, cluster_count, *,
+                                  cluster_step=0.25, min_mult=0.75, max_mult=1.5):
+    """Conviction scalar for a copy = politician credibility x cluster boost,
+    CLAMPED to [min_mult, max_mult] so conviction only moves size WITHIN the
+    hardcoded caps, never past them. `cluster_count` is the number of distinct
+    politicians buying the same name (1 = no boost). Returns 1.0 on bad input."""
+    try:
+        w = float(pol_weight)
+        c = int(cluster_count)
+    except (TypeError, ValueError):
+        return 1.0
+    if w <= 0:
+        w = 1.0
+    boost = 1.0 + max(0, c - 1) * float(cluster_step)
+    return max(float(min_mult), min(w * boost, float(max_mult)))
+
+
 class AlpacaClient:
     def __init__(self, config_path: Path):
         with open(config_path) as f:
@@ -518,7 +563,7 @@ class PoliticianBot:
         log.info(f"Found {len(all_new_trades)} new copyable trades")
         return all_new_trades
 
-    def execute_trade(self, trade: dict) -> dict | None:
+    def execute_trade(self, trade: dict, cluster_counts: dict = None) -> dict | None:
         ticker = self.risk.validate_ticker(trade.get("issuer", {}).get("ticker", ""))
         if not ticker:
             log.info(f"Skipping non-tradeable: {trade.get('issuer', {}).get('name', 'Unknown')}")
@@ -541,12 +586,14 @@ class PoliticianBot:
             return None
 
         if action == "BUY":
-            return self._execute_buy(trade, ticker, equity, cash, account)
+            return self._execute_buy(trade, ticker, equity, cash, account,
+                                     cluster_counts=cluster_counts)
         elif action == "SELL":
             return self._execute_sell(trade, ticker)
         return None
 
-    def _execute_buy(self, trade: dict, ticker: str, equity: float, cash: float, account: dict) -> dict | None:
+    def _execute_buy(self, trade: dict, ticker: str, equity: float, cash: float,
+                     account: dict, cluster_counts: dict = None) -> dict | None:
         if not self.risk.check_duplicate_trade(ticker):
             return None
 
@@ -577,6 +624,28 @@ class PoliticianBot:
 
         reported_size = trade.get("transaction", {}).get("size", "1K–15K")
         trade_value = self.risk.get_trade_size(reported_size, equity)
+
+        # Conviction overlay: scale the copy by the politician's track-record tier
+        # and by cluster strength (multiple politicians into the same name), then
+        # RE-CLAMP inside the single-position cap so conviction never breaches it.
+        conv_cfg = self.risk.limits.get("conviction", {})
+        if conv_cfg.get("enabled"):
+            pol_name = (trade.get("politician", {}) or {}).get("name", "")
+            pw = politician_weight(pol_name, conv_cfg.get("politician_tiers", {}))
+            cc = (cluster_counts or {}).get(ticker, 1)
+            mult = compute_conviction_multiplier(
+                pw, cc,
+                cluster_step=conv_cfg.get("cluster_step", 0.25),
+                min_mult=conv_cfg.get("min_multiplier", 0.75),
+                max_mult=conv_cfg.get("max_multiplier", 1.5))
+            if mult != 1.0:
+                cap = min(self.risk.limits["max_trade_value_usd"],
+                          equity * self.risk.limits["max_single_position_pct"] / 100.0)
+                scaled = max(self.risk.limits["min_trade_value_usd"],
+                             min(trade_value * mult, cap))
+                log.info(f"Conviction {ticker}: {pol_name or 'n/a'} weight {pw:.2f}, "
+                         f"cluster {cc} -> x{mult:.2f} (${trade_value:,.0f} -> ${scaled:,.0f})")
+                trade_value = scaled
 
         if not self.risk.check_position_size(trade_value, equity):
             return None
@@ -948,9 +1017,17 @@ class PoliticianBot:
         new_trades = self.scan_politician_trades()
         executed = []
 
+        # Cluster-buy detection: count distinct politicians per (validated) ticker
+        # in this scan so the conviction model can up-size names that several
+        # members are buying at once (a stronger signal than a lone disclosure).
+        cluster_counts = count_cluster_buys(
+            (self.risk.validate_ticker((t.get("issuer", {}) or {}).get("ticker", "")),
+             (t.get("politician", {}) or {}).get("name", ""))
+            for t in new_trades)
+
         for trade in new_trades:
             fp = self._trade_fingerprint(trade)
-            result = self.execute_trade(trade)
+            result = self.execute_trade(trade, cluster_counts=cluster_counts)
             self.processed_trades.add(fp)
             if result:
                 executed.append(result)
