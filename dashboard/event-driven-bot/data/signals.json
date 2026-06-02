@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-02T14:10:38.329854+00:00",
-  "total_signals": 13,
+  "timestamp": "2026-06-02T16:32:57.369196+00:00",
+  "total_signals": 7,
   "signals": [
     {
       "symbol": "VLO",
@@ -112,42 +112,6 @@
       "tranche": "core_swing"
     },
     {
-      "symbol": "HAL",
-      "sector": "Energy",
-      "signal": "BUY",
-      "score": 0.5,
-      "price": 42.98,
-      "atr": 1.2,
-      "rs_vs_spy": 14.32,
-      "rsi": 64.7,
-      "rvol": 0.82,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+14.3%)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (65)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "OXY",
-      "sector": "Energy",
-      "signal": "BUY",
-      "score": 0.5,
-      "price": 60.7,
-      "atr": 1.95,
-      "rs_vs_spy": 10.6,
-      "rsi": 59.2,
-      "rvol": 0.95,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+10.6%)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (59)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
       "symbol": "NVDA",
       "sector": "Tech",
       "signal": "BUY",
@@ -162,76 +126,6 @@
         "Strong RS vs SPY (+10.2%)",
         "Above EMA50 & EMA200",
         "RSI in sweet spot (60)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "PSX",
-      "sector": "Energy",
-      "signal": "BUY",
-      "score": 0.5,
-      "price": 182.38,
-      "atr": 5.68,
-      "rs_vs_spy": 10.16,
-      "rsi": 62.6,
-      "rvol": 0.96,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+10.2%)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (63)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "PANW",
-      "sector": "Tech",
-      "signal": "BUY",
-      "score": 0.45,
-      "price": 240.13,
-      "atr": 9.57,
-      "rs_vs_spy": 51.84,
-      "rsi": 78.4,
-      "rvol": 1.32,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+51.8%)",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "MPC",
-      "sector": "Energy",
-      "signal": "BUY",
-      "score": 0.45,
-      "price": 263.02,
-      "atr": 8.5,
-      "rs_vs_spy": 26.68,
-      "rsi": 66.7,
-      "rvol": 1.04,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+26.7%)",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "COP",
-      "sector": "Energy",
-      "signal": "BUY",
-      "score": 0.45,
-      "price": 125.11,
-      "atr": 3.44,
-      "rs_vs_spy": 4.92,
-      "rsi": 56.9,
-      "rvol": 0.74,
-      "reasons": [
-        "MACD bullish crossover",
-        "MACD crossover below zero (structural reversal)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (57)"
       ],
       "tranche": "core_swing"
     }
