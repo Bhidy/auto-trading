@@ -11,6 +11,7 @@ import pytest
 
 from shared.sizing import (
     MAX_WEIGHT_PCT,
+    meets_min_notional,
     position_add_room_qty,
     realized_risk_pct,
     shares_for_dollar_risk,
@@ -164,3 +165,31 @@ def test_add_room_fractional_for_crypto():
 ])
 def test_add_room_zero_on_degenerate(args):
     assert position_add_room_qty(*args) == 0
+
+
+# --- meets_min_notional: stop capital-starved stub orders --------------------
+# Locks the 2026-06-02 stub: P1 had $80 cash, placed 3 shares of XLE ($184) and
+# called it a position. The floor turns that into a clean skip.
+
+def test_min_notional_passes_above_floor():
+    assert meets_min_notional(10, 100.0, floor_usd=500) is True   # $1,000 >= $500
+
+
+def test_min_notional_blocks_the_xle_stub():
+    # 3 shares * $61.29 = ~$184 — the actual stub that shipped. Must be rejected.
+    assert meets_min_notional(3, 61.29, floor_usd=500) is False
+
+
+def test_min_notional_scales_with_equity():
+    # floor = max($500, 0.5% of equity). On a $1M book that is $5,000.
+    assert meets_min_notional(20, 100.0, floor_usd=500, equity=1_000_000, floor_pct=0.5) is False  # $2k < $5k
+    assert meets_min_notional(60, 100.0, floor_usd=500, equity=1_000_000, floor_pct=0.5) is True   # $6k >= $5k
+
+
+def test_min_notional_no_floor_allows_anything_positive():
+    assert meets_min_notional(1, 1.0) is True
+
+
+@pytest.mark.parametrize("qty, price", [(0, 100.0), (-1, 100.0), (5, 0.0), (None, 100.0), (5, "x")])
+def test_min_notional_false_on_degenerate(qty, price):
+    assert meets_min_notional(qty, price, floor_usd=500) is False

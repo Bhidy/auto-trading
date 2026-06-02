@@ -103,6 +103,33 @@ def shares_for_dollar_risk(equity, risk_budget_pct, atr, stop_atr_mult):
     return int((equity * risk_budget_pct / 100.0) / stop_distance)
 
 
+def meets_min_notional(qty, price, *, floor_usd=0.0, equity=None, floor_pct=0.0):
+    """True if an order's notional (qty*price) clears the minimum-position floor.
+
+    Guards against capital-starved "stub" fills. Observed live 2026-06-02: P1 had
+    $80 cash, approved a $11,964 XLE order, the executor down-sized it to whatever
+    cash allowed and placed **3 shares = $184** — a meaningless position that just
+    consumed the last dollar and blocked everything behind it. A floor turns that
+    into a clean skip instead of noise.
+
+    The floor is the GREATER of an absolute USD floor (`floor_usd`) and `floor_pct`%
+    of equity (when `equity` is given), so it scales with the book. Returns True
+    when no floor is configured (floor == 0). Returns False on degenerate input."""
+    try:
+        notional = float(qty) * float(price)
+    except (TypeError, ValueError):
+        return False
+    if notional <= 0:
+        return False
+    floor = float(floor_usd or 0.0)
+    if equity and floor_pct:
+        try:
+            floor = max(floor, float(equity) * float(floor_pct) / 100.0)
+        except (TypeError, ValueError):
+            pass
+    return notional >= floor
+
+
 def position_add_room_qty(existing_value, price, equity, max_pct, *, fractional=False):
     """Max ADDITIONAL quantity addable to an existing position without the
     resulting total (existing + add) breaching the single-position cap.

@@ -19,6 +19,16 @@
     "500K–1M": 8000,
     "1M–5M": 8000
   },
+  "base_position_pct": 4.0,
+  "size_bucket_multiplier": {
+    "1K–15K": 0.75,
+    "15K–50K": 1.25,
+    "50K–100K": 1.5,
+    "100K–250K": 1.75,
+    "250K–500K": 2.0,
+    "500K–1M": 2.0,
+    "1M–5M": 2.0
+  },
   "blocked_tickers": [],
   "allowed_asset_types": ["stock", "etf"],
   "require_us_listed": true,

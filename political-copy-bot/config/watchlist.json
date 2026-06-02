@@ -1,6 +1,19 @@
 {
   "primary_politician": "Michael McCaul",
-  "backup_politicians": ["Marjorie Taylor Greene", "John Curtis"],
+  "backup_politicians": [
+    "Nancy Pelosi",
+    "Marjorie Taylor Greene",
+    "Dan Crenshaw",
+    "Josh Gottheimer",
+    "Ro Khanna",
+    "Tommy Tuberville",
+    "John Curtis",
+    "Kevin Hern",
+    "Mark Green",
+    "Pat Fallon",
+    "Earl Blumenauer",
+    "David Taylor"
+  ],
   "scan_all_politicians": true,
   "check_intervals": {
     "primary_scan_days": 30,

@@ -30,5 +30,13 @@
     "penny_lab": 0.05,
     "defensive_cash": 0.20,
     "options_testing": 0.05
+  },
+  "min_position_notional_usd": 500,
+  "rotation": {
+    "enabled": true,
+    "min_cash_pct": 3.0,
+    "rotation_edge": 0.25,
+    "max_rotation_pct": 15.0,
+    "max_rotations": 3
   }
 }

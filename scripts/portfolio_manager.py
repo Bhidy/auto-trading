@@ -174,6 +174,107 @@ def compute_rebalance_orders(positions, equity, regime):
     }
 
 # ---------------------------------------------------------------------------
+# CAPITAL RECYCLING (rotation) — free cash for high-conviction starved BUYs
+# ---------------------------------------------------------------------------
+
+def compute_rotation_plan(positions, validated, cash, equity, *,
+                          min_cash_pct=3.0, rotation_edge=0.25,
+                          max_rotation_pct=15.0, max_rotations=3):
+    """Free capital for high-conviction approved BUYs that are starved for cash by
+    exiting the lowest-conviction CURRENT holdings the analyst no longer wants.
+
+    WHY THIS EXISTS: without it P1 deploys ~100% on day one and freezes. Observed
+    2026-06-02: P1 held 14 names at 86% gross / **$80 cash** and could not act on
+    its own #1/#2-ranked adds (XLK conf 0.86, SPY 0.72) while still holding
+    low-conviction HOLDs (TSLA score 0.08, XLI 0.01, XLY 0.05). Capital only ever
+    freed up when a stop/TP happened to fire — so in a flat market it never traded.
+
+    DESIGN (conservative & fail-safe):
+      * Returns [] unless the book is genuinely STARVED (cash < min_cash_pct% of
+        equity). Default behavior off the starved path is "do nothing".
+      * Only proposes FULL exits (clean close_trade accounting, no qty drift) of
+        names whose current signal is HOLD — NEVER a name still signalled BUY, and
+        never a name that is itself an approved BUY this run.
+      * Only rotates when the best starved BUY out-ranks the exit candidate by at
+        least `rotation_edge` (prevents churn between similar-conviction names).
+      * Caps total rotation at `max_rotation_pct`% of equity and `max_rotations`
+        names per run.
+      * Pure function — places NO orders. Returns a list of sell actions for the
+        caller to execute and account for.
+
+    `validated` is the risk-officer output (approved_orders + rejected_orders, each
+    carrying `symbol`, `signal`, `confidence`). Each returned action is
+    {symbol, qty, side='sell', est_value, score, reason}.
+    """
+    try:
+        equity = float(equity); cash = float(cash)
+    except (TypeError, ValueError):
+        return []
+    if equity <= 0 or cash >= equity * min_cash_pct / 100.0:
+        return []
+
+    approved = validated.get("approved_orders", []) or []
+    rejected = validated.get("rejected_orders", []) or []
+    signal_by, score_by = {}, {}
+    for o in list(approved) + list(rejected):
+        sym = o.get("symbol")
+        if not sym:
+            continue
+        signal_by[sym] = o.get("signal")
+        score_by[sym] = o.get("confidence", 0) or 0
+
+    buys = sorted([o for o in approved if o.get("signal") == "BUY"],
+                  key=lambda o: o.get("confidence", 0) or 0, reverse=True)
+    if not buys:
+        return []
+    best_buy_conf = buys[0].get("confidence", 0) or 0
+    approved_syms = {o.get("symbol") for o in approved}
+
+    # How much extra cash the top starved BUYs need (beyond what's on hand).
+    need = 0.0
+    for b in buys[:max_rotations]:
+        bn = b.get("approved_dollar_amount") or (
+            (b.get("approved_qty", 0) or 0) * (b.get("price", 0) or 0))
+        need += float(bn or 0)
+    need = max(0.0, need - cash)
+    if need <= 0:
+        return []
+
+    # Rotation candidates: held, currently HOLD, not an approved buy. Weakest first.
+    candidates = []
+    for p in positions:
+        sym = p.get("symbol")
+        if not sym or signal_by.get(sym) != "HOLD" or sym in approved_syms:
+            continue
+        mv = abs(float(p.get("market_value", 0) or 0))
+        qty = int(float(p.get("qty", 0) or 0))
+        if qty <= 0 or mv <= 0:
+            continue
+        candidates.append({"symbol": sym, "score": score_by.get(sym, 0) or 0,
+                           "mv": mv, "qty": qty})
+    candidates.sort(key=lambda c: c["score"])
+
+    rotation_cap = equity * max_rotation_pct / 100.0
+    plan, freed = [], 0.0
+    for c in candidates:
+        if len(plan) >= max_rotations or need <= 0:
+            break
+        if freed + c["mv"] > rotation_cap:
+            continue  # would breach the daily rotation cap — skip this (larger) name
+        if best_buy_conf - c["score"] < rotation_edge:
+            continue  # not enough conviction edge to justify the swap
+        plan.append({
+            "symbol": c["symbol"], "qty": c["qty"], "side": "sell",
+            "est_value": round(c["mv"], 2), "score": round(c["score"], 3),
+            "reason": (f"rotate out of HOLD {c['symbol']} (conf {c['score']:.2f}) to fund "
+                       f"higher-conviction BUY (top conf {best_buy_conf:.2f})"),
+        })
+        freed += c["mv"]
+        need -= c["mv"]
+    return plan
+
+
+# ---------------------------------------------------------------------------
 # HRP ADVISORY TILTS (T2 artifact consumer — OFF by default, never auto-trades)
 # ---------------------------------------------------------------------------
 

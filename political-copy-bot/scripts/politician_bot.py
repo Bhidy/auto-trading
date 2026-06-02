@@ -272,10 +272,26 @@ class RiskManager:
         return True
 
     def get_trade_size(self, reported_size: str, equity: float) -> float:
-        scaling = self.limits["trade_size_scaling"]
-        base = scaling.get(reported_size, self.limits["min_trade_value_usd"])
-        scaled = min(base, equity * self.limits["max_single_position_pct"] / 100)
-        return max(self.limits["min_trade_value_usd"], min(scaled, self.limits["max_trade_value_usd"]))
+        """Conviction-scaled copy size as a PERCENT of the live book — not a flat
+        $1.5K. The disclosed trade-size bucket is the conviction proxy: a larger
+        politician buy → a larger copy. Bounded by the single-position cap and the
+        max_trade_value guardrail. Falls back to the legacy flat `trade_size_scaling`
+        table when `base_position_pct` is not configured (back-compat).
+
+        WHY: with the flat table P2 copied ~$1.5K per disclosure and deployed only
+        ~$10K of a $100K book — sitting 90% in idle cash (observed 2026-06-02). The
+        copy size was decoupled from the book size, so the portfolio could never get
+        invested. Sizing as a % of equity ties deployment to capital."""
+        cap = min(self.limits["max_trade_value_usd"],
+                  equity * self.limits["max_single_position_pct"] / 100.0)
+        floor = self.limits["min_trade_value_usd"]
+        base_pct = self.limits.get("base_position_pct")
+        if base_pct:
+            bucket_mult = self.limits.get("size_bucket_multiplier", {}).get(reported_size, 1.0)
+            target = equity * float(base_pct) / 100.0 * float(bucket_mult)
+        else:
+            target = self.limits["trade_size_scaling"].get(reported_size, floor)
+        return max(floor, min(target, cap))
 
     def log_trade(self, trade_record: dict):
         trade_record["timestamp"] = datetime.now().isoformat()

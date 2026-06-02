@@ -4,6 +4,7 @@
   "kill_switch_daily_loss_pct": 5.0,
   "kill_switch_halt_hours": 24,
   "max_trades_per_day": 15,
+  "max_signals_per_sector": 3,
   "max_gross_exposure_pct": 80.0,
   "min_market_cap_billions": 2.0,
   "min_avg_daily_volume": 2000000,

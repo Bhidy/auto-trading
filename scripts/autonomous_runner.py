@@ -411,6 +411,59 @@ def run_trading_session(alpaca: AlpacaClient):
     skips = []             # [{symbol, reason}] for approved orders we did not place
     max_trades = limits["max_trades_per_day"] - portfolio_state["trades_today"]
 
+    # --- Capital recycling (rotation) ----------------------------------------
+    # If the book is cash-starved, exit the lowest-conviction HOLD names to fund
+    # the highest-conviction approved BUYs. compute_rotation_plan is fail-safe:
+    # it returns nothing unless genuinely starved (cash < min_cash_pct of equity).
+    # Sells go in first so the buy loop below sees the freed cash this same run.
+    rot_cfg = limits.get("rotation", {})
+    rotated = []
+    if rot_cfg.get("enabled", True) and approved:
+        from portfolio_manager import compute_rotation_plan
+        rotation = compute_rotation_plan(
+            positions, validated, cash, equity,
+            min_cash_pct=rot_cfg.get("min_cash_pct", 3.0),
+            rotation_edge=rot_cfg.get("rotation_edge", 0.25),
+            max_rotation_pct=rot_cfg.get("max_rotation_pct", 15.0),
+            max_rotations=rot_cfg.get("max_rotations", 3),
+        )
+        for rot in rotation:
+            if trades_executed >= max_trades:
+                break
+            rsym, rqty = rot["symbol"], rot["qty"]
+            try:
+                quote = alpaca.get_latest_quote(rsym)
+                bid = float(quote.get("quote", {}).get("bp", 0))
+                limit_price = round(bid * 0.999, 2) if bid > 0 else None
+                rcoid = make_client_order_id("p1", rsym, "sell")
+                result = alpaca.place_order(
+                    symbol=rsym, qty=rqty, side="sell",
+                    order_type="limit" if limit_price else "market",
+                    limit_price=limit_price, client_order_id=rcoid,
+                )
+                log.info(f"  ROTATE: selling {rqty} x {rsym} — {rot['reason']}")
+                status, filled_qty, filled_price = confirm_fill(alpaca, result.get("id"))
+                exit_px = filled_price or limit_price or 0
+                if filled_qty > 0:
+                    from performance_tracker import find_open_trade, close_trade
+                    tr = find_open_trade(rsym)
+                    if tr and exit_px > 0:
+                        close_trade(tr["id"], exit_px)
+                    cash += filled_qty * exit_px
+                    rotated.append(rsym)
+                trades_executed += 1  # counts against the daily trade budget
+                time.sleep(0.5)
+            except requests.HTTPError as e:
+                resp = getattr(e, "response", None)
+                if resp is not None and resp.status_code == 422 and "client_order_id" in resp.text:
+                    log.info(f"  {rsym}: rotation already placed today (idempotent skip)")
+                    continue
+                log.error(f"  Rotation sell failed for {rsym}: {e}")
+            except Exception as e:
+                log.error(f"  Rotation sell error for {rsym}: {e}")
+        if rotated:
+            log.info(f"Rotation freed cash by exiting {len(rotated)} HOLD name(s): {rotated}")
+
     for order in approved:
         if trades_executed >= max_trades:
             log.warning(f"Daily trade limit reached ({limits['max_trades_per_day']})")
@@ -464,6 +517,18 @@ def run_trading_session(alpaca: AlpacaClient):
                 log.warning(f"  Insufficient cash for {symbol}")
                 skips.append({"symbol": symbol, "reason": "insufficient cash", "benign": True})
                 continue
+
+        # Min-notional gate — never place a capital-starved stub (observed
+        # 2026-06-02: 3 shares / $184 of XLE with $80 cash left). Skip cleanly
+        # instead of consuming the last dollar on a meaningless position.
+        from shared.sizing import meets_min_notional
+        min_notional = limits.get("min_position_notional_usd", 500)
+        if signal == "BUY" and not meets_min_notional(
+                qty, price, floor_usd=min_notional, equity=equity, floor_pct=0.5):
+            log.info(f"  {symbol} order ${qty * price:,.0f} below min notional "
+                     f"(${min_notional}) — skipping stub")
+            skips.append({"symbol": symbol, "reason": "below min notional", "benign": True})
+            continue
 
         side = "buy" if signal == "BUY" else "sell"
 

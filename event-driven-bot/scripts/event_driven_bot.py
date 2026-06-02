@@ -145,6 +145,28 @@ def compute_position_size(equity, price, atr_val, limits):
 # TECHNICAL SIGNAL GENERATION
 # ---------------------------------------------------------------------------
 
+def diversify_by_sector(items: list, max_per_sector: int) -> list:
+    """Cap the number of items per sector, preserving input order (which must be
+    conviction-sorted, strongest first). Stops one hot sector from monopolising the
+    candidate/signal queue and then being entirely rejected downstream by the 20%
+    sector-exposure cap.
+
+    Observed 2026-06-02: 8 of 13 P3 signals were Energy and 79% of the qualified
+    watchlist was Energy+Tech; both sectors were already at cap, so the executor
+    placed 0 of 13. Keeping the strongest N names per sector leaves the queue room
+    for sectors that still have headroom. `max_per_sector` <= 0 disables (no-op)."""
+    if not max_per_sector or max_per_sector <= 0:
+        return list(items)
+    seen, out = {}, []
+    for it in items:
+        sec = it.get("sector", "Unknown")
+        if seen.get(sec, 0) >= max_per_sector:
+            continue
+        seen[sec] = seen.get(sec, 0) + 1
+        out.append(it)
+    return out
+
+
 def generate_signals(watchlist_data: dict, alpaca: AlpacaClient) -> list:
     """Generate technical breakout signals from the fundamental watchlist."""
     universe = watchlist_data.get("universe", [])
@@ -236,6 +258,18 @@ def generate_signals(watchlist_data: dict, alpaca: AlpacaClient) -> list:
         signals.append(signal)
 
     signals.sort(key=lambda x: x["score"], reverse=True)
+
+    # Spread the queue across sectors so a single hot sector (e.g. Energy on
+    # 2026-06-02) can't fill it with names that the 20% exposure cap will reject
+    # downstream, starving sectors that still have headroom.
+    max_per_sector = limits.get("max_signals_per_sector", 0)
+    if max_per_sector:
+        before = len(signals)
+        signals = diversify_by_sector(signals, max_per_sector)
+        if len(signals) < before:
+            log.info(f"Sector diversification: {before} -> {len(signals)} signals "
+                     f"(cap {max_per_sector}/sector)")
+
     log.info(f"Generated {len(signals)} technical signals from {len(universe)} watchlist stocks")
     return signals
 
