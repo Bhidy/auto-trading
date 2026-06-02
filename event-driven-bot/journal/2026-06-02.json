@@ -1,0 +1,67 @@
+[
+  {
+    "date": "2026-06-02",
+    "timestamp": "2026-06-02T22:29:42.568302+00:00",
+    "audit": {
+      "equity": 106001.49,
+      "cash": 40038.91,
+      "daily_pnl": 1207.81,
+      "daily_pnl_pct": 1.153,
+      "total_open_exposure": 65962.58,
+      "exposure_pct": 62.2,
+      "position_count": 4,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Energy": 15520.54,
+        "Financials": 16654.44,
+        "Tech": 18538.0,
+        "Consumer": 15249.6
+      }
+    },
+    "positions": [
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "263.06",
+        "market_value": "15520.54",
+        "unrealized_pl": "547.52",
+        "pnl_pct": 3.66,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MS",
+        "qty": "77",
+        "entry": "200.681558",
+        "current": "216.2914",
+        "market_value": "16654.4378",
+        "unrealized_pl": "1201.957834",
+        "pnl_pct": 7.78,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "62",
+        "entry": "249.54",
+        "current": "299",
+        "market_value": "18538",
+        "unrealized_pl": "3066.52",
+        "pnl_pct": 19.82,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "112.96",
+        "market_value": "15249.6",
+        "unrealized_pl": "-285.240015",
+        "pnl_pct": -1.84,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": []
+  }
+]
