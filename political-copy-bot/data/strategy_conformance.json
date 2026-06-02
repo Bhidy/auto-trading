@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-02T14:10:47.299905+00:00",
+  "timestamp": "2026-06-02T15:00:20.862311+00:00",
   "portfolio_id": "portfolio_2",
   "conformant": true,
   "checks": [
@@ -12,6 +12,11 @@
       "name": "freshness_and_technical_confirmation",
       "ok": true,
       "detail": "enforced pre-order (is_fresh_enough + confirm_with_technicals)"
+    },
+    {
+      "name": "disclosure_dates_parseable",
+      "ok": true,
+      "detail": "0/8 unparseable"
     }
   ],
   "violations": []
