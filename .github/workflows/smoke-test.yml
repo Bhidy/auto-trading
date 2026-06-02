@@ -50,8 +50,13 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+      # PINNED. Unpinned `vercel@latest` shipped a broken build (54.7.0,
+      # 2026-06-01) whose `@vercel/build-utils` threw "Named export
+      # 'isPackageInstalled' not found", failing the production deploy until the
+      # upstream fix (54.7.1) landed. Pin for reproducible deploys; bump
+      # deliberately after confirming a release is good.
+      - name: Install Vercel CLI (pinned)
+        run: npm install -g vercel@54.7.1
 
       - name: Pull Vercel production environment
         working-directory: dashboard
