@@ -15,7 +15,7 @@ Exit code is always 0; the workflow reads `alert`/`summary` from GITHUB_OUTPUT.
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -274,8 +274,25 @@ def _emit_output(alert: bool, summary: str):
         f.write("HEARTBEAT_EOF\n")
 
 
+def reference_session_date(now_utc):
+    """The trading-session date this post-close watchdog should verify.
+
+    The heartbeat is scheduled at 22:30/23:30 UTC (after the US close). GitHub
+    Actions can delay a scheduled run by hours; if it lands AFTER UTC midnight
+    (early next-day hours), naive UTC `today` points at a day whose session has
+    not run yet — producing a FALSE 'STALE' alert (e.g. the 02:00 UTC run that
+    opened a spurious issue). Anchor to the run hour instead: only treat the
+    current UTC day as the session-to-verify once we are at/after ~21:00 UTC
+    (post-close for both EDT and EST); otherwise verify the previous day. This
+    can only remove false positives — an on-time 22:30/23:30 run is unchanged,
+    and a delayed run still correctly verifies the session it was meant to.
+    """
+    ref = now_utc if now_utc.hour >= 21 else now_utc - timedelta(days=1)
+    return ref.strftime("%Y-%m-%d")
+
+
 def main():
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = reference_session_date(datetime.now(timezone.utc))
     api_key = os.environ.get("P1_API_KEY", "")
     api_secret = os.environ.get("P1_API_SECRET", "")
 
