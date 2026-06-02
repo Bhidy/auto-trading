@@ -188,12 +188,15 @@
     "reasons": [
       "Strongest sector momentum 30.2%"
     ],
-    "exit_price": null,
-    "exit_timestamp": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "hold_days": null,
-    "status": "open"
+    "exit_price": 197.23,
+    "exit_timestamp": "2026-06-02T18:35:24.147612+00:00",
+    "pnl": 384.06,
+    "pnl_pct": 7.77,
+    "hold_days": 6,
+    "status": "closed",
+    "gross_pnl": 384.21,
+    "fees": 0.15,
+    "realized_pnl": 384.06
   },
   {
     "id": 11,
