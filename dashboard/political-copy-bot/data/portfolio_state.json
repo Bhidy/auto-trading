@@ -1,94 +1,118 @@
 {
-  "timestamp": "2026-06-02T16:33:26.694419",
+  "timestamp": "2026-06-02T18:11:36.146689",
   "account": {
-    "equity": "100180.66",
-    "cash": "76316.75",
-    "buying_power": "169871.29",
-    "portfolio_value": "100180.66",
-    "daily_pnl_pct": -0.07
+    "equity": "100203.58",
+    "cash": "51360.9",
+    "buying_power": "148997.11",
+    "portfolio_value": "100203.58",
+    "daily_pnl_pct": -0.04
   },
   "positions": [
     {
       "symbol": "DIA",
       "qty": "13",
       "avg_entry": "512.522308",
-      "market_value": "6663.02",
-      "unrealized_pl": "0.229996",
-      "unrealized_plpc": "0.00003"
+      "market_value": "6673.55",
+      "unrealized_pl": "10.759996",
+      "unrealized_plpc": "0.00161"
     },
     {
       "symbol": "HD",
       "qty": "4",
       "avg_entry": "317.0925",
-      "market_value": "1240.94",
-      "unrealized_pl": "-27.43",
-      "unrealized_plpc": "-0.02163"
+      "market_value": "1244.7208",
+      "unrealized_pl": "-23.6492",
+      "unrealized_plpc": "-0.01865"
     },
     {
       "symbol": "INTU",
       "qty": "4",
       "avg_entry": "312.62",
-      "market_value": "1289.9",
-      "unrealized_pl": "39.42",
-      "unrealized_plpc": "0.03152"
+      "market_value": "1296.8",
+      "unrealized_pl": "46.32",
+      "unrealized_plpc": "0.03704"
+    },
+    {
+      "symbol": "IWM",
+      "qty": "24",
+      "avg_entry": "291.19",
+      "market_value": "6988.32",
+      "unrealized_pl": "-0.24",
+      "unrealized_plpc": "-0.00003"
     },
     {
       "symbol": "MEDP",
       "qty": "3",
       "avg_entry": "448.17",
-      "market_value": "1324.2",
-      "unrealized_pl": "-20.31",
-      "unrealized_plpc": "-0.01511"
+      "market_value": "1321.05",
+      "unrealized_pl": "-23.46",
+      "unrealized_plpc": "-0.01745"
     },
     {
       "symbol": "PG",
       "qty": "10",
       "avg_entry": "147.36",
-      "market_value": "1394.4",
-      "unrealized_pl": "-79.2",
-      "unrealized_plpc": "-0.05375"
+      "market_value": "1395.7",
+      "unrealized_pl": "-77.9",
+      "unrealized_plpc": "-0.05286"
     },
     {
       "symbol": "PH",
       "qty": "1",
       "avg_entry": "852.09",
-      "market_value": "830.9251",
-      "unrealized_pl": "-21.1649",
-      "unrealized_plpc": "-0.02484"
+      "market_value": "833.185",
+      "unrealized_pl": "-18.905",
+      "unrealized_plpc": "-0.02219"
     },
     {
       "symbol": "QQQ",
       "qty": "9",
       "avg_entry": "745.347778",
-      "market_value": "6708.0258",
-      "unrealized_pl": "-0.104202",
-      "unrealized_plpc": "-0.00002"
+      "market_value": "6701.58",
+      "unrealized_pl": "-6.550002",
+      "unrealized_plpc": "-0.00098"
     },
     {
       "symbol": "SPY",
       "qty": "9",
       "avg_entry": "759.56",
-      "market_value": "6835.95",
-      "unrealized_pl": "-0.09",
-      "unrealized_plpc": "-0.00001"
+      "market_value": "6831.8172",
+      "unrealized_pl": "-4.2228",
+      "unrealized_plpc": "-0.00062"
     },
     {
       "symbol": "T",
       "qty": "60",
       "avg_entry": "24.76",
-      "market_value": "1470.66",
-      "unrealized_pl": "-14.94",
-      "unrealized_plpc": "-0.01006"
+      "market_value": "1471.8",
+      "unrealized_pl": "-13.8",
+      "unrealized_plpc": "-0.00929"
     },
     {
       "symbol": "TER",
       "qty": "7",
       "avg_entry": "368.88",
-      "market_value": "2722.16",
-      "unrealized_pl": "140",
-      "unrealized_plpc": "0.05422"
+      "market_value": "2734.48",
+      "unrealized_pl": "152.32",
+      "unrealized_plpc": "0.05899"
+    },
+    {
+      "symbol": "XLF",
+      "qty": "136",
+      "avg_entry": "51.57",
+      "market_value": "7012.16",
+      "unrealized_pl": "-1.36",
+      "unrealized_plpc": "-0.00019"
+    },
+    {
+      "symbol": "XLK",
+      "qty": "22",
+      "avg_entry": "197.176364",
+      "market_value": "4337.52",
+      "unrealized_pl": "-0.360008",
+      "unrealized_plpc": "-0.00008"
     }
   ],
-  "open_orders": 2,
-  "total_positions": 10
+  "open_orders": 1,
+  "total_positions": 13
 }

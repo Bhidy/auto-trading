@@ -272,5 +272,44 @@
     "reason": "benchmark_sleeve: deploy idle cash",
     "timestamp": "2026-06-02T16:33:24.896343",
     "date": "2026-06-02"
+  },
+  {
+    "symbol": "IWM",
+    "side": "buy",
+    "qty": 24,
+    "limit_price": 291.63,
+    "estimated_value": 6999.12,
+    "order_id": "3e90e70c-1b42-4517-8730-4347014afd45",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-06-02T18:11:32.743338",
+    "date": "2026-06-02"
+  },
+  {
+    "symbol": "XLK",
+    "side": "buy",
+    "qty": 35,
+    "limit_price": 197.49,
+    "estimated_value": 6912.15,
+    "order_id": "1a8fd06c-01c0-43df-a416-053061b401c2",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-06-02T18:11:33.851315",
+    "date": "2026-06-02"
+  },
+  {
+    "symbol": "XLF",
+    "side": "buy",
+    "qty": 136,
+    "limit_price": 51.65,
+    "estimated_value": 7024.4,
+    "order_id": "b8ab2347-fd74-4005-b348-32304d335f08",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-06-02T18:11:34.954654",
+    "date": "2026-06-02"
   }
 ]
