@@ -42,13 +42,44 @@ log = logging.getLogger("politician_bot")
 # signal alone — require a corroborating technical confirmation.
 # ---------------------------------------------------------------------------
 
+# Capitol Trades returns the underlying TRANSACTION date in a compact human
+# format like "8 May2026" / "8 May 2026"; the published/disclosed fields are
+# sometimes ISO ("2026-05-15"). A parser that only understood ISO once idled
+# P2's entire book for days: the T9 freshness gate (commit 09abea0) fails CLOSED
+# on an unknown age, so every disclosure was silently dropped as "stale". Parse
+# every format the source can emit. Only ever WIDEN this list, never narrow it.
+_DISCLOSURE_DATE_FORMATS = (
+    "%d %b%Y",    # 8 May2026    (Capitol Trades transaction date, no space)
+    "%d %b %Y",   # 8 May 2026
+    "%d %B%Y",    # 8 May2026    (full month name, same token for "May")
+    "%d %B %Y",   # 8 May 2026
+    "%b %d, %Y",  # May 8, 2026
+    "%b %d %Y",   # May 8 2026
+    "%B %d, %Y",  # May 8, 2026  (full month name)
+    "%m/%d/%Y",   # 05/08/2026
+)
+
+
 def _parse_date(value):
+    """Parse a disclosure date from any format the Capitol Trades source emits.
+    ISO first (fast path), then the compact human formats above. Returns None
+    only when nothing matches; callers treat None as 'unknown' and fail closed,
+    so a silent format drift MUST surface loudly (see scan_politician_trades)."""
     if not value:
         return None
-    try:
-        return datetime.fromisoformat(str(value)[:10])
-    except ValueError:
+    s = str(value).strip()
+    if not s:
         return None
+    try:
+        return datetime.fromisoformat(s[:10])  # 2026-05-15 / 2026-05-15T09:30
+    except ValueError:
+        pass
+    for fmt in _DISCLOSURE_DATE_FORMATS:
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
 
 
 def disclosure_age_days(trade, now=None):
@@ -274,6 +305,13 @@ class PoliticianBot:
         self.processed_trades_path = BASE_DIR / "data" / "processed_trades.json"
         self.portfolio_state_path = BASE_DIR / "data" / "portfolio_state.json"
         self.processed_trades = self._load_processed()
+        # Freshness-gate observability (reset each scan). A disclosure whose date
+        # cannot be parsed is "unknown age" and fails closed — indistinguishable
+        # from "genuinely stale" unless we count it. If the feed's date format
+        # drifts, _unparseable_dates == _freshness_evaluated and we scream rather
+        # than silently idle the book (the T9 regression that hid for days).
+        self._freshness_evaluated = 0
+        self._unparseable_dates = 0
 
     def _load_processed(self) -> set:
         if self.processed_trades_path.exists():
@@ -300,10 +338,21 @@ class PoliticianBot:
             return False
         # T9: reject decayed signals — a delayed disclosure whose transaction is
         # already stale is research context, not a tradeable edge. Fails closed.
+        self._freshness_evaluated += 1
         if not is_fresh_enough(trade, self._max_disclosure_age()):
             age = disclosure_age_days(trade)
-            log.info(f"Skipping stale disclosure ({age}d old) for "
-                     f"{trade.get('issuer', {}).get('ticker', '?')}")
+            ticker = trade.get("issuer", {}).get("ticker", "?")
+            if age is None:
+                # Date present but UNPARSEABLE — a data/format problem, NOT a
+                # decayed signal. Treating these as routine "stale" skips is what
+                # let the T9 regression hide. Make every one loud and count it.
+                self._unparseable_dates += 1
+                log.warning(f"UNPARSEABLE disclosure date for {ticker} "
+                            f"(dates={trade.get('dates', {})}) — freshness gate "
+                            f"cannot evaluate it; Capitol Trades date format may "
+                            f"have changed (see _DISCLOSURE_DATE_FORMATS)")
+            else:
+                log.info(f"Skipping stale disclosure ({age}d old) for {ticker}")
             return False
         issuer = trade.get("issuer", {}).get("name", "")
         ticker = trade.get("issuer", {}).get("ticker", "")
@@ -333,6 +382,8 @@ class PoliticianBot:
 
         log.info(f"Scanning {primary} trades (last {days} days)...")
         all_new_trades = []
+        self._freshness_evaluated = 0
+        self._unparseable_dates = 0
 
         try:
             buy_trades = call_mcp_tool("get_politician_trades", {
@@ -378,6 +429,19 @@ class PoliticianBot:
                         all_new_trades.append(t)
             except Exception as e:
                 log.error(f"Error scanning {backup}: {e}")
+
+        # Make a blinded feed LOUD: if every dated disclosure we evaluated had an
+        # unparseable date, the copy pipeline is dark (almost certainly a feed
+        # format change), not "quiet markets". This is the alarm the T9 regression
+        # never had — it is also surfaced as a conformance violation downstream.
+        if self._unparseable_dates and self._unparseable_dates == self._freshness_evaluated:
+            log.error(f"P2 BLINDED: all {self._freshness_evaluated} dated disclosure(s) "
+                      f"had UNPARSEABLE dates — no new copies can open until the date "
+                      f"parser is updated (Capitol Trades format likely changed). "
+                      f"Fix _DISCLOSURE_DATE_FORMATS / _parse_date.")
+        elif self._unparseable_dates:
+            log.warning(f"{self._unparseable_dates}/{self._freshness_evaluated} disclosure "
+                        f"dates were unparseable — partial feed format drift; check _parse_date.")
 
         log.info(f"Found {len(all_new_trades)} new copyable trades")
         return all_new_trades
@@ -773,6 +837,8 @@ class PoliticianBot:
         # confirmation are enforced pre-order inside execute_trade.
         from shared.integrity import (sizing_band_conformance, strategy_conformance,
                                       write_conformance_report)
+        blinded = bool(self._unparseable_dates
+                       and self._unparseable_dates == self._freshness_evaluated)
         conf = strategy_conformance(portfolio_id="portfolio_2", checks=[
             sizing_band_conformance(
                 executed, self.risk.limits.get("min_trade_value_usd", 0),
@@ -780,6 +846,13 @@ class PoliticianBot:
                 value_key="estimated_value"),
             {"name": "freshness_and_technical_confirmation", "ok": True,
              "detail": "enforced pre-order (is_fresh_enough + confirm_with_technicals)"},
+            # A fully-unreadable disclosure feed is a conformance FAILURE: the
+            # mandate (copy congressional trades) cannot be met when the parser
+            # can't read a single date. Surfaces to heartbeat/dashboard.
+            {"name": "disclosure_dates_parseable", "ok": not blinded,
+             "detail": (f"BLINDED: {self._unparseable_dates}/{self._freshness_evaluated} "
+                        f"disclosure dates unparseable — feed format changed" if blinded
+                        else f"{self._unparseable_dates}/{self._freshness_evaluated} unparseable")},
         ])
         write_conformance_report(str(BASE_DIR / "data" / "strategy_conformance.json"), conf)
 
