@@ -668,5 +668,139 @@
       "Excellent risk/reward \u2014 strategy well-calibrated",
       "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation"
     ]
+  },
+  {
+    "date": "2026-06-02",
+    "timestamp": "2026-06-02T23:20:14.945722+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 99444.24,
+      "cash": 16768.86,
+      "portfolio_value": 99444.24,
+      "daily_pnl": -91.04999999998836,
+      "daily_pnl_pct": -0.091
+    },
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "qty": "25",
+        "market_value": "7850",
+        "unrealized_pl": "85.5",
+        "unrealized_plpc": "0.01101"
+      },
+      {
+        "symbol": "AMZN",
+        "qty": "52",
+        "market_value": "13288.6",
+        "unrealized_pl": "-515.250008",
+        "unrealized_plpc": "-0.03733"
+      },
+      {
+        "symbol": "BIL",
+        "qty": "218",
+        "market_value": "19925.2",
+        "unrealized_pl": "-47.96",
+        "unrealized_plpc": "-0.0024"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "28",
+        "market_value": "10156.44",
+        "unrealized_pl": "-610.199996",
+        "unrealized_plpc": "-0.05668"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "17",
+        "market_value": "4932.55",
+        "unrealized_pl": "-4.779992",
+        "unrealized_plpc": "-0.00097"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "37",
+        "market_value": "8178.11",
+        "unrealized_pl": "313.879991",
+        "unrealized_plpc": "0.03991"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "2",
+        "market_value": "1488.34",
+        "unrealized_pl": "26.205",
+        "unrealized_plpc": "0.01792"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "14",
+        "market_value": "10613.12",
+        "unrealized_pl": "37.060002",
+        "unrealized_plpc": "0.0035"
+      },
+      {
+        "symbol": "TSLA",
+        "qty": "13",
+        "market_value": "5477.42",
+        "unrealized_pl": "-203.570003",
+        "unrealized_plpc": "-0.03583"
+      },
+      {
+        "symbol": "XLE",
+        "qty": "3",
+        "market_value": "174.1494",
+        "unrealized_pl": "1.1394",
+        "unrealized_plpc": "0.00659"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "3",
+        "market_value": "591.45",
+        "unrealized_pl": "17.422152",
+        "unrealized_plpc": "0.03035"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 8,
+        "wins": 4,
+        "losses": 4,
+        "win_rate": 0.5,
+        "avg_pnl_pct": 0.71,
+        "avg_win_pct": 2.3,
+        "avg_loss_pct": -0.89,
+        "win_loss_ratio": 2.59,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -3.18,
+        "total_pnl": 274.08,
+        "profit_factor": 2.54,
+        "per_trade_sharpe": 0.23,
+        "sharpe_estimate": 0.23
+      },
+      "metrics_30d": {
+        "total_trades": 8,
+        "wins": 4,
+        "losses": 4,
+        "win_rate": 0.5,
+        "avg_pnl_pct": 0.71,
+        "avg_win_pct": 2.3,
+        "avg_loss_pct": -0.89,
+        "win_loss_ratio": 2.59,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -3.18,
+        "total_pnl": 274.08,
+        "profit_factor": 2.54,
+        "per_trade_sharpe": 0.23,
+        "sharpe_estimate": 0.23
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": [
+      "Excellent risk/reward \u2014 strategy well-calibrated",
+      "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation"
+    ]
   }
 ]
