@@ -561,6 +561,21 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 continue
             trade_value = shares * price
 
+        # After a within-sector rotation the freed room may be smaller than the full
+        # tranche size (e.g. OXY ~$6K freed, but VLO's full tranche ~$15K → still
+        # busts the 20% cap). Cap the entry to the remaining sector budget so the
+        # rotation always produces a valid trade and doesn't throw away the swap.
+        remaining_sector_room = (equity * limits["max_sector_exposure_pct"] / 100.0
+                                 - sector_exposure.get(sector, 0))
+        if remaining_sector_room < trade_value and remaining_sector_room > 0:
+            adj_shares = int(remaining_sector_room * 0.95 / price)
+            if adj_shares > 0:
+                log.info(f"  Post-rotation: sizing {sym} {shares}->{adj_shares} sh "
+                         f"to fit remaining sector room (${remaining_sector_room:,.0f})")
+                shares = adj_shares
+                trade_value = shares * price
+            # If adj_shares == 0, the proposed-cap check below will catch it cleanly.
+
         # Enforce the sector cap on the PROPOSED exposure (current + THIS order),
         # not just current. The early >= check above only blocks adding to a
         # sector already at the cap; a single tranche-sized entry could still
