@@ -46,15 +46,4 @@ jobs:
 
       - name: Commit artifact if changed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/hrp_weights.json; then
-            echo "No change to data/hrp_weights.json — nothing to commit."
-            exit 0
-          fi
-          git add data/hrp_weights.json
-          git commit -m "research(T2): refresh HRP weights artifact [skip ci]"
-          for i in 1 2 3; do
-            git pull --rebase origin main && git push origin main && break
-            echo "push attempt $i failed; retrying..."; sleep 5
-          done
+          bash scripts/commit_and_push.sh "research(T2): refresh HRP weights artifact [skip ci]" data/hrp_weights.json
