@@ -233,5 +233,44 @@
     "reason": "Take profit at 25.4%",
     "timestamp": "2026-06-01T19:28:01.461230",
     "date": "2026-06-01"
+  },
+  {
+    "symbol": "SPY",
+    "side": "buy",
+    "qty": 9,
+    "limit_price": 760.7,
+    "estimated_value": 6846.3,
+    "order_id": "86b27adf-ab9c-447c-a2cd-9a23a664f262",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-06-02T16:33:22.103196",
+    "date": "2026-06-02"
+  },
+  {
+    "symbol": "QQQ",
+    "side": "buy",
+    "qty": 9,
+    "limit_price": 746.46,
+    "estimated_value": 6718.14,
+    "order_id": "ba98d2b0-ac37-4179-95d5-2e3cbc3e447e",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-06-02T16:33:23.503705",
+    "date": "2026-06-02"
+  },
+  {
+    "symbol": "DIA",
+    "side": "buy",
+    "qty": 13,
+    "limit_price": 513.32,
+    "estimated_value": 6673.16,
+    "order_id": "d4339a16-553f-49bd-8bfc-ba8ff21dc4d6",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-06-02T16:33:24.896343",
+    "date": "2026-06-02"
   }
 ]
