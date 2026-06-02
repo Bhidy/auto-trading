@@ -2053,7 +2053,7 @@
                 ['portfolio_2','Capitol Shadow'],['portfolio_3','Cautious Sniper']
             ].map(function(o) { return '<option value="'+o[0]+'"'+(o[0]===_mpAo.pf?' selected':'')+'>'+o[1]+'</option>'; }).join('');
 
-            var stOpts = [['all','All Orders'],['executed','Executed'],['open','Open']]
+            var stOpts = [['all','All Orders'],['executed','Executed'],['open','Open'],['canceled','Unfilled']]
                 .map(function(o) { return '<option value="'+o[0]+'"'+(o[0]===_mpAo.status?' selected':'')+'>'+o[1]+'</option>'; }).join('');
 
             fil.innerHTML = '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.65rem;padding:.65rem .85rem;background:'+filterBg+';border:1px solid var(--line);border-radius:.75rem;">' +
@@ -2089,7 +2089,7 @@
             if (_mpAo.loading) return;
             _mpAo.loading = true;
             fetch('/api/orders/unified?portfolio_id=' + (_mpAo.pf || 'all'), { cache: 'no-store' })
-                .then(function(r) { return r.ok ? r.json() : { executed: [], open: [] }; })
+                .then(function(r) { return r.ok ? r.json() : { executed: [], open: [], canceled: [] }; })
                 .then(function(d) {
                     _mpAo.data = d; _mpAo.loading = false;
                     mpRenderAoTable();
@@ -2117,27 +2117,44 @@
             };
         }
 
+        // Period → inclusive start date as a YYYY-MM-DD string. Compared as strings
+        // (never Date objects) so it can't drift across timezones — the bots write
+        // order dates in UTC, so we anchor the cutoff in UTC too. 1D = TODAY only;
+        // 5D = the last 5 TRADING days (Mon–Fri); 1M/3M = calendar months.
+        function mpPeriodCutoff(period) {
+            var now = new Date();
+            if (period === '5D') {
+                var d = new Date(now), counted = 0;
+                while (true) {
+                    var dow = d.getUTCDay();                 // 0=Sun … 6=Sat
+                    if (dow !== 0 && dow !== 6) { counted++; if (counted >= 5) break; }
+                    d.setUTCDate(d.getUTCDate() - 1);
+                }
+                return d.toISOString().slice(0, 10);
+            }
+            var c = new Date(now);
+            if (period === '1M') c.setUTCMonth(c.getUTCMonth() - 1);
+            else if (period === '3M') c.setUTCMonth(c.getUTCMonth() - 3);
+            // '1D' and default: today only → cutoff is today's UTC date.
+            return c.toISOString().slice(0, 10);
+        }
+
         function mpRenderAoTable() {
             var body = document.getElementById('mpAoTableBody');
             if (!body) return;
             var d = _mpAo.data;
             if (!d) { body.innerHTML = '<div class="pf-empty" style="padding:1.5rem;">No data yet.</div>'; return; }
 
-            var cutoff = new Date(); cutoff.setHours(0,0,0,0);
-            var p = _mpAo.period;
-            if      (p==='1D') cutoff.setDate(cutoff.getDate()-1);
-            else if (p==='5D') cutoff.setDate(cutoff.getDate()-5);
-            else if (p==='1M') cutoff.setMonth(cutoff.getMonth()-1);
-            else if (p==='3M') cutoff.setMonth(cutoff.getMonth()-3);
+            var cutoffStr = mpPeriodCutoff(_mpAo.period);
 
             var status = _mpAo.status;
             var rows = [];
-            var totalCount=0, execCount=0, openCount=0, totalBuy=0, totalSell=0, totalOpen=0;
+            var totalCount=0, execCount=0, openCount=0, canceledCount=0, totalBuy=0, totalSell=0, totalOpen=0;
 
             if (status==='all'||status==='executed') {
                 (d.executed||[]).forEach(function(tr) {
                     var n=mpNormOrder(tr);
-                    if (!n.dateStr||new Date(n.dateStr)<cutoff) return;
+                    if (!n.dateStr || n.dateStr < cutoffStr) return;
                     var cost=n.qty*n.price, sc=n.side==='buy'?'pf-badge-pos':'pf-badge-neg';
                     totalCount++; execCount++;
                     if (n.side==='buy') totalBuy+=cost; else totalSell+=cost;
@@ -2155,7 +2172,7 @@
             if (status==='all'||status==='open') {
                 (d.open||[]).forEach(function(o) {
                     var n=mpNormOrder(o);
-                    if (!n.dateStr||new Date(n.dateStr)<cutoff) return;
+                    if (!n.dateStr || n.dateStr < cutoffStr) return;
                     var sc=n.side==='buy'?'pf-badge-pos':'pf-badge-neg';
                     var isBracket = n.orderStatus==='held';
                     var sBg=isBracket?'rgba(245,158,11,.12)':'rgba(59,130,246,.12)';

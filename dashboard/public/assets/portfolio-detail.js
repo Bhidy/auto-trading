@@ -1277,9 +1277,12 @@
         var discTxt = portfolio.halted ? il('Review', 'مراجعة') : il('On Track', 'على المسار');
         var discDot = portfolio.halted ? 'var(--pf-red)' : 'var(--pf-green)';
 
+        // NOTE: this score measures portfolio STRUCTURE (liquidity, diversification,
+        // concentration, volatility, discipline) — NOT returns. Never assert
+        // "strong returns" here; P&L lives in the header and equity chart.
         var note = score >= 75
-            ? il('Healthy overall. Strong returns, ' + (I.largest > 10 ? 'moderate' : 'well-managed') + ' concentration risk, and a solid cash buffer.',
-                 'صحية بشكل عام. عوائد قوية، ومخاطر تركّز ' + (I.largest > 10 ? 'معتدلة' : 'مُدارة جيداً') + '، واحتياطي نقدي قوي.')
+            ? il('Healthy structure. ' + (I.largest > 10 ? 'Moderate' : 'Well-managed') + ' concentration risk and a solid cash buffer. (Structure only — see P&L above for returns.)',
+                 'بنية صحية. مخاطر تركّز ' + (I.largest > 10 ? 'معتدلة' : 'مُدارة جيداً') + ' واحتياطي نقدي قوي. (البنية فقط — انظر الأرباح/الخسائر أعلاه للعوائد.)')
             : score >= 55
             ? il('Stable footing with room to improve. Watch concentration and keep guardrails active.',
                  'وضع مستقر مع مجال للتحسين. راقب التركّز وأبقِ المصدّات نشطة.')
@@ -1655,7 +1658,9 @@
         var avgHold = ages.length ? ages.reduce(function (s, x) { return s + x; }, 0) / ages.length : null;
         var turnover = (I.equity > 0 && turnoverVal > 0) ? Math.min(100, (turnoverVal / I.equity) * 100) : null;
 
-        return { hasClosed: hasClosed, winRate: winRate, avgWin: avgWin, avgLoss: avgLoss, pf: pf, sharpe: sharpe, turnover: turnover, avgHold: avgHold };
+        var n = hasClosed ? lr.total_trades : I.holds.length;
+        return { hasClosed: hasClosed, n: n, lowSample: hasClosed && lr.total_trades < 5,
+                 winRate: winRate, avgWin: avgWin, avgLoss: avgLoss, pf: pf, sharpe: sharpe, turnover: turnover, avgHold: avgHold };
     }
     function tradeQualityCard(I) {
         var q = computeTradeQuality(I);
@@ -1671,6 +1676,12 @@
         var wrFoot = q.winRate >= 55 ? ['is-good', il('Above avg', 'فوق المتوسط')] : q.winRate >= 45 ? ['is-warn', il('In range', 'ضمن النطاق')] : ['is-bad', il('Below avg', 'تحت المتوسط')];
         var pfFoot = q.pf >= 1.5 ? ['is-good', il('Healthy', 'صحي')] : q.pf >= 1 ? ['is-warn', il('Marginal', 'حدّي')] : ['is-bad', il('At risk', 'في خطر')];
         var shFoot = q.sharpe == null ? ['is-warn', il('Building', 'قيد البناء')] : q.sharpe >= 1 ? ['is-good', il('Strong', 'قوي')] : ['is-warn', il('Developing', 'متطور')];
+        // Small closed-trade samples are not statistically meaningful — never
+        // present a confident verdict (e.g. "100% / Healthy" off 1 trade).
+        if (q.lowSample) {
+            var lowLbl = il('Low sample (' + q.n + ')', 'عيّنة صغيرة (' + q.n + ')');
+            wrFoot = ['is-warn', lowLbl]; pfFoot = ['is-warn', lowLbl]; shFoot = ['is-warn', lowLbl];
+        }
 
         var grid =
             card(il('Win Rate', 'معدل الربح'), fmt(q.winRate, 1) + '%', 'winrate' + pfId, green, wrFoot[1], wrFoot[0]) +
@@ -1682,7 +1693,11 @@
             card(il('Avg Hold', 'متوسط المدة'), q.avgHold == null ? '—' : fmt(q.avgHold, 1) + 'd', 'hold' + pfId, teal, il('holding period', 'فترة الاحتفاظ'), 'is-good') +
             card(il('Open Positions', 'مراكز مفتوحة'), String(I.holdingsCount), 'open' + pfId, teal, il('live', 'مباشر'), 'is-good');
 
-        var note = q.hasClosed ? il('From closed-trade learning report.', 'من تقرير تعلّم الصفقات المغلقة.') : il('Derived from live open positions (closed-trade history is still building).', 'مشتق من المراكز المفتوحة المباشرة (سجل الصفقات المغلقة قيد البناء).');
+        var note = !q.hasClosed
+            ? il('Derived from live open positions (closed-trade history is still building).', 'مشتق من المراكز المفتوحة المباشرة (سجل الصفقات المغلقة قيد البناء).')
+            : q.lowSample
+            ? il('From ' + q.n + ' closed trade' + (q.n === 1 ? '' : 's') + ' — sample too small to be statistically meaningful yet.', 'من ' + q.n + ' صفقة مغلقة — العيّنة أصغر من أن تكون ذات دلالة إحصائية بعد.')
+            : il('From closed-trade learning report.', 'من تقرير تعلّم الصفقات المغلقة.');
 
         return '<div class="pf-ic">' +
             icHead('trend', il('Trade Quality Analytics', 'تحليلات جودة التداول'), note) +

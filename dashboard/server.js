@@ -1080,6 +1080,38 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
 // persisted history exists, returns [] and the caller shows only real data.
 // (Replaces the former synthetic generateStrategyBackfill, which manufactured
 // equity curves and mislabeled them as real — an institutional-integrity defect.)
+// Combine multiple per-portfolio equity series into ONE total-equity series by
+// date. CRITICAL: forward-fill each portfolio's last-known equity across the
+// union of dates before summing. A naive per-date sum collapses on any date
+// where only some portfolios have posted a snapshot — e.g. intraday, before the
+// others' EOD writers run — yielding ~1/3 of the book and crashing the
+// normalized curve (the "-66.68%" all-portfolios bug). Before a portfolio's
+// first observation its starting capital (basePerSeries) is assumed so the
+// combined book starts whole.
+function combineEquitySeries(serieses, basePerSeries = 100000) {
+    const maps = [];
+    const dateSet = new Set();
+    for (const s of serieses) {
+        const m = {};
+        for (const r of (s || [])) {
+            if (r && r.date) { m[r.date] = parseFloat(r.equity || 0); dateSet.add(r.date); }
+        }
+        maps.push(m);
+    }
+    const dates = [...dateSet].sort((a, b) => a.localeCompare(b));
+    const running = maps.map(() => null);
+    const out = [];
+    for (const date of dates) {
+        let total = 0;
+        for (let i = 0; i < maps.length; i++) {
+            if (maps[i][date] !== undefined) running[i] = maps[i][date];
+            total += (running[i] !== null ? running[i] : basePerSeries);
+        }
+        out.push({ date, equity: Math.round(total * 100) / 100 });
+    }
+    return out;
+}
+
 async function realEquityBackfill(id, beforeDate, baseValue) {
     const START = '2020-01-01';
     const base = parseFloat(baseValue) || 100000;
@@ -1091,12 +1123,7 @@ async function realEquityBackfill(id, beforeDate, baseValue) {
                 supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
                 supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
             ]);
-            const map = {};
-            for (const r of [...p1, ...p2, ...p3]) {
-                if (!r.date) continue;
-                map[r.date] = (map[r.date] || 0) + parseFloat(r.equity || 0);
-            }
-            rows = Object.entries(map).map(([date, equity]) => ({ date, equity }));
+            rows = combineEquitySeries([p1, p2, p3]);
         } else {
             rows = await supabaseGet('portfolio_equity_history', {
                 portfolio_id: `eq.${id}`, date: `gte.${START}`,
@@ -1626,14 +1653,9 @@ app.get('/api/supabase/equity', async (req, res) => {
             supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
             supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
         ]);
-        // Build date-keyed map
-        const map = {};
-        for (const row of [...p1, ...p2, ...p3]) {
-            if (!row.date) continue;
-            map[row.date] = (map[row.date] || 0) + parseFloat(row.equity || 0);
-        }
-        const combined = Object.entries(map).sort(([a],[b]) => a.localeCompare(b)).map(([date, equity]) => ({ date, equity }));
-        return res.json(combined);
+        // Forward-fill each portfolio before summing (see combineEquitySeries):
+        // a naive per-date sum collapses on partial dates → false -66% curve.
+        return res.json(combineEquitySeries([p1, p2, p3]));
     }
 
     const rows = await supabaseGet('portfolio_equity_history', {
@@ -1684,9 +1706,7 @@ app.get('/api/portfolio/:id/tail-risk', async (req, res) => {
     if (id === 'all') {
         const [p1, p2, p3] = await Promise.all(['portfolio_1', 'portfolio_2', 'portfolio_3'].map(
             pid => supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${pid}`, date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 })));
-        const map = {};
-        for (const r of [...p1, ...p2, ...p3]) { if (r.date) map[r.date] = (map[r.date] || 0) + parseFloat(r.equity || 0); }
-        rows = Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).map(([date, equity]) => ({ date, equity }));
+        rows = combineEquitySeries([p1, p2, p3]);
     } else {
         rows = await supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${id}`, date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 });
     }
@@ -2001,6 +2021,7 @@ app.get('/api/orders/unified', async (req, res) => {
 
     const executed = [];
     const open = [];
+    const canceled = [];   // terminal-but-unfilled (expired/canceled/rejected), real orders only
 
     for (const id of ids) {
         const cfg = portfoliosConfig[id];
@@ -2072,8 +2093,18 @@ app.get('/api/orders/unified', async (req, res) => {
                 alpacaFilledKeys.add(descKey);
             } else if (OPEN_STATUSES.has(o.status)) {
                 open.push(norm);
+            } else {
+                // Terminal but NOT filled (canceled/expired/rejected/replaced).
+                // Surface MEANINGFUL unfilled orders — e.g. a copy-trade limit that
+                // expired before filling (P2 PGR/MA/SPGI/DHR) — but suppress the
+                // auto-managed bracket/OCO exit legs: every closed bracket position
+                // leaves a take-profit limit + stop-loss stop that expire/cancel as
+                // normal management (order_class bracket/oco/oto). A standalone order
+                // the system actually placed is order_class simple/empty. Previously
+                // ALL of these were dropped, which hid the genuine unfilled orders too.
+                const cls = (o.order_class || '').toLowerCase();
+                if (cls === '' || cls === 'simple') canceled.push(norm);
             }
-            // canceled/expired/rejected: omitted to keep the view clean
         });
 
         // Add trade_log entries NOT already covered by Alpaca filled data.
@@ -2098,7 +2129,8 @@ app.get('/api/orders/unified', async (req, res) => {
         return db - da;
     });
 
-    res.json({ executed, open, fetched_at: new Date().toISOString() });
+    canceled.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    res.json({ executed, open, canceled, fetched_at: new Date().toISOString() });
 });
 
 // B6. Place crypto order
