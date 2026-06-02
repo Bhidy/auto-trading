@@ -128,7 +128,7 @@ Trading/monitor/EOD/weekly (9, per CLAUDE above) **plus**:
 | `codeql.yml` | push/PR + weekly | Security static analysis. |
 | `heartbeat.yml` | 22:30 & 23:30 UTC M-F | Watchdog: alerts (GitHub issue / Slack) if any portfolio went stale. |
 | `market-data.yml` | 21:30 & 22:30 UTC M-F + dispatch | Mirrors daily bars → Supabase. `dispatch days=730` = full backfill. |
-| `smoke-test.yml` | push to `dashboard/**` | Polls prod health post-deploy. **No VERCEL_TOKEN** (Vercel git-integration auto-deploys). |
+| `smoke-test.yml` ("Deploy & Smoke Test") | push to dashboard **code** paths | **Performs the real production deploy** via the Vercel CLI (uses `VERCEL_TOKEN`; CLI version **pinned** in the workflow), then smoke-tests prod. Vercel git-integration was never wired — this workflow IS the deploy. Data-only commits do NOT trigger it. |
 
 **Scheduled-trading reliability:** all trading/EOD crons use MULTIPLE staggered cron lines covering BOTH EDT and EST UTC offsets, with an idempotency dedup gate (P1/P3 check today's `signals.json` date). A single cron line is a known-fragile pattern — never reduce to one.
 
@@ -308,7 +308,8 @@ Regime detected from SPY: STRONG_BULL → BULL → CORRECTION → RECOVERY → B
 ## Deployment Pipeline
 ```
 GitHub Actions commits state JSON → git push → GitHub
-    → Vercel detects repo push → auto-builds from dashboard/ directory
+    → smoke-test.yml CLI-deploys to Vercel on dashboard *code* pushes (VERCEL_TOKEN, CLI pinned)
+    → data-only commits do NOT deploy — live data is read from Alpaca, committed JSON is fallback
     → Data files already present (synced by Actions before commit, NOT by build.sh)
     → Express serverless API serves live Alpaca data + committed state files
 ```
