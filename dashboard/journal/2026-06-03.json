@@ -236,5 +236,124 @@
     "insights": [
       "Losing money \u2014 reduce exposure and review strategy"
     ]
+  },
+  {
+    "date": "2026-06-03",
+    "timestamp": "2026-06-03T22:53:29.668110+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 98683.22,
+      "cash": 42545.86,
+      "portfolio_value": 98683.22,
+      "daily_pnl": -54.35000000000582,
+      "daily_pnl_pct": -0.055
+    },
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "qty": "25",
+        "market_value": "7836.75",
+        "unrealized_pl": "72.25",
+        "unrealized_plpc": "0.00931"
+      },
+      {
+        "symbol": "AMZN",
+        "qty": "52",
+        "market_value": "13052",
+        "unrealized_pl": "-751.850008",
+        "unrealized_plpc": "-0.05447"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "17",
+        "market_value": "4879.51",
+        "unrealized_pl": "-57.819992",
+        "unrealized_plpc": "-0.01171"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "37",
+        "market_value": "7890.25",
+        "unrealized_pl": "26.019991",
+        "unrealized_plpc": "0.00331"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "2",
+        "market_value": "1476.2",
+        "unrealized_pl": "-13.69",
+        "unrealized_plpc": "-0.00919"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "14",
+        "market_value": "10506.02",
+        "unrealized_pl": "-70.039998",
+        "unrealized_plpc": "-0.00662"
+      },
+      {
+        "symbol": "TSLA",
+        "qty": "13",
+        "market_value": "5474.43",
+        "unrealized_pl": "-206.560003",
+        "unrealized_plpc": "-0.03636"
+      },
+      {
+        "symbol": "XLE",
+        "qty": "69",
+        "market_value": "4057.2",
+        "unrealized_pl": "5.430024",
+        "unrealized_plpc": "0.00134"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "5",
+        "market_value": "965",
+        "unrealized_pl": "-15.098025",
+        "unrealized_plpc": "-0.0154"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 11,
+        "wins": 4,
+        "losses": 7,
+        "win_rate": 0.364,
+        "avg_pnl_pct": -0.64,
+        "avg_win_pct": 2.32,
+        "avg_loss_pct": -2.33,
+        "win_loss_ratio": 0.99,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -8.19,
+        "total_pnl": -435.93,
+        "profit_factor": 0.53,
+        "per_trade_sharpe": -0.16,
+        "sharpe_estimate": -0.16
+      },
+      "metrics_30d": {
+        "total_trades": 12,
+        "wins": 5,
+        "losses": 7,
+        "win_rate": 0.417,
+        "avg_pnl_pct": -0.55,
+        "avg_win_pct": 1.94,
+        "avg_loss_pct": -2.33,
+        "win_loss_ratio": 0.83,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -8.19,
+        "total_pnl": -406.89,
+        "profit_factor": 0.56,
+        "per_trade_sharpe": -0.15,
+        "sharpe_estimate": -0.15
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": [
+      "Losing money \u2014 reduce exposure and review strategy"
+    ]
   }
 ]
