@@ -38,5 +38,13 @@
     "rotation_edge": 0.25,
     "max_rotation_pct": 15.0,
     "max_rotations": 3
+  },
+  "correlation_clusters": {
+    "mega_cap_tech_ai": ["AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "NVDA", "TSLA", "AVGO", "AMD", "QQQ", "XLK"]
+  },
+  "max_cluster_exposure_pct": 55.0,
+  "cross_portfolio": {
+    "single_name_cap_pct": 10.0,
+    "sector_cap_pct": 30.0
   }
 }
