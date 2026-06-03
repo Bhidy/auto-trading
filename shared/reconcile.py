@@ -5,7 +5,18 @@ integrity audit is identical everywhere.
 Pure, dependency-free. Each bot builds its inputs from its own schema and writes
 its own report file; the drift logic lives here once.
 """
+import copy
 from datetime import datetime, timezone
+
+
+def is_open_trade(t):
+    """Open-trade predicate shared by all bots.
+
+    A missing ``status`` means open (P3 legacy entries carry no status field),
+    while any explicit closed* status (``closed`` or ``closed_reconciled``) is
+    not-open. Use this everywhere the open set is built so the three bots agree.
+    """
+    return t.get("status", "open") == "open"
 
 
 def _num(x):
@@ -124,3 +135,187 @@ def working_orders_report(open_orders):
         "working_orders": working,
         "working_count": len(working),
     }
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-TRAIL REPAIR (broker is ground truth) — places NO orders.
+# compute_drift() *detects* drift; this *repairs* the trade log so the audit
+# trail reaches in_sync. It never touches the broker and never fabricates P&L.
+# ---------------------------------------------------------------------------
+
+def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconciled"):
+    """Turn an open lot into a reconciled close (mutates `trade`).
+
+    A real broker exit price -> a genuine ``closed`` trade with realized P&L
+    (recovers true history into the readiness sample). An unknown exit ->
+    ``closed_reconciled`` with ``pnl=None`` — we remove it from open risk
+    without inventing a realized result the system never observed.
+    """
+    trade["reconciled"] = True
+    trade["reconcile_reason"] = reason
+    trade["exit_timestamp"] = now_iso
+    if exit_price is not None:
+        trade["exit_price"] = exit_price
+        trade["status"] = "closed"
+        if pnl_fn is not None:
+            try:
+                qty = float(trade.get("qty") or 0)
+                entry = float(trade.get("entry_price") or 0)
+                pnl = pnl_fn(trade.get("side", "buy"), qty, entry, float(exit_price))
+                trade["pnl"] = pnl
+                trade["realized_pnl"] = pnl
+                notional = abs(entry * qty) or 1.0
+                trade["pnl_pct"] = round(pnl / notional * 100, 2)
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
+    else:
+        trade["exit_price"] = None
+        trade["pnl"] = None
+        trade["realized_pnl"] = None
+        trade["status"] = "closed_reconciled"
+    return trade
+
+
+def _unlogged_lot(symbol, qty, entry_price, now_iso, reason):
+    """A fresh open lot reconstructed from a live broker position (real cost basis)."""
+    return {
+        "symbol": symbol,
+        "side": "buy",
+        "qty": round(float(qty), 6),
+        "entry_price": entry_price,
+        "timestamp": now_iso,
+        "status": "open",
+        "reconciled": True,
+        "reconcile_reason": reason,
+        "reasons": ["reconciled from broker position"],
+        "exit_price": None,
+        "pnl": None,
+        "pnl_pct": None,
+    }
+
+
+def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
+                            exit_prices=None, pnl_fn=None):
+    """Repair the OPEN trades in ``trade_log`` to match broker ``positions``
+    (ground truth). Returns ``(new_log, actions)``. Places NO orders.
+
+    Corrections (broker always wins):
+      * orphan      — open lot(s) for a symbol the broker does not hold -> close
+                      (real exit if in ``exit_prices`` else ``closed_reconciled``)
+      * qty over    — summed open qty > broker qty -> trim oldest lots/portions
+                      (handles double-logged duplicate lots)
+      * qty under / unlogged — broker holds more than logged -> append a
+                      reconciled open lot at the broker's average price
+
+    Honest by construction: never fabricates P&L (reconciled-without-exit closes
+    carry ``pnl=None`` and a distinct ``closed_reconciled`` status, so they stay
+    out of win-rate/Sharpe stats). Idempotent: an in-sync log yields no actions.
+
+    ``exit_prices``: optional {symbol: real_exit_price}.
+    ``pnl_fn(side, qty, entry, exit) -> net_pnl``: optional, used only when a real
+    exit price is known (pass shared.accounting.realized_pnl for net-of-fee P&L).
+    """
+    now_iso = now_iso or datetime.now(timezone.utc).isoformat()
+    exit_prices = exit_prices or {}
+    log = copy.deepcopy(trade_log)
+    actions = []
+
+    broker = {}
+    for p in positions or []:
+        s = p.get("symbol")
+        if not s:
+            continue
+        q = _num(p.get("qty"))
+        broker[s] = {
+            "qty": q,  # None when the caller passes symbol-only positions
+            "avg": _num(p.get("avg_entry_price") or p.get("avg_price")),
+        }
+
+    open_by_sym = {}
+    for idx, t in enumerate(log):
+        if is_open_trade(t) and t.get("symbol"):
+            open_by_sym.setdefault(t["symbol"], []).append(idx)
+
+    touched = set()
+
+    # 1) symbols present in the log's open set
+    for sym, idxs in open_by_sym.items():
+        b = broker.get(sym)
+        logged_qty = sum(_num(log[i].get("qty")) or 0.0 for i in idxs)
+        # held = present at broker with a positive (or unknown) qty
+        held = b is not None and (b["qty"] is None or b["qty"] > 0)
+
+        if not held:
+            for i in idxs:
+                _close_record(log[i], now_iso, exit_prices.get(sym), pnl_fn,
+                              reason="orphan_no_live_position")
+            actions.append({"action": "close_orphan", "symbol": sym,
+                            "lots": len(idxs), "qty": round(logged_qty, 6)})
+            continue
+
+        broker_qty = b["qty"]
+        if broker_qty is None or logged_qty <= 1e-9:
+            continue  # held but qty not comparable -> symbol-level audit only
+
+        diff = logged_qty - broker_qty
+        if diff > 1e-6:
+            touched.add(sym)
+            to_remove = diff
+            for i in idxs:
+                if to_remove <= 1e-6:
+                    break
+                lot_qty = _num(log[i].get("qty")) or 0.0
+                if lot_qty <= to_remove + 1e-9:
+                    _close_record(log[i], now_iso, exit_prices.get(sym), pnl_fn,
+                                  reason="qty_drift_excess_lot")
+                    to_remove -= lot_qty
+                else:
+                    removed = to_remove
+                    log[i]["qty"] = round(lot_qty - removed, 6)
+                    split = copy.deepcopy(log[i])
+                    split["qty"] = round(removed, 6)
+                    split.pop("id", None)
+                    _close_record(split, now_iso, exit_prices.get(sym), pnl_fn,
+                                  reason="qty_drift_excess_partial")
+                    log.append(split)
+                    to_remove = 0.0
+            actions.append({"action": "trim_qty", "symbol": sym,
+                            "removed_qty": round(diff, 6), "broker_qty": broker_qty})
+        elif diff < -1e-6:
+            touched.add(sym)
+            log.append(_unlogged_lot(sym, -diff, b["avg"], now_iso,
+                                     reason="qty_drift_short"))
+            actions.append({"action": "add_qty", "symbol": sym,
+                            "added_qty": round(-diff, 6), "broker_qty": broker_qty})
+
+    # 2) broker symbols with no open log trade -> unlogged position
+    for sym, b in broker.items():
+        if sym not in open_by_sym and (b["qty"] or 0) > 0:
+            log.append(_unlogged_lot(sym, b["qty"], b["avg"], now_iso,
+                                     reason="unlogged_position"))
+            actions.append({"action": "add_unlogged", "symbol": sym,
+                            "qty": round(b["qty"], 6)})
+
+    # 3) cost-basis snap: for any symbol whose lots we changed, set the surviving
+    # open lots' entry to the broker's average (ground truth) so the repair also
+    # clears cost_basis_drift and the symbol reaches full in_sync.
+    for sym in touched:
+        b = broker.get(sym)
+        if not b or not b.get("avg") or (b["qty"] or 0) <= 0:
+            continue
+        for t in log:
+            if t.get("symbol") == sym and is_open_trade(t):
+                t["entry_price"] = b["avg"]
+                t["reconciled"] = True
+                t.setdefault("reconcile_reason", "cost_basis_synced")
+
+    # preserve the integer-id convention where the log uses one (P1); P3 has none
+    if any(isinstance(t.get("id"), int) for t in trade_log):
+        next_id = max([t.get("id", 0) for t in log
+                       if isinstance(t.get("id"), int)] or [0]) + 1
+        for t in log:
+            if t.get("id") is None:
+                t["id"] = next_id
+                next_id += 1
+
+    return log, actions

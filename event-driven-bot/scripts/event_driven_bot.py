@@ -809,13 +809,30 @@ def run_eod_journal(alpaca: AlpacaClient):
     positions = alpaca.get_positions()
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
 
-    # Read-only integrity audit: flag drift between trade log and broker.
-    from shared.reconcile import compute_drift
+    # Repair the audit trail to broker ground truth, then audit it. P3 entries
+    # historically carried no lifecycle status, so a closed bracket lingered as a
+    # permanent orphan; this closes such lots (closed_reconciled, pnl=None unless
+    # a real exit is known), trims double-logged qty, and logs unlogged positions.
+    # Places NO orders; never fabricates P&L.
+    from shared.reconcile import (compute_drift, reconcile_log_to_broker,
+                                  is_open_trade)
+    from shared.accounting import realized_pnl
+    repaired, recon_actions = reconcile_log_to_broker(
+        trade_log, positions,
+        pnl_fn=lambda side, qty, entry, ex: realized_pnl(side, qty, entry, ex)["net_pnl"],
+    )
+    if recon_actions:
+        save_json(DATA_DIR / "trade_log.json", repaired)
+        log.info(f"  Reconciliation backfill: {len(recon_actions)} action(s): "
+                 f"{[a['action'] + ':' + a['symbol'] for a in recon_actions]}")
+        trade_log = repaired
+    open_trades = [t for t in trade_log if is_open_trade(t) and t.get("symbol")]
     recon = compute_drift(
         [p.get("symbol") for p in positions if p.get("symbol")],
-        [t.get("symbol") for t in trade_log
-         if t.get("status") == "open" and t.get("symbol")],
+        [t.get("symbol") for t in open_trades],
+        positions=positions, open_trades=open_trades,
     )
+    recon["reconcile_actions"] = recon_actions
     save_json(DATA_DIR / "reconciliation_report.json", recon)
     if recon["in_sync"]:
         log.info("  Reconciliation: trade log and broker positions in sync")

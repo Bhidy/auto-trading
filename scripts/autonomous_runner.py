@@ -806,18 +806,36 @@ def reconcile_positions(alpaca: AlpacaClient):
                               (an entry fill that wasn't logged, e.g. a limit
                               that filled after the confirmation window).
     """
-    from shared.reconcile import compute_drift
+    from shared.reconcile import (compute_drift, reconcile_log_to_broker,
+                                  is_open_trade)
+    from shared.accounting import realized_pnl
 
     positions = alpaca.get_positions()
     pos_syms = [p.get("symbol") for p in positions if p.get("symbol")]
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
-    open_trades = [t for t in trade_log if t.get("status") == "open" and t.get("symbol")]
+
+    # Repair the audit trail to broker ground truth BEFORE auditing it: close
+    # orphan lots, trim double-logged qty, log unlogged positions. Places NO
+    # orders; recovers real net-of-fee P&L only where a true exit price exists,
+    # otherwise marks 'closed_reconciled' (pnl=None) — never fabricates a result.
+    repaired, recon_actions = reconcile_log_to_broker(
+        trade_log, positions,
+        pnl_fn=lambda side, qty, entry, ex: realized_pnl(side, qty, entry, ex)["net_pnl"],
+    )
+    if recon_actions:
+        save_json(DATA_DIR / "trade_log.json", repaired)
+        log.info(f"  Reconciliation backfill: {len(recon_actions)} corrective action(s): "
+                 f"{[a['action'] + ':' + a['symbol'] for a in recon_actions]}")
+        trade_log = repaired
+
+    open_trades = [t for t in trade_log if is_open_trade(t) and t.get("symbol")]
     open_syms = [t.get("symbol") for t in open_trades]
 
     # Pass detailed records so qty + cost-basis drift (C6) is caught, not just
     # symbol presence — a partial fill or missed corporate action shows up here.
     report = compute_drift(pos_syms, open_syms, positions=positions,
                            open_trades=open_trades)
+    report["reconcile_actions"] = recon_actions
     save_json(DATA_DIR / "reconciliation_report.json", report)
     if report["in_sync"]:
         log.info("  Reconciliation: trade log and broker positions in sync")

@@ -27,14 +27,24 @@ def test_in_sync_when_positions_match_open_trades(tmp_path, monkeypatch):
     assert report["unlogged_positions"] == []
 
 
-def test_orphan_open_trade_detected(tmp_path, monkeypatch):
+def test_orphan_open_trade_self_healed(tmp_path, monkeypatch):
     # Trade log says NVDA is open but the broker has no such position.
+    # reconcile_positions now REPAIRS to broker truth (closes the orphan) rather
+    # than only flagging it, so the post-repair report is in sync and records the
+    # corrective action. No exit price is known -> closed_reconciled, pnl=None.
     _seed_trade_log(tmp_path, monkeypatch, [
-        {"id": 1, "symbol": "NVDA", "status": "open"},
+        {"id": 1, "symbol": "NVDA", "side": "buy", "qty": 5, "entry_price": 200.0,
+         "status": "open"},
     ])
     report = ar.reconcile_positions(_alpaca([]))
-    assert report["in_sync"] is False
-    assert report["orphan_open_trades"] == ["NVDA"]
+    assert report["in_sync"] is True
+    assert report["orphan_open_trades"] == []
+    assert any(a["action"] == "close_orphan" and a["symbol"] == "NVDA"
+               for a in report["reconcile_actions"])
+    saved_log = json.loads((tmp_path / "trade_log.json").read_text())
+    nvda = next(t for t in saved_log if t["symbol"] == "NVDA")
+    assert nvda["status"] == "closed_reconciled"
+    assert nvda["pnl"] is None
 
 
 def test_unlogged_position_detected(tmp_path, monkeypatch):
