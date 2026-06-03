@@ -35,5 +35,9 @@
   "cross_portfolio": {
     "single_name_cap_pct": 10.0,
     "sector_cap_pct": 30.0
-  }
+  },
+  "correlation_clusters": {
+    "mega_cap_tech_ai": ["AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "META", "NVDA", "TSLA", "AVGO", "AMD", "QQQ", "XLK"]
+  },
+  "max_cluster_exposure_pct": 45.0
 }

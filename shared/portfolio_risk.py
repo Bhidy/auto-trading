@@ -89,6 +89,58 @@ def exceeds_aggregate_cap(books, symbol, add_market_value, single_name_cap_pct=1
     return projected_pct > single_name_cap_pct
 
 
+def cluster_of(symbol, clusters):
+    """Return the correlated-cluster name containing `symbol`, or None.
+
+    `clusters`: {cluster_name: [member symbols]}. First match wins; a symbol in
+    no cluster is uncorrelated for this purpose.
+    """
+    for name, members in (clusters or {}).items():
+        if symbol in members:
+            return name
+    return None
+
+
+def cluster_exposure_pct(positions, clusters, equity):
+    """% of equity held in each correlated cluster.
+
+    `positions`: [{"symbol", "market_value"}]. Returns {cluster_name: pct}. Used
+    by the de-correlation add-gate and the cross-portfolio monitor so a basket of
+    names that move together is visible as one bet, not many small ones.
+    """
+    equity = _abs_float(equity)
+    if not equity:
+        return {}
+    raw = {}
+    for p in positions or []:
+        name = cluster_of(p.get("symbol"), clusters)
+        if name:
+            raw[name] = raw.get(name, 0.0) + _abs_float(p.get("market_value"))
+    return {k: round(v / equity * 100, 3) for k, v in raw.items()}
+
+
+def would_breach_cluster_cap(symbol, positions, equity, clusters,
+                             max_cluster_pct, add_market_value=0.0):
+    """Would adding `add_market_value` of `symbol` push its correlated cluster
+    above `max_cluster_pct` of equity? Returns
+    ``(breach, cluster_name, projected_pct, cap)``.
+
+    A symbol in no cluster, or absent config, never breaches. This is an ADVISORY
+    constraint layered INSIDE the hardcoded caps — it only ever REJECTS a new add
+    (tightens); it never relaxes a hard limit.
+    """
+    name = cluster_of(symbol, clusters)
+    equity = _abs_float(equity)
+    if not name or not equity or not max_cluster_pct:
+        return (False, name, 0.0, max_cluster_pct)
+    current = 0.0
+    for p in positions or []:
+        if cluster_of(p.get("symbol"), clusters) == name:
+            current += _abs_float(p.get("market_value"))
+    projected = (current + _abs_float(add_market_value)) / equity * 100
+    return (projected > max_cluster_pct, name, round(projected, 3), max_cluster_pct)
+
+
 def portfolio_heat(positions, equity):
     """Portfolio 'heat' = total open risk to predefined stops, as a % of equity.
 

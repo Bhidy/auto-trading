@@ -177,3 +177,62 @@ def test_crypto_dust_order_rejected_by_min_notional(limits, portfolio):
     result = ro.validate_trade(_crypto_buy(pct=0.0005), portfolio, limits)  # ~$0.50
     assert result["approved"] is False
     assert any("notional" in r.lower() for r in result["rejections"])
+
+
+# --- De-correlation gates (committee rec #2) --------------------------------
+
+def _clustered(limits):
+    """Limits + a correlated-cluster config, mirroring production risk_limits.json."""
+    out = dict(limits)
+    out["correlation_clusters"] = {"mega_cap_tech_ai": ["NVDA", "AAPL", "QQQ", "XLK", "AMZN"]}
+    out["max_cluster_exposure_pct"] = 55.0
+    return out
+
+
+def test_no_add_to_name_already_at_single_stock_cap(limits, portfolio):
+    """NVDA appreciated to 8.1% (>= 8% stock cap). A further BUY is rejected even
+    though the per-order size cap alone would still 'fit' the increment."""
+    portfolio["positions"] = {"NVDA": {"qty": 37, "avg_price": 219.0}}  # 37*220/100k=8.14%
+    result = ro.validate_trade(
+        _buy(symbol="NVDA", price=220.0, itype="stock", pct=2.0), portfolio, _clustered(limits))
+    assert result["approved"] is False
+    assert any("single-stock cap" in r for r in result["rejections"])
+
+
+def test_cluster_cap_blocks_correlated_add(limits, portfolio):
+    """Mega-cap cluster already ~51.8%; a new correlated NVDA add (->~59.8%) is
+    rejected by the cluster cap (55%)."""
+    portfolio["positions"] = {
+        "AAPL": {"qty": 60, "avg_price": 300.0},   # 18.0%
+        "QQQ": {"qty": 30, "avg_price": 700.0},    # 21.0%
+        "AMZN": {"qty": 40, "avg_price": 320.0},   # 12.8% -> 51.8% total
+    }
+    result = ro.validate_trade(
+        _buy(symbol="NVDA", price=220.0, itype="stock", pct=8.0), portfolio, _clustered(limits))
+    assert result["approved"] is False
+    assert any("correlated cluster" in r for r in result["rejections"])
+
+
+def test_cluster_cap_allows_diversifying_add(limits, portfolio):
+    """The same heavy mega-cap book does NOT block a de-correlating add — XLE
+    (energy) is not in the cluster, so the gate steers capital toward diversity."""
+    portfolio["positions"] = {
+        "AAPL": {"qty": 60, "avg_price": 300.0},
+        "QQQ": {"qty": 30, "avg_price": 700.0},
+        "AMZN": {"qty": 40, "avg_price": 320.0},
+    }
+    result = ro.validate_trade(
+        _buy(symbol="XLE", price=58.0, itype="etf", pct=5.0), portfolio, _clustered(limits))
+    assert result["approved"] is True
+
+
+def test_decorrelation_gates_off_when_unconfigured(limits, portfolio):
+    """Backward compatible: with no cluster config the gates never fire."""
+    portfolio["positions"] = {
+        "AAPL": {"qty": 60, "avg_price": 300.0},
+        "QQQ": {"qty": 30, "avg_price": 700.0},
+        "AMZN": {"qty": 40, "avg_price": 320.0},
+    }
+    result = ro.validate_trade(
+        _buy(symbol="NVDA", price=220.0, itype="stock", pct=8.0), portfolio, limits)
+    assert result["approved"] is True

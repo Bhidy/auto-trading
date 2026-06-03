@@ -10,6 +10,8 @@ for _p in (REPO_ROOT, os.path.join(REPO_ROOT, "scripts")):
 
 from shared.portfolio_risk import (  # noqa: E402
     aggregate_exposure,
+    cluster_exposure_pct,
+    cluster_of,
     conditional_var,
     covariance_matrix,
     exceeds_aggregate_cap,
@@ -17,7 +19,48 @@ from shared.portfolio_risk import (  # noqa: E402
     portfolio_heat,
     value_at_risk,
     var_circuit_breaker,
+    would_breach_cluster_cap,
 )
+
+_CLUSTERS = {"mega_cap_tech_ai": ["AAPL", "NVDA", "QQQ", "XLK", "AMZN"]}
+
+
+def test_cluster_of_membership():
+    assert cluster_of("NVDA", _CLUSTERS) == "mega_cap_tech_ai"
+    assert cluster_of("XLE", _CLUSTERS) is None
+    assert cluster_of("AAPL", {}) is None
+
+
+def test_cluster_exposure_pct_sums_members():
+    positions = [
+        {"symbol": "AAPL", "market_value": 18_000},
+        {"symbol": "QQQ", "market_value": 21_000},
+        {"symbol": "XLE", "market_value": 10_000},   # not in cluster
+    ]
+    out = cluster_exposure_pct(positions, _CLUSTERS, 100_000)
+    assert out["mega_cap_tech_ai"] == 39.0   # (18k+21k)/100k
+    assert "XLE" not in out
+
+
+def test_would_breach_cluster_cap_true_when_over():
+    positions = [{"symbol": "AAPL", "market_value": 51_800}]
+    breach, name, proj, cap = would_breach_cluster_cap(
+        "NVDA", positions, 100_000, _CLUSTERS, 55.0, add_market_value=8_000)
+    assert breach is True and name == "mega_cap_tech_ai"
+    assert proj == 59.8 and cap == 55.0
+
+
+def test_would_breach_cluster_cap_false_for_uncorrelated_symbol():
+    positions = [{"symbol": "AAPL", "market_value": 51_800}]
+    breach, name, _proj, _cap = would_breach_cluster_cap(
+        "XLE", positions, 100_000, _CLUSTERS, 55.0, add_market_value=8_000)
+    assert breach is False and name is None
+
+
+def test_would_breach_cluster_cap_no_config_never_breaches():
+    breach, _n, _p, _c = would_breach_cluster_cap(
+        "NVDA", [{"symbol": "NVDA", "market_value": 90_000}], 100_000, {}, None)
+    assert breach is False
 
 
 def _books():

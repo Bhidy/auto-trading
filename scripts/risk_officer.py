@@ -16,6 +16,15 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 from shared.alpaca_http import evaluate_asset_gate  # noqa: E402
+from shared.portfolio_risk import would_breach_cluster_cap  # noqa: E402
+
+
+def _f(x):
+    """Tolerant float — malformed state never crashes validation."""
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return 0.0
 
 def load_config():
     """Load risk limits, profile-aware. RISK_PROFILE=live selects the tighter
@@ -211,6 +220,39 @@ def validate_trade(signal, portfolio, limits, asset_info=None):
             f"computed_qty=0 (size {suggested_pct}% x ${equity:,.0f} / ${price} "
             f"< 1 share) — position size too small or price too high"
         )
+
+    # --- De-correlation gates (committee rec #2): advisory caps layered INSIDE
+    # the hardcoded limits. They only ever REJECT a new long add — never relax a
+    # hard limit. Applied to BUY entries only; shorts/exits reduce correlated
+    # long exposure, and crypto is handled by its own exposure cap above. ---
+    if sig == "BUY" and instrument_type != "crypto":
+        positions = portfolio.get("positions", {}) or {}
+        held = positions.get(symbol)
+
+        # (a) No new add to a name already at/above its single-stock cap. The
+        # size-cap above only trims THIS order; it does not stop stacking onto a
+        # position price-appreciation already pushed to the cap (NVDA at 8.1%).
+        if held:
+            cur_pct = (abs(_f(held.get("qty"))) * price / equity * 100) if equity else 0.0
+            if cur_pct >= max_pct - 1e-9:
+                rejections.append(
+                    f"{symbol} already at single-stock cap "
+                    f"({cur_pct:.1f}% >= {max_pct:.1f}%) — no new add")
+
+        # (b) Correlated-cluster cap: a basket of names that move together is one
+        # bet. Block adds that push the cluster over max_cluster_exposure_pct.
+        clusters = limits.get("correlation_clusters") or {}
+        max_cluster = limits.get("max_cluster_exposure_pct")
+        if clusters and max_cluster:
+            pos_list = [{"symbol": s, "market_value": abs(_f(p.get("qty")) * _f(p.get("avg_price")))}
+                        for s, p in positions.items()]
+            breach, cname, proj, cap = would_breach_cluster_cap(
+                symbol, pos_list, equity, clusters, max_cluster,
+                add_market_value=dollar_amount)
+            if breach:
+                rejections.append(
+                    f"{symbol} in correlated cluster '{cname}': adding would push "
+                    f"cluster exposure to {proj:.1f}% > {cap:.1f}% cap (de-correlation gate)")
 
     approved = len(rejections) == 0
 
