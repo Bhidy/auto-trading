@@ -605,3 +605,26 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Investment-Committee Skill — Auto-Invoke (interactive Claude Code only)
+
+The `world-class-auto-trading-investment-committee` skill encodes this project's institutional
+trade-decision discipline. In interactive Claude Code sessions it MUST run automatically — the
+user should never have to type the skill name.
+
+Rules:
+- **Auto-trigger (blocking):** When the user (in their own words, without naming the skill)
+  asks you to evaluate, propose, score, approve, reject, size, exit, reduce, or sanity-check
+  ANY trade, signal, candidate symbol, position, stop/target, portfolio-risk action, or
+  self-learning **parameter change** for P1/P2/P3 — invoke the Skill tool with
+  `skill: "world-class-auto-trading-investment-committee"` BEFORE producing your analysis, and
+  answer in the skill's mandated output format. This includes questions like "should we buy X",
+  "is this trade good", "review this position", "can we lower the buy threshold".
+- **Do NOT auto-trigger** for non-decision work (dashboard/UI, branding, CSS, workflow YAML,
+  infra, docs, deployment, generic coding). Those are out of scope; only convene the committee
+  for an actual trade/portfolio/parameter **decision**. When unsure whether a turn is a
+  decision, prefer convening the committee.
+- **Hard boundary (cloud-only constraint):** This auto-invoke is for INTERACTIVE sessions with
+  Claude only. NEVER wire this skill, or any Claude/LLM call, into the autonomous cloud trading
+  loop (GitHub Actions / scripts). The committee advises a human; it is not a runtime dependency.
+  See `feedback_cloud_only_no_claude_pc` in memory.
