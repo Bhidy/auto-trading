@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-03T23:16:37.725778+00:00",
-  "total_equity": 304233.45,
-  "gross_exposure_pct": 57.545,
+  "timestamp": "2026-06-03T23:22:13.915067+00:00",
+  "total_equity": 304256.25,
+  "gross_exposure_pct": 57.541,
   "by_symbol": {
     "AAPL": {
       "market_value": 7764.5,
@@ -122,14 +122,14 @@
     },
     "TER": {
       "market_value": 2840.18,
-      "pct_of_total": 0.934,
+      "pct_of_total": 0.933,
       "books": [
         "portfolio_2"
       ]
     },
     "XLF": {
       "market_value": 6929.2,
-      "pct_of_total": 2.278,
+      "pct_of_total": 2.277,
       "books": [
         "portfolio_2"
       ]
@@ -171,7 +171,7 @@
     },
     "VLO": {
       "market_value": 4978.95,
-      "pct_of_total": 1.637,
+      "pct_of_total": 1.636,
       "books": [
         "portfolio_3"
       ]
@@ -194,11 +194,11 @@
   "by_sector": {
     "Unknown": {
       "market_value": 136178.93,
-      "pct_of_total": 44.761
+      "pct_of_total": 44.758
     },
     "Energy": {
       "market_value": 20076.13,
-      "pct_of_total": 6.599
+      "pct_of_total": 6.598
     },
     "Consumer": {
       "market_value": 15534.84,
@@ -214,7 +214,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 16.819
+    "mega_cap_tech_ai": 16.817
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],

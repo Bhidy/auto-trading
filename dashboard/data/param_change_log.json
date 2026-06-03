@@ -192,5 +192,27 @@
       ],
       "approved": false
     }
+  },
+  {
+    "timestamp": "2026-06-03T23:22:14.870946+00:00",
+    "approved": false,
+    "changed_knobs": {},
+    "n_changes": 0,
+    "gate": {
+      "current_oos_sharpe": 3.128,
+      "candidate_oos_sharpe": 3.128,
+      "n_windows": 1,
+      "min_oos_windows": 2,
+      "small_n_refused": true,
+      "sharpe_ok": true,
+      "challenger_sharpe": 2.018,
+      "pbo": null,
+      "deflated_sharpe": null,
+      "beats_challenger": true,
+      "screen_reasons": [
+        "insufficient OOS windows (N=1 < 2) to deflate \u2014 refusing change on small sample (fail-closed)"
+      ],
+      "approved": false
+    }
   }
 ]
