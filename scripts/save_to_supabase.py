@@ -39,7 +39,14 @@ SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 DATA_URL     = 'https://data.alpaca.markets'
 TRADING_URL  = (args.base_url or 'https://paper-api.alpaca.markets').rstrip('/')
 BASELINE     = 100000.0  # per-portfolio paper starting capital
-TODAY        = datetime.date.today().isoformat()
+# Trading-date label in ET. Alpaca + GitHub Actions run in UTC, so date.today() can
+# roll to the next calendar day for an evening EOD run and mislabel the row (e.g. a
+# 06-02 evening run landing on 06-03), which produced a duplicated "today" snapshot.
+try:
+    from zoneinfo import ZoneInfo
+    TODAY = datetime.datetime.now(ZoneInfo('America/New_York')).date().isoformat()
+except Exception:
+    TODAY = datetime.date.today().isoformat()
 
 # Benchmarks + common holdings + market-pulse watchlist to track daily
 MARKET_SYMBOLS = [
@@ -86,43 +93,6 @@ def _num(v):
         return None
 
 
-def _state_equity(state):
-    """Schema-tolerant equity read across the three bot state shapes.
-
-    P1 keeps equity at top level; P2 nests it under `account`; P3 uses a
-    different file/keys entirely. Only used as a fallback when the live
-    Alpaca account fetch fails — never write a fabricated baseline silently.
-    """
-    acct = state.get('account') if isinstance(state.get('account'), dict) else {}
-    for src in (state, acct):
-        for k in ('portfolio_value', 'equity', 'portfolio_equity', 'total_equity'):
-            v = _num(src.get(k))
-            if v is not None and v > 0:
-                return v
-    return None
-
-
-def _state_cash(state):
-    acct = state.get('account') if isinstance(state.get('account'), dict) else {}
-    for src in (state, acct):
-        v = _num(src.get('cash'))
-        if v is not None:
-            return v
-    return 0.0
-
-
-def _state_positions_count(state):
-    pos = state.get('positions')
-    if isinstance(state.get('account'), dict) and not pos:
-        pos = state['account'].get('positions')
-    if isinstance(pos, dict):
-        return len(pos)
-    if isinstance(pos, list):
-        return len(pos)
-    tp = _num(state.get('total_positions'))
-    return int(tp) if tp is not None else 0
-
-
 def supabase_upsert(table, rows):
     if not SUPABASE_URL or not SUPABASE_KEY:
         print(f'  SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set — skipping {table}')
@@ -159,36 +129,36 @@ try:
 except Exception as e:
     print(f'  Could not read state file: {e}')
 
-# Live broker account is the source of truth. The committed state file is only a
-# fallback (and is schema-tolerant) — the old code read P1's flat schema and wrote
-# a literal $100,000 for P2 (nested under `account`) and P3 (different file), which
-# fabricated the equity curve. We now refuse to write a baseline rather than lie.
+# Live broker account is the ONLY acceptable source for a daily close. We deliberately
+# do NOT fall back to the committed state file for equity/cash: it can be stale
+# (yesterday's value), which previously wrote a duplicated "today" snapshot, and an
+# older revision wrote a literal $100,000 from a mis-shaped state. The EOD step is
+# non-fatal, so a missed day (backfillable) is strictly safer than a stale/fabricated
+# close. Refuse to write rather than carry forward.
 acct   = alpaca_trading_get('/v2/account') or {}
 equity = _num(acct.get('equity'))
 cash   = _num(acct.get('cash'))
-source = 'alpaca'
-if equity is None or equity <= 0:
-    equity = _state_equity(state)
-    cash   = _state_cash(state)
-    source = 'state'
-if cash is None:
-    cash = _state_cash(state)
 
 if equity is None or equity <= 0:
-    print(f'  WARNING: no live or state equity for {args.portfolio_id} — '
-          f'skipping equity snapshot (refusing to fabricate the $100K baseline)')
+    print(f'  WARNING: no LIVE broker equity for {args.portfolio_id} — skipping equity '
+          f'snapshot (refusing to fabricate the $100K baseline or carry forward a stale value)')
 else:
+    # Real position count from the live broker; cash from the live account. If a value
+    # is genuinely unavailable we write NULL (unknown) — never a misleading 0, which is
+    # what previously made P3 (holding ~$65k cash / 5 positions) look like cash:0/0 pos.
     live_positions = alpaca_trading_get('/v2/positions')
-    positions = len(live_positions) if isinstance(live_positions, list) else _state_positions_count(state)
-    pnl     = equity - BASELINE
-    pnl_pct = (pnl / BASELINE) * 100
-    print(f'  equity={equity:.2f} cash={(cash or 0):.2f} pnl={pnl:.2f} ({pnl_pct:.2f}%) '
-          f'positions={positions} [source={source}]')
+    positions = len(live_positions) if isinstance(live_positions, list) else None
+    cash_val  = round(cash, 2) if cash is not None else None
+    pnl       = equity - BASELINE
+    pnl_pct   = (pnl / BASELINE) * 100
+    print(f'  equity={equity:.2f} cash={cash_val if cash_val is not None else "NULL"} '
+          f'pnl={pnl:.2f} ({pnl_pct:.2f}%) '
+          f'positions={positions if positions is not None else "NULL"} [source=alpaca]')
     supabase_upsert('portfolio_equity_history', [{
         'portfolio_id':    args.portfolio_id,
         'date':            TODAY,
         'equity':          round(equity, 2),
-        'cash':            round(cash or 0, 2),
+        'cash':            cash_val,
         'pnl':             round(pnl, 2),
         'pnl_pct':         round(pnl_pct, 4),
         'positions_count': positions,
