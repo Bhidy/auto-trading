@@ -44,6 +44,7 @@
 
     function t(k) { return (T[lang] && T[lang][k]) || (T.en[k]) || k; }
     function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
 
     function applyLang() {
         lang = document.documentElement.lang || 'en';
@@ -165,13 +166,14 @@
                 return;
             }
             grid.innerHTML = wls.map(function (wl) {
-                var syms = (wl.assets || []).map(function (a) { return a.symbol; }).join(', ') || 'Empty';
+                var syms = (wl.assets || []).map(function (a) { return esc(a.symbol); }).join(', ') || 'Empty';
+                var wlId = (wl.id || '').slice(0, 8);
                 return '<div class="scr-wl-card">' +
-                    '<div class="scr-wl-name">' + (wl.name || 'Unnamed') + '</div>' +
+                    '<div class="scr-wl-name">' + esc(wl.name || 'Unnamed') + '</div>' +
                     '<div class="scr-wl-symbols">' + syms + '</div>' +
-                    '<div style="font-size:.68rem;color:var(--muted);margin-top:.3rem;">' + (wl.assets || []).length + ' symbols &middot; ID: ' + (wl.id || '').slice(0, 8) + '</div>' +
+                    '<div style="font-size:.68rem;color:var(--muted);margin-top:.3rem;">' + (wl.assets || []).length + ' symbols &middot; ID: ' + esc(wlId) + '</div>' +
                     '<div class="scr-wl-actions">' +
-                    '<button class="pf-btn pf-btn--sm pf-btn--danger-ghost" onclick="window._deleteWl(\'' + wl.id + '\')">Delete</button>' +
+                    '<button class="pf-btn pf-btn--sm pf-btn--danger-ghost" onclick="window._deleteWl(\'' + esc(wl.id) + '\')">Delete</button>' +
                     '</div></div>';
             }).join('');
         } catch (e) {
