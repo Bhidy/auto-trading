@@ -643,3 +643,6 @@ html[dir="rtl"] .article-title {
     .periods { flex: 0 0 auto; justify-content: stretch; }
     .periods button { flex: 1; }
 }
+
+/* Visually-hidden but screen-reader-available (for skip-links & per-page h1). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
