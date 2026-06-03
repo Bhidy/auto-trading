@@ -133,13 +133,19 @@ def evaluate_overfitting_screens(cur_windows, cand_windows, *,
 
 
 def gate_param_change(current_params, candidate_params, symbol_bars, spy_bars,
-                      min_sharpe_margin=-0.05, extra_trial_sharpes=None, **kw):
+                      min_sharpe_margin=-0.05, extra_trial_sharpes=None,
+                      min_oos_windows=2, **kw):
     """Return (approved: bool, detail: dict).
 
     Approves the candidate only if it passes ALL gates, fully automatically:
       1. aggregate OOS mean Sharpe ≥ current − margin (robustness vs status quo);
       2. overfitting screens (Deflated Sharpe + PBO) do not flag it as noise;
-      3. it is not clearly worse than the fixed challenger benchmark OOS.
+      3. it is not clearly worse than the fixed challenger benchmark OOS;
+      4. the OOS sample is large enough to deflate honestly — a CHANGE with fewer
+         than `min_oos_windows` windows is REFUSED on small N (committee rec #6).
+         Small N is exactly where multiple-testing luck masquerades as skill, and
+         below 2 windows the Deflated Sharpe cannot even be computed, so the change
+         would otherwise ride on the raw Sharpe test alone.
     Fails closed on any error or insufficient data (an unvalidatable change is
     never applied).
     """
@@ -178,11 +184,24 @@ def gate_param_change(current_params, candidate_params, symbol_bars, spy_bars,
             challenger_sharpe=challenger_sharpe, cand_sharpe=cand_sharpe,
             extra_trial_sharpes=extra_trial_sharpes)
 
+    # Small-N refusal (committee rec #6): a real CHANGE needs enough out-of-sample
+    # windows to deflate honestly. Below the floor, refuse and keep current params
+    # (fail-closed) rather than approving on the raw Sharpe test alone.
+    n_windows = cand["aggregate"]["n_windows"]
+    small_n_refused = bool(is_change and n_windows < min_oos_windows)
+    if small_n_refused:
+        screens = {**screens, "ok": False,
+                   "reasons": list(screens["reasons"]) + [
+                       f"insufficient OOS windows (N={n_windows} < {min_oos_windows}) "
+                       f"to deflate — refusing change on small sample (fail-closed)"]}
+
     approved = bool(sharpe_ok and screens["ok"])
     return approved, {
         "current_oos_sharpe": cur_sharpe,
         "candidate_oos_sharpe": cand_sharpe,
-        "n_windows": cand["aggregate"]["n_windows"],
+        "n_windows": n_windows,
+        "min_oos_windows": min_oos_windows,
+        "small_n_refused": small_n_refused,
         "sharpe_ok": sharpe_ok,
         "challenger_sharpe": challenger_sharpe,
         "pbo": screens["pbo"],

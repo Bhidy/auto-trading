@@ -103,6 +103,31 @@ def test_gate_approves_equal_params():
     assert detail["candidate_oos_sharpe"] == detail["current_oos_sharpe"]
 
 
+def test_gate_refuses_change_on_small_n():
+    """A real CHANGE with fewer OOS windows than the floor is REFUSED (fail-closed),
+    not approved on the raw Sharpe test alone (committee rec #6: refuse on small N).
+    Forcing the floor above the available window count isolates the guard."""
+    syms, spy = _universe(400)
+    approved, detail = wf.gate_param_change(
+        {"confidence_buy_threshold": 0.5}, {"confidence_buy_threshold": 0.4},
+        syms, spy, test_days=50, warmup=150, max_positions=2, min_oos_windows=99)
+    assert approved is False
+    assert detail["small_n_refused"] is True
+    assert any("small sample" in r for r in detail["screen_reasons"])
+
+
+def test_gate_small_n_floor_exempts_equal_params():
+    """The small-N refusal applies only to CHANGES — a no-op (identical params) is
+    not a new bet and stays approvable even below the window floor."""
+    syms, spy = _universe(400)
+    p = {"confidence_buy_threshold": 0.5}
+    approved, detail = wf.gate_param_change(
+        p, dict(p), syms, spy, test_days=50, warmup=150, max_positions=2,
+        min_oos_windows=99)
+    assert approved is True
+    assert detail["small_n_refused"] is False
+
+
 def test_load_aligned_bars_from_cache(tmp_path):
     import json
     # Two bucket files sharing a date axis with SPY.
