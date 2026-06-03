@@ -149,9 +149,27 @@ class AlpacaClient:
 
     def place_bracket_order(self, symbol, qty, side, take_profit_price,
                             stop_loss_price, client_order_id=None):
+        # GTC (not day): the take-profit / stop-loss legs must persist for the
+        # WHOLE multi-day holding period. A `day` bracket expires its protective
+        # legs at that session's close, leaving positions held overnight with NO
+        # stop — the monitor relies on these broker legs and does no software stop.
+        # The market entry still fills instantly; only the exit legs rest GTC.
         return self.place_order(
             symbol=symbol, qty=qty, side=side, order_type="market",
-            time_in_force="day", order_class="bracket",
+            time_in_force="gtc", order_class="bracket",
+            take_profit={"limit_price": str(round(take_profit_price, 2))},
+            stop_loss={"stop_price": str(round(stop_loss_price, 2))},
+            client_order_id=client_order_id,
+        )
+
+    def place_oco_order(self, symbol, qty, side, take_profit_price,
+                        stop_loss_price, client_order_id=None):
+        """GTC one-cancels-other exit pair (limit take-profit + stop-loss) for a
+        position that is ALREADY held — used to re-arm protection on a position
+        whose original bracket legs expired/were canceled."""
+        return self.place_order(
+            symbol=symbol, qty=qty, side=side, order_type="limit",
+            time_in_force="gtc", order_class="oco",
             take_profit={"limit_price": str(round(take_profit_price, 2))},
             stop_loss={"stop_price": str(round(stop_loss_price, 2))},
             client_order_id=client_order_id,

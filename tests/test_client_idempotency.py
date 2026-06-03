@@ -70,6 +70,33 @@ def test_p3_bracket_order_threads_client_order_id(monkeypatch):
     body = captured["json"]
     assert body["client_order_id"] == "p3-20260529-MSFT-buy"
     assert body["order_class"] == "bracket"
+    # GTC, not day: protective legs must persist across the whole multi-day hold.
+    # A `day` bracket expired its stop/TP at the first close, leaving positions naked.
+    assert body["time_in_force"] == "gtc"
+    assert body["stop_loss"]["stop_price"] == "90.0"
+    assert body["take_profit"]["limit_price"] == "110.0"
+
+
+def test_p3_oco_rearm_is_gtc_and_well_formed(monkeypatch):
+    alpaca_client = pytest.importorskip("alpaca_client")
+    captured = _capture(monkeypatch)
+
+    c = alpaca_client.AlpacaClient.__new__(alpaca_client.AlpacaClient)
+    c.headers = {"APCA-API-KEY-ID": "k", "APCA-API-SECRET-KEY": "s"}
+    c.base_url = "https://paper-api.alpaca.markets"
+
+    c.place_oco_order(symbol="MSFT", qty=5, side="sell",
+                      take_profit_price=120.0, stop_loss_price=95.0,
+                      client_order_id="p3-rearm-20260603-MSFT-sell")
+    body = captured["json"]
+    assert body["order_class"] == "oco"
+    assert body["time_in_force"] == "gtc"
+    assert body["side"] == "sell"
+    assert body["take_profit"]["limit_price"] == "120.0"
+    assert body["stop_loss"]["stop_price"] == "95.0"
+    # OCO carries the TP price in the take_profit leg, never a top-level limit_price.
+    assert "limit_price" not in body
+    assert body["client_order_id"] == "p3-rearm-20260603-MSFT-sell"
 
 
 def test_p2_place_order_includes_client_order_id(monkeypatch):

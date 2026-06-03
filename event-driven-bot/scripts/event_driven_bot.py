@@ -733,10 +733,11 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             state["halt_until"] = None
             save_json(DATA_DIR / "bot_state.json", state)
 
-    # Per-position stop-loss and take-profit are enforced server-side by the
-    # bracket (OCO) orders placed at entry (see run_trading_session →
-    # place_bracket_order), so this loop is for portfolio-level reporting and
-    # the kill switch above — not manual stop execution.
+    # Per-position stop-loss / take-profit are enforced server-side by the entry
+    # bracket's OCO legs, which are now GTC so they persist for the whole holding
+    # period (a `day` bracket left multi-day positions naked after the first
+    # close). _rearm_protective_stops below is the backstop: it re-arms any
+    # position whose protective legs have lapsed, so this loop stays reporting-only.
     positions = alpaca.get_positions()
     for pos in positions:
         sym = pos["symbol"]
@@ -751,8 +752,73 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     # window — the catalyst edge is gone and the position is now unmanaged risk.
     _enforce_catalyst_decay(alpaca, positions, limits)
 
+    # Safety net: re-arm protective stops on any position left naked (e.g. legacy
+    # day-bracket legs that expired overnight). Capital preservation > clutter.
+    _rearm_protective_stops(alpaca, limits)
+
     _sync_state(alpaca)
     log.info(f"Monitor: {len(positions)} positions, equity=${equity:,.2f}")
+
+
+def _rearm_protective_stops(alpaca: AlpacaClient, limits: dict):
+    """Re-arm exit protection on any LONG position that has no working protective
+    sell order. Restores the take-profit + stop-loss the system already computed
+    (stored in the trade log) as a GTC OCO; falls back to a plain GTC stop if the
+    OCO is rejected. Idempotent (deterministic client_order_id) and never raises."""
+    try:
+        positions = alpaca.get_positions()
+        if not positions:
+            return
+        open_orders = alpaca.get_orders(status="open")
+    except Exception as e:
+        log.warning(f"  re-arm: could not read positions/orders: {e}")
+        return
+
+    protected = {o.get("symbol") for o in open_orders
+                 if o.get("side") == "sell"
+                 and o.get("type") in ("stop", "stop_limit", "limit")}
+
+    trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    tl_by_sym = {t["symbol"]: t for t in trade_log
+                 if t.get("status") == "open" and t.get("symbol")}
+
+    fb_stop = limits.get("rearm_fallback_stop_pct", 0.08)
+    fb_tp   = limits.get("rearm_fallback_tp_pct", 0.15)
+    rearmed = 0
+    for pos in positions:
+        sym = pos["symbol"]
+        if sym in protected:
+            continue
+        try:
+            qty = int(float(pos.get("qty", 0) or 0))
+            if qty <= 0 or pos.get("side", "long") != "long":
+                continue  # only re-arm long positions
+            current = float(pos.get("current_price", 0) or 0)
+            if current <= 0:
+                continue
+            rec = tl_by_sym.get(sym, {})
+            stop = float(rec.get("stop_loss") or 0) or round(current * (1 - fb_stop), 2)
+            tp   = float(rec.get("take_profit_1") or 0) or round(current * (1 + fb_tp), 2)
+            # Sell stop must sit below market, sell limit above — clamp for validity
+            # (a breached stop becomes an immediate exit, which is the correct action).
+            stop = min(stop, round(current * 0.999, 2))
+            tp   = max(tp,   round(current * 1.001, 2))
+            try:
+                alpaca.place_oco_order(sym, qty, "sell", take_profit_price=tp,
+                                       stop_loss_price=stop,
+                                       client_order_id=make_client_order_id("p3-rearm", sym, "sell"))
+            except Exception:
+                # OCO rejected — restore at least the critical stop-loss.
+                alpaca.place_order(symbol=sym, qty=qty, side="sell", order_type="stop",
+                                   stop_price=stop, time_in_force="gtc",
+                                   client_order_id=make_client_order_id("p3-stop", sym, "sell"))
+            rearmed += 1
+            log.warning(f"  RE-ARMED {sym}: {qty} sh stop=${stop:.2f} tp=${tp:.2f} "
+                        f"(protective legs had lapsed)")
+        except Exception as e:
+            log.error(f"  re-arm failed for {sym}: {e}")
+    if rearmed:
+        log.warning(f"  re-armed protection on {rearmed} naked position(s)")
 
 
 def _enforce_catalyst_decay(alpaca: AlpacaClient, positions: list, limits: dict):
