@@ -1,18 +1,23 @@
 {
-  "timestamp": "2026-06-02T23:20:14.921133+00:00",
-  "positions_held": 11,
-  "open_trades_logged": 10,
+  "timestamp": "2026-06-03T22:33:52.587705+00:00",
+  "positions_held": 9,
+  "open_trades_logged": 9,
   "orphan_open_trades": [],
-  "unlogged_positions": [
-    "XLK"
-  ],
-  "qty_drift": [
-    {
-      "symbol": "QQQ",
-      "broker_qty": 2.0,
-      "logged_qty": 6.0
-    }
-  ],
+  "unlogged_positions": [],
+  "qty_drift": [],
   "cost_basis_drift": [],
-  "in_sync": false
+  "in_sync": true,
+  "reconcile_actions": [
+    {
+      "action": "trim_qty",
+      "symbol": "QQQ",
+      "removed_qty": 4.0,
+      "broker_qty": 2.0
+    },
+    {
+      "action": "add_unlogged",
+      "symbol": "XLK",
+      "qty": 5.0
+    }
+  ]
 }

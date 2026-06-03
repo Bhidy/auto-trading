@@ -67,8 +67,8 @@
     "timestamp": "2026-05-27T14:29:30Z",
     "symbol": "QQQ",
     "side": "buy",
-    "qty": 6,
-    "entry_price": 726.44,
+    "qty": 2.0,
+    "entry_price": 744.945,
     "bucket": "core_equity",
     "signal_score": 0.75,
     "reasons": [
@@ -79,7 +79,9 @@
     "pnl": null,
     "pnl_pct": null,
     "hold_days": null,
-    "status": "open"
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
   },
   {
     "id": 5,
@@ -153,12 +155,15 @@
     "reasons": [
       "Strong momentum, AI winner"
     ],
-    "exit_price": null,
-    "exit_timestamp": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "hold_days": null,
-    "status": "open"
+    "exit_price": 359.77,
+    "exit_timestamp": "2026-06-03T22:33:52.348151+00:00",
+    "pnl": -481.2,
+    "pnl_pct": -8.19,
+    "hold_days": 7,
+    "status": "closed",
+    "gross_pnl": -481.05,
+    "fees": 0.15,
+    "realized_pnl": -481.2
   },
   {
     "id": 9,
@@ -613,5 +618,44 @@
     "status": "open",
     "stop_loss": 56.32,
     "take_profit": 65.37
+  },
+  {
+    "timestamp": "2026-05-27T14:29:30Z",
+    "symbol": "QQQ",
+    "side": "buy",
+    "qty": 4.0,
+    "entry_price": 726.44,
+    "bucket": "core_equity",
+    "signal_score": 0.75,
+    "reasons": [
+      "Tech index strong momentum"
+    ],
+    "exit_price": null,
+    "exit_timestamp": "2026-06-03T22:33:52.586312+00:00",
+    "pnl": null,
+    "pnl_pct": null,
+    "hold_days": null,
+    "status": "closed_reconciled",
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_partial",
+    "realized_pnl": null,
+    "id": 24
+  },
+  {
+    "symbol": "XLK",
+    "side": "buy",
+    "qty": 5.0,
+    "entry_price": 196.019605,
+    "timestamp": "2026-06-03T22:33:52.586312+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 25
   }
 ]
