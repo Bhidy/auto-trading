@@ -290,16 +290,16 @@
                     var rowId = 'opt-row-' + contractId.slice(-8);
                     html += '<tr id="' + rowId + '" class="opt-clickable" style="cursor:pointer;" onclick="var snap=arguments[0];window._showGreeks && window._showGreeks(\'' + contractId + '\', snap)">';
                     if (isCall) {
-                        html += '<td style="color:#2ecc71; font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
-                        html += '<td style="color:#2ecc71; font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
+                        html += '<td style="color:var(--pf-green); font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
+                        html += '<td style="color:var(--pf-green); font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
                         html += '<td style="font-family:var(--pf-mono); text-align:center;">' + vol + '</td>';
                         html += '<td style="font-family:var(--pf-mono); font-weight:800; text-align:center; background:var(--teal-soft); color:var(--teal); border-radius:4px;">$' + strike + '</td>';
                         html += '<td colspan="3" style="color:var(--muted); text-align:center;">—</td>';
                     } else {
                         html += '<td colspan="3" style="color:var(--muted); text-align:center;">—</td>';
                         html += '<td style="font-family:var(--pf-mono); font-weight:800; text-align:center; background:var(--teal-soft); color:var(--teal); border-radius:4px;">$' + strike + '</td>';
-                        html += '<td style="color:#e74c3c; font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
-                        html += '<td style="color:#e74c3c; font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
+                        html += '<td style="color:var(--pf-red); font-family:var(--pf-mono); font-weight:700;">$' + bid.toFixed(2) + '</td>';
+                        html += '<td style="color:var(--pf-red); font-family:var(--pf-mono);">$' + ask.toFixed(2) + '</td>';
                         html += '<td style="font-family:var(--pf-mono); text-align:center;">' + vol + '</td>';
                     }
                     html += '</tr>';
@@ -375,8 +375,8 @@
         var items = [
             { label: 'Delta', val: greeks.delta ? greeks.delta.toFixed(4) : '—', color: '#FF8A3D' },
             { label: 'Gamma', val: greeks.gamma ? greeks.gamma.toFixed(4) : '—', color: '#E55A1F' },
-            { label: 'Theta', val: greeks.theta ? greeks.theta.toFixed(4) : '—', color: '#e74c3c' },
-            { label: 'Vega', val: greeks.vega ? greeks.vega.toFixed(4) : '—', color: '#2ecc71' },
+            { label: 'Theta', val: greeks.theta ? greeks.theta.toFixed(4) : '—', color: 'var(--pf-red)' },
+            { label: 'Vega', val: greeks.vega ? greeks.vega.toFixed(4) : '—', color: 'var(--pf-green)' },
             { label: 'Rho', val: greeks.rho ? greeks.rho.toFixed(4) : '—', color: '#8b5cf6' },
             { label: 'IV', val: iv ? (iv * 100).toFixed(1) + '%' : '—', color: 'var(--teal)' }
         ];
@@ -413,15 +413,15 @@
                 }
 
                 ratingEl.textContent = consensus;
-                ratingEl.style.color = buy > 60 ? '#2ecc71' : (hold > 40 ? '#FF8A3D' : '#e74c3c');
+                ratingEl.style.color = buy > 60 ? 'var(--pf-green)' : (hold > 40 ? '#FF8A3D' : 'var(--pf-red)');
 
                 if (buy === 0 && hold === 0 && sell === 0) {
                     bars.innerHTML = '<div style="text-align:center; color:var(--muted); font-size:0.72rem; padding:0.5rem;">Not in active watchlist.</div>';
                 } else {
                     bars.innerHTML =
-                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'شراء' : 'Buy') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + buy + '%; background:#2ecc71;"></div></div><span class="num">' + buy + '%</span></div>' +
+                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'شراء' : 'Buy') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + buy + '%; background:var(--pf-green);"></div></div><span class="num">' + buy + '%</span></div>' +
                         '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'احتفاظ' : 'Hold') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + hold + '%; background:#FF8A3D;"></div></div><span class="num">' + hold + '%</span></div>' +
-                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'بيع' : 'Sell') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + sell + '%; background:#e74c3c;"></div></div><span class="num">' + sell + '%</span></div>';
+                        '<div class="rating-row"><span class="label">' + (lang === 'ar' ? 'بيع' : 'Sell') + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + sell + '%; background:var(--pf-red);"></div></div><span class="num">' + sell + '%</span></div>';
                 }
             })
             .catch(function() {
@@ -452,7 +452,7 @@
                             '<span>' + pSym + '</span>' +
                         '</td>' +
                         '<td style="font-family:var(--pf-mono);">' + price + '</td>' +
-                        '<td style="font-family:var(--pf-mono); color:' + (q.changePct >= 0 ? '#2ecc71' : '#e74c3c') + ';">' + changePct + '</td>' +
+                        '<td style="font-family:var(--pf-mono); color:' + (q.changePct >= 0 ? 'var(--pf-green)' : 'var(--pf-red)') + ';">' + changePct + '</td>' +
                         '<td style="font-family:var(--pf-mono);">' + vol + '</td>' +
                     '</tr>';
                 });

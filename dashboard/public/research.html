@@ -4,11 +4,11 @@
     <script src="/assets/starta-theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Stocks Research & Insights Center | Starta Markets</title>
+    <title>AI Stocks Research & Insights Center | Auto Trading</title>
     <meta name="description" content="Access deep neural sentiment analysis, portfolio strategies breakdowns, and methodology disclaimers.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -83,7 +83,7 @@
         }
         .circle-fill-green {
             fill: none;
-            stroke: #2ecc71;
+            stroke: var(--pf-green);
             stroke-width: 2.8;
             stroke-linecap: round;
             transition: stroke-dasharray 0.35s ease;
@@ -97,7 +97,7 @@
         }
         .circle-fill-red {
             fill: none;
-            stroke: #e74c3c;
+            stroke: var(--pf-red);
             stroke-width: 2.8;
             stroke-linecap: round;
             transition: stroke-dasharray 0.35s ease;
@@ -262,7 +262,7 @@
                     </div>
 
                     <div>
-                        <h5 style="font-size:0.75rem; text-transform:uppercase; font-family:var(--pf-mono); color:#e74c3c; margin-bottom:0.4rem;" data-key="out_risks">Identified Risk Indexes</h5>
+                        <h5 style="font-size:0.75rem; text-transform:uppercase; font-family:var(--pf-mono); color:var(--pf-red); margin-bottom:0.4rem;" data-key="out_risks">Identified Risk Indexes</h5>
                         <p style="font-size:0.85rem; line-height:1.6; color:var(--ink);" id="outRisksText"></p>
                     </div>
                 </div>

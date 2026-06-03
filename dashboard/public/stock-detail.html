@@ -4,11 +4,11 @@
     <script src="/assets/starta-theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Institutional Stock Details | Starta Markets</title>
+    <title>Institutional Stock Details | Auto Trading</title>
     <meta name="description" content="Advanced quote details, historical charts, Level 2 depth book, options chains, and AI catalysts summaries.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -98,11 +98,11 @@
         }
         .chg-pill.pos {
             background: rgba(46, 204, 113, 0.15);
-            color: #2ecc71;
+            color: var(--pf-green);
         }
         .chg-pill.neg {
             background: rgba(231, 76, 60, 0.15);
-            color: #e74c3c;
+            color: var(--pf-red);
         }
         .chart-toggle-row {
             display: flex;
@@ -268,11 +268,11 @@
             overflow: hidden;
         }
         .l2-row.bid {
-            color: #2ecc71;
+            color: var(--pf-green);
             background: rgba(46, 204, 113, 0.05);
         }
         .l2-row.ask {
-            color: #e74c3c;
+            color: var(--pf-red);
             background: rgba(231, 76, 60, 0.05);
         }
         .l2-depth-fill {

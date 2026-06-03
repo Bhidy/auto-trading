@@ -1166,8 +1166,8 @@
                 '<div style="display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; text-align:center; padding:0.3rem 0.35rem; font-family:var(--pf-mono); font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--line); margin-bottom:0.25rem;"><span>BID SIZE</span><span>BID</span><span>ASK</span><span>ASK SIZE</span></div>' +
                 '<div class="mp-l2-row" style="display:grid; grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr; gap:0.15rem; align-items:center; text-align:center; padding:0.4rem 0.35rem; border-radius:4px; font-family:var(--pf-mono); font-size:0.78rem; position:relative; overflow:hidden;">' +
                     '<span class="ob-bidsize" style="text-align:start; color:var(--muted); z-index:1; padding-inline-start:0.15rem; font-weight:700;"></span>' +
-                    '<span class="ob-bid" style="text-align:end; color:#2ecc71; font-weight:700; z-index:1; padding-inline-end:0.45rem;"></span>' +
-                    '<span class="ob-ask" style="text-align:start; color:#e74c3c; font-weight:700; z-index:1; padding-inline-start:0.45rem;"></span>' +
+                    '<span class="ob-bid" style="text-align:end; color:var(--pf-green); font-weight:700; z-index:1; padding-inline-end:0.45rem;"></span>' +
+                    '<span class="ob-ask" style="text-align:start; color:var(--pf-red); font-weight:700; z-index:1; padding-inline-start:0.45rem;"></span>' +
                     '<span class="ob-asksize" style="text-align:end; color:var(--muted); z-index:1; padding-inline-end:0.15rem; font-weight:700;"></span>' +
                     '<div class="ob-bidbar" style="position:absolute; top:0; bottom:0; left:0; background:rgba(46,204,113,0.08); z-index:0;"></div>' +
                     '<div class="ob-askbar" style="position:absolute; top:0; bottom:0; right:0; background:rgba(231,76,60,0.08); z-index:0;"></div>' +
@@ -1185,7 +1185,7 @@
     }
 
     function getSvgSparkline(sym, isPos) {
-        var stroke = isPos ? '#2ecc71' : '#e74c3c';
+        var stroke = isPos ? 'var(--pf-green)' : 'var(--pf-red)';
         var db = stockPriceDatabase[sym];
         if (!db || !db._sparkData) {
             return '<svg width="55" height="24" viewBox="0 0 55 24" style="display:block;"><line x1="0" y1="12" x2="55" y2="12" stroke="var(--line)" stroke-width="1"/></svg>';
@@ -1791,7 +1791,7 @@
                 tabBuy.classList.remove('active');
                 tabSell.classList.add('active');
                 document.getElementById('placeOrderBtnText').textContent = lang === 'ar' ? 'أرسل أمر البيع' : 'Place Sell Order';
-                document.getElementById('placeTacticalOrderBtn').style.background = '#e74c3c';
+                document.getElementById('placeTacticalOrderBtn').style.background = 'var(--pf-red)';
             }
         }
     };
@@ -1844,7 +1844,7 @@
         if (!toast || !toastTitle || !toastBody) return;
         toastTitle.textContent = title;
         toastBody.textContent = body;
-        if (iconSvg) iconSvg.setAttribute('stroke', success ? '#2ecc71' : '#e74c3c');
+        if (iconSvg) iconSvg.setAttribute('stroke', success ? 'var(--pf-green)' : 'var(--pf-red)');
         toast.style.display = 'block';
         setTimeout(function() { toast.style.display = 'none'; }, 4000);
     }

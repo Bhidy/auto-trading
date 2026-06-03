@@ -5,14 +5,14 @@
 
 /* ─── Portfolio colour tokens ─────────────────────────────────────────── */
 :root {
-    --pf-green:       #16a34a;
+    --pf-green:       #15803d;
     --pf-green-soft:  rgba(22, 163, 74,  0.10);
     --pf-green-text:  #22c55e;
     --pf-red:         #dc2626;
     --pf-red-soft:    rgba(220, 38, 38,  0.10);
     --pf-red-text:    #ef4444;
     --pf-amber:       rgba(245, 158, 11, 0.90);
-    --pf-radius:      .75rem;
+    --pf-radius:      .85rem;
     --pf-radius-sm:   .5rem;
     --pf-mono:        'IBM Plex Mono', ui-monospace, monospace;
 }
@@ -483,14 +483,14 @@
 }
 .pf-insight-icon--green { background: var(--pf-green-soft); color: var(--pf-green); }
 .pf-insight-icon--amber { background: rgba(245,158,11,.12); color: var(--pf-amber); }
-.pf-insight-icon--blue  { background: rgba(59,130,246,.12); color: #60a5fa; }
+.pf-insight-icon--blue  { background: var(--teal-soft); color: var(--teal); }
 .pf-insight-icon--teal  { background: var(--teal-soft); color: var(--teal); }
 .pf-insight-body { flex: 1; min-width: 0; }
 .pf-insight-title  { font-size: .78rem; font-weight: 700; margin-bottom: .18rem; }
 .pf-insight-detail { font-size: .72rem; color: var(--muted); line-height: 1.5; }
 .pf-insights-beta {
     display: inline-flex; align-items: center; gap: .3rem;
-    font-size: .68rem; background: rgba(139,92,246,.15); color: #a78bfa;
+    font-size: .68rem; background: var(--teal-soft); color: var(--teal-dark);
     border: 1px solid rgba(139,92,246,.2); padding: .1rem .4rem; border-radius: 999px;
 }
 
@@ -732,7 +732,7 @@ th:hover .pf-th-sort { opacity: .55; }
 }
 .pf-tx-icon--buy  { background: var(--pf-green-soft); color: var(--pf-green); }
 .pf-tx-icon--sell { background: var(--pf-red-soft); color: var(--pf-red); }
-.pf-tx-icon--div  { background: rgba(59,130,246,.12); color: #60a5fa; }
+.pf-tx-icon--div  { background: var(--teal-soft); color: var(--teal); }
 .pf-tx-icon--dep  { background: rgba(245,158,11,.12); color: var(--pf-amber); }
 .pf-tx-info { flex: 1; min-width: 0; }
 .pf-tx-info strong { font-size: .78rem; font-weight: 700; display: block; }
