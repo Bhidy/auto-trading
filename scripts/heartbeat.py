@@ -188,6 +188,39 @@ def assess_integrity(reports: dict, today=None):
     return False, "Execution integrity & conformance: all clear."
 
 
+def read_cross_portfolio(root: Path):
+    """The cross-portfolio aggregate-exposure report P1's EOD writes (committee
+    rec #3). Missing report -> None (no alert)."""
+    return _read_json(root / "data" / "cross_portfolio_risk.json")
+
+
+def assess_cross_portfolio(report):
+    """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
+
+    Surfaces aggregate single-name / sector / correlated-cluster cap breaches
+    measured across ALL THREE books — the correlation-convergence risk no single
+    portfolio can see. ADVISORY: a breach is surfaced for visibility; it places
+    no orders and relaxes no limit. A missing report is never an alert.
+    """
+    if not isinstance(report, dict):
+        return False, "Cross-portfolio exposure: no report."
+    sn = report.get("single_name_breaches") or []
+    sec = report.get("sector_breaches") or []
+    cl = report.get("cluster_breaches") or []
+    parts = []
+    if sn:
+        parts.append(f"single-name > {report.get('single_name_cap_pct')}% of total: {', '.join(sn)}")
+    if sec:
+        parts.append(f"sector > {report.get('sector_cap_pct')}% of total: {', '.join(sec)}")
+    if cl:
+        parts.append(f"correlated cluster > {report.get('max_cluster_exposure_pct')}% of total: {', '.join(cl)}")
+    if parts:
+        return True, ("CROSS-PORTFOLIO CONCENTRATION (aggregate across P1/P2/P3):\n"
+                      + "\n".join(f"  - {p}" for p in parts))
+    gross = report.get("gross_exposure_pct")
+    return False, f"Cross-portfolio exposure: within aggregate caps (gross {gross}% of total equity)."
+
+
 # --- Tail risk surfacing (advisory) -----------------------------------------
 # Surface per-book VaR/CVaR on the watchdog using the canonical pure-Python math
 # in shared/portfolio_risk.py (single source of truth). Advisory by default: it
@@ -316,6 +349,13 @@ def main():
     if integ_alert:
         alert = True
         summary = f"{summary}\n\n{integ_summary}"
+
+    # Cross-portfolio aggregate concentration (committee rec #3): the correlated
+    # stacking no single book can see. Advisory — always surfaced for visibility.
+    cp_alert, cp_summary = assess_cross_portfolio(read_cross_portfolio(REPO_ROOT))
+    summary = f"{summary}\n\n{cp_summary}"
+    if cp_alert:
+        alert = True
 
     # Tail-risk surfacing (advisory). Best-effort: uses P1's keys (already in env)
     # and never affects the staleness/reconciliation/integrity alerts on failure.

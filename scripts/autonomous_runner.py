@@ -883,6 +883,27 @@ def run_end_of_day(alpaca: AlpacaClient):
     # Read-only integrity audit: flag any drift between trade log and broker.
     reconcile_positions(alpaca)
 
+    # Cross-portfolio aggregate exposure (committee rec #3) — advisory, read-only,
+    # committed so the dashboard + heartbeat can surface the correlated stacking no
+    # single book sees. P1's EOD owns this write (it commits root data/).
+    try:
+        from shared.cross_portfolio import cross_portfolio_report, load_books
+        root = DATA_DIR.parent
+        cfg = load_json(root / "config" / "risk_limits.json", {})
+        xp = cfg.get("cross_portfolio", {})
+        xp_report = cross_portfolio_report(
+            load_books(str(root)),
+            single_name_cap_pct=xp.get("single_name_cap_pct", 10.0),
+            sector_cap_pct=xp.get("sector_cap_pct", 30.0),
+            clusters=cfg.get("correlation_clusters"),
+            max_cluster_pct=cfg.get("max_cluster_exposure_pct"),
+        )
+        save_json(DATA_DIR / "cross_portfolio_risk.json", xp_report)
+        log.info(f"  Cross-portfolio: gross {xp_report['gross_exposure_pct']}% of total, "
+                 f"clusters={xp_report.get('cluster_exposure_pct')}, ok={xp_report['ok']}")
+    except Exception as e:
+        log.warning(f"  Cross-portfolio report skipped: {e}")
+
     # Run self-learning
     from performance_tracker import adapt_parameters, generate_learning_report
 
