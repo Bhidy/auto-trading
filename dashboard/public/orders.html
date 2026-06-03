@@ -36,6 +36,7 @@
         .ord-status--partially_filled { background: rgba(245,158,11,.12); color: #f59e0b; }
         .ord-status--canceled, .ord-status--expired, .ord-status--rejected { background: var(--pf-red-soft); color: var(--pf-red); }
         .ord-status--pending_new, .ord-status--pending_cancel, .ord-status--pending_replace { background: rgba(148,163,184,.12); color: var(--muted); }
+        .ord-status--held, .ord-status--done_for_day, .ord-status--accepted_for_bidding, .ord-status--calculated, .ord-status--stopped, .ord-status--suspended { background: rgba(245,158,11,.12); color: #C9461A; }
         .ord-side--buy { color: var(--pf-green); font-weight: 700; }
         .ord-side--sell { color: var(--pf-red); font-weight: 700; }
         .ord-actions-cell { display: flex; gap: .35rem; }
@@ -157,7 +158,7 @@
             <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_open">Open</div><div class="ord-kpi-val" id="kpiOpen">—</div></div>
             <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_filled">Filled</div><div class="ord-kpi-val" id="kpiFilled">—</div></div>
             <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_canceled">Canceled</div><div class="ord-kpi-val" id="kpiCanceled">—</div></div>
-            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_value">Est. Fill Value</div><div class="ord-kpi-val" id="kpiValue">—</div></div>
+            <div class="ord-kpi"><div class="ord-kpi-label" data-key="kpi_value">Gross Traded Value</div><div class="ord-kpi-val" id="kpiValue">—</div></div>
         </div>
 
         <!-- Toolbar -->

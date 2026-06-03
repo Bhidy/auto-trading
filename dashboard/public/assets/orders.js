@@ -10,7 +10,7 @@
             nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders',
             nav_crypto: 'Crypto Terminal', nav_options: 'Options Lab', nav_screener: 'Screener',
             nav_history: 'Account History', nav_alerts: 'Alerts', nav_research: 'Research & AI', nav_settings: 'Settings',
-            kpi_total: 'Total Orders', kpi_open: 'Open', kpi_filled: 'Filled', kpi_canceled: 'Canceled', kpi_value: 'Est. Fill Value',
+            kpi_total: 'Total Orders', kpi_open: 'Open', kpi_filled: 'Filled', kpi_canceled: 'Canceled', kpi_value: 'Gross Traded Value',
             th_symbol: 'Symbol', th_side: 'Side', th_type: 'Type', th_qty: 'Qty', th_filled: 'Filled',
             th_price: 'Price', th_stop: 'Stop', th_avg_fill: 'Avg Fill', th_status: 'Status',
             th_tif: 'TIF', th_submitted: 'Submitted', th_actions: 'Actions',
@@ -38,7 +38,7 @@
             nav_market_pulse: 'نبض السوق', nav_trading: 'التداول', nav_orders: 'الأوامر',
             nav_crypto: 'محطة الكريبتو', nav_options: 'مختبر الخيارات', nav_screener: 'الفرز',
             nav_history: 'سجل الحساب', nav_alerts: 'التنبيهات', nav_research: 'البحث والذكاء', nav_settings: 'الإعدادات',
-            kpi_total: 'إجمالي الأوامر', kpi_open: 'مفتوحة', kpi_filled: 'منفذة', kpi_canceled: 'ملغاة', kpi_value: 'قيمة التنفيذ',
+            kpi_total: 'إجمالي الأوامر', kpi_open: 'مفتوحة', kpi_filled: 'منفذة', kpi_canceled: 'ملغاة', kpi_value: 'إجمالي قيمة التداول',
             th_symbol: 'الرمز', th_side: 'الاتجاه', th_type: 'النوع', th_qty: 'الكمية', th_filled: 'منفذ',
             th_price: 'السعر', th_stop: 'وقف', th_avg_fill: 'متوسط', th_status: 'الحالة',
             th_tif: 'المدة', th_submitted: 'تاريخ', th_actions: 'إجراءات',
@@ -81,7 +81,7 @@
 
     function $(id) { return document.getElementById(id); }
     function fmtPrice(v) { var n = parseFloat(v); return isNaN(n) ? '—' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-    function fmtDate(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); }
+    function fmtDate(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit' }) + ' ET'; }
     function fmtQty(v) { var n = parseFloat(v); return isNaN(n) ? '—' : n.toLocaleString('en-US'); }
 
     function getLogoHtml(sym, size = 20) {
