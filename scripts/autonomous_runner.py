@@ -655,6 +655,52 @@ def run_trading_session(alpaca: AlpacaClient):
 # MODE 3: INTRADAY MONITOR
 # ---------------------------------------------------------------------------
 
+# Regime severity ordering (least -> most bearish). Used to detect intraday
+# DETERIORATION vs the morning regime (committee rec #5).
+_REGIME_SEVERITY = ["STRONG_BULL", "BULL", "RECOVERY", "TRANSITIONAL",
+                    "UNKNOWN", "CORRECTION", "BEAR", "STRONG_BEAR"]
+
+
+def _regime_rank(regime):
+    return (_REGIME_SEVERITY.index(regime) if regime in _REGIME_SEVERITY
+            else _REGIME_SEVERITY.index("UNKNOWN"))
+
+
+def refresh_intraday_regime(alpaca: AlpacaClient, portfolio_state: dict, signals_data: dict):
+    """Recompute the SPY market regime intraday so the stored label stops lagging a
+    midday pullback (committee rec #5). The morning regime in signals.json is the
+    provenance for that day's signals; this writes a fresh, timestamped
+    `current_regime` onto portfolio_state and warns when it has DETERIORATED vs the
+    morning read. ADVISORY: updates the label only — it places no orders and does
+    not alter the morning signals. Best-effort; never breaks the monitor.
+    """
+    try:
+        from analyst_v2 import detect_regime, regime_allocation_modifier
+        resp = alpaca.get_stock_bars("SPY", timeframe="1Day", limit=220)
+        bars = resp.get("bars", []) if isinstance(resp, dict) else (resp or [])
+        closes = [float(b["c"]) for b in bars if b.get("c")]
+        if len(closes) < 50:
+            log.info("  Intraday regime refresh: insufficient SPY history")
+            return None
+        regime = detect_regime(closes)
+        morning = (signals_data or {}).get("market_regime", "UNKNOWN")
+        portfolio_state["current_regime"] = regime
+        portfolio_state["current_regime_at"] = datetime.now(timezone.utc).isoformat()
+        portfolio_state["current_regime_modifiers"] = regime_allocation_modifier(regime)
+        portfolio_state["morning_regime"] = morning
+        deteriorated = _regime_rank(regime) > _regime_rank(morning)
+        portfolio_state["regime_deteriorated_intraday"] = deteriorated
+        if deteriorated:
+            log.warning(f"  Regime DETERIORATED intraday: morning {morning} -> now {regime} "
+                        f"(SPY ${closes[-1]:.2f}) — risk posture should lean defensive")
+        else:
+            log.info(f"  Intraday regime: {regime} (morning {morning}, SPY ${closes[-1]:.2f})")
+        return regime
+    except Exception as e:
+        log.warning(f"  Intraday regime refresh skipped: {e}")
+        return None
+
+
 def run_intraday_monitor(alpaca: AlpacaClient):
     log.info("=" * 60)
     log.info("INTRADAY MONITOR — Checking P&L, stops, kill switch")
@@ -785,6 +831,9 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             log.warning(f"  ALERT [{level}]: {alert['msg']}")
         else:
             log.info(f"  ALERT [{level}]: {alert['msg']}")
+
+    # Refresh the regime label intraday so it does not lag a midday pullback (rec #5).
+    refresh_intraday_regime(alpaca, portfolio_state, signals_data)
 
     _sync_portfolio_state(alpaca, portfolio_state)
     log.info(f"Monitor: equity=${equity:,.2f}, daily P&L={daily_pnl_pct:+.2f}%, {len(positions)} positions, {len(triggers)} triggers")
