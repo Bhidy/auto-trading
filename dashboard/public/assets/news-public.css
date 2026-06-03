@@ -71,7 +71,7 @@ html[dir="rtl"] body,
 html[dir="rtl"] .display { font-family: "IBM Plex Sans Arabic", Arial, sans-serif; }
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
-.display { font-family: Sora, Manrope, Arial, sans-serif; }
+.display { font-family: 'DM Serif Display', serif; }
 .backdrop {
     position: fixed;
     inset: 0;
@@ -287,7 +287,7 @@ html[dir="rtl"] .cat-strip {
     top: 50%;
     width: 1rem;
     transform: translateY(-50%);
-    color: #94a3b8;
+    color: var(--muted);
 }
 html[dir="rtl"] .search-box svg { left: auto; right: 1rem; }
 .search-box input {

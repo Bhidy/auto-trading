@@ -2,7 +2,13 @@
     "use strict";
 
     var STORAGE_KEY = "theme";
-    var DEFAULT_THEME = "light";
+    // First-load default honors the OS preference; falls back to light. A stored
+    // choice always wins over this (see storedTheme).
+    var DEFAULT_THEME = (function () {
+        try {
+            return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        } catch (_) { return "light"; }
+    })();
 
     function normalize(theme) {
         return theme === "light" || theme === "dark" ? theme : DEFAULT_THEME;
