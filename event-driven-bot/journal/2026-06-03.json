@@ -568,5 +568,119 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-03",
+    "timestamp": "2026-06-03T23:24:25.394537+00:00",
+    "audit": {
+      "equity": 105408.21,
+      "cash": 65161.31,
+      "daily_pnl": -240.1,
+      "daily_pnl_pct": -0.227,
+      "total_open_exposure": 40246.9,
+      "exposure_pct": 38.2,
+      "position_count": 5,
+      "trades_today": 3,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 3350.36,
+        "Energy": 20905.79,
+        "Consumer": 15990.75
+      }
+    },
+    "positions": [
+      {
+        "symbol": "CSCO",
+        "qty": "26",
+        "entry": "126.21",
+        "current": "128.86",
+        "market_value": "3350.36",
+        "unrealized_pl": "68.9",
+        "pnl_pct": 2.1,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "141.5",
+        "market_value": "141.5",
+        "unrealized_pl": "0.82",
+        "pnl_pct": 0.58,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "267.21",
+        "market_value": "15765.39",
+        "unrealized_pl": "792.37",
+        "pnl_pct": 5.29,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "262.05",
+        "current": "263.1",
+        "market_value": "4998.9",
+        "unrealized_pl": "19.95",
+        "pnl_pct": 0.4,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "118.45",
+        "market_value": "15990.75",
+        "unrealized_pl": "455.909985",
+        "pnl_pct": 2.94,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "VLO",
+        "side": "buy",
+        "qty": 19,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.8,
+        "reasons": [
+          "Breaking upper BB ($261.57)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+24.6%)"
+        ]
+      },
+      {
+        "symbol": "EOG",
+        "side": "buy",
+        "qty": 1,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.73,
+        "reasons": [
+          "Breaking upper BB ($144.68)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "CSCO",
+        "side": "buy",
+        "qty": 26,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "MACD bullish crossover",
+          "High RVOL (1.7x)",
+          "Strong RS vs SPY (+39.7%)"
+        ]
+      }
+    ]
   }
 ]
