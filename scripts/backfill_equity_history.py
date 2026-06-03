@@ -23,10 +23,18 @@ Required env:
 import os
 import json
 import argparse
+import urllib.parse
 import urllib.request
 import urllib.error
 import ssl
 import datetime
+from zoneinfo import ZoneInfo
+
+# US market trading dates are in America/New_York. Alpaca's daily portfolio
+# history timestamps each bar at 00:00 UTC, which is 8pm prior-day ET — so the
+# UTC date is one day AHEAD of the actual trading session. Labelling by ET date
+# matches the EOD writer (save_to_supabase runs ~4:15pm ET) and the broker truth.
+ET = ZoneInfo('America/New_York')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--portfolio-id', required=True)
@@ -87,6 +95,42 @@ def supabase_upsert(table, rows):
         return False
 
 
+def supabase_get_dates(portfolio_id, start, end):
+    """Existing equity-history dates for a portfolio within [start, end]."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return []
+    q = urllib.parse.urlencode({
+        'portfolio_id': f'eq.{portfolio_id}',
+        'date':         f'gte.{start}',
+        'select':       'date',
+        'order':        'date.asc',
+    }) + f'&date=lte.{end}'
+    req = urllib.request.Request(f'{SUPABASE_URL}/rest/v1/portfolio_equity_history?{q}',
+        headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
+    try:
+        with urllib.request.urlopen(req, context=SSL_CTX, timeout=20) as r:
+            return [row['date'][:10] for row in json.loads(r.read())]
+    except Exception as e:
+        print(f'  Supabase read error: {e}')
+        return []
+
+
+def supabase_delete_date(portfolio_id, date):
+    """Delete one (portfolio_id, date) phantom row. Scoped + logged."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return False
+    q = urllib.parse.urlencode({'portfolio_id': f'eq.{portfolio_id}', 'date': f'eq.{date}'})
+    req = urllib.request.Request(f'{SUPABASE_URL}/rest/v1/portfolio_equity_history?{q}',
+        method='DELETE', headers={'apikey': SUPABASE_KEY, 'Authorization': f'Bearer {SUPABASE_KEY}'})
+    try:
+        with urllib.request.urlopen(req, context=SSL_CTX, timeout=20) as r:
+            print(f'  Deleted phantom row {portfolio_id} {date} — HTTP {r.status}')
+            return True
+    except Exception as e:
+        print(f'  Supabase delete error ({date}): {e}')
+        return False
+
+
 print(f'\nBackfilling {args.portfolio_id} equity history (period={args.period})...')
 hist = alpaca_get(
     f'/v2/account/portfolio/history?period={args.period}'
@@ -99,8 +143,9 @@ rows = []
 for ts, eq in zip(timestamps, equities):
     equity = float(eq or 0)
     if equity <= 0:
-        continue  # market-closed gap day — skip, never fabricate
-    date = datetime.datetime.utcfromtimestamp(ts).date().isoformat()
+        continue  # pre-funding / market-closed gap — skip, never fabricate
+    # ET trading-session date (NOT the UTC date — see ET note above).
+    date = datetime.datetime.fromtimestamp(ts, ET).date().isoformat()
     pnl = equity - BASELINE
     rows.append({
         'portfolio_id': args.portfolio_id,
@@ -110,13 +155,34 @@ for ts, eq in zip(timestamps, equities):
         'pnl_pct':      round((pnl / BASELINE) * 100, 4),
     })
 
-print(f'  {len(rows)} real daily equity points from Alpaca:')
+print(f'  {len(rows)} real daily equity points from Alpaca (ET trading dates):')
 for r in rows:
     print(f"    {r['date']}  equity={r['equity']}  pnl={r['pnl']}")
 
-if args.dry_run:
+if not rows:
+    print('  No funded equity history returned — nothing to do.')
+elif args.dry_run:
     print('  [dry-run] not writing')
 else:
     supabase_upsert('portfolio_equity_history', rows)
+    # Reconcile: remove any pre-existing Supabase row within the broker-covered
+    # range whose date the broker does NOT confirm (weekend phantoms, the legacy
+    # fabricated baseline, and prior off-by-one writes). This makes the
+    # system-of-record EXACTLY mirror Alpaca's broker daily history.
+    broker_dates = {r['date'] for r in rows}
+    lo, hi = min(broker_dates), max(broker_dates)
+    existing = supabase_get_dates(args.portfolio_id, lo, hi)
+    # Only prune WEEKEND phantoms (markets are closed → never a real trading day).
+    # This keeps the reconcile safe even if Alpaca returns a partial set on a
+    # flaky call: it can never delete a real weekday trading row. Legacy weekday
+    # rows (e.g. the fabricated $100K) are corrected by the upsert above, not deleted.
+    phantoms = [d for d in sorted(set(existing) - broker_dates)
+                if datetime.date.fromisoformat(d).weekday() >= 5]
+    if phantoms:
+        print(f'  Pruning {len(phantoms)} weekend phantom date(s) in [{lo}..{hi}]: {phantoms}')
+        for d in phantoms:
+            supabase_delete_date(args.portfolio_id, d)
+    else:
+        print('  No weekend phantom rows to prune.')
 
 print(f'Done. {args.portfolio_id} equity history repaired.')
