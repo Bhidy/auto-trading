@@ -249,6 +249,7 @@
     /* ─── Neural Signals Feed — Real Signals from Trading System ─────── */
     var feedContainer = null;
     var realSignalsCache = [];
+    var signalsTimestamp = null;
     var signalsRendered = false;
 
     function loadRealSignals() {
@@ -258,6 +259,7 @@
                 var signals = (data.signals && data.signals.signals) || [];
                 if (signals.length === 0) return;
                 realSignalsCache = signals;
+                signalsTimestamp = (data.signals && data.signals.timestamp) || null;
                 renderSignalsFeed();
             })
             .catch(function() {});
@@ -266,6 +268,14 @@
     function renderSignalsFeed() {
         if (!feedContainer || realSignalsCache.length === 0) return;
         feedContainer.innerHTML = '';
+        // The feed renders the morning analysis snapshot, not a live tick — stamp it
+        // with the analysis time (ET) so the price isn't mistaken for real-time.
+        if (signalsTimestamp) {
+            var tsEl = document.createElement('div');
+            tsEl.style.cssText = 'font-size:0.62rem;color:var(--muted);font-family:var(--pf-mono);margin-bottom:0.6rem;';
+            tsEl.textContent = (lang === 'ar' ? 'آخر تحليل: ' : 'Analysis as of ') + new Date(signalsTimestamp).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' ET';
+            feedContainer.appendChild(tsEl);
+        }
         var shown = realSignalsCache.slice(0, 8);
         shown.forEach(function(s) {
             var isBuy = s.signal === 'BUY' || s.signal === 'STRONG_BUY';

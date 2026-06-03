@@ -1367,8 +1367,10 @@
             data.slice(0, 6).forEach(function (item, idx) {
                 var headline = item.headline || item.title || '';
                 var source = item.source || 'Market News';
-                var sentiment = item.sentiment || 'neutral';
-                var sentClass = 'sentiment-' + sentiment.toLowerCase();
+                // Alpaca news carries no sentiment field — do NOT synthesize a
+                // "NEUTRAL" analytic badge that implies an analysis was performed.
+                var sentiment = item.sentiment || null;
+                var sentClass = sentiment ? 'sentiment-' + sentiment.toLowerCase() : '';
                 var dateStr = '';
                 if (item.created_at) {
                     var d = new Date(item.created_at);
@@ -1391,7 +1393,7 @@
                     <div style="flex:1;">
                         <div style="display:flex;gap:0.3rem;margin-bottom:0.25rem;align-items:center;">
                             <span style="font-family:var(--pf-mono);font-size:0.58rem;font-weight:800;background:var(--teal-soft);color:var(--teal);padding:0.05rem 0.35rem;border-radius:3px;">${symbols || 'NEWS'}</span>
-                            <span class="mp-news-sentiment ${sentClass}">${sentiment.toUpperCase()}</span>
+                            ${sentiment ? '<span class="mp-news-sentiment ' + sentClass + '">' + sentiment.toUpperCase() + '</span>' : ''}
                         </div>
                         <div class="mp-news-headline">${headline}</div>
                         <div class="mp-news-meta">

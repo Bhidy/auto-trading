@@ -303,39 +303,18 @@
         <!-- Right: Consensus News Sentiment Gauges -->
         <div>
             <div class="research-card">
-                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--ink); margin-bottom: 0.5rem;" data-key="sentiment_title">Consensus News Sentiment</h3>
-                <p style="font-size:0.72rem; color:var(--muted); margin-bottom: 1.5rem;" data-key="sentiment_sub">Aggregated global sentiment ratio parsed from over 2,000 news articles daily.</p>
-                
-                <div class="radial-sentiment-wrap">
-                    <!-- Positive Gauge -->
-                    <div class="radial-sentiment-item">
-                        <svg viewBox="0 0 36 36" class="circular-chart">
-                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="circle-fill-green" stroke-dasharray="68, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <text x="18" y="20.35" class="percentage-text">68%</text>
-                        </svg>
-                        <span style="font-size: 0.75rem; font-weight: 700; color: #2ecc71;" data-key="sent_bullish">Bullish Sentiment</span>
-                    </div>
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--ink); margin-bottom: 0.5rem;" data-key="method_title">How Signals Are Scored</h3>
+                <p style="font-size:0.72rem; color:var(--muted); margin-bottom: 1.5rem;" data-key="method_sub">Each symbol earns a transparent multi-factor composite score from the live engine — not an opaque sentiment index. Factor weights:</p>
 
-                    <!-- Neutral Gauge -->
-                    <div class="radial-sentiment-item">
-                        <svg viewBox="0 0 36 36" class="circular-chart">
-                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="circle-fill-orange" stroke-dasharray="20, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <text x="18" y="20.35" class="percentage-text">20%</text>
-                        </svg>
-                        <span style="font-size: 0.75rem; font-weight: 700; color: #FF8A3D;" data-key="sent_neutral">Neutral Sentiment</span>
-                    </div>
-
-                    <!-- Negative Gauge -->
-                    <div class="radial-sentiment-item">
-                        <svg viewBox="0 0 36 36" class="circular-chart">
-                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="circle-fill-red" stroke-dasharray="12, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <text x="18" y="20.35" class="percentage-text">12%</text>
-                        </svg>
-                        <span style="font-size: 0.75rem; font-weight: 700; color: #e74c3c;" data-key="sent_bearish">Bearish Sentiment</span>
-                    </div>
+                <div style="display:flex; flex-direction:column; gap:0.7rem;">
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">Trend</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:100%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.30</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">Momentum</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:83%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.25</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">Market Regime</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:50%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.15</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">RSI</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:50%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.15</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">MACD</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:33%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.10</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">Relative Strength</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:33%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.10</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">Bollinger Bands</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:17%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.05</span></div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;"><span style="width:128px; font-size:0.74rem; color:var(--ink);">Volume</span><span style="flex:1; height:8px; background:var(--line); border-radius:999px; overflow:hidden;"><i style="display:block; height:100%; width:17%; background:var(--teal); border-radius:999px;"></i></span><span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--muted); width:34px; text-align:end;">0.05</span></div>
                 </div>
             </div>
         </div>
