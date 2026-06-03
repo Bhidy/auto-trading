@@ -14,7 +14,11 @@ for _p in (REPO_ROOT, P2_SCRIPTS):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from politician_bot import SLEEVE_SYMBOLS, compute_sleeve_orders  # noqa: E402
+from politician_bot import (  # noqa: E402
+    SLEEVE_SYMBOLS,
+    classify_capital,
+    compute_sleeve_orders,
+)
 
 CFG = {
     "enabled": True,
@@ -86,3 +90,30 @@ def test_real_2026_06_02_p2_scenario():
     assert orders                                  # idle cash finally gets deployed
     assert len(orders) <= CFG["max_orders_per_run"]
     assert all(o["side"] == "buy" for o in orders)
+
+
+# --- Honest beta/alpha disclosure (committee rec #4) ------------------------
+
+def test_classify_capital_splits_beta_alpha_cash():
+    positions = [
+        {"symbol": "SPY", "market_value": "20000"},    # sleeve -> beta
+        {"symbol": "QQQ", "market_value": "10000"},     # sleeve -> beta
+        {"symbol": "SPGI", "market_value": "8000"},     # politician copy -> alpha
+    ]
+    c = classify_capital(positions, SLEEVE_SYMBOLS, cash=62_000, equity=100_000)
+    assert c["sleeve_beta_pct"] == 30.0
+    assert c["politician_alpha_pct"] == 8.0
+    assert c["cash_pct"] == 62.0
+    assert c["sleeve_beta_value"] == 30_000.0
+
+
+def test_classify_capital_handles_bad_input():
+    assert classify_capital([], SLEEVE_SYMBOLS, 0, 0)["sleeve_beta_pct"] == 0.0
+    assert classify_capital(None, SLEEVE_SYMBOLS, "x", "y")["politician_alpha_pct"] == 0.0
+
+
+def test_classify_capital_all_sleeve_is_pure_beta():
+    positions = [{"symbol": s, "market_value": "5000"} for s in ["SPY", "DIA", "IWM"]]
+    c = classify_capital(positions, SLEEVE_SYMBOLS, cash=85_000, equity=100_000)
+    assert c["politician_alpha_pct"] == 0.0
+    assert c["sleeve_beta_pct"] == 15.0

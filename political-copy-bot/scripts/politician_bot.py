@@ -175,6 +175,41 @@ def compute_sleeve_orders(equity, cash, positions, cfg, *, sleeve_symbols=None):
     return (sells + buys)[:max_orders]
 
 
+def classify_capital(positions, sleeve_symbols, cash, equity):
+    """Split P2's book into beta-sleeve vs politician-alpha vs cash, as % of equity.
+
+    The benchmark sleeve is honest BETA — a diversified ETF parking of idle cash —
+    NOT politician insight. Disclosing the split keeps the dashboard (and the
+    committee) from mistaking parked beta for alpha. Pure; a symbol in the sleeve
+    set is beta, anything else is the politician-copy overlay. Returns zeros on
+    bad input.
+    """
+    zeros = {"sleeve_beta_pct": 0.0, "politician_alpha_pct": 0.0, "cash_pct": 0.0,
+             "sleeve_beta_value": 0.0, "politician_alpha_value": 0.0}
+    sset = set(sleeve_symbols or [])
+    try:
+        equity = float(equity)
+        cash = float(cash)
+    except (TypeError, ValueError):
+        return zeros
+    if equity <= 0:
+        return zeros
+    beta = alpha = 0.0
+    for p in positions or []:
+        mv = abs(float(p.get("market_value", 0) or 0))
+        if p.get("symbol") in sset:
+            beta += mv
+        else:
+            alpha += mv
+    return {
+        "sleeve_beta_pct": round(beta / equity * 100, 2),
+        "politician_alpha_pct": round(alpha / equity * 100, 2),
+        "cash_pct": round(cash / equity * 100, 2),
+        "sleeve_beta_value": round(beta, 2),
+        "politician_alpha_value": round(alpha, 2),
+    }
+
+
 # ---------------------------------------------------------------------------
 # CONVICTION MODEL — politician track-record weighting + cluster-buy detection
 # ---------------------------------------------------------------------------
@@ -854,11 +889,19 @@ class PoliticianBot:
         positions = self.alpaca.get_positions()
         orders = self.alpaca.get_orders("open")
 
+        # Honest beta/alpha disclosure: the benchmark sleeve is parked BETA, not
+        # politician insight. Tag each position and surface the split so the
+        # dashboard never overstates "alpha" (committee rec #4).
+        sleeve_cfg = self.risk.limits.get("benchmark_sleeve", {})
+        sleeve_syms = set(sleeve_cfg.get("symbols") or SLEEVE_SYMBOLS)
+        equity = account.get("equity")
+        cash = account.get("cash")
+
         state = {
             "timestamp": datetime.now().isoformat(),
             "account": {
-                "equity": account.get("equity"),
-                "cash": account.get("cash"),
+                "equity": equity,
+                "cash": cash,
                 "buying_power": account.get("buying_power"),
                 "portfolio_value": account.get("portfolio_value"),
                 "daily_pnl_pct": round(
@@ -874,9 +917,12 @@ class PoliticianBot:
                     "market_value": p["market_value"],
                     "unrealized_pl": p["unrealized_pl"],
                     "unrealized_plpc": p["unrealized_plpc"],
+                    "classification": ("beta_sleeve" if p["symbol"] in sleeve_syms
+                                       else "politician_alpha"),
                 }
                 for p in positions
             ],
+            "capital_classification": classify_capital(positions, sleeve_syms, cash, equity),
             "open_orders": len(orders),
             "total_positions": len(positions),
         }
@@ -967,6 +1013,8 @@ class PoliticianBot:
                     "order_id": order.get("id"),
                     "politician": "BENCHMARK_SLEEVE",
                     "source": "benchmark_sleeve",
+                    "strategy": "benchmark_sleeve",
+                    "evidence_quality": "beta",  # parked beta, NOT politician alpha
                     "reason": o["reason"],
                 })
                 executed.append({"symbol": sym, "side": side, "qty": qty})
