@@ -231,6 +231,14 @@
             return;
         }
 
+        // Price/volume/MA alerts are meaningless without a positive threshold —
+        // reject so a "$0.00" alert can't be created.
+        var needsThreshold = type.indexOf('price') !== -1 || type.indexOf('volume') !== -1 || type === 'technical_ma';
+        if (needsThreshold && !(threshold > 0)) {
+            alert(lang === 'ar' ? 'يرجى إدخال قيمة عتبة أكبر من صفر.' : 'Please enter a threshold greater than zero.');
+            return;
+        }
+
         var newAlert = {
             id: Date.now(),
             symbol: sym,
