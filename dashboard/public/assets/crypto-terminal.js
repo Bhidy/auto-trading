@@ -8,8 +8,8 @@
         en: {
             ct_title: 'Crypto Terminal',
             ct_subtitle: 'Real-time cryptocurrency trading — orderbook, trade tape, and order entry',
-            ct_last_price: 'Last Price', ct_24h_change: '24h Change', ct_24h_high: '24h High',
-            ct_24h_low: '24h Low', ct_24h_vol: '24h Volume', ct_spread: 'Spread',
+            ct_last_price: 'Last Price', ct_24h_change: 'Today Change', ct_24h_high: 'Today High',
+            ct_24h_low: 'Today Low', ct_24h_vol: 'Today Volume', ct_spread: 'Spread',
             ct_orderbook: 'Orderbook', ct_trades: 'Recent Trades', ct_new_order: 'New Crypto Order',
             ct_positions: 'Crypto Positions', ct_no_positions: 'Select a portfolio to view positions',
             ct_no_crypto_pos: 'No crypto positions in this portfolio',
@@ -31,8 +31,8 @@
         ar: {
             ct_title: 'محطة العملات الرقمية',
             ct_subtitle: 'تداول العملات الرقمية في الوقت الفعلي — دفتر الأوامر وشريط التداول وإدخال الأوامر',
-            ct_last_price: 'آخر سعر', ct_24h_change: 'التغيير 24س', ct_24h_high: 'أعلى 24س',
-            ct_24h_low: 'أدنى 24س', ct_24h_vol: 'حجم 24س', ct_spread: 'الفارق',
+            ct_last_price: 'آخر سعر', ct_24h_change: 'تغيير اليوم', ct_24h_high: 'أعلى اليوم',
+            ct_24h_low: 'أدنى اليوم', ct_24h_vol: 'حجم اليوم', ct_spread: 'الفارق',
             ct_orderbook: 'دفتر الأوامر', ct_trades: 'آخر التداولات', ct_new_order: 'أمر كريبتو جديد',
             ct_positions: 'مراكز الكريبتو', ct_no_positions: 'اختر محفظة لعرض المراكز',
             ct_no_crypto_pos: 'لا توجد مراكز كريبتو في هذه المحفظة',
@@ -140,7 +140,9 @@
         } else if (ticker.includes('ETH') || ticker === 'ETH/USD' || ticker === 'ETHUSD') {
             logoFile = 'ETH_USD';
         } else {
-            logoFile = logoFile.replace('/', '-');
+            // Underscore convention to match existing BTC_USD.svg / ETH_USD.svg and
+            // the local {SYM}_USD.svg assets (e.g. LTC/USD -> LTC_USD.svg).
+            logoFile = logoFile.replace('/', '_');
         }
         var src = '/assets/logos/' + logoFile + '.svg';
         var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
