@@ -23,6 +23,29 @@
     --pf-red-soft:   rgba(239,  68,  68, 0.12);
 }
 
+/* ─── Mobile horizontal-overflow guard ────────────────────────────────────
+   Dense cards (L2 books, options/peer/positions tables, metric grids) default
+   to min-width:auto, so wide content stretched the collapsed grid column past
+   the viewport and forced horizontal PAGE scroll on phones (stock-detail 166px,
+   alerts 132, portfolio-detail 115, market-pulse 55). Let columns shrink and
+   make wide tables scroll INSIDE their card instead of stretching the page. */
+@media (max-width: 1024px) {
+    .pf-main-grid { grid-template-columns: 1fr; }
+    .stock-grid, .research-grid, .alerts-grid, .mp-grid, .pf-main-grid,
+    .stock-grid > *, .research-grid > *, .alerts-grid > *, .mp-grid > *, .pf-main-grid > *,
+    .stock-card, .research-card, .pf-card, .pf-panel, .alerts-card, .pf-tabs { min-width: 0; }
+    .sec-table, .options-table, .peer-table, .pos-table,
+    .alerts-table, .ord-table, .scr-table, .l2-book, .pf-table {
+        display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .pf-kpi-strip { min-width: 0; }
+    .mp-search-input { min-width: 0; max-width: 100%; }
+    .mp-tabs { flex-wrap: wrap; }
+    /* Safety: clip residual horizontal overflow on the detail body (inner tabs/
+       tables keep their own overflow-x:auto, so nothing becomes unreachable). */
+    .pf-dash-body { overflow-x: hidden; }
+}
+
 /* ─── Shared helpers ──────────────────────────────────────────────────── */
 .pf-page { padding-top: 5rem; min-height: 100dvh; }
 
