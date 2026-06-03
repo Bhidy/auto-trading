@@ -27,6 +27,9 @@ Every AI model agent working on this project MUST operate under the following st
 4. **Preserve existing quality** — If something is already premium, don't degrade it.
 5. **Document decisions** — Every trade decision, design choice, and architectural change must have a logged reason.
 
+### Communication Style (Mandatory)
+Keep all feedback, status updates, and reports **summarized and clear**. Lead with the answer/verdict first, then minimal supporting detail. Prefer tight bullets and small tables over long prose; avoid multi-page dumps, repetition, and walls of text. Be precise and honest (say "not verified" when unsure), but concise — respect the reader's time. Long, exhaustive reports are the exception (only when explicitly requested), not the default.
+
 ### Brand Voice Reference
 - **System Name**: Auto Trading (by RiseWealth)
 - **Dashboard**: `https://autotradingportfolios.vercel.app`
