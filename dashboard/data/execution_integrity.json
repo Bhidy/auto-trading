@@ -1,25 +1,25 @@
 {
-  "timestamp": "2026-06-02T16:33:19.583378+00:00",
+  "timestamp": "2026-06-03T14:10:50.838509+00:00",
   "portfolio_id": "portfolio_1",
   "total_signals": 23,
-  "approved": 9,
-  "placed": 4,
-  "filled": 3,
+  "approved": 13,
+  "placed": 2,
+  "filled": 2,
   "unexplained": 0,
   "skipped": [
     {
       "symbol": "NVDA",
-      "reason": "already hold 8.3%",
+      "reason": "already hold 8.1%",
       "benign": true
     },
     {
       "symbol": "AAPL",
-      "reason": "already hold 7.8%",
+      "reason": "already hold 7.9%",
       "benign": true
     },
     {
       "symbol": "AMZN",
-      "reason": "already hold 13.5%",
+      "reason": "already hold 13.3%",
       "benign": true
     },
     {
@@ -28,13 +28,43 @@
       "benign": true
     },
     {
-      "symbol": "IWM",
+      "symbol": "QQQ",
       "reason": "insufficient cash",
+      "benign": true
+    },
+    {
+      "symbol": "TSLA",
+      "reason": "below min notional",
+      "benign": true
+    },
+    {
+      "symbol": "SPY",
+      "reason": "already hold 10.7%",
+      "benign": true
+    },
+    {
+      "symbol": "IWM",
+      "reason": "below min notional",
+      "benign": true
+    },
+    {
+      "symbol": "DIA",
+      "reason": "insufficient cash",
+      "benign": true
+    },
+    {
+      "symbol": "BIL",
+      "reason": "already hold 20.1%",
+      "benign": true
+    },
+    {
+      "symbol": "XLY",
+      "reason": "below min notional",
       "benign": true
     }
   ],
   "halted": false,
-  "cash_available": false,
+  "cash_available": true,
   "anomalous": false,
   "anomaly_reason": null
 }

@@ -1,14 +1,27 @@
 {
-  "timestamp": "2026-05-28T15:57:09.240724+00:00",
+  "timestamp": "2026-06-03T14:11:01.264522+00:00",
   "signals": [
     {
-      "symbol": "MRVL",
+      "symbol": "PANW",
       "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Oppenheimer Maintains Outperform on Marvell Technology, Raises Price Target to $250",
+      "headline": "Citizens Maintains Market Outperform on Palo Alto Networks, Raises Price Target to $320",
       "source": "benzinga",
-      "created_at": "2026-05-28T15:35:47Z",
+      "created_at": "2026-06-03T13:33:03Z",
+      "reasons": [
+        "Positive: 'outperform'"
+      ],
+      "tranche": "event_driven"
+    },
+    {
+      "symbol": "PANW",
+      "sector": "Tech",
+      "signal": "NEWS_BUY",
+      "score": 0.3,
+      "headline": "Wedbush Maintains Outperform on Palo Alto Networks, Raises Price Target to $340",
+      "source": "benzinga",
+      "created_at": "2026-06-03T13:29:55Z",
       "reasons": [
         "Positive: 'outperform'"
       ],

@@ -1,45 +1,20 @@
 {
-  "timestamp": "2026-06-02T16:33:11.315437+00:00",
+  "timestamp": "2026-06-03T14:11:01.561070+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 7,
-  "approved": 7,
+  "total_signals": 2,
+  "approved": 2,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "VLO",
-      "reason": "sector Energy would breach cap",
-      "benign": true
-    },
-    {
-      "symbol": "EOG",
-      "reason": "sector Energy would breach cap",
-      "benign": true
-    },
-    {
-      "symbol": "XOM",
-      "reason": "sector Energy would breach cap",
-      "benign": true
-    },
-    {
-      "symbol": "WMT",
+      "symbol": "PANW",
       "reason": "already hold",
       "benign": true
     },
     {
-      "symbol": "CSCO",
+      "symbol": "PANW",
       "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "MU",
-      "reason": "sector Tech would breach cap",
-      "benign": true
-    },
-    {
-      "symbol": "NVDA",
-      "reason": "sector Tech would breach cap",
       "benign": true
     }
   ],
