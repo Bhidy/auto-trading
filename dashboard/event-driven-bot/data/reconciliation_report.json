@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-03T22:33:59.753781+00:00",
+  "timestamp": "2026-06-03T22:50:24.943004+00:00",
   "positions_held": 5,
   "open_trades_logged": 5,
   "orphan_open_trades": [],
@@ -7,30 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "trim_qty",
-      "symbol": "CSCO",
-      "removed_qty": 129.0,
-      "broker_qty": 26.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "PANW",
-      "lots": 1,
-      "qty": 62.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "MS",
-      "lots": 1,
-      "qty": 77.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "OXY",
-      "lots": 1,
-      "qty": 262.0
-    }
-  ]
+  "reconcile_actions": []
 }
