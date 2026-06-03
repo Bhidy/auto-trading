@@ -30,11 +30,15 @@ parser.add_argument('--portfolio-id', required=True, help='portfolio_1 | portfol
 parser.add_argument('--state-file',   required=True, help='Path to portfolio_state.json')
 parser.add_argument('--api-key',      default='', help='Alpaca API key for market data')
 parser.add_argument('--api-secret',   default='', help='Alpaca API secret')
+parser.add_argument('--base-url',     default='https://paper-api.alpaca.markets',
+                    help='Alpaca trading API base (paper). Source of truth for live equity.')
 args = parser.parse_args()
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 SUPABASE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 DATA_URL     = 'https://data.alpaca.markets'
+TRADING_URL  = (args.base_url or 'https://paper-api.alpaca.markets').rstrip('/')
+BASELINE     = 100000.0  # per-portfolio paper starting capital
 TODAY        = datetime.date.today().isoformat()
 
 # Benchmarks + common holdings + market-pulse watchlist to track daily
@@ -50,11 +54,10 @@ SSL_CTX.check_hostname = False
 SSL_CTX.verify_mode = ssl.CERT_NONE
 
 
-def alpaca_get(path):
+def _alpaca_get(base, path):
     if not args.api_key:
         return None
-    url = DATA_URL + path
-    req = urllib.request.Request(url, headers={
+    req = urllib.request.Request(base + path, headers={
         'APCA-API-KEY-ID':     args.api_key,
         'APCA-API-SECRET-KEY': args.api_secret,
     })
@@ -64,6 +67,60 @@ def alpaca_get(path):
     except Exception as e:
         print(f'  Alpaca error {path}: {e}')
         return None
+
+
+def alpaca_get(path):
+    """Market-data API (data.alpaca.markets) — bars/snapshots."""
+    return _alpaca_get(DATA_URL, path)
+
+
+def alpaca_trading_get(path):
+    """Trading API (paper-api.alpaca.markets) — live account/positions truth."""
+    return _alpaca_get(TRADING_URL, path)
+
+
+def _num(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _state_equity(state):
+    """Schema-tolerant equity read across the three bot state shapes.
+
+    P1 keeps equity at top level; P2 nests it under `account`; P3 uses a
+    different file/keys entirely. Only used as a fallback when the live
+    Alpaca account fetch fails — never write a fabricated baseline silently.
+    """
+    acct = state.get('account') if isinstance(state.get('account'), dict) else {}
+    for src in (state, acct):
+        for k in ('portfolio_value', 'equity', 'portfolio_equity', 'total_equity'):
+            v = _num(src.get(k))
+            if v is not None and v > 0:
+                return v
+    return None
+
+
+def _state_cash(state):
+    acct = state.get('account') if isinstance(state.get('account'), dict) else {}
+    for src in (state, acct):
+        v = _num(src.get('cash'))
+        if v is not None:
+            return v
+    return 0.0
+
+
+def _state_positions_count(state):
+    pos = state.get('positions')
+    if isinstance(state.get('account'), dict) and not pos:
+        pos = state['account'].get('positions')
+    if isinstance(pos, dict):
+        return len(pos)
+    if isinstance(pos, list):
+        return len(pos)
+    tp = _num(state.get('total_positions'))
+    return int(tp) if tp is not None else 0
 
 
 def supabase_upsert(table, rows):
@@ -102,21 +159,40 @@ try:
 except Exception as e:
     print(f'  Could not read state file: {e}')
 
-equity     = float(state.get('portfolio_value') or state.get('equity') or 100000)
-cash       = float(state.get('cash') or 0)
-pnl        = float(state.get('total_pl') or state.get('unrealized_pl') or 0)
-pnl_pct    = float(state.get('total_pl_pct') or state.get('return_pct') or 0)
-positions  = len(state.get('positions') or [])
+# Live broker account is the source of truth. The committed state file is only a
+# fallback (and is schema-tolerant) — the old code read P1's flat schema and wrote
+# a literal $100,000 for P2 (nested under `account`) and P3 (different file), which
+# fabricated the equity curve. We now refuse to write a baseline rather than lie.
+acct   = alpaca_trading_get('/v2/account') or {}
+equity = _num(acct.get('equity'))
+cash   = _num(acct.get('cash'))
+source = 'alpaca'
+if equity is None or equity <= 0:
+    equity = _state_equity(state)
+    cash   = _state_cash(state)
+    source = 'state'
+if cash is None:
+    cash = _state_cash(state)
 
-supabase_upsert('portfolio_equity_history', [{
-    'portfolio_id':    args.portfolio_id,
-    'date':            TODAY,
-    'equity':          round(equity, 2),
-    'cash':            round(cash, 2),
-    'pnl':             round(pnl, 2),
-    'pnl_pct':         round(pnl_pct, 4),
-    'positions_count': positions,
-}])
+if equity is None or equity <= 0:
+    print(f'  WARNING: no live or state equity for {args.portfolio_id} — '
+          f'skipping equity snapshot (refusing to fabricate the $100K baseline)')
+else:
+    live_positions = alpaca_trading_get('/v2/positions')
+    positions = len(live_positions) if isinstance(live_positions, list) else _state_positions_count(state)
+    pnl     = equity - BASELINE
+    pnl_pct = (pnl / BASELINE) * 100
+    print(f'  equity={equity:.2f} cash={(cash or 0):.2f} pnl={pnl:.2f} ({pnl_pct:.2f}%) '
+          f'positions={positions} [source={source}]')
+    supabase_upsert('portfolio_equity_history', [{
+        'portfolio_id':    args.portfolio_id,
+        'date':            TODAY,
+        'equity':          round(equity, 2),
+        'cash':            round(cash or 0, 2),
+        'pnl':             round(pnl, 2),
+        'pnl_pct':         round(pnl_pct, 4),
+        'positions_count': positions,
+    }])
 
 
 # ── 2. Market daily prices ───────────────────────────────────────────────────

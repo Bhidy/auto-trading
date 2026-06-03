@@ -1,0 +1,48 @@
+name: "Backfill Equity History (one-off repair)"
+
+# Repairs the Supabase portfolio_equity_history system-of-record from Alpaca's
+# broker daily portfolio history. Fixes the legacy bug where P2/P3 were written
+# as a flat $100,000 (save_to_supabase read a P1-shaped state). Idempotent
+# (merge-upsert on portfolio_id+date) — safe to re-run. Manual dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Alpaca portfolio-history lookback (1M/3M/6M/1A)"
+        required: false
+        default: "6M"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-equity
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Backfill all three portfolios' equity history
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PERIOD: ${{ github.event.inputs.period || '6M' }}
+        run: |
+          set -e
+          python3 scripts/backfill_equity_history.py --portfolio-id portfolio_1 \
+            --api-key "${{ secrets.P1_API_KEY }}" --api-secret "${{ secrets.P1_API_SECRET }}" \
+            --period "$PERIOD"
+          python3 scripts/backfill_equity_history.py --portfolio-id portfolio_2 \
+            --api-key "${{ secrets.P2_API_KEY }}" --api-secret "${{ secrets.P2_API_SECRET }}" \
+            --period "$PERIOD"
+          python3 scripts/backfill_equity_history.py --portfolio-id portfolio_3 \
+            --api-key "${{ secrets.P3_API_KEY }}" --api-secret "${{ secrets.P3_API_SECRET }}" \
+            --period "$PERIOD"

@@ -60,7 +60,7 @@ jobs:
           # Optional telemetry — must NEVER fail the trading/EOD job.
           python3 scripts/save_to_supabase.py \
             --portfolio-id portfolio_3 \
-            --state-file event-driven-bot/data/portfolio_state.json \
+            --state-file event-driven-bot/data/bot_state.json \
             --api-key "${{ secrets.P3_API_KEY }}" \
             --api-secret "${{ secrets.P3_API_SECRET }}" || echo "Supabase snapshot skipped/failed (non-fatal)"
 

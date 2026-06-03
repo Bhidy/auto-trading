@@ -657,6 +657,17 @@ app.get('/api/portfolio/all/details', async (req, res) => {
 
     const finalPositions = Object.values(mergedPositions);
 
+    // Rebase EVERY position weight to the combined-book equity. parsePositionLive
+    // computed each weight against its source portfolio's ~$100K equity, and the
+    // merge above only rebased symbols held in >1 portfolio — so single-portfolio
+    // positions stayed ~3x over-weighted. That inflated the aggregate Sector
+    // Exposure, Top-5 concentration, Largest Position and every $-of-weight tooltip
+    // (weights summed to ~202% instead of the true deployment %). One pass here is
+    // the single source of truth for aggregate weight, fixing the whole cascade.
+    finalPositions.forEach(p => {
+        p.weight = totalEquity > 0 ? (p.marketValue / totalEquity) * 100 : 0;
+    });
+
     res.json({
         id: 'all',
         label: 'All Portfolios',

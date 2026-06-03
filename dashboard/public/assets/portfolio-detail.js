@@ -490,7 +490,7 @@
         });
         return mdd;
     }
-    function bmBestWorst(equityRows) {
+    function bmBestWorst(equityRows, liveNav) {
         var best = null, worst = null;
         equityRows.forEach(function (r) {
             var e = parseFloat(r.equity);
@@ -498,6 +498,15 @@
             if (!best  || e > best.value)  best  = { value: e, date: (r.date || '').slice(0, 10) };
             if (!worst || e < worst.value) worst = { value: e, date: (r.date || '').slice(0, 10) };
         });
+        // The live NAV is part of the equity path: "Best/Worst Value" must never
+        // contradict the header (a Best Value below the current NAV is impossible
+        // when the book is at a fresh high). The daily series only holds closes,
+        // so fold in today's live mark as a candidate.
+        if (liveNav != null && isFinite(liveNav)) {
+            var today = new Date().toISOString().slice(0, 10);
+            if (!best  || liveNav > best.value)  best  = { value: liveNav, date: today };
+            if (!worst || liveNav < worst.value) worst = { value: liveNav, date: today };
+        }
         return { best: best, worst: worst };
     }
     function bmPeriodToStartDate(p) {
@@ -776,7 +785,8 @@
         var maxDD     = bmMaxDrawdown(pIndex);
 
         var initialCapital = (pfId === 'all') ? 300000 : 100000;
-        var bw = bmBestWorst(equityRows);
+        var liveNav = (metrics && isFinite(metrics.totalValue)) ? metrics.totalValue : null;
+        var bw = bmBestWorst(equityRows, liveNav);
         var sharpe = bmSharpe(equityVals, intraday);
         var beta = (spyIndex && !intraday) ? bmBeta(bmDailyReturns(equityVals), bmDailyReturns(spyIndex)) : null;
 
@@ -1656,7 +1666,10 @@
             if (v) turnoverVal += v;
         });
         var avgHold = ages.length ? ages.reduce(function (s, x) { return s + x; }, 0) / ages.length : null;
-        var turnover = (I.equity > 0 && turnoverVal > 0) ? Math.min(100, (turnoverVal / I.equity) * 100) : null;
+        // Cumulative gross traded notional ÷ current equity (life-to-date). Not a
+        // period turnover ratio — do NOT cap at 100% (capping made it pin near the
+        // ceiling as trade history grew, which read as a meaningless constant).
+        var turnover = (I.equity > 0 && turnoverVal > 0) ? (turnoverVal / I.equity) * 100 : null;
 
         var n = hasClosed ? lr.total_trades : I.holds.length;
         return { hasClosed: hasClosed, n: n, lowSample: hasClosed && lr.total_trades < 5,
@@ -1689,7 +1702,7 @@
             card(il('Avg Loss', 'متوسط الخسارة'), fmt(-Math.abs(q.avgLoss), 2) + '%', 'avgloss' + pfId, red, il('per loser', 'لكل خاسر'), 'is-bad') +
             card(il('Profit Factor', 'عامل الربح'), q.pf >= 99 ? '∞' : fmt(q.pf, 2), 'pf' + pfId, teal, pfFoot[1], pfFoot[0]) +
             card(il('Sharpe Ratio', 'نسبة شارب'), q.sharpe == null ? '—' : fmt(q.sharpe, 2), 'sharpe' + pfId, teal, shFoot[1], shFoot[0]) +
-            card(il('Turnover', 'معدل الدوران'), q.turnover == null ? '—' : fmt(q.turnover, 1) + '%', 'turn' + pfId, teal, il('of equity', 'من حقوق الملكية'), 'is-warn') +
+            card(il('Gross Traded', 'إجمالي المتداول'), q.turnover == null ? '—' : fmt(q.turnover, 1) + '%', 'turn' + pfId, teal, il('vs equity · life-to-date', 'مقابل حقوق الملكية · منذ البداية'), 'is-warn') +
             card(il('Avg Hold', 'متوسط المدة'), q.avgHold == null ? '—' : fmt(q.avgHold, 1) + 'd', 'hold' + pfId, teal, il('holding period', 'فترة الاحتفاظ'), 'is-good') +
             card(il('Open Positions', 'مراكز مفتوحة'), String(I.holdingsCount), 'open' + pfId, teal, il('live', 'مباشر'), 'is-good');
 
@@ -2625,7 +2638,7 @@
                     '<canvas id="contribDonutChart" width="128" height="128"></canvas>' +
                     '<div class="pf-contrib-donut-center">' +
                         '<span class="pf-num" style="font-size:1.35rem;font-weight:700;color:var(--ink);">' + winRate + '%</span>' +
-                        '<span style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">' + il('Win Rate', 'معدل الربح') + '</span>' +
+                        '<span style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;" title="' + il('Share of open positions currently in profit (distinct from closed-trade win rate)', 'نسبة المراكز المفتوحة الرابحة حالياً (تختلف عن معدل ربح الصفقات المغلقة)') + '">' + il('In Profit', 'في الربح') + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="pf-contrib-donut-legend">' +
