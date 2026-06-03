@@ -189,7 +189,6 @@
 
     function renderStockData(data) {
         var symbol = data.symbol;
-        var quote = data.quote || { price: 150.00, bid: 149.95, ask: 150.05, size: 100 };
         var profile = data.profile || {};
         rawBarsData = data.bars || [];
 
@@ -205,18 +204,39 @@
             logoEl.style.display = 'block';
         }
         document.getElementById('stockSymbolText').textContent = symbol;
+
+        // Honest empty-state: when the backend returns no quote (invalid/unknown
+        // symbol) do NOT fabricate a $150 hero. Show an explicit "no data" state
+        // and skip the fake metrics/sections.
+        if (data.quote === null || data.quote === undefined || data.quote.price == null) {
+            document.getElementById('stockCompanyName').textContent = profile.name || symbol;
+            document.getElementById('stockCompanyDesc').textContent = 'No market data available for this symbol.';
+            var heroEl = document.getElementById('stockLastPrice');
+            heroEl.textContent = '—';
+            heroEl.style.color = 'var(--muted)';
+            var pill = document.getElementById('stockChangePill');
+            pill.className = 'chg-pill';
+            pill.style.color = 'var(--muted)';
+            pill.textContent = (lang === 'ar' ? 'لا توجد بيانات لهذا الرمز' : 'Symbol not found / no data');
+            return;
+        }
+
+        var quote = data.quote;
         document.getElementById('stockCompanyName').textContent = profile.name || (symbol + ' Corp.');
         document.getElementById('stockCompanyDesc').textContent = profile.desc || 'No profile description available.';
-        
+
         // Price Hero
-        document.getElementById('stockLastPrice').textContent = '$' + quote.price.toFixed(2);
-        
+        var heroEl = document.getElementById('stockLastPrice');
+        heroEl.style.color = 'var(--ink)';
+        heroEl.textContent = '$' + quote.price.toFixed(2);
+
         // Change calculate
         var prevClose = parseFloat(profile.prev || quote.price);
         var change = quote.price - prevClose;
         var changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
         
         var changePill = document.getElementById('stockChangePill');
+        changePill.style.color = '';
         if (change >= 0) {
             changePill.className = 'chg-pill pos';
             changePill.textContent = '▲ +' + changePct.toFixed(2) + '%';
