@@ -248,7 +248,19 @@
       renderConcentration(cross);
     } catch (e) { renderConcentration(null); }
 
+    // The cross-portfolio concentration panel is genuinely aggregated, but the
+    // per-book engine panels have no aggregate endpoint — under "All Books" they
+    // show P1. Label that explicitly instead of implying it's an all-books figure.
     const id = currentPf === 'all' ? 'portfolio_1' : currentPf;
+    const scopeNote = $('bookScopeNote');
+    if (scopeNote) {
+      if (currentPf === 'all') {
+        scopeNote.style.display = 'block';
+        scopeNote.innerHTML = 'Concentration above is aggregated across all books. The per-book engine panels below (Validation, Execution, Accounting, Governance, Reconciliation) reflect <strong>P1 · Self-Improving</strong> — select a specific book for P2/P3.';
+      } else {
+        scopeNote.style.display = 'none';
+      }
+    }
     try {
       const intel = await getJSON('/api/portfolio/' + id + '/intelligence');
       renderValidation(intel.validation);
