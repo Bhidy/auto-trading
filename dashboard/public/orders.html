@@ -162,18 +162,18 @@
 
         <!-- Toolbar -->
         <div class="ord-toolbar">
-            <select id="filterStatus" class="ord-filter-select">
+            <select id="filterStatus" aria-label="Filter orders by status" class="ord-filter-select">
                 <option value="all" data-key="filter_all_status">All Status</option>
                 <option value="open">Open</option>
                 <option value="closed">Closed</option>
                 <option value="all" selected>All</option>
             </select>
-            <select id="filterSide" class="ord-filter-select">
+            <select id="filterSide" aria-label="Filter orders by side" class="ord-filter-select">
                 <option value="" data-key="filter_all_side">All Sides</option>
                 <option value="buy">Buy</option>
                 <option value="sell">Sell</option>
             </select>
-            <input type="text" id="filterSymbol" class="ord-search" placeholder="Search symbol..." data-key-placeholder="search_symbol">
+            <input type="text" id="filterSymbol" aria-label="Filter orders by symbol" class="ord-search" placeholder="Search symbol..." data-key-placeholder="search_symbol">
             <div style="flex:1;"></div>
             <button class="pf-btn pf-btn--sm" id="btnRefresh" data-key="btn_refresh">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>

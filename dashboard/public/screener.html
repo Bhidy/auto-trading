@@ -109,7 +109,7 @@
         </div>
 
         <div class="scr-toolbar">
-            <select id="filterClass" class="scr-filter">
+            <select id="filterClass" aria-label="Filter by asset class" class="scr-filter">
                 <option value="us_equity" data-key="class_equity">US Equity</option>
                 <option value="crypto" data-key="class_crypto">Crypto</option>
             </select>
@@ -126,7 +126,7 @@
                 <option value="BATS">BATS</option>
                 <option value="OTC">OTC</option>
             </select>
-            <input type="text" id="searchInput" class="scr-search" placeholder="Search by symbol or name...">
+            <input type="text" id="searchInput" aria-label="Search assets" class="scr-search" placeholder="Search by symbol or name...">
             <div style="flex:1;"></div>
             <button class="pf-btn pf-btn--sm" id="btnLoad" data-key="btn_search">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -168,7 +168,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
                 <h2 style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;margin:0;" data-key="wl_title">Alpaca Watchlists</h2>
                 <div style="display:flex;gap:.5rem;align-items:center;">
-                    <select id="wlPortfolio" class="scr-filter" style="min-width:180px;"></select>
+                    <select id="wlPortfolio" aria-label="Select portfolio for watchlist" class="scr-filter" style="min-width:180px;"></select>
                     <button class="pf-btn pf-btn--sm pf-btn--primary" id="btnNewWl" data-key="btn_new_wl">+ New Watchlist</button>
                 </div>
             </div>

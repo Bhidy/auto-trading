@@ -275,12 +275,12 @@
                 
                 <div class="form-group">
                     <label data-key="label_symbol">Asset Symbol</label>
-                    <input type="text" class="form-control" id="alertSymbolInput" placeholder="e.g. AAPL, NVDA, SPY" value="AAPL">
+                    <input type="text" class="form-control" id="alertSymbolInput" aria-label="Alert symbol" placeholder="e.g. AAPL, NVDA, SPY" value="AAPL">
                 </div>
 
                 <div class="form-group">
                     <label data-key="label_type">Alert Type</label>
-                    <select class="form-control" id="alertTypeSelect">
+                    <select class="form-control" id="alertTypeSelect" aria-label="Alert condition type">
                         <option value="price_gt" data-key="opt_p_gt">Price crosses above ($)</option>
                         <option value="price_lt" data-key="opt_p_lt">Price crosses below ($)</option>
                         <option value="volume_gt" data-key="opt_v_gt">Volume spike above (Shares)</option>
@@ -293,7 +293,7 @@
 
                 <div class="form-group">
                     <label id="triggerValLabel" data-key="label_val">Threshold Value</label>
-                    <input type="number" class="form-control" id="alertThresholdInput" value="195.00">
+                    <input type="number" class="form-control" id="alertThresholdInput" aria-label="Alert threshold value" value="195.00">
                 </div>
 
                 <button class="alert-btn" id="createAlertBtn" data-key="btn_deploy">Deploy Alert</button>
@@ -305,7 +305,7 @@
                     <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--teal);" data-key="feed_title">Neural Signals Feed</h3>
                     <span style="font-size:0.65rem; padding: 0.15rem 0.5rem; border-radius: 999px; background:var(--teal-soft); color:var(--teal-dark); font-family:var(--pf-mono);">LATEST ANALYSIS</span>
                 </div>
-                <div class="live-feed-box" id="neuralSignalsFeed">
+                <div class="live-feed-box" id="neuralSignalsFeed" role="log" aria-live="polite" aria-relevant="additions" aria-label="AI neural signals feed">
                     <!-- Dynamic feeds -->
                 </div>
             </div>
