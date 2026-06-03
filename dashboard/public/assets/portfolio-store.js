@@ -33,7 +33,20 @@
         MS:   { name: 'Morgan Stanley', nameAr: 'مورجان ستانلي للخدمات المالية', sector: 'Event Tech', color: '#3b82f6' },
         MSFT: { name: 'Microsoft Corp.', nameAr: 'مايكروسوفت', sector: 'Tech', color: '#00a4ef' },
         NVDA: { name: 'NVIDIA Corp.', nameAr: 'إنفيديا', sector: 'Tech', color: '#76b900' },
-        PANW: { name: 'Palo Alto Networks Inc.', nameAr: 'بالو ألتو لشبكات الأمان', sector: 'Event Tech', color: '#ec4899' }
+        PANW: { name: 'Palo Alto Networks Inc.', nameAr: 'بالو ألتو لشبكات الأمان', sector: 'Event Tech', color: '#ec4899' },
+        // Sector ETFs — belong to the Sector Momentum sleeve alongside XLK/XLI/XLY.
+        XLE:  { name: 'Energy Select Sector SPDR Fund', nameAr: 'قطاع الطاقة الأمريكي', sector: 'Sector Momentum', color: '#f97316' },
+        XLF:  { name: 'Financial Select Sector SPDR Fund', nameAr: 'قطاع المال الأمريكي', sector: 'Sector Momentum', color: '#2563eb' },
+        XLV:  { name: 'Health Care Select Sector SPDR Fund', nameAr: 'قطاع الرعاية الصحية الأمريكي', sector: 'Sector Momentum', color: '#14b8a6' },
+        // Single names held by P2 (Capitol Shadow) / P3 (Cautious Sniper) — real GICS sectors.
+        MPC:  { name: 'Marathon Petroleum Corp.', nameAr: 'ماراثون بتروليوم', sector: 'Energy', color: '#e11d48' },
+        VLO:  { name: 'Valero Energy Corp.', nameAr: 'فاليرو للطاقة', sector: 'Energy', color: '#be123c' },
+        EOG:  { name: 'EOG Resources Inc.', nameAr: 'إي أو جي ريسورسز', sector: 'Energy', color: '#dc2626' },
+        WMT:  { name: 'Walmart Inc.', nameAr: 'وول مارت', sector: 'Consumer Staples', color: '#0071ce' },
+        HD:   { name: 'The Home Depot Inc.', nameAr: 'هوم ديبوت', sector: 'Consumer Disc.', color: '#f96302' },
+        T:    { name: 'AT&T Inc.', nameAr: 'إيه تي آند تي', sector: 'Comm. Services', color: '#00a8e0' },
+        MEDP: { name: 'Medpace Holdings Inc.', nameAr: 'ميدبيس القابضة', sector: 'Health Care', color: '#0ea5e9' },
+        PH:   { name: 'Parker-Hannifin Corp.', nameAr: 'باركر هانيفين', sector: 'Industrials', color: '#475569' }
     };
 
     function symMeta(sym) {

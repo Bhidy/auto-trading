@@ -996,6 +996,12 @@
         'Gov Copy':        { beta: 1.05, vol: 0.19 },
         'Event Tech':      { beta: 1.22, vol: 0.27 },
         'Financials':      { beta: 1.18, vol: 0.22 },
+        'Energy':          { beta: 1.05, vol: 0.30 },
+        'Health Care':     { beta: 0.80, vol: 0.15 },
+        'Industrials':     { beta: 1.10, vol: 0.19 },
+        'Consumer Staples':{ beta: 0.58, vol: 0.13 },
+        'Consumer Disc.':  { beta: 1.18, vol: 0.22 },
+        'Comm. Services':  { beta: 0.98, vol: 0.20 },
         'Quant':           { beta: 1.10, vol: 0.18 },
         'Other':           { beta: 1.00, vol: 0.20 }
     };
