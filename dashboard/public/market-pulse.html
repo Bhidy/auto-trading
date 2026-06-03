@@ -1122,7 +1122,7 @@
                 <div>
                     <span class="mp-header-label" data-key="lbl_sp500">S&P 500 (SPY)</span>
                     <span class="mp-header-val" id="headerSpyPrice" style="display:block; margin-top:0.15rem;">—</span>
-                    <span class="mp-header-meta pf-pos pf-num" id="headerSpyChg" style="margin-top:0.1rem;">+0.23%</span>
+                    <span class="mp-header-meta pf-num" id="headerSpyChg" style="margin-top:0.1rem;">—</span>
                 </div>
                 <div style="width:75px; height:32px; position:relative; opacity:0.85; margin-inline-start:0.35rem;">
                     <canvas id="spySparklineCanvas"></canvas>
@@ -1398,7 +1398,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:0.75rem; margin-bottom:1rem;">
                     <div>
                         <h3 style="font-family:'DM Serif Display',serif; font-size:1.25rem; color:var(--ink); margin:0;">My Positions</h3>
-                        <p style="font-size:0.75rem; color:var(--muted); margin-top:0.15rem;">Total Value: <strong style="color:var(--ink);" id="mktValSummary">$2,442,258.50</strong> <span class="pf-pos" id="mktValChg" style="font-weight:700;">▲ 1.28% (+30,742.01)</span></p>
+                        <p style="font-size:0.75rem; color:var(--muted); margin-top:0.15rem;">Total Value: <strong style="color:var(--ink);" id="mktValSummary">—</strong> <span id="mktValChg" style="font-weight:700;"></span></p>
                     </div>
                     <a href="/portfolio-detail.html?id=all" style="font-size:0.72rem; color:var(--teal); font-weight:700; text-decoration:none;">View All</a>
                 </div>
@@ -1423,8 +1423,8 @@
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--muted); margin-top:1rem; border-top:1px solid var(--line); padding-top:0.85rem;">
-                    <span>Cash Balance: <strong style="color:var(--ink);" id="cashBalText">$125,430.20</strong></span>
-                    <span>Day Change: <strong class="pf-pos" id="dayChgText">▲ +$4,553.20 (0.19%)</strong></span>
+                    <span>Cash Balance: <strong style="color:var(--ink);" id="cashBalText">—</strong></span>
+                    <span>Day Change: <strong id="dayChgText">—</strong></span>
                 </div>
             </div>
 
@@ -1475,7 +1475,7 @@
                     <div class="order-form-group">
                         <label>Limit Price ($)</label>
                         <div style="position:relative; display:flex; align-items:center;">
-                            <input type="number" class="order-control" id="orderLimitPriceInput" style="border-radius:4px; padding-inline-end:1.85rem; width:100%; text-align:center;" value="1087.40">
+                            <input type="number" class="order-control" id="orderLimitPriceInput" style="border-radius:4px; padding-inline-end:1.85rem; width:100%; text-align:center;" value="" placeholder="0.00">
                             <span style="position:absolute; right:0.55rem; color:var(--muted); cursor:pointer; font-size:0.85rem; font-weight:700; user-select:none; line-height:1;" id="btnClearLimit" title="Clear">×</span>
                         </div>
                     </div>
@@ -1495,7 +1495,7 @@
 
                 <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--muted); margin-top:0.75rem;">
                     <span>Buying Power</span>
-                    <strong style="color:var(--ink); font-family:var(--pf-mono);" id="buyingPowerVal">$125,430.20</strong>
+                    <strong style="color:var(--ink); font-family:var(--pf-mono);" id="buyingPowerVal">—</strong>
                 </div>
             </div>
 

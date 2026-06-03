@@ -1475,24 +1475,31 @@ app.get('/api/stock/:symbol/details', async (req, res) => {
             alpacaRequest('GET', `${cfg.base_url}/v2/assets/${symbol}`, cfg.api_key, cfg.api_secret).catch(() => null)
         ]);
 
-        if (q && q.quote) {
-            const ask = parseFloat(q.quote.ap || 0);
-            const bid = parseFloat(q.quote.bp || 0);
+        barData = (b && b.bars) ? b.bars : [];
+        const snapData = snap && snap[symbol];
+        const ask = (q && q.quote) ? parseFloat(q.quote.ap || 0) : 0;
+        const bid = (q && q.quote) ? parseFloat(q.quote.bp || 0) : 0;
+        // Price-source priority mirrors /api/market/quotes so the hero price is the
+        // REAL last trade — not a one-sided/zero quote. After hours, ask can be 0 and a
+        // stale quote can even carry the wrong sign; last trade + prev daily close fix
+        // both the magnitude and the direction of the % change.
+        const lastTradePx = parseFloat(snapData?.latestTrade?.p || 0);
+        const dayClosePx = parseFloat(snapData?.dailyBar?.c || 0);
+        const midPx = (ask > 0 && bid > 0) ? (ask + bid) / 2 : 0;
+        const prevClose = parseFloat(snapData?.prevDailyBar?.c || 0);
+        const px = lastTradePx > 0 ? lastTradePx
+                 : dayClosePx > 0 ? dayClosePx
+                 : midPx > 0 ? midPx
+                 : (bid > 0 ? bid : ask);
+        if (px > 0) {
             quoteData = {
-                price: ask > 0 ? ask : bid,
+                price: px,
                 bid: bid,
                 ask: ask,
-                size: parseInt(q.quote.as || 1),
-                timestamp: q.quote.t
+                size: (q && q.quote) ? parseInt(q.quote.as || 1) : 1,
+                timestamp: snapData?.latestTrade?.t || (q && q.quote ? q.quote.t : null),
+                prev: prevClose
             };
-        }
-
-        barData = (b && b.bars) ? b.bars : [];
-
-        const snapData = snap && snap[symbol];
-        const prevClose = snapData?.prevDailyBar?.c || 0;
-        if (snapData && quoteData) {
-            quoteData.prev = prevClose;
         }
 
         if (asset) {

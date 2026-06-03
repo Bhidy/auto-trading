@@ -4,7 +4,7 @@
     <script src="/assets/starta-theme.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Settings & User Profile | Starta Markets</title>
+    <title>System Settings | Auto Trading</title>
     <meta name="description" content="Manage your Alpaca API credentials, configure alert preferences, update security details, and adjust themes.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,10 +200,10 @@
             <!-- Profile Card -->
             <div class="settings-card">
                 <div class="profile-avatar-wrap">
-                    <div class="avatar-circle">QD</div>
+                    <div class="avatar-circle">AT</div>
                     <div>
-                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--ink);" id="profileDisplayName">Quant Director</h3>
-                        <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem;" id="profileEmail">director@startamarkets.com</p>
+                        <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--ink);" id="profileDisplayName">Auto Trading</h3>
+                        <p style="font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem;" id="profileEmail">Autonomous paper-trading · RiseWealth</p>
                     </div>
                 </div>
 
@@ -227,30 +227,30 @@
 
         <!-- Right: Alpaca API key integrations & notification preferences -->
         <div>
-            <!-- Alpaca credentials -->
+            <!-- Broker connections (read-only; keys live only in deployment env, never in the browser) -->
             <div class="settings-card">
-                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 0.35rem;" data-key="alpaca_title">Alpaca API Integrations</h3>
-                <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem;" data-key="alpaca_sub">Configure your live paper trading keys. Transactions are pushed directly using these secure parameters.</p>
-                
-                <div class="form-group">
-                    <label data-key="set_lbl_key">Alpaca Key ID</label>
-                    <input type="text" class="form-control" style="font-family:var(--pf-mono);" id="alpacaKeyInput" value="PKAUIEDLGNSIFULHTPYHOVPQ7Y">
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 0.35rem;" data-key="conn_title">Broker Connections</h3>
+                <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.25rem;" data-key="conn_sub">Alpaca paper-trading API keys are stored as secure deployment environment variables and are never sent to the browser. They cannot be edited here.</p>
+                <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.7rem 0.95rem; border:1px solid var(--line); border-radius:0.85rem;">
+                        <span style="font-weight:600; color:var(--ink);" data-key="nav_pf1">Self Improving Brain</span>
+                        <span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--teal-dark); display:inline-flex; align-items:center; gap:0.4rem;"><span style="width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;"></span><span data-key="conn_connected">Connected</span></span>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.7rem 0.95rem; border:1px solid var(--line); border-radius:0.85rem;">
+                        <span style="font-weight:600; color:var(--ink);" data-key="nav_pf2">Capitol Shadow</span>
+                        <span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--teal-dark); display:inline-flex; align-items:center; gap:0.4rem;"><span style="width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;"></span><span data-key="conn_connected">Connected</span></span>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.7rem 0.95rem; border:1px solid var(--line); border-radius:0.85rem;">
+                        <span style="font-weight:600; color:var(--ink);" data-key="nav_pf3">Cautious Sniper</span>
+                        <span style="font-family:var(--pf-mono); font-size:0.72rem; color:var(--teal-dark); display:inline-flex; align-items:center; gap:0.4rem;"><span style="width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;"></span><span data-key="conn_connected">Connected</span></span>
+                    </div>
                 </div>
-
-                <div class="form-group">
-                    <label data-key="set_lbl_secret">Alpaca Secret Key</label>
-                    <input type="password" class="form-control" style="font-family:var(--pf-mono);" id="alpacaSecretInput" value="••••••••••••••••••••••••••••••••••••••••">
-                </div>
-
-                <button class="btn-settings-save" onclick="alert('API credentials updated locally!')">
-                    <span data-key="btn_save_cred">Update Credentials</span>
-                </button>
             </div>
 
             <!-- Notifications preferences -->
             <div class="settings-card">
                 <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 0.5rem;" data-key="notif_title">Alert & Push Preferences</h3>
-                <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.25rem;" data-key="notif_sub">Configure how and when the neural system warning flags get dispatched to your device.</p>
+                <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1.25rem;" data-key="notif_sub">Notification delivery is managed by the operations layer; these toggles are a preview of planned per-user preferences.</p>
                 
                 <div class="checkbox-group">
                     <label class="checkbox-item">
@@ -272,24 +272,10 @@
                 </div>
             </div>
 
-            <!-- Security change password -->
+            <!-- Access control (informational; trade endpoints gated server-side, no in-browser auth) -->
             <div class="settings-card">
-                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 1.25rem;" data-key="sec_pass_title">Change Access Password</h3>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label data-key="lbl_new_pass">New Password</label>
-                        <input type="password" class="form-control" placeholder="••••••••">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label data-key="lbl_confirm_pass">Confirm Password</label>
-                        <input type="password" class="form-control" placeholder="••••••••">
-                    </div>
-                </div>
-
-                <button class="btn-settings-save" style="margin-top: 1.5rem;" onclick="alert('Security credentials updated!')">
-                    <span data-key="btn_change_pass">Change Password</span>
-                </button>
+                <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.45rem; color: var(--ink); margin-bottom: 0.5rem;" data-key="sec_title">Access Control</h3>
+                <p style="font-size: 0.8rem; color: var(--muted); line-height: 1.65;" data-key="sec_sub">Trade-execution endpoints are gated server-side by a deployment access token; read-only dashboards are public for this showcase. There is no in-browser password to set.</p>
             </div>
         </div>
     </div>
@@ -334,21 +320,17 @@
                     set_lbl_theme: 'Visual Palette Theme',
                     opt_theme_dark: 'Institutional Dark solar',
                     opt_theme_light: 'Institutional Light paper',
-                    alpaca_title: 'Alpaca API Integrations',
-                    alpaca_sub: 'Configure your live paper trading keys. Transactions are pushed directly using these secure parameters.',
-                    set_lbl_key: 'Alpaca Key ID',
-                    set_lbl_secret: 'Alpaca Secret Key',
-                    btn_save_cred: 'Update Credentials',
+                    conn_title: 'Broker Connections',
+                    conn_sub: 'Alpaca paper-trading API keys are stored as secure deployment environment variables and are never sent to the browser. They cannot be edited here.',
+                    conn_connected: 'Connected',
                     notif_title: 'Alert & Push Preferences',
-                    notif_sub: 'Configure how and when the neural system warning flags get dispatched to your device.',
+                    notif_sub: 'Notification delivery is managed by the operations layer; these toggles are a preview of planned per-user preferences.',
                     chk_email: 'Dispatch email digest for daily portfolio allocation changes',
                     chk_push: 'Enable high-density desktop push warning alerts for price limits',
                     chk_sound: 'Play alert buzzer audio on high-frequency Level 2 orders crossings',
                     chk_earnings: 'Pre-warn options delta risk 48 hours prior to corporate earnings reports',
-                    sec_pass_title: 'Change Access Password',
-                    lbl_new_pass: 'New Password',
-                    lbl_confirm_pass: 'Confirm Password',
-                    btn_change_pass: 'Change Password'
+                    sec_title: 'Access Control',
+                    sec_sub: 'Trade-execution endpoints are gated server-side by a deployment access token; read-only dashboards are public for this showcase. There is no in-browser password to set.'
                 },
                 ar: {
                     nav_home: 'الرئيسية',
@@ -373,21 +355,17 @@
                     set_lbl_theme: 'سمة المظهر والألوان',
                     opt_theme_dark: 'السمة الداكنة (Dark Solar)',
                     opt_theme_light: 'السمة المضيئة (Light Paper)',
-                    alpaca_title: 'ربط مفاتيح Alpaca API',
-                    alpaca_sub: 'قم بتهيئة مفاتيح حساب Alpaca Paper التابع لك لتوجيه وإدارة صفقات التداول الفعلي.',
-                    set_lbl_key: 'معرف المفتاح (Key ID)',
-                    set_lbl_secret: 'المفتاح السري (Secret Key)',
-                    btn_save_cred: 'تحديث بيانات الربط',
+                    conn_title: 'اتصالات الوساطة',
+                    conn_sub: 'مفاتيح Alpaca للتداول الورقي محفوظة كمتغيرات بيئة آمنة في النشر ولا تُرسل أبداً إلى المتصفح، ولا يمكن تعديلها من هنا.',
+                    conn_connected: 'متصل',
                     notif_title: 'تفضيلات التنبيهات والإشعارات',
-                    notif_sub: 'اضبط كيفية وتوقيت إرسال إشعارات وتنبيهات النظام العصبي الفورية لهاتفك أو حاسوبك.',
+                    notif_sub: 'تُدار قنوات إرسال الإشعارات من قبل طبقة التشغيل؛ هذه المفاتيح معاينة لتفضيلات المستخدم المخطط لها.',
                     chk_email: 'إرسال ملخص بالبريد الإلكتروني لتغييرات وتدوير المحافظ اليومية',
                     chk_push: 'تفعيل إشعارات سطح المكتب الفورية لتحركات الأسعار الهامة',
                     chk_sound: 'تشغيل نغمة تنبيه صوتية عند تنفيذ صفقات المستوى الثاني الكبرى',
                     chk_earnings: 'تنبيه بمخاطر عقود الخيارات ٤٨ ساعة قبل تقارير أرباح الشركات المودعة',
-                    sec_pass_title: 'تغيير كلمة المرور الشخصية',
-                    lbl_new_pass: 'كلمة المرور الجديدة',
-                    lbl_confirm_pass: 'تأكيد كلمة المرور',
-                    btn_change_pass: 'تعديل كلمة المرور'
+                    sec_title: 'التحكم في الوصول',
+                    sec_sub: 'نقاط تنفيذ التداول محمية من جانب الخادم برمز وصول للنشر؛ ولوحات العرض للقراءة فقط متاحة للجميع في هذا العرض. لا توجد كلمة مرور في المتصفح.'
                 }
             };
 
@@ -412,11 +390,11 @@
                 });
 
                 if (l === 'ar') {
-                    document.getElementById('profileDisplayName').textContent = 'مدير الكميات الرقمي';
-                    document.getElementById('profileEmail').textContent = 'director@startamarkets.com';
+                    document.getElementById('profileDisplayName').textContent = 'التداول الآلي';
+                    document.getElementById('profileEmail').textContent = 'نظام تداول ورقي آلي · RiseWealth';
                 } else {
-                    document.getElementById('profileDisplayName').textContent = 'Quant Director';
-                    document.getElementById('profileEmail').textContent = 'director@startamarkets.com';
+                    document.getElementById('profileDisplayName').textContent = 'Auto Trading';
+                    document.getElementById('profileEmail').textContent = 'Autonomous paper-trading · RiseWealth';
                 }
             }
 

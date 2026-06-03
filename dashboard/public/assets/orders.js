@@ -135,9 +135,12 @@
 
     async function loadOrders() {
         if (!currentPfId) return;
-        var status = $('filterStatus').value;
-        var url = '/api/portfolio/' + currentPfId + '/orders?limit=200&nested=true';
-        if (status && status !== 'all') url += '&status=' + status;
+        // Always send an explicit status. Alpaca's orders API defaults to `open`
+        // when status is omitted, so "All" (which previously sent nothing) showed an
+        // EMPTY table for any portfolio with no open orders (P1/P2) despite dozens of
+        // filled orders. status=all returns open+closed.
+        var status = $('filterStatus').value || 'all';
+        var url = '/api/portfolio/' + currentPfId + '/orders?limit=200&nested=true&status=' + status;
         try {
             var resp = await fetch(url);
             allOrders = await resp.json();

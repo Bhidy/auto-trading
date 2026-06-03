@@ -742,6 +742,14 @@
             if (bpVal && data.account) bpVal.textContent = fmtMoney(data.account.buying_power || 0);
         }).catch(function() {
             if (!positionsLoaded) body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">Could not load live positions.</td></tr>';
+            // HONESTY: never leave seeded/last values implying a real balance when the
+            // live fetch fails. Reset the summary to a neutral em-dash + drop the
+            // pos/neg color so no fabricated portfolio total is ever shown as real.
+            ['mktValSummary', 'cashBalText', 'buyingPowerVal'].forEach(function (id) {
+                var el = document.getElementById(id); if (el) el.textContent = '—';
+            });
+            var mvc = document.getElementById('mktValChg'); if (mvc) { mvc.textContent = '—'; mvc.className = ''; }
+            var dct = document.getElementById('dayChgText'); if (dct) { dct.innerHTML = '—'; dct.className = ''; }
         });
     }
 
