@@ -1,0 +1,22 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Auto Trading. brand mark (RiseWealth solar) — standalone favicon derived
+       from the navbar logo; gradient + rounded corners baked in for a flat file. -->
+  <defs>
+    <linearGradient id="rwSolar" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF8A3D"/>
+      <stop offset="1" stop-color="#E55A1F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#rwSolar)"/>
+  <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+  <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
+  <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+  <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+  <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+  <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+  <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+  <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+  <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+  <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+  <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
+</svg>
