@@ -417,6 +417,12 @@ const SECTOR_MAP = {
     MEDP: 'Healthcare', PH: 'Industrials', T: 'Communications',
 };
 
+// ET (America/New_York) calendar date YYYY-MM-DD for a ms timestamp. Alpaca daily
+// portfolio-history bars are stamped 00:00 UTC = 20:00 ET of the PRIOR trading day,
+// so toISOString() mislabels every daily point +1 day (and lands two on Saturdays).
+// Always label daily equity points in ET.
+const etDate = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date(ms));
+
 app.get('/api/intelligence/cross-portfolio', async (req, res) => {
     loadConfig();
     const singleNameCap = 10.0, sectorCap = 30.0;
@@ -573,7 +579,11 @@ app.get('/api/portfolio/all/summary', async (req, res) => {
             else { totalEquity += parseFloat(localState.equity || 100000); totalCash += parseFloat(localState.cash || 100000); totalPositions += localState.positions || 0; }
         }
     }
-    const totalDayPnlPct = 300000 > 0 ? (totalDayPnL / 300000) * 100 : 0;
+    // Day-change % divides by PRIOR-DAY equity (equity − today's P&L), not the fixed
+    // $300k initial capital — otherwise it disagrees with /all/details and drifts as
+    // equity moves away from book value.
+    const totalLastEquity = totalEquity - totalDayPnL;
+    const totalDayPnlPct = totalLastEquity > 0 ? (totalDayPnL / totalLastEquity) * 100 : 0;
     res.json({
         id: 'all',
         label: 'All Portfolios',
@@ -746,8 +756,8 @@ app.get('/api/portfolio/all/equity-history', async (req, res) => {
                     const ts = alpacaHistory.timestamp[i];
                     const eq = parseFloat(alpacaHistory.equity[i] || 0);
                     if (eq > 0) {
-                        const dateObj = timeframe === '1D' || timeframe === '1Day'
-                            ? new Date(ts * 1000).toISOString().slice(0, 10)
+                        const dateObj = (timeframe === '1D' || timeframe === '1Day')
+                            ? etDate(ts * 1000)
                             : new Date(ts * 1000).toISOString();
                         if (!combinedHistory[dateObj]) { combinedHistory[dateObj] = 0; dateContributors[dateObj] = 0; }
                         combinedHistory[dateObj] += eq;
@@ -1199,7 +1209,7 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
                     if (eq !== null && eq !== undefined && parseFloat(eq) > 0) {
                         const dateObj = new Date(ts * 1000);
                         history.push({
-                            date: (timeframe === '1D' || timeframe === '1Day') ? dateObj.toISOString().slice(0, 10) : dateObj.toISOString(),
+                            date: (timeframe === '1D' || timeframe === '1Day') ? etDate(ts * 1000) : dateObj.toISOString(),
                             equity: parseFloat(eq),
                             profit_loss: parseFloat(pl || 0),
                             profit_loss_pct: parseFloat(plPct || 0)
@@ -1210,7 +1220,7 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
                 try {
                     const account = await alpacaRequest('GET', `${cfg.base_url}/v2/account`, cfg.api_key, cfg.api_secret);
                     const liveEq = parseFloat(account.equity);
-                    const todayStr = new Date().toISOString().slice(0, 10);
+                    const todayStr = etDate(Date.now());
                     const lastPoint = history[history.length - 1];
                     if (liveEq > 0 && (!lastPoint || lastPoint.date !== todayStr || Math.abs(lastPoint.equity - liveEq) > 1)) {
                         if (lastPoint && lastPoint.date === todayStr) {
