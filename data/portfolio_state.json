@@ -1,5 +1,5 @@
 {
-  "equity": 98760.72,
+  "equity": 98699.15,
   "starting_equity": 100000.0,
   "day_start_equity": 99444.24,
   "week_start_equity": 99481.41,
@@ -12,16 +12,6 @@
     "AMZN": {
       "qty": 52,
       "avg_price": 265.458654,
-      "bucket": "aggressive_growth"
-    },
-    "BIL": {
-      "qty": 218,
-      "avg_price": 91.62,
-      "bucket": "defensive"
-    },
-    "GOOGL": {
-      "qty": 28,
-      "avg_price": 384.522857,
       "bucket": "aggressive_growth"
     },
     "IWM": {
@@ -55,24 +45,24 @@
       "bucket": "sector_momentum"
     },
     "XLK": {
-      "qty": 66,
+      "qty": 33,
       "avg_price": 196.019605,
       "bucket": "sector_momentum"
     }
   },
   "trades_today": 0,
-  "total_exposure": 98216.9675,
-  "long_market_value": 98216.9675,
+  "total_exposure": 61658.1,
+  "long_market_value": 61658.1,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 544.59,
-  "day_pnl": -683.52,
-  "day_pnl_pct": -0.006873,
-  "week_pnl": -720.69,
-  "week_pnl_pct": -0.007244,
+  "cash": 37041.05,
+  "day_pnl": -745.09,
+  "day_pnl_pct": -0.007493,
+  "week_pnl": -782.26,
+  "week_pnl_pct": -0.007863,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-03T18:34:07.801491+00:00"
+  "last_updated": "2026-06-03T18:40:54.305496+00:00"
 }
