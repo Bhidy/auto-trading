@@ -119,10 +119,24 @@
             <div class="nav-links">
                 <a href="/" data-key="nav_home">Home</a>
                 <a href="/portfolio-detail.html?id=all" data-key="nav_portfolios">Portfolios</a>
-                <a href="/market-pulse.html">Market Pulse</a>
-                <a href="/orders.html">Orders</a>
-                <a href="/intelligence.html" class="active" style="color: var(--teal-dark); font-weight: 700; border: 1px solid rgba(229,90,31,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft);">Intelligence</a>
-                <a href="/research.html" data-key="nav_research">Research &amp; AI</a>
+                <a href="/market-pulse.html" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;" aria-hidden="true"></span>
+                    <span data-key="nav_market_pulse">Market Pulse</span>
+                </a>
+                <a href="/crypto-terminal.html" data-key="nav_crypto_link">Crypto</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/intelligence.html" class="nav-dropdown-trigger active" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_workspace">Workspace</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/intelligence.html" data-key="nav_intelligence">Intelligence</a>
+                        <a href="/research.html" data-key="nav_research">Research &amp; AI</a>
+                        <a href="/orders.html" data-key="nav_orders">Orders</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
                 <a href="/settings.html" data-key="nav_settings">Settings</a>
             </div>
             <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">

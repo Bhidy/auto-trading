@@ -124,6 +124,25 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 15px rgba(229, 90, 31, 0.25);
         }
+        /* Alerts section (folded in from the standalone Alerts page) */
+        .settings-section-head { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; max-width:1400px; margin:2.75rem auto 1.1rem; padding:0 1.5rem; }
+        .settings-section-head h2 { font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--ink); margin:0; }
+        .settings-demo-badge { font-size:0.64rem; font-family:var(--pf-mono); text-transform:uppercase; letter-spacing:0.04em; color:var(--teal-dark); background:var(--teal-soft); border:1px solid var(--line); padding:0.28rem 0.65rem; border-radius:999px; }
+        .alerts-sub-grid { display:grid; grid-template-columns:1fr 1.5fr; gap:1.5rem; max-width:1400px; margin:0 auto 1rem; padding:0 1.5rem; }
+        @media(max-width:900px){ .alerts-sub-grid{ grid-template-columns:1fr; } }
+        .alert-btn { width:100%; background:var(--teal); color:#FFF7EE; border:none; padding:0.8rem; border-radius:999px; font-weight:700; cursor:pointer; transition:box-shadow .2s,transform .2s; font-size:0.9rem; }
+        .alert-btn:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(229,90,31,.28); }
+        .alerts-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+        .alerts-table th { text-align:left; padding:0.6rem 0.55rem; border-bottom:1px solid var(--line); color:var(--muted); text-transform:uppercase; font-size:0.6rem; font-family:var(--pf-mono); letter-spacing:0.05em; }
+        .alerts-table td { padding:0.68rem 0.55rem; border-bottom:1px solid var(--line); color:var(--ink); }
+        .alerts-table tr:last-child td { border-bottom:none; }
+        .at-toggle { width:38px; height:21px; border-radius:999px; border:none; background:var(--line); position:relative; cursor:pointer; transition:background .2s; padding:0; flex-shrink:0; }
+        .at-toggle.on { background:var(--teal); }
+        .at-toggle span { position:absolute; top:2px; left:2px; width:17px; height:17px; border-radius:50%; background:#fff; transition:transform .2s; }
+        .at-toggle.on span { transform:translateX(17px); }
+        html[dir="rtl"] .at-toggle span { left:auto; right:2px; }
+        html[dir="rtl"] .at-toggle.on span { transform:translateX(-17px); }
+        .at-del { background:none; border:none; color:var(--pf-red); font-weight:700; cursor:pointer; font-size:0.72rem; font-family:var(--pf-mono); }
     </style>
 </head>
 <body>
@@ -156,27 +175,25 @@
             <div class="nav-links">
                 <a href="/" data-key="nav_home">Home</a>
                 <a href="/portfolio-detail.html?id=all" data-key="nav_portfolios">Portfolios</a>
-                <a href="/market-pulse.html" data-key="nav_market_pulse" style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;"></span>
-                    Market Pulse
+                <a href="/market-pulse.html" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;" aria-hidden="true"></span>
+                    <span data-key="nav_market_pulse">Market Pulse</span>
                 </a>
+                <a href="/crypto-terminal.html" data-key="nav_crypto_link">Crypto</a>
                 <div class="nav-dropdown-wrap">
-                    <a href="/orders.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
-                        <span data-key="nav_trading">Trading</span>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    <a href="/intelligence.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_workspace">Workspace</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                     </a>
                     <div class="nav-dropdown-menu">
+                        <a href="/intelligence.html" data-key="nav_intelligence">Intelligence</a>
+                        <a href="/research.html" data-key="nav_research">Research &amp; AI</a>
                         <a href="/orders.html" data-key="nav_orders">Orders</a>
-                        <a href="/crypto-terminal.html" data-key="nav_crypto">Crypto Terminal</a>
-                        <a href="/market-pulse?view=options" data-key="nav_options">Options Lab</a>
                         <a href="/screener.html" data-key="nav_screener">Screener</a>
                         <a href="/account-history.html" data-key="nav_history">Account History</a>
                     </div>
                 </div>
-                <a href="/alerts.html" data-key="nav_alerts">Alerts</a>
-                <a href="/intelligence.html" data-key="nav_intelligence">Intelligence</a>
-                <a href="/research.html" data-key="nav_research">Research & AI</a>
-                <a href="/settings.html" class="active" data-key="nav_settings" style="color: var(--teal); font-weight: 700; border: 1px solid rgba(229, 90, 31, 0.2); padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--teal-soft); display: inline-flex; align-items: center; gap: 0.35rem;">Settings</a>
+                <a href="/settings.html" class="active" data-key="nav_settings">Settings</a>
             </div>
             <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
                 <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
@@ -280,6 +297,96 @@
             </div>
         </div>
     </div>
+
+    <!-- Alerts (folded in from the standalone Alerts page) -->
+    <div class="settings-section-head">
+        <h2>Alerts</h2>
+        <span class="settings-demo-badge">Demo · saved on this device · not monitored server-side</span>
+    </div>
+    <div class="alerts-sub-grid">
+        <div class="settings-card">
+            <h3 style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:var(--ink); margin-bottom:1.25rem;">Deploy Smart Alert</h3>
+            <div class="form-group">
+                <label for="alertSymbolInput">Asset Symbol</label>
+                <input type="text" class="form-control" id="alertSymbolInput" aria-label="Alert symbol" placeholder="e.g. AAPL, NVDA, SPY" value="AAPL">
+            </div>
+            <div class="form-group">
+                <label for="alertTypeSelect">Alert Type</label>
+                <select class="form-control" id="alertTypeSelect" aria-label="Alert condition type">
+                    <option value="price_gt">Price crosses above ($)</option>
+                    <option value="price_lt">Price crosses below ($)</option>
+                    <option value="volume_gt">Volume spike above (Shares)</option>
+                    <option value="news_sentiment">AI news sentiment negative</option>
+                    <option value="earnings">Earnings release announcement</option>
+                    <option value="technical_ma">Technical MA(20/50) crossover</option>
+                    <option value="ai_signal">AI Neural Buy/Sell Signal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="alertThresholdInput">Threshold Value</label>
+                <input type="number" class="form-control" id="alertThresholdInput" aria-label="Alert threshold value" placeholder="195.00">
+            </div>
+            <button class="alert-btn" id="createAlertBtn" type="button">Deploy Alert</button>
+        </div>
+        <div class="settings-card" style="overflow-x:auto;">
+            <h3 style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:var(--ink); margin-bottom:1.25rem;">Active Tactical Alerts</h3>
+            <table class="alerts-table">
+                <thead><tr><th>Symbol</th><th>Condition</th><th>Threshold</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="activeAlertsBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+    (function () {
+        'use strict';
+        var KEY = 'at-user-alerts';
+        var TYPES = { price_gt:'Price >', price_lt:'Price <', volume_gt:'Volume >', news_sentiment:'Negative Sentiment', earnings:'Earnings', technical_ma:'MA(20/50) Crossover', ai_signal:'AI Signal' };
+        var NUMERIC = { price_gt:1, price_lt:1, volume_gt:1, technical_ma:1 };
+        function defaults(){ return [
+            { id:1, symbol:'AAPL', type:'price_gt', threshold:195, enabled:true },
+            { id:2, symbol:'NVDA', type:'technical_ma', threshold:950, enabled:true },
+            { id:3, symbol:'TSLA', type:'price_lt', threshold:170, enabled:false },
+            { id:4, symbol:'SPY', type:'volume_gt', threshold:100000000, enabled:true }
+        ]; }
+        var alerts; try { alerts = JSON.parse(localStorage.getItem(KEY)) || defaults(); } catch (e) { alerts = defaults(); }
+        if (!Array.isArray(alerts)) alerts = defaults();
+        function save(){ try { localStorage.setItem(KEY, JSON.stringify(alerts)); } catch (e) {} }
+        function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+        function fmtThr(a){ if (a.type === 'volume_gt') return Number(a.threshold).toLocaleString(); if (NUMERIC[a.type]) return '$' + Number(a.threshold).toFixed(2); return '—'; }
+        var body = document.getElementById('activeAlertsBody');
+        function render(){
+            if (!body) return;
+            if (!alerts.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">No alerts saved.</td></tr>'; return; }
+            body.innerHTML = alerts.map(function (a) {
+                return '<tr>' +
+                    '<td style="font-weight:700;">' + esc(a.symbol) + '</td>' +
+                    '<td>' + esc(TYPES[a.type] || a.type) + '</td>' +
+                    '<td class="pf-num">' + fmtThr(a) + '</td>' +
+                    '<td><button class="at-toggle' + (a.enabled ? ' on' : '') + '" data-id="' + a.id + '" role="switch" aria-checked="' + !!a.enabled + '" aria-label="Toggle alert"><span></span></button></td>' +
+                    '<td><button class="at-del" data-id="' + a.id + '" aria-label="Delete alert">Delete</button></td>' +
+                '</tr>';
+            }).join('');
+        }
+        if (body) body.addEventListener('click', function (e) {
+            var tg = e.target.closest('.at-toggle');
+            if (tg) { var id = +tg.getAttribute('data-id'); var a = alerts.filter(function (x) { return x.id === id; })[0]; if (a) { a.enabled = !a.enabled; save(); render(); } return; }
+            var dl = e.target.closest('.at-del');
+            if (dl) { var did = +dl.getAttribute('data-id'); alerts = alerts.filter(function (x) { return x.id !== did; }); save(); render(); }
+        });
+        var btn = document.getElementById('createAlertBtn');
+        if (btn) btn.addEventListener('click', function () {
+            var sym = (document.getElementById('alertSymbolInput').value || '').trim().toUpperCase().replace(/[^A-Z0-9.\/-]/g, '').slice(0, 12);
+            var type = document.getElementById('alertTypeSelect').value;
+            var thr = parseFloat(document.getElementById('alertThresholdInput').value);
+            if (!sym) { alert('Enter a symbol.'); return; }
+            if (NUMERIC[type] && !(thr > 0)) { alert('Enter a threshold greater than 0 for this alert type.'); return; }
+            alerts.push({ id: Date.now(), symbol: sym, type: type, threshold: NUMERIC[type] ? thr : 0, enabled: true });
+            save(); render();
+            document.getElementById('alertThresholdInput').value = '';
+        });
+        render();
+    })();
+    </script>
 
     <!-- Scrolling Index Ticker Ribbon -->
     <div class="pf-ticker-container">
