@@ -46,8 +46,13 @@ app.use('/api', rateLimit({
 // disabled entirely; when set, callers must present it as a Bearer token or
 // x-access-token header. Read endpoints remain public (showcase).
 const ACCESS_TOKEN = process.env.DASHBOARD_ACCESS_TOKEN || '';
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 app.use((req, res, next) => {
-    if (req.method !== 'POST' || !req.path.startsWith('/api/')) return next();
+    // Gate ALL mutating verbs, not just POST. DELETE (cancel order / cancel-all /
+    // delete watchlist) and PATCH/PUT (replace order / update watchlist) reach the
+    // live broker and MUST require the token — anonymous DELETE /orders (cancel-all)
+    // would wipe protective bracket stops. Reads (GET/HEAD/OPTIONS) stay public.
+    if (!MUTATING_METHODS.has(req.method) || !req.path.startsWith('/api/')) return next();
     if (!ACCESS_TOKEN) {
         return res.status(503).json({
             error: 'Trade actions are disabled. Set DASHBOARD_ACCESS_TOKEN to enable.',
@@ -404,6 +409,12 @@ const SECTOR_MAP = {
     XLU: 'Utilities', XLRE: 'Real Estate',
     BIL: 'Defensive', SHY: 'Defensive', TLT: 'Defensive', GLD: 'Defensive',
     JPM: 'Financials', MS: 'Financials',
+    // P2 (Capitol Shadow) / P3 (Cautious Sniper) single names — classify into real
+    // GICS sectors so combined exposure isn't understated as a large "Other" bucket.
+    CSCO: 'Technology', INTU: 'Technology', TER: 'Technology', PANW: 'Technology',
+    MPC: 'Energy', VLO: 'Energy', EOG: 'Energy',
+    WMT: 'Consumer', HD: 'Consumer', PG: 'Consumer',
+    MEDP: 'Healthcare', PH: 'Industrials', T: 'Communications',
 };
 
 app.get('/api/intelligence/cross-portfolio', async (req, res) => {
@@ -2308,10 +2319,18 @@ app.get('/api/crypto/bars/:symbol', async (req, res) => {
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
     const sym = req.params.symbol.replace('/', '%2F');
     const { timeframe, start, end, limit } = req.query;
-    let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/bars?symbols=${sym}&timeframe=${timeframe || '1Day'}`;
-    if (start) url += `&start=${start}`;
+    const tf = timeframe || '1Day';
+    const lim = parseInt(limit) || 80;
+    // Crypto trades 24/7. Without an explicit `start` Alpaca returns only a tiny
+    // recent slice (1Day → a SINGLE candle), the same empty-period pitfall as stock
+    // bars. Derive a lookback that comfortably covers `limit` bars when none is sent.
+    let startParam = start;
+    if (!startParam) {
+        const tfMin = { '1Min': 1, '5Min': 5, '15Min': 15, '1Hour': 60, '4Hour': 240, '1Day': 1440 }[tf] || 1440;
+        startParam = new Date(Date.now() - tfMin * 60000 * lim * 1.5).toISOString();
+    }
+    let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/bars?symbols=${sym}&timeframe=${tf}&start=${startParam}&limit=${lim}`;
     if (end) url += `&end=${end}`;
-    if (limit) url += `&limit=${limit}`;
     try {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
@@ -2379,7 +2398,9 @@ app.get('/api/crypto/orderbook/:symbol', async (req, res) => {
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
     const sym = req.params.symbol.replace('/', '%2F');
     try {
-        const data = await alpacaRequest('GET', `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/orderbooks/books?symbols=${sym}`, cfg.api_key, cfg.api_secret);
+        // Correct Alpaca path is /latest/orderbooks (the previous /orderbooks/books
+        // 404'd, so the live depth ladder silently rendered empty for every visitor).
+        const data = await alpacaRequest('GET', `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/latest/orderbooks?symbols=${sym}`, cfg.api_key, cfg.api_secret);
         res.json(data);
     } catch (e) {
         res.json({ orderbooks: {} });

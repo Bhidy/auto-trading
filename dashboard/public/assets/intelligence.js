@@ -81,12 +81,17 @@
         <div class="bar-track"><div class="bar-fill ${s.breach ? 'breach' : ''}" style="width:${w}%"></div></div></div>`;
     }).join('') || '<div class="empty-note">—</div>';
 
+    // Null-safe: never dereference .length on a missing array. The endpoint always
+    // returns these, but a partial/200 error body must degrade to 0, not throw and
+    // blank the whole concentration panel.
+    const breachCount = (d.single_name_breaches || []).length + (d.sector_breaches || []).length;
+
     $('concBody').innerHTML = `
       <div class="metric-row" style="margin-bottom:1.25rem">
         <div class="metric"><div class="label">Total Equity</div><div class="value">${fmtMoney(d.total_equity)}</div></div>
         <div class="metric"><div class="label">Single-name cap</div><div class="value">${fmtNum(d.single_name_cap_pct, 0)}<span class="unit">%</span></div></div>
         <div class="metric"><div class="label">Sector cap</div><div class="value">${fmtNum(d.sector_cap_pct, 0)}<span class="unit">%</span></div></div>
-        <div class="metric"><div class="label">Breaches</div><div class="value ${(d.single_name_breaches.length + d.sector_breaches.length) ? 'neg' : 'pos'}">${d.single_name_breaches.length + d.sector_breaches.length}</div></div>
+        <div class="metric"><div class="label">Breaches</div><div class="value ${breachCount ? 'neg' : 'pos'}">${breachCount}</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
         <div><div class="card-sub" style="margin-bottom:.75rem">By name (vs ${fmtNum(d.single_name_cap_pct, 0)}% cap)</div>${symBars}</div>
