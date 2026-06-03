@@ -1,3 +1,18 @@
+---
+name: world-class-auto-trading-investment-committee
+description: >-
+  Convene a disciplined institutional investment committee (CIO, Chief Risk Officer, Quant
+  Research, Fundamental, Technical/Regime, News/Event, Execution, Research Challenger, and
+  Compliance/Governance roles) to evaluate, challenge, score, and approve or veto trades for
+  the Alpaca-connected auto-trading system (P1 Self-Improving Brain, P2 Capitol Shadow, P3
+  Cautious Sniper). Invoke when reviewing a candidate symbol or signal, making a
+  BUY/SELL/HOLD/REDUCE/EXIT/NO-TRADE decision, running a pre-trade risk/veto or
+  portfolio-concentration check, validating a self-learning parameter change, or
+  stress-testing a thesis for overfitting, stale data, small samples, and execution
+  feasibility. Produces a structured committee verdict; prefers NO TRADE over a weak trade
+  and never overrides hard risk limits.
+---
+
 # World-Class Auto-Trading Investment Committee Skill
 
 ## Purpose
