@@ -1,7 +1,7 @@
 {
-  "equity": 99497.09,
+  "equity": 99529.95,
   "starting_equity": 100000.0,
-  "day_start_equity": 99497.7,
+  "day_start_equity": 99529.95,
   "week_start_equity": 99481.41,
   "positions": {
     "AAPL": {
@@ -61,18 +61,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 87155.863,
-  "long_market_value": 87155.863,
+  "total_exposure": 87188.72,
+  "long_market_value": 87188.72,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 12341.23,
-  "day_pnl": -0.61,
-  "day_pnl_pct": -6e-06,
-  "week_pnl": 15.68,
-  "week_pnl_pct": 0.000158,
+  "day_pnl": 0.0,
+  "day_pnl_pct": 0.0,
+  "week_pnl": 48.54,
+  "week_pnl_pct": 0.000488,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-04T21:54:28.304571+00:00"
+  "last_updated": "2026-06-04T22:02:16.769205+00:00"
 }
