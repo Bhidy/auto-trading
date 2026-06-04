@@ -873,5 +873,22 @@
     "status": "open",
     "stop_loss": 269.75,
     "take_profit": 302.87
+  },
+  {
+    "symbol": "XLK",
+    "side": "buy",
+    "qty": 3.0,
+    "entry_price": 190.775758,
+    "timestamp": "2026-06-04T21:54:27.070788+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 32
   }
 ]

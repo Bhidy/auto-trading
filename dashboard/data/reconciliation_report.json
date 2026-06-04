@@ -1,11 +1,17 @@
 {
-  "timestamp": "2026-06-03T23:22:13.908405+00:00",
-  "positions_held": 9,
-  "open_trades_logged": 9,
+  "timestamp": "2026-06-04T21:54:27.072535+00:00",
+  "positions_held": 11,
+  "open_trades_logged": 11,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "add_unlogged",
+      "symbol": "XLK",
+      "qty": 3.0
+    }
+  ]
 }
