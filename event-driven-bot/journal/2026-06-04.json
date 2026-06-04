@@ -1,0 +1,146 @@
+[
+  {
+    "date": "2026-06-04",
+    "timestamp": "2026-06-04T21:55:09.822873+00:00",
+    "audit": {
+      "equity": 105386.07,
+      "cash": 47206.89,
+      "daily_pnl": 281.21,
+      "daily_pnl_pct": 0.268,
+      "total_open_exposure": 58179.18,
+      "exposure_pct": 55.2,
+      "position_count": 8,
+      "trades_today": 3,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 21115.1,
+        "Energy": 21140.83,
+        "Consumer": 15923.25
+      }
+    },
+    "positions": [
+      {
+        "symbol": "CSCO",
+        "qty": "26",
+        "entry": "126.21",
+        "current": "130.25",
+        "market_value": "3386.5",
+        "unrealized_pl": "105.04",
+        "pnl_pct": 3.2,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "140.88",
+        "market_value": "140.88",
+        "unrealized_pl": "0.2",
+        "pnl_pct": 0.14,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "267.05",
+        "market_value": "15755.95",
+        "unrealized_pl": "782.93",
+        "pnl_pct": 5.23,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MU",
+        "qty": "16",
+        "entry": "983.75",
+        "current": "985.75",
+        "market_value": "15772",
+        "unrealized_pl": "32",
+        "pnl_pct": 0.2,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "9",
+        "entry": "212.4",
+        "current": "217.4",
+        "market_value": "1956.6",
+        "unrealized_pl": "45",
+        "pnl_pct": 2.35,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "262.05",
+        "current": "260",
+        "market_value": "4940",
+        "unrealized_pl": "-38.95",
+        "pnl_pct": -0.78,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "117.95",
+        "market_value": "15923.25",
+        "unrealized_pl": "388.409985",
+        "pnl_pct": 2.5,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "152",
+        "market_value": "304",
+        "unrealized_pl": "1.22",
+        "pnl_pct": 0.4,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "XOM",
+        "side": "buy",
+        "qty": 2,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.65,
+        "reasons": [
+          "Breaking upper BB ($160.89)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "MU",
+        "side": "buy",
+        "qty": 16,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+60.2%)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "NVDA",
+        "side": "buy",
+        "qty": 9,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+10.2%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
+  }
+]
