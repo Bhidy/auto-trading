@@ -24,7 +24,7 @@
 
     var portfolio, metrics, detailCache = null;
     var perfChart = null, allocChart = null;
-    var chartPeriod = 'All', chartMode = 'index';
+    var chartPeriod = '1D', chartMode = 'index';
     var holdingsTab = 'overview';
     var contribTab  = 'gainers';
     var intelTab    = 'overview'; // hub tab: overview | attribution | risk | quality
