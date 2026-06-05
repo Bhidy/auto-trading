@@ -136,12 +136,15 @@
     "reasons": [
       "Strongest 3M momentum 29.5%"
     ],
-    "exit_price": null,
-    "exit_timestamp": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "hold_days": null,
-    "status": "open"
+    "exit_price": 248.556539,
+    "exit_timestamp": "2026-06-05T21:45:26.365112+00:00",
+    "pnl": -467.08,
+    "pnl_pct": -7.87,
+    "hold_days": 9,
+    "status": "closed",
+    "gross_pnl": -466.92,
+    "fees": 0.16,
+    "realized_pnl": -467.08
   },
   {
     "id": 8,
