@@ -118,7 +118,7 @@ function loadConfig() {
     if (!portfoliosConfig || Object.keys(portfoliosConfig).length === 0) {
         portfoliosConfig = {};
         const portfolioDefs = [
-            { id: 'portfolio_1', label: 'Self Improving Brain', account: 'PA3HULQQ8OOH', strategy: 'Multi-factor scoring with regime detection', dir: './' },
+            { id: 'portfolio_1', label: 'Improving Brain', account: 'PA3HULQQ8OOH', strategy: 'Multi-factor scoring with regime detection', dir: './' },
             { id: 'portfolio_2', label: 'Capitol Shadow', account: 'PA38R564MIS7', strategy: 'Copy trades from top-performing US politicians', dir: './political-copy-bot' },
             { id: 'portfolio_3', label: 'Cautious Sniper', account: 'PA3M3WI7C58W', strategy: 'Institutional multi-factor: fundamental + technical + news', dir: './event-driven-bot' },
         ];

@@ -44,7 +44,7 @@
             nav_home: 'Home',
             nav_portfolios: 'Portfolios',
             nav_pf_list: 'Portfolio List',
-            nav_pf1: 'Self Improving Brain',
+            nav_pf1: 'Improving Brain',
             nav_pf2: 'Capitol Shadow',
             nav_pf3: 'Cautious Sniper',
             nav_market_pulse: 'Market Pulse',

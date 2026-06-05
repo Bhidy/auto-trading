@@ -447,7 +447,7 @@
         
         var serverSlots = [
             { id: 'all',         name: 'All Portfolios',       nameAr: 'جميع المحافظ',           currency: 'USD', benchmark: 'SPY', isServer: true, isAggregated: true },
-            { id: 'portfolio_1', name: 'Self Improving Brain', nameAr: 'الدماغ ذاتي التحسين', currency: 'USD', benchmark: 'SPY', isServer: true },
+            { id: 'portfolio_1', name: 'Improving Brain', nameAr: 'الدماغ ذاتي التحسين', currency: 'USD', benchmark: 'SPY', isServer: true },
             { id: 'portfolio_2', name: 'Capitol Shadow',       nameAr: 'ظل الكابيتول',          currency: 'USD', benchmark: 'SPY', isServer: true },
             { id: 'portfolio_3', name: 'Cautious Sniper',      nameAr: 'القناص الحذر',          currency: 'USD', benchmark: 'SPY', isServer: true }
         ];

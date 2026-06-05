@@ -5,7 +5,7 @@
         en: {
             scr_title: 'Asset Screener', scr_subtitle: 'Browse and filter all tradable assets — stocks, ETFs, crypto, and options',
             nav_home: 'Home', nav_portfolios: 'Portfolios', nav_pf_list: 'Portfolio List',
-            nav_pf1: 'Self Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper',
+            nav_pf1: 'Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper',
             nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders',
             nav_crypto: 'Crypto Terminal', nav_options: 'Options Lab', nav_screener: 'Screener',
             nav_history: 'Account History', nav_alerts: 'Alerts', nav_research: 'Research & AI', nav_settings: 'Settings',

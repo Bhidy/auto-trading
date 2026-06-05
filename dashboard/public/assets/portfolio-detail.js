@@ -12,7 +12,7 @@
 
     /* ─── Nav translations ────────────────────────────────────────────── */
     var NAV = {
-        en: { nav_all: 'All Portfolios', nav_pf1: 'Self Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper', nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders', nav_crypto: 'Crypto Terminal', nav_options: 'Options Lab', nav_screener: 'Screener', nav_history: 'Account History' },
+        en: { nav_all: 'All Portfolios', nav_pf1: 'Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper', nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders', nav_crypto: 'Crypto Terminal', nav_options: 'Options Lab', nav_screener: 'Screener', nav_history: 'Account History' },
         ar: { nav_all: 'جميع المحافظ', nav_pf1: 'الدماغ ذاتي التحسين', nav_pf2: 'ظل الكابيتول', nav_pf3: 'القناص الحذر', nav_market_pulse: 'نبض السوق', nav_trading: 'التداول', nav_orders: 'الأوامر', nav_crypto: 'محطة العملات الرقمية', nav_options: 'مختبر الخيارات', nav_screener: 'فلتر الأسهم', nav_history: 'سجل الحساب' }
     };
     function applyNavLang(l) {
@@ -2005,7 +2005,7 @@
 
         var pfOptions = [
             { v: 'all',         l: il('All Portfolios', 'الكل') },
-            { v: 'portfolio_1', l: 'Self Improving Brain' },
+            { v: 'portfolio_1', l: 'Improving Brain' },
             { v: 'portfolio_2', l: 'Capitol Shadow' },
             { v: 'portfolio_3', l: 'Cautious Sniper' }
         ].map(function(o) {

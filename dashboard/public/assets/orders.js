@@ -6,7 +6,7 @@
             orders_title: 'Order Management',
             orders_subtitle: 'Full order lifecycle — create, monitor, replace, and cancel orders across all portfolios',
             nav_home: 'Home', nav_portfolios: 'Portfolios', nav_pf_list: 'Portfolio List',
-            nav_pf1: 'Self Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper',
+            nav_pf1: 'Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper',
             nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders',
             nav_crypto: 'Crypto Terminal', nav_options: 'Options Lab', nav_screener: 'Screener',
             nav_history: 'Account History', nav_alerts: 'Alerts', nav_research: 'Research & AI', nav_settings: 'Settings',
@@ -118,33 +118,58 @@
             var resp = await fetch('/api/portfolios');
             var data = await resp.json();
             sel.innerHTML = '';
+            var allOpt = document.createElement('option');
+            allOpt.value = 'all';
+            allOpt.textContent = 'All Portfolios';
+            sel.appendChild(allOpt);
             Object.entries(data).forEach(function (entry) {
                 var opt = document.createElement('option');
                 opt.value = entry[0];
                 opt.textContent = entry[1].label || entry[0];
                 sel.appendChild(opt);
             });
-            if (sel.options.length > 0) {
-                currentPfId = sel.value;
-                loadOrders();
-            }
+            currentPfId = sel.value;   // defaults to "all" (first option)
+            updateNewOrderState();
+            loadOrders();
         } catch (e) {
             sel.innerHTML = '<option>No portfolios</option>';
         }
     }
 
+    function updateNewOrderState() {
+        var btn = $('btnNewOrder');
+        if (!btn) return;
+        var isAll = currentPfId === 'all';
+        btn.disabled = isAll;
+        btn.style.opacity = isAll ? '0.45' : '';
+        btn.style.cursor = isAll ? 'not-allowed' : '';
+        btn.title = isAll ? 'Select a specific portfolio to place an order' : '';
+    }
+
     async function loadOrders() {
         if (!currentPfId) return;
-        // Always send an explicit status. Alpaca's orders API defaults to `open`
-        // when status is omitted, so "All" (which previously sent nothing) showed an
-        // EMPTY table for any portfolio with no open orders (P1/P2) despite dozens of
-        // filled orders. status=all returns open+closed.
+        // status=all returns open+closed (Alpaca defaults to `open` when omitted).
         var status = $('filterStatus').value || 'all';
-        var url = '/api/portfolio/' + currentPfId + '/orders?limit=200&nested=true&status=' + status;
         try {
-            var resp = await fetch(url);
-            allOrders = await resp.json();
-            if (!Array.isArray(allOrders)) allOrders = [];
+            if (currentPfId === 'all') {
+                // Aggregate every portfolio's orders; tag each with its book, newest first.
+                var sel = $('ordPortfolioSelect');
+                var ids = [].slice.call(sel.options).map(function (o) { return o.value; })
+                    .filter(function (v) { return v && v !== 'all'; });
+                var lists = await Promise.all(ids.map(function (id) {
+                    return fetch('/api/portfolio/' + id + '/orders?limit=200&nested=true&status=' + status)
+                        .then(function (r) { return r.json(); })
+                        .then(function (arr) { return (Array.isArray(arr) ? arr : []).map(function (o) { o._pf = id; return o; }); })
+                        .catch(function () { return []; });
+                }));
+                allOrders = [].concat.apply([], lists).sort(function (a, b) {
+                    return new Date(b.submitted_at || b.created_at || 0) - new Date(a.submitted_at || a.created_at || 0);
+                });
+            } else {
+                var resp = await fetch('/api/portfolio/' + currentPfId + '/orders?limit=200&nested=true&status=' + status);
+                allOrders = await resp.json();
+                if (!Array.isArray(allOrders)) allOrders = [];
+            }
         } catch (e) {
             allOrders = [];
         }
@@ -152,12 +177,20 @@
         updateKpis();
     }
 
+    var PERIOD_DAYS = { '1D': 1, '5D': 5, '1M': 30, '3M': 90 };
     function getFilteredOrders() {
         var sideF = $('filterSide').value;
         var symF = $('filterSymbol').value.toUpperCase().trim();
+        var pEl = $('filterPeriod');
+        var days = pEl ? (PERIOD_DAYS[pEl.value] || 0) : 0;
+        var cutoff = days ? Date.now() - days * 86400000 : 0;
         return allOrders.filter(function (o) {
             if (sideF && o.side !== sideF) return false;
             if (symF && (o.symbol || '').indexOf(symF) === -1) return false;
+            if (cutoff) {
+                var ts = new Date(o.submitted_at || o.created_at || 0).getTime();
+                if (!ts || ts < cutoff) return false;
+            }
             return true;
         });
     }
@@ -204,9 +237,10 @@
     }
 
     function updateKpis() {
-        var total = allOrders.length;
+        var scope = getFilteredOrders();
+        var total = scope.length;
         var open = 0, filled = 0, canceled = 0, value = 0;
-        allOrders.forEach(function (o) {
+        scope.forEach(function (o) {
             if (['new', 'accepted', 'partially_filled', 'pending_new', 'held'].indexOf(o.status) !== -1) open++;
             if (o.status === 'filled') filled++;
             if (o.status === 'canceled') canceled++;
@@ -365,7 +399,8 @@
         applyLang();
         loadPortfolios();
 
-        $('ordPortfolioSelect').addEventListener('change', function () { currentPfId = this.value; loadOrders(); });
+        $('ordPortfolioSelect').addEventListener('change', function () { currentPfId = this.value; updateNewOrderState(); loadOrders(); });
+        var pe = $('filterPeriod'); if (pe) pe.addEventListener('change', function () { renderOrders(); updateKpis(); });
         $('filterStatus').addEventListener('change', loadOrders);
         $('filterSide').addEventListener('change', renderOrders);
         $('filterSymbol').addEventListener('input', renderOrders);
