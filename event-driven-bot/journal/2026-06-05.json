@@ -280,5 +280,99 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-06-05",
+    "timestamp": "2026-06-05T22:35:16.930449+00:00",
+    "audit": {
+      "equity": 103463.74,
+      "cash": 61715.2,
+      "daily_pnl": -2041.04,
+      "daily_pnl_pct": -1.935,
+      "total_open_exposure": 41748.54,
+      "exposure_pct": 40.4,
+      "position_count": 7,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 5015.85,
+        "Energy": 20756.79,
+        "Consumer": 15975.9
+      }
+    },
+    "positions": [
+      {
+        "symbol": "CSCO",
+        "qty": "26",
+        "entry": "126.21",
+        "current": "121.89",
+        "market_value": "3169.14",
+        "unrealized_pl": "-112.32",
+        "pnl_pct": -3.42,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "137.78",
+        "market_value": "137.78",
+        "unrealized_pl": "-2.9",
+        "pnl_pct": -2.06,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "262.01",
+        "market_value": "15458.59",
+        "unrealized_pl": "485.57",
+        "pnl_pct": 3.24,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "9",
+        "entry": "212.4",
+        "current": "205.19",
+        "market_value": "1846.71",
+        "unrealized_pl": "-64.89",
+        "pnl_pct": -3.4,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "262.05",
+        "current": "255.82",
+        "market_value": "4860.58",
+        "unrealized_pl": "-118.37",
+        "pnl_pct": -2.38,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "118.34",
+        "market_value": "15975.9",
+        "unrealized_pl": "441.059985",
+        "pnl_pct": 2.84,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "149.92",
+        "market_value": "299.84",
+        "unrealized_pl": "-2.94",
+        "pnl_pct": -0.97,
+        "sector": "Energy"
+      }
+    ],
+    "trades": []
   }
 ]
