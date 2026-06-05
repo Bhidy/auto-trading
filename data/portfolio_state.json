@@ -1,5 +1,5 @@
 {
-  "equity": 99414.18,
+  "equity": 98648.39,
   "starting_equity": 100000.0,
   "day_start_equity": 99413.99,
   "week_start_equity": 99481.41,
@@ -14,6 +14,11 @@
       "avg_price": 265.458654,
       "bucket": "aggressive_growth"
     },
+    "DIA": {
+      "qty": 21,
+      "avg_price": 516.138095,
+      "bucket": "core_equity"
+    },
     "GOOGL": {
       "qty": 20,
       "avg_price": 365.54,
@@ -21,7 +26,7 @@
     },
     "IWM": {
       "qty": 19,
-      "avg_price": 290.329999,
+      "avg_price": 290.33,
       "bucket": "core_equity"
     },
     "NVDA": {
@@ -46,33 +51,33 @@
     },
     "XLE": {
       "qty": 201,
-      "avg_price": 58.501243,
+      "avg_price": 58.501244,
       "bucket": "sector_momentum"
     },
     "XLK": {
       "qty": 3,
-      "avg_price": 190.775758,
+      "avg_price": 190.35082,
       "bucket": "sector_momentum"
     },
     "XLY": {
-      "qty": 42,
-      "avg_price": 117.93,
+      "qty": 53,
+      "avg_price": 117.767547,
       "bucket": "sector_momentum"
     }
   },
   "trades_today": 0,
-  "total_exposure": 87072.9513,
-  "long_market_value": 87072.9513,
+  "total_exposure": 98435.2169,
+  "long_market_value": 98435.2169,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 12341.23,
-  "day_pnl": 0.19,
-  "day_pnl_pct": 2e-06,
-  "week_pnl": -67.23,
-  "week_pnl_pct": -0.000676,
+  "cash": 213.68,
+  "day_pnl": -765.6,
+  "day_pnl_pct": -0.007701,
+  "week_pnl": -833.02,
+  "week_pnl_pct": -0.008374,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-04T22:55:35.469057+00:00"
+  "last_updated": "2026-06-05T14:11:05.510024+00:00"
 }
