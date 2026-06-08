@@ -1,0 +1,213 @@
+[
+  {
+    "date": "2026-06-08",
+    "timestamp": "2026-06-08T22:02:16.017609+00:00",
+    "audit": {
+      "equity": 104018.62,
+      "cash": 26061.49,
+      "daily_pnl": 489.31,
+      "daily_pnl_pct": 0.473,
+      "total_open_exposure": 77957.13,
+      "exposure_pct": 74.9,
+      "position_count": 12,
+      "trades_today": 5,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 21046.63,
+        "Energy": 20876.83,
+        "Consumer": 20743.68,
+        "Financials": 15289.99
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "5",
+        "entry": "156.66",
+        "current": "156.3",
+        "market_value": "781.5",
+        "unrealized_pl": "-1.8",
+        "pnl_pct": -0.23,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "CSCO",
+        "qty": "26",
+        "entry": "126.21",
+        "current": "124.16",
+        "market_value": "3228.16",
+        "unrealized_pl": "-53.3",
+        "pnl_pct": -1.62,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "140.15",
+        "market_value": "140.15",
+        "unrealized_pl": "-0.53",
+        "pnl_pct": -0.38,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "F",
+        "qty": "298",
+        "entry": "14.95",
+        "current": "15.01",
+        "market_value": "4472.98",
+        "unrealized_pl": "17.88",
+        "pnl_pct": 0.4,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "263.1507",
+        "market_value": "15525.8913",
+        "unrealized_pl": "552.8713",
+        "pnl_pct": 3.69,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MS",
+        "qty": "72",
+        "entry": "215.19",
+        "current": "212.361",
+        "market_value": "15289.992",
+        "unrealized_pl": "-203.688",
+        "pnl_pct": -1.31,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "16",
+        "entry": "924.95",
+        "current": "947.76",
+        "market_value": "15164.16",
+        "unrealized_pl": "364.96",
+        "pnl_pct": 2.47,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "9",
+        "entry": "212.4",
+        "current": "208.09",
+        "market_value": "1872.81",
+        "unrealized_pl": "-38.79",
+        "pnl_pct": -2.03,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "1",
+        "entry": "122.41",
+        "current": "123.35",
+        "market_value": "123.35",
+        "unrealized_pl": "0.94",
+        "pnl_pct": 0.77,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "262.05",
+        "current": "258.3045",
+        "market_value": "4907.7855",
+        "unrealized_pl": "-71.1645",
+        "pnl_pct": -1.43,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "119.61",
+        "market_value": "16147.35",
+        "unrealized_pl": "612.509985",
+        "pnl_pct": 3.94,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "151.5002",
+        "market_value": "303.0004",
+        "unrealized_pl": "0.2204",
+        "pnl_pct": 0.07,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MU",
+        "side": "buy",
+        "qty": 16,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($929.35)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+114.5%)"
+        ]
+      },
+      {
+        "symbol": "MS",
+        "side": "buy",
+        "qty": 72,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($202.52)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "F",
+        "side": "buy",
+        "qty": 298,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($15.52)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "ANET",
+        "side": "buy",
+        "qty": 5,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.53,
+        "reasons": [
+          "MACD bullish crossover",
+          "MACD crossover below zero (structural reversal)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "TGT",
+        "side": "buy",
+        "qty": 1,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "High RVOL (1.5x)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
+  }
+]
