@@ -1,5 +1,5 @@
 {
-  "equity": 97723.04,
+  "equity": 97533.44,
   "starting_equity": 100000.0,
   "day_start_equity": 96593.96,
   "week_start_equity": 99481.41,
@@ -7,11 +7,6 @@
     "AAPL": {
       "qty": 25,
       "avg_price": 310.58,
-      "bucket": "aggressive_growth"
-    },
-    "AMZN": {
-      "qty": 11,
-      "avg_price": 246.98087,
       "bucket": "aggressive_growth"
     },
     "DIA": {
@@ -53,26 +48,21 @@
       "qty": 3,
       "avg_price": 190.35082,
       "bucket": "sector_momentum"
-    },
-    "XLY": {
-      "qty": 53,
-      "avg_price": 117.767547,
-      "bucket": "sector_momentum"
     }
   },
   "trades_today": 0,
-  "total_exposure": 87216.23,
-  "long_market_value": 87216.23,
+  "total_exposure": 78196.115,
+  "long_market_value": 78196.115,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 10505.86,
-  "day_pnl": 1129.08,
-  "day_pnl_pct": 0.011689,
-  "week_pnl": -1758.37,
-  "week_pnl_pct": -0.017675,
+  "cash": 19337.72,
+  "day_pnl": 939.48,
+  "day_pnl_pct": 0.009726,
+  "week_pnl": -1947.97,
+  "week_pnl_pct": -0.019581,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-08T17:32:24.533641+00:00"
+  "last_updated": "2026-06-08T17:46:44.401918+00:00"
 }
