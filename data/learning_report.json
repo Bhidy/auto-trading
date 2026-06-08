@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-08T22:15:23.909285+00:00",
+  "timestamp": "2026-06-08T22:49:38.824894+00:00",
   "overall": {
     "total_trades": 20,
     "wins": 6,
@@ -49,29 +49,29 @@
     "sharpe_estimate": -0.32
   },
   "by_bucket": {
-    "sector_momentum": {
-      "trades": 8,
-      "win_rate": 0.375,
-      "total_pnl": 386.23,
-      "avg_pnl_pct": 0.44
-    },
-    "defensive": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
-    },
     "aggressive_growth": {
       "trades": 7,
       "win_rate": 0.143,
       "total_pnl": -1598.85,
       "avg_pnl_pct": -3.73
     },
+    "sector_momentum": {
+      "trades": 8,
+      "win_rate": 0.375,
+      "total_pnl": 386.23,
+      "avg_pnl_pct": 0.44
+    },
     "core_equity": {
       "trades": 3,
       "win_rate": 0.667,
       "total_pnl": 38.72,
       "avg_pnl_pct": 0.34
+    },
+    "defensive": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
     }
   },
   "by_symbol": {
@@ -81,35 +81,23 @@
       "total_pnl": 29.04,
       "avg_pnl_pct": 0.42
     },
+    "QQQ": {
+      "trades": 2,
+      "win_rate": 0.5,
+      "total_pnl": 1.41,
+      "avg_pnl_pct": 0.1
+    },
     "BIL": {
       "trades": 1,
       "win_rate": 0.0,
       "total_pnl": -46.39,
       "avg_pnl_pct": -0.23
     },
-    "AMZN": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -915.21,
-      "avg_pnl_pct": -4.58
-    },
-    "XLK": {
-      "trades": 5,
-      "win_rate": 0.6,
-      "total_pnl": 663.71,
-      "avg_pnl_pct": 1.89
-    },
     "XLY": {
       "trades": 3,
       "win_rate": 0.0,
       "total_pnl": -268.58,
       "avg_pnl_pct": -2.1
-    },
-    "QQQ": {
-      "trades": 2,
-      "win_rate": 0.5,
-      "total_pnl": 1.41,
-      "avg_pnl_pct": 0.1
     },
     "XLI": {
       "trades": 1,
@@ -128,6 +116,18 @@
       "win_rate": 1.0,
       "total_pnl": 37.31,
       "avg_pnl_pct": 0.82
+    },
+    "XLK": {
+      "trades": 5,
+      "win_rate": 0.6,
+      "total_pnl": 663.71,
+      "avg_pnl_pct": 1.89
+    },
+    "AMZN": {
+      "trades": 3,
+      "win_rate": 0.0,
+      "total_pnl": -915.21,
+      "avg_pnl_pct": -4.58
     }
   },
   "insights": [
