@@ -1,5 +1,5 @@
 {
-  "equity": 96593.96,
+  "equity": 97451.95,
   "starting_equity": 100000.0,
   "day_start_equity": 96593.96,
   "week_start_equity": 99481.41,
@@ -7,6 +7,11 @@
     "AAPL": {
       "qty": 25,
       "avg_price": 310.58,
+      "bucket": "aggressive_growth"
+    },
+    "AMZN": {
+      "qty": 23,
+      "avg_price": 246.98087,
       "bucket": "aggressive_growth"
     },
     "DIA": {
@@ -20,8 +25,8 @@
       "bucket": "aggressive_growth"
     },
     "IWM": {
-      "qty": 19,
-      "avg_price": 290.33,
+      "qty": 40,
+      "avg_price": 287.52125,
       "bucket": "core_equity"
     },
     "NVDA": {
@@ -40,8 +45,8 @@
       "bucket": "core_equity"
     },
     "TSLA": {
-      "qty": 13,
-      "avg_price": 436.999231,
+      "qty": 16,
+      "avg_price": 430.406875,
       "bucket": "aggressive_growth"
     },
     "XLE": {
@@ -61,18 +66,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 83455.34,
-  "long_market_value": 83455.34,
+  "total_exposure": 97181.804,
+  "long_market_value": 97181.804,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 13138.62,
-  "day_pnl": 0.0,
-  "day_pnl_pct": 0.0,
-  "week_pnl": -2887.45,
-  "week_pnl_pct": -0.029025,
+  "cash": 267.94,
+  "day_pnl": 857.99,
+  "day_pnl_pct": 0.008882,
+  "week_pnl": -2029.46,
+  "week_pnl_pct": -0.0204,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-05T22:45:56.322686+00:00"
+  "last_updated": "2026-06-08T14:15:03.049920+00:00"
 }
