@@ -10,5 +10,10 @@
       "includeFiles": "{data,event-driven-bot/data,political-copy-bot/data,journal,config}/**",
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/guardian-trigger", "schedule": "50 13 * * 1-5" },
+    { "path": "/api/guardian-trigger", "schedule": "10 14 * * 1-5" },
+    { "path": "/api/guardian-trigger", "schedule": "10 16 * * 1-5" }
+  ]
 }

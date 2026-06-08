@@ -2750,6 +2750,77 @@ app.post('/api/portfolio/:id/option/no-exercise/:symbol', async (req, res) => {
     }
 });
 
+// ─── Guardian External Trigger — Vercel Cron L2 Scheduler ──────────────────
+// Vercel fires this endpoint on weekdays via vercel.json "crons" schedule.
+// It dispatches a GitHub repository_dispatch (event_type: trading-catchup)
+// which starts the Guardian workflow within seconds — NOT subject to the
+// GitHub Actions cron throttle that caused today's missed session.
+//
+// Required Vercel env vars:
+//   CRON_SECRET         — random secret; Vercel sends it as Authorization: Bearer
+//   GITHUB_DISPATCH_PAT — fine-grained GitHub PAT with repo "actions:write" scope
+//
+// If either var is unset the endpoint returns 503 (fail-closed — no silent no-ops).
+app.get('/api/guardian-trigger', async (req, res) => {
+    const CRON_SECRET = process.env.CRON_SECRET || '';
+    const GITHUB_DISPATCH_PAT = process.env.GITHUB_DISPATCH_PAT || '';
+
+    if (!CRON_SECRET || !GITHUB_DISPATCH_PAT) {
+        console.error('[guardian-trigger] CRON_SECRET or GITHUB_DISPATCH_PAT not set — trigger disabled.');
+        return res.status(503).json({
+            ok: false,
+            error: 'Guardian trigger not configured. Set CRON_SECRET and GITHUB_DISPATCH_PAT in Vercel env vars.',
+        });
+    }
+
+    // Vercel cron requests carry Authorization: Bearer ${CRON_SECRET}
+    const authHeader = req.headers['authorization'] || '';
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+        return res.status(401).json({ ok: false, error: 'Unauthorized.' });
+    }
+
+    const payload = JSON.stringify({
+        event_type: 'trading-catchup',
+        client_payload: { source: 'vercel-cron', fired_at: new Date().toISOString() },
+    });
+
+    try {
+        const result = await new Promise((resolve, reject) => {
+            const options = {
+                hostname: 'api.github.com',
+                path: '/repos/Bhidy/auto-trading/dispatches',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_DISPATCH_PAT}`,
+                    'Accept': 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    'User-Agent': 'auto-trading-vercel-cron/1.0',
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(payload),
+                },
+            };
+            const r2 = https.request(options, (r) => {
+                let body = '';
+                r.on('data', d => body += d);
+                r.on('end', () => resolve({ status: r.statusCode, body }));
+            });
+            r2.on('error', reject);
+            r2.write(payload);
+            r2.end();
+        });
+
+        if (result.status === 204) {
+            console.log(`[guardian-trigger] repository_dispatch OK at ${new Date().toISOString()}`);
+            return res.json({ ok: true, dispatched: true, at: new Date().toISOString() });
+        }
+        console.error(`[guardian-trigger] GitHub returned ${result.status}: ${result.body}`);
+        return res.status(502).json({ ok: false, github_status: result.status, body: result.body });
+    } catch (e) {
+        console.error(`[guardian-trigger] dispatch error: ${e.message}`);
+        return res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
 if (require.main === module) {
     app.listen(PORT, () => {
         console.log(`=======================================================`);

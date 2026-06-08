@@ -568,7 +568,13 @@ class PoliticianBot:
             except Exception as e:
                 log.error(f"Error scanning sells for {primary}: {e}")
 
+        # Space out requests to Capitol Trades — rapid-fire subprocess spawns
+        # across 13 politicians exhausts the external API's rate limit (429).
+        # Sleep before the backup loop (after primary scan already fired one request).
+        time.sleep(2)
+
         for backup in self.watchlist_cfg.get("backup_politicians", []):
+            time.sleep(1.5)  # rate-limit guard between each politician scan
             try:
                 backup_trades = call_mcp_tool("get_politician_trades", {
                     "politician": backup, "type": ["BUY"], "days": days,
