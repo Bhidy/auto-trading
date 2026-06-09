@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-06-09T14:09:51.256732+00:00",
+  "timestamp": "2026-06-09T14:14:08.815373+00:00",
   "portfolio_id": "portfolio_1",
   "total_signals": 23,
-  "approved": 10,
-  "placed": 4,
-  "filled": 3,
+  "approved": 8,
+  "placed": 3,
+  "filled": 1,
   "unexplained": 0,
   "skipped": [
     {
@@ -18,18 +18,13 @@
       "benign": true
     },
     {
-      "symbol": "QQQ",
-      "reason": "already hold 11.8%",
+      "symbol": "AMZN",
+      "reason": "already hold 7.1%",
       "benign": true
     },
     {
-      "symbol": "AAPL",
+      "symbol": "TSLA",
       "reason": "already hold 7.6%",
-      "benign": true
-    },
-    {
-      "symbol": "XLK",
-      "reason": "below min notional",
       "benign": true
     },
     {
