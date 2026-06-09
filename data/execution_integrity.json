@@ -1,35 +1,30 @@
 {
-  "timestamp": "2026-06-08T14:15:02.409812+00:00",
+  "timestamp": "2026-06-09T14:09:51.256732+00:00",
   "portfolio_id": "portfolio_1",
   "total_signals": 23,
   "approved": 10,
-  "placed": 3,
+  "placed": 4,
   "filled": 3,
   "unexplained": 0,
   "skipped": [
     {
+      "symbol": "IWM",
+      "reason": "already hold 11.9%",
+      "benign": true
+    },
+    {
       "symbol": "DIA",
-      "reason": "already hold 11.0%",
+      "reason": "already hold 11.1%",
       "benign": true
     },
     {
       "symbol": "QQQ",
-      "reason": "already hold 11.7%",
-      "benign": true
-    },
-    {
-      "symbol": "GOOGL",
-      "reason": "already hold 7.4%",
-      "benign": true
-    },
-    {
-      "symbol": "XLY",
-      "reason": "below min notional",
+      "reason": "already hold 11.8%",
       "benign": true
     },
     {
       "symbol": "AAPL",
-      "reason": "already hold 8.0%",
+      "reason": "already hold 7.6%",
       "benign": true
     },
     {

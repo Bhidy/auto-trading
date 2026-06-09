@@ -470,5 +470,30 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-06-09T14:09:54.307387+00:00",
+    "date": "2026-06-09",
+    "symbol": "MRVL",
+    "side": "buy",
+    "qty": 4,
+    "entry_price": 275.93,
+    "stop_loss": 257.16,
+    "take_profit_1": 313.19,
+    "atr": 12.45,
+    "trade_value": 1103.36,
+    "order_id": "9ceb82ba-493f-4f7b-89e6-ba1bb11b17a1",
+    "order_status": "filled",
+    "filled_qty": 4.0,
+    "sector": "Tech",
+    "tranche": "core_swing",
+    "signal_score": 0.45,
+    "reasons": [
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+141.7%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
