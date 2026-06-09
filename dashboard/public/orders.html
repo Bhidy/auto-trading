@@ -18,7 +18,9 @@
         .ord-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
         .ord-head h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; margin: 0; }
         .ord-head p { color: var(--muted); font-size: .82rem; margin: .2rem 0 0; }
-        .ord-toolbar { display: flex; align-items: center; gap: .65rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .ord-toolbar { display: flex; align-items: flex-end; gap: .65rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .ord-filter-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .ord-filter-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-family: var(--pf-mono); font-weight: 700; padding-inline-start: 0.2rem; }
         .ord-filter-select { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .4rem .85rem; color: var(--ink); font-size: .78rem; font-weight: 600; cursor: pointer; }
         .ord-filter-select:focus { outline: none; border-color: var(--teal); }
         .ord-search { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: .4rem 1rem; color: var(--ink); font-size: .78rem; min-width: 180px; }
@@ -113,15 +115,15 @@
                     <span data-key="nav_market_pulse">Market Pulse</span>
                 </a>
                 <a href="/crypto-terminal.html" data-key="nav_crypto_link">Crypto</a>
+                <a href="/orders.html" class="active" data-key="nav_orders">Orders</a>
                 <div class="nav-dropdown-wrap">
-                    <a href="/intelligence.html" class="nav-dropdown-trigger active" style="display: flex; align-items: center; gap: 0.35rem;">
+                    <a href="/intelligence.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
                         <span data-key="nav_workspace">Workspace</span>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                     </a>
                     <div class="nav-dropdown-menu">
                         <a href="/intelligence.html" data-key="nav_intelligence">Intelligence</a>
                         <a href="/research.html" data-key="nav_research">Research &amp; AI</a>
-                        <a href="/orders.html" data-key="nav_orders">Orders</a>
                         <a href="/screener.html" data-key="nav_screener">Screener</a>
                         <a href="/account-history.html" data-key="nav_history">Account History</a>
                     </div>
@@ -145,7 +147,6 @@
                 <p data-key="orders_subtitle">Full order lifecycle — create, monitor, replace, and cancel orders across all portfolios</p>
             </div>
             <div style="display:flex;gap:.65rem;align-items:center;">
-                <select id="ordPortfolioSelect" class="ord-filter-select" style="min-width:200px;"></select>
                 <button class="pf-btn pf-btn--primary" id="btnNewOrder" data-key="btn_new_order">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     New Order
@@ -164,19 +165,39 @@
 
         <!-- Toolbar -->
         <div class="ord-toolbar">
-            <select id="filterStatus" aria-label="Filter orders by status" class="ord-filter-select">
-                <option value="all" data-key="filter_all_status">All Status</option>
-                <option value="open">Open</option>
-                <option value="closed">Closed</option>
-                <option value="all" selected>All</option>
-            </select>
-            <select id="filterSide" aria-label="Filter orders by side" class="ord-filter-select">
-                <option value="" data-key="filter_all_side">All Sides</option>
-                <option value="buy">Buy</option>
-                <option value="sell">Sell</option>
-            </select>
-            <input type="text" id="filterSymbol" aria-label="Filter orders by symbol" class="ord-search" placeholder="Search symbol..." data-key-placeholder="search_symbol">
-            <div style="flex:1;"></div>
+            <div class="ord-filter-group">
+                <span class="ord-filter-label">Period</span>
+                <select id="filterPeriod" aria-label="Filter orders by period" class="ord-filter-select">
+                    <option value="1D">1D</option>
+                    <option value="5D">5D</option>
+                    <option value="1M">1M</option>
+                    <option value="3M" selected>3M</option>
+                </select>
+            </div>
+            <div class="ord-filter-group">
+                <span class="ord-filter-label">Status</span>
+                <select id="filterStatus" aria-label="Filter orders by status" class="ord-filter-select">
+                    <option value="all" selected>All Orders</option>
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+            <div class="ord-filter-group">
+                <span class="ord-filter-label">Portfolio</span>
+                <select id="ordPortfolioSelect" aria-label="Filter orders by portfolio" class="ord-filter-select" style="min-width:170px;"></select>
+            </div>
+            <div class="ord-filter-group">
+                <span class="ord-filter-label">Side</span>
+                <select id="filterSide" aria-label="Filter orders by side" class="ord-filter-select">
+                    <option value="" data-key="filter_all_side">All Sides</option>
+                    <option value="buy">Buy</option>
+                    <option value="sell">Sell</option>
+                </select>
+            </div>
+            <div class="ord-filter-group" style="flex:1; min-width:150px;">
+                <span class="ord-filter-label">Symbol</span>
+                <input type="text" id="filterSymbol" aria-label="Filter orders by symbol" class="ord-search" placeholder="Search symbol..." data-key-placeholder="search_symbol" style="width:100%;">
+            </div>
             <button class="pf-btn pf-btn--sm" id="btnRefresh" data-key="btn_refresh">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 Refresh
