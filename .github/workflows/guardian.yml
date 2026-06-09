@@ -154,6 +154,7 @@ jobs:
           PY
 
       - name: P1 catch-up (only if market open AND not run today)
+        id: p1catch
         if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p1_stale == 'true'
         continue-on-error: true
         run: |
@@ -164,6 +165,7 @@ jobs:
           python3 scripts/autonomous_runner.py trading-session
 
       - name: P3 catch-up (only if market open AND not run today)
+        id: p3catch
         if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p3_stale == 'true'
         continue-on-error: true
         run: |
@@ -179,6 +181,7 @@ jobs:
           python3 scripts/event_driven_bot.py news-scan || true
 
       - name: P2 catch-up (only if market open AND not run today)
+        id: p2catch
         if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p2_stale == 'true'
         continue-on-error: true
         run: |
@@ -213,3 +216,25 @@ jobs:
         if: always()
         run: |
           bash scripts/commit_and_push.sh "Guardian: catch-up self-heal" data journal event-driven-bot/data event-driven-bot/journal political-copy-bot/data political-copy-bot/journal
+
+      # Anti-silent-failure: each catch-up step is `continue-on-error: true` so a
+      # crash in one portfolio cannot block the others. But that also means a
+      # crashed catch-up would otherwise let this workflow conclude SUCCESS — a
+      # silent miss. This final gate inspects each step's true `outcome` (which
+      # `continue-on-error` does not mask) and fails the workflow if ANY catch-up
+      # crashed, so failure-alert.yml raises an alert the same day. It runs AFTER
+      # the commit so partial state is never lost. A skipped step (market closed
+      # or portfolio already fresh) has outcome 'skipped', not 'failure', so the
+      # happy path and clean no-trade days are unaffected.
+      - name: Surface any swallowed catch-up failure
+        if: always()
+        run: |
+          FAILED=""
+          [ "${{ steps.p1catch.outcome }}" = "failure" ] && FAILED="$FAILED P1"
+          [ "${{ steps.p3catch.outcome }}" = "failure" ] && FAILED="$FAILED P3"
+          [ "${{ steps.p2catch.outcome }}" = "failure" ] && FAILED="$FAILED P2"
+          if [ -n "$FAILED" ]; then
+            echo "::error::Guardian catch-up CRASHED for:$FAILED — failing the workflow so the watchdog alerts (state was already committed)."
+            exit 1
+          fi
+          echo "No catch-up crashed — all attempted portfolios completed cleanly."
