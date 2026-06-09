@@ -1,23 +1,18 @@
 {
-  "equity": 97124.87,
+  "equity": 94835.9,
   "starting_equity": 100000.0,
   "day_start_equity": 97149.65,
   "week_start_equity": 97149.65,
   "positions": {
-    "AAPL": {
-      "qty": 25,
-      "avg_price": 310.58,
-      "bucket": "aggressive_growth"
-    },
-    "AMZN": {
-      "qty": 28,
-      "avg_price": 248.84,
-      "bucket": "aggressive_growth"
-    },
     "DIA": {
       "qty": 21,
       "avg_price": 516.138095,
       "bucket": "core_equity"
+    },
+    "GOOGL": {
+      "qty": 1,
+      "avg_price": 366.171,
+      "bucket": "aggressive_growth"
     },
     "IWM": {
       "qty": 40,
@@ -30,12 +25,12 @@
       "bucket": "aggressive_growth"
     },
     "QQQ": {
-      "qty": 16,
+      "qty": 12,
       "avg_price": 735.75125,
       "bucket": "core_equity"
     },
     "SPY": {
-      "qty": 14,
+      "qty": 11,
       "avg_price": 755.432857,
       "bucket": "core_equity"
     },
@@ -55,24 +50,24 @@
       "bucket": "sector_momentum"
     },
     "XLY": {
-      "qty": 31,
+      "qty": 8,
       "avg_price": 117.41129,
       "bucket": "sector_momentum"
     }
   },
   "trades_today": 0,
-  "total_exposure": 96203.16,
-  "long_market_value": 96203.16,
+  "total_exposure": 72747.0754,
+  "long_market_value": 72747.0754,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 923.86,
-  "day_pnl": -24.78,
-  "day_pnl_pct": -0.000255,
-  "week_pnl": -24.78,
-  "week_pnl_pct": -0.000255,
+  "cash": 19090.5,
+  "day_pnl": -2313.75,
+  "day_pnl_pct": -0.023816,
+  "week_pnl": -2313.75,
+  "week_pnl_pct": -0.023816,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-09T14:14:08.915223+00:00"
+  "last_updated": "2026-06-09T17:07:29.597226+00:00"
 }
