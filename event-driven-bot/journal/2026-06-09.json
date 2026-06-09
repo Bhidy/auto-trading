@@ -322,5 +322,113 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-09",
+    "timestamp": "2026-06-09T22:50:17.751436+00:00",
+    "audit": {
+      "equity": 102370.78,
+      "cash": 51435.2,
+      "daily_pnl": -1876.23,
+      "daily_pnl_pct": -1.8,
+      "total_open_exposure": 50935.58,
+      "exposure_pct": 49.8,
+      "position_count": 7,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Energy": 15666.47,
+        "Consumer": 20629.11,
+        "Tech": 14640.0
+      }
+    },
+    "positions": [
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "137.33",
+        "market_value": "137.33",
+        "unrealized_pl": "-3.35",
+        "pnl_pct": -2.38,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "F",
+        "qty": "298",
+        "entry": "14.95",
+        "current": "14.9",
+        "market_value": "4440.2",
+        "unrealized_pl": "-14.9",
+        "pnl_pct": -0.33,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "258.15",
+        "market_value": "15230.85",
+        "unrealized_pl": "257.83",
+        "pnl_pct": 1.72,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MU",
+        "qty": "16",
+        "entry": "924.95",
+        "current": "915.0001",
+        "market_value": "14640.0016",
+        "unrealized_pl": "-159.1984",
+        "pnl_pct": -1.08,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "1",
+        "entry": "122.41",
+        "current": "126.61",
+        "market_value": "126.61",
+        "unrealized_pl": "4.2",
+        "pnl_pct": 3.43,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "118.98",
+        "market_value": "16062.3",
+        "unrealized_pl": "527.459985",
+        "pnl_pct": 3.4,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "149.1457",
+        "market_value": "298.2914",
+        "unrealized_pl": "-4.4886",
+        "pnl_pct": -1.48,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MRVL",
+        "side": "buy",
+        "qty": 4,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+141.7%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
