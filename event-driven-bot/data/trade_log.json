@@ -203,7 +203,13 @@
       "RSI in sweet spot (65)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed_reconciled",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-09T21:59:58.567319+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "timestamp": "2026-06-03T14:10:56.515874+00:00",
@@ -255,9 +261,13 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open",
+    "status": "closed_reconciled",
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-09T21:59:58.567319+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "timestamp": "2026-06-04T14:10:55.695087+00:00",
@@ -341,7 +351,13 @@
       "RSI in sweet spot (60)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed_reconciled",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-09T21:59:58.567319+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "timestamp": "2026-06-08T14:15:21.310448+00:00",
@@ -392,7 +408,13 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed_reconciled",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-09T21:59:58.567319+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "timestamp": "2026-06-08T14:15:25.778168+00:00",
@@ -443,7 +465,13 @@
       "RSI in sweet spot (53)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed_reconciled",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-09T21:59:58.567319+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "timestamp": "2026-06-08T14:15:29.293910+00:00",
@@ -494,6 +522,12 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed_reconciled",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-09T21:59:58.567319+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null
   }
 ]
