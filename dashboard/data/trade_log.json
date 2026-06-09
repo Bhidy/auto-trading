@@ -55,12 +55,15 @@
       "Uptrend confirmed",
       "Positive momentum"
     ],
-    "exit_price": null,
-    "exit_timestamp": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "hold_days": null,
-    "status": "open"
+    "exit_price": 728.037143,
+    "exit_timestamp": "2026-06-09T21:59:30.797076+00:00",
+    "pnl": -132.2,
+    "pnl_pct": -2.94,
+    "hold_days": 13,
+    "status": "closed",
+    "gross_pnl": -132.08,
+    "fees": 0.12,
+    "realized_pnl": -132.2
   },
   {
     "id": 4,
@@ -74,14 +77,17 @@
     "reasons": [
       "Tech index strong momentum"
     ],
-    "exit_price": null,
-    "exit_timestamp": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "hold_days": null,
-    "status": "open",
+    "exit_price": 695.20625,
+    "exit_timestamp": "2026-06-09T21:59:30.875667+00:00",
+    "pnl": -99.52,
+    "pnl_pct": -6.68,
+    "hold_days": 13,
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "cost_basis_synced",
+    "gross_pnl": -99.48,
+    "fees": 0.04,
+    "realized_pnl": -99.52
   },
   {
     "id": 5,
@@ -180,12 +186,15 @@
     "reasons": [
       "Above both MAs, SpaceX catalyst"
     ],
-    "exit_price": null,
-    "exit_timestamp": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "hold_days": null,
-    "status": "open"
+    "exit_price": 389.81,
+    "exit_timestamp": "2026-06-09T21:59:30.964621+00:00",
+    "pnl": -613.61,
+    "pnl_pct": -10.8,
+    "hold_days": 13,
+    "status": "closed",
+    "gross_pnl": -613.47,
+    "fees": 0.14,
+    "realized_pnl": -613.61
   },
   {
     "id": 10,
