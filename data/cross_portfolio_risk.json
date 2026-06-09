@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-09T22:55:46.682905+00:00",
-  "total_equity": 296610.99,
-  "gross_exposure_pct": 59.455,
+  "timestamp": "2026-06-09T23:04:03.417360+00:00",
+  "total_equity": 296635.39,
+  "gross_exposure_pct": 59.45,
   "by_symbol": {
     "DIA": {
       "market_value": 17450.96,
@@ -36,7 +36,7 @@
     },
     "XLK": {
       "market_value": 13835.56,
-      "pct_of_total": 4.665,
+      "pct_of_total": 4.664,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -107,7 +107,7 @@
     },
     "XLI": {
       "market_value": 6998.8,
-      "pct_of_total": 2.36,
+      "pct_of_total": 2.359,
       "books": [
         "portfolio_2"
       ]
@@ -179,7 +179,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 126038.82,
-      "pct_of_total": 42.493
+      "pct_of_total": 42.489
     },
     "Energy": {
       "market_value": 15399.96,
@@ -187,7 +187,7 @@
     },
     "Consumer": {
       "market_value": 20112.35,
-      "pct_of_total": 6.781
+      "pct_of_total": 6.78
     },
     "Tech": {
       "market_value": 14799.2,
@@ -199,7 +199,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 9.453
+    "mega_cap_tech_ai": 9.452
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
