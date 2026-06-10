@@ -1,59 +1,65 @@
 {
-  "timestamp": "2026-06-09T23:04:04.229863+00:00",
+  "timestamp": "2026-06-10T22:21:03.096711+00:00",
   "overall": {
-    "total_trades": 27,
+    "total_trades": 35,
     "wins": 6,
-    "losses": 21,
-    "win_rate": 0.222,
-    "avg_pnl_pct": -2.3,
+    "losses": 29,
+    "win_rate": 0.171,
+    "avg_pnl_pct": -2.39,
     "avg_win_pct": 1.95,
-    "avg_loss_pct": -3.51,
-    "win_loss_ratio": 0.55,
+    "avg_loss_pct": -3.29,
+    "win_loss_ratio": 0.59,
     "max_win_pct": 7.77,
     "max_loss_pct": -10.8,
-    "total_pnl": -3420.61,
-    "profit_factor": 0.18,
-    "per_trade_sharpe": -0.6,
-    "sharpe_estimate": -0.6
+    "total_pnl": -4387.64,
+    "profit_factor": 0.14,
+    "per_trade_sharpe": -0.69,
+    "sharpe_estimate": -0.69
   },
   "last_7_days": {
-    "total_trades": 19,
-    "wins": 2,
-    "losses": 17,
-    "win_rate": 0.105,
+    "total_trades": 24,
+    "wins": 1,
+    "losses": 23,
+    "win_rate": 0.042,
     "avg_pnl_pct": -3.56,
-    "avg_win_pct": 1.23,
-    "avg_loss_pct": -4.12,
-    "win_loss_ratio": 0.3,
+    "avg_win_pct": 1.98,
+    "avg_loss_pct": -3.8,
+    "win_loss_ratio": 0.52,
     "max_win_pct": 1.98,
     "max_loss_pct": -10.8,
-    "total_pnl": -3694.69,
-    "profit_factor": 0.07,
-    "per_trade_sharpe": -1.03,
-    "sharpe_estimate": -1.03
+    "total_pnl": -4461.95,
+    "profit_factor": 0.05,
+    "per_trade_sharpe": -1.15,
+    "sharpe_estimate": -1.15
   },
   "last_30_days": {
-    "total_trades": 27,
+    "total_trades": 35,
     "wins": 6,
-    "losses": 21,
-    "win_rate": 0.222,
-    "avg_pnl_pct": -2.3,
+    "losses": 29,
+    "win_rate": 0.171,
+    "avg_pnl_pct": -2.39,
     "avg_win_pct": 1.95,
-    "avg_loss_pct": -3.51,
-    "win_loss_ratio": 0.55,
+    "avg_loss_pct": -3.29,
+    "win_loss_ratio": 0.59,
     "max_win_pct": 7.77,
     "max_loss_pct": -10.8,
-    "total_pnl": -3420.61,
-    "profit_factor": 0.18,
-    "per_trade_sharpe": -0.6,
-    "sharpe_estimate": -0.6
+    "total_pnl": -4387.64,
+    "profit_factor": 0.14,
+    "per_trade_sharpe": -0.69,
+    "sharpe_estimate": -0.69
   },
   "by_bucket": {
     "aggressive_growth": {
-      "trades": 10,
-      "win_rate": 0.1,
-      "total_pnl": -2761.61,
-      "avg_pnl_pct": -4.65
+      "trades": 13,
+      "win_rate": 0.077,
+      "total_pnl": -3173.2,
+      "avg_pnl_pct": -4.04
+    },
+    "sector_momentum": {
+      "trades": 11,
+      "win_rate": 0.273,
+      "total_pnl": -41.82,
+      "avg_pnl_pct": -0.34
     },
     "defensive": {
       "trades": 1,
@@ -62,30 +68,18 @@
       "avg_pnl_pct": -0.23
     },
     "core_equity": {
-      "trades": 7,
-      "win_rate": 0.286,
-      "total_pnl": -991.36,
-      "avg_pnl_pct": -2.58
-    },
-    "sector_momentum": {
       "trades": 8,
-      "win_rate": 0.375,
-      "total_pnl": 386.23,
-      "avg_pnl_pct": 0.44
+      "win_rate": 0.25,
+      "total_pnl": -1077.34,
+      "avg_pnl_pct": -2.4
     }
   },
   "by_symbol": {
-    "XLI": {
+    "AAPL": {
       "trades": 1,
       "win_rate": 0.0,
-      "total_pnl": -16.38,
-      "avg_pnl_pct": -0.34
-    },
-    "BIL": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
+      "total_pnl": -513.33,
+      "avg_pnl_pct": -6.61
     },
     "DIA": {
       "trades": 1,
@@ -93,29 +87,41 @@
       "total_pnl": 37.31,
       "avg_pnl_pct": 0.82
     },
-    "GOOGL": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -712.68,
-      "avg_pnl_pct": -4.26
-    },
-    "XLY": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -268.58,
-      "avg_pnl_pct": -2.1
-    },
-    "AMZN": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -915.21,
-      "avg_pnl_pct": -4.58
-    },
-    "AAPL": {
+    "XLI": {
       "trades": 1,
       "win_rate": 0.0,
-      "total_pnl": -513.33,
-      "avg_pnl_pct": -6.61
+      "total_pnl": -16.38,
+      "avg_pnl_pct": -0.34
+    },
+    "TSLA": {
+      "trades": 3,
+      "win_rate": 0.0,
+      "total_pnl": -776.6,
+      "avg_pnl_pct": -5.23
+    },
+    "XLK": {
+      "trades": 8,
+      "win_rate": 0.375,
+      "total_pnl": 332.75,
+      "avg_pnl_pct": -0.48
+    },
+    "XLY": {
+      "trades": 4,
+      "win_rate": 0.0,
+      "total_pnl": -407.08,
+      "avg_pnl_pct": -1.9
+    },
+    "BIL": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
+    },
+    "AMZN": {
+      "trades": 4,
+      "win_rate": 0.0,
+      "total_pnl": -1000.42,
+      "avg_pnl_pct": -3.76
     },
     "QQQ": {
       "trades": 4,
@@ -123,23 +129,17 @@
       "total_pnl": -645.75,
       "avg_pnl_pct": -2.96
     },
-    "XLK": {
-      "trades": 5,
-      "win_rate": 0.6,
-      "total_pnl": 663.71,
-      "avg_pnl_pct": 1.89
-    },
-    "TSLA": {
-      "trades": 2,
-      "win_rate": 0.0,
-      "total_pnl": -649.43,
-      "avg_pnl_pct": -6.89
-    },
     "SPY": {
-      "trades": 2,
+      "trades": 3,
       "win_rate": 0.0,
-      "total_pnl": -382.92,
-      "avg_pnl_pct": -3.54
+      "total_pnl": -468.9,
+      "avg_pnl_pct": -2.75
+    },
+    "GOOGL": {
+      "trades": 4,
+      "win_rate": 0.0,
+      "total_pnl": -911.89,
+      "avg_pnl_pct": -3.91
     },
     "NVDA": {
       "trades": 1,
@@ -152,6 +152,7 @@
     "Win rate declining \u2014 tighten entry criteria",
     "Losing money \u2014 reduce exposure and review strategy",
     "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation",
+    "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'core_equity' underperforming severely \u2014 consider reducing allocation"
   ]
 }
