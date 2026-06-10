@@ -65,17 +65,21 @@ export function AmbientBackground() {
   const colors =
     scheme === 'dark'
       ? (['#150B05', '#0E0805', '#080403'] as const)
-      : (['#FFF3E6', '#FFF7F0', '#FDEFE3'] as const);
+      : (['#FFFFFF', '#FFFFFF', '#FFFFFF'] as const);
 
   const orbColor = palette.glowTeal;
-  const orb2 = scheme === 'dark' ? 'rgba(255,138,61,0.13)' : 'rgba(255,168,106,0.22)';
+  const orb2 = scheme === 'dark' ? 'rgba(255,138,61,0.13)' : 'rgba(229,90,31,0.06)';
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <LinearGradient colors={colors} style={StyleSheet.absoluteFill} />
-      <Orb size={width * 1.25} color={orbColor} x={-width * 0.35} y={-width * 0.45} driftX={26} driftY={20} duration={9000} />
-      <Orb size={width * 0.95} color={orb2} x={width * 0.45} y={height * 0.28} driftX={-22} driftY={30} duration={12000} />
-      <Orb size={width * 1.1} color={orbColor} x={-width * 0.2} y={height * 0.66} driftX={18} driftY={-24} duration={11000} />
+      {scheme === 'dark' && (
+        <>
+          <Orb size={width * 1.25} color={orbColor} x={-width * 0.35} y={-width * 0.45} driftX={26} driftY={20} duration={9000} />
+          <Orb size={width * 0.95} color={orb2} x={width * 0.45} y={height * 0.28} driftX={-22} driftY={30} duration={12000} />
+          <Orb size={width * 1.1} color={orbColor} x={-width * 0.2} y={height * 0.66} driftX={18} driftY={-24} duration={11000} />
+        </>
+      )}
     </View>
   );
 }
