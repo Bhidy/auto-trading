@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { Card } from '@/components/Card';
-import { GlassCard } from '@/components/GlassCard';
+import { PageHeader } from '@/components/PageHeader';
+import { FilterPills } from '@/components/FilterPills';
 import { Text } from '@/components/Text';
 import { Tag } from '@/components/Tag';
 import { Button } from '@/components/Button';
 import { Divider } from '@/components/Divider';
 import { Field } from '@/components/Field';
 import { Icon } from '@/components/Icon';
-import { SegmentedControl } from '@/components/SegmentedControl';
-import { Reveal } from '@/components/Reveal';
 import { useOverview } from '@/api/hooks';
 import {
   biometricSupport,
@@ -22,14 +19,34 @@ import {
 } from '@/lib/auth';
 import { useTheme, type ThemePref } from '@/theme';
 import { PORTFOLIOS, API_BASE_URL } from '@/lib/constants';
+import { fonts } from '@/theme/typography';
+import { cardShadow, radius } from '@/theme/tokens';
 import { haptic } from '@/lib/haptics';
 
 const THEME_OPTIONS = ['Dark', 'Light', 'System'] as const;
 const PREF_MAP: Record<(typeof THEME_OPTIONS)[number], ThemePref> = { Dark: 'dark', Light: 'light', System: 'system' };
 const LABEL_MAP: Record<ThemePref, (typeof THEME_OPTIONS)[number]> = { dark: 'Dark', light: 'Light', system: 'System' };
 
+function SectionIcon({ name }: { name: 'settings' | 'lock' | 'globe' | 'bolt' }) {
+  const { palette } = useTheme();
+  return (
+    <View
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 11,
+        backgroundColor: palette.tealSoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Icon name={name} size={17} color={palette.teal} />
+    </View>
+  );
+}
+
 export default function Settings() {
-  const { palette, pref, setPref } = useTheme();
+  const { palette, pref, setPref, scheme } = useTheme();
   const { data: overview } = useOverview();
 
   const [tokenInput, setTokenInput] = useState('');
@@ -71,178 +88,141 @@ export default function Settings() {
     setNotice('Token removed — the app is now read-only.');
   };
 
+  const flatCard = {
+    backgroundColor: palette.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.line,
+    ...cardShadow(scheme),
+  };
+
+  const sectionTitle = (label: string) => (
+    <Text style={{ fontFamily: fonts.uiBold, fontSize: 15, letterSpacing: -0.2, color: palette.ink }}>
+      {label}
+    </Text>
+  );
+
   return (
-    <Screen>
-      <ScreenHeader title="Settings" eyebrow="Control room" />
+    <Screen
+      padded={false}
+      ambient={false}
+      contentContainerStyle={{ paddingBottom: 130, paddingHorizontal: 18 }}
+    >
+      <PageHeader title="Settings" sub="Control room" />
 
       <View style={{ gap: 20 }}>
 
         {/* ── APPEARANCE ── */}
-        <Reveal index={0}>
-          <Card style={{ gap: 14 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 11,
-                  backgroundColor: palette.tealSoft,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon name="settings" size={17} color={palette.teal} />
-              </View>
-              <Text variant="subtitle">Appearance</Text>
-            </View>
-            <SegmentedControl
-              options={THEME_OPTIONS}
-              value={LABEL_MAP[pref]}
-              onChange={(v) => setPref(PREF_MAP[v])}
-            />
-            <Text variant="caption" dim>
-              Dark Solar is the native terminal experience. Light Paper mirrors the day theme.
-            </Text>
-          </Card>
-        </Reveal>
+        <View style={{ ...flatCard, padding: 16, gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <SectionIcon name="settings" />
+            {sectionTitle('Appearance')}
+          </View>
+          <FilterPills
+            options={THEME_OPTIONS}
+            value={LABEL_MAP[pref]}
+            onChange={(v) => setPref(PREF_MAP[v as typeof THEME_OPTIONS[number]])}
+            stretch
+          />
+          <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12.5, color: palette.muted, lineHeight: 18 }}>
+            Dark Solar is the native terminal experience. Light Paper mirrors the day theme.
+          </Text>
+        </View>
 
         {/* ── TRADING SECURITY ── */}
-        <Reveal index={1}>
-          <GlassCard glow style={{ gap: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 11,
-                    backgroundColor: palette.tealSoft,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Icon name="lock" size={17} color={palette.teal} />
-                </View>
-                <Text variant="subtitle">Trading security</Text>
-              </View>
-              <Tag
-                label={tokenSet ? 'Armed' : 'Read-only'}
-                tone={tokenSet ? 'live' : 'neutral'}
-                live={!!tokenSet}
-              />
+        <View style={{ ...flatCard, padding: 16, gap: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <SectionIcon name="lock" />
+              {sectionTitle('Trading security')}
             </View>
+            <Tag
+              label={tokenSet ? 'Armed' : 'Read-only'}
+              tone={tokenSet ? 'live' : 'neutral'}
+              live={!!tokenSet}
+            />
+          </View>
 
-            <Text variant="caption" dim>
-              Live actions (orders, closes, cancels) require the dashboard access token — stored only in the iOS Keychain.
-              Every action additionally requires{' '}
-              {bio?.type === 'face'
-                ? 'Face ID'
-                : bio?.type === 'fingerprint'
-                  ? 'Touch ID'
-                  : 'biometric confirmation'}
-              .
+          <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12.5, color: palette.muted, lineHeight: 18 }}>
+            Live actions (orders, closes, cancels) require the dashboard access token — stored only in the iOS
+            Keychain. Every action additionally requires{' '}
+            {bio?.type === 'face' ? 'Face ID' : bio?.type === 'fingerprint' ? 'Touch ID' : 'biometric confirmation'}.
+          </Text>
+
+          {tokenSet ? (
+            <Button label="Remove token (back to read-only)" variant="ghost" full onPress={removeToken} />
+          ) : (
+            <View style={{ gap: 10 }}>
+              <Field
+                label="Access token"
+                value={tokenInput}
+                onChangeText={setTokenInput}
+                placeholder="DASHBOARD_ACCESS_TOKEN"
+                secure
+              />
+              <Button label="Store in Keychain" full onPress={saveToken} />
+            </View>
+          )}
+
+          {notice && (
+            <Text
+              style={{
+                fontFamily: fonts.uiMedium,
+                fontSize: 12.5,
+                color: notice.includes('enabled') || notice.includes('stored') ? palette.up : palette.down,
+                lineHeight: 17,
+              }}
+            >
+              {notice}
             </Text>
-
-            {tokenSet ? (
-              <Button label="Remove token (back to read-only)" variant="ghost" full onPress={removeToken} />
-            ) : (
-              <View style={{ gap: 10 }}>
-                <Field
-                  label="Access token"
-                  value={tokenInput}
-                  onChangeText={setTokenInput}
-                  placeholder="DASHBOARD_ACCESS_TOKEN"
-                  secure
-                />
-                <Button label="Store in Keychain" full onPress={saveToken} />
-              </View>
-            )}
-
-            {notice && (
-              <Text
-                variant="caption"
-                color={notice.includes('enabled') || notice.includes('stored') ? 'up' : 'down'}
-              >
-                {notice}
-              </Text>
-            )}
-          </GlassCard>
-        </Reveal>
+          )}
+        </View>
 
         {/* ── BROKER CONNECTIONS ── */}
-        <Reveal index={2}>
-          <Card padded={false} style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 11,
-                  backgroundColor: palette.tealSoft,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon name="globe" size={17} color={palette.teal} />
-              </View>
-              <Text variant="subtitle">Broker connections</Text>
-            </View>
-            <Divider />
-            {PORTFOLIOS.map((p, i) => {
-              const live = overview?.find((o) => o.id === p.id)?.liveConnected;
-              return (
-                <View key={p.id}>
-                  {i > 0 && <Divider />}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 }}>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text variant="bodyStrong">{p.label}</Text>
-                      <Text variant="caption" dim>
-                        Alpaca paper · {p.account}
-                      </Text>
-                    </View>
-                    <Tag
-                      label={live ? 'Connected' : 'Synced'}
-                      tone={live ? 'live' : 'neutral'}
-                      live={!!live}
-                    />
+        <View style={{ ...flatCard }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
+            <SectionIcon name="globe" />
+            {sectionTitle('Broker connections')}
+          </View>
+          <Divider />
+          {PORTFOLIOS.map((p, i) => {
+            const live = overview?.find((o) => o.id === p.id)?.liveConnected;
+            return (
+              <View key={p.id}>
+                {i > 0 && <Divider />}
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, gap: 12 }}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={{ fontFamily: fonts.uiBold, fontSize: 14, color: palette.ink }}>{p.label}</Text>
+                    <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12, color: palette.muted }}>
+                      Alpaca paper · {p.account}
+                    </Text>
                   </View>
+                  <Tag label={live ? 'Connected' : 'Synced'} tone={live ? 'live' : 'neutral'} live={!!live} />
                 </View>
-              );
-            })}
-          </Card>
-        </Reveal>
+              </View>
+            );
+          })}
+        </View>
 
         {/* ── ABOUT ── */}
-        <Reveal index={3}>
-          <Card style={{ gap: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 11,
-                  backgroundColor: palette.tealSoft,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon name="bolt" size={17} color={palette.teal} />
-              </View>
-              <Text variant="subtitle">About</Text>
-            </View>
-            <View style={{ gap: 5 }}>
-              <Text variant="caption" dim>
-                Auto Trading by RiseWealth — three autonomous strategies, one paper book.
-              </Text>
-              <Text variant="caption" dim>
-                API · {API_BASE_URL}
-              </Text>
-              <Text variant="caption" dim>
-                Paper trading only. Not financial advice.
-              </Text>
-            </View>
-          </Card>
-        </Reveal>
+        <View style={{ ...flatCard, padding: 16, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <SectionIcon name="bolt" />
+            {sectionTitle('About')}
+          </View>
+          <View style={{ gap: 5 }}>
+            <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12.5, color: palette.muted, lineHeight: 18 }}>
+              Auto Trading by RiseWealth — three autonomous strategies, one paper book.
+            </Text>
+            <Text style={{ fontFamily: fonts.mono, fontSize: 11.5, color: palette.muted }}>
+              {API_BASE_URL}
+            </Text>
+            <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12.5, color: palette.muted }}>
+              Paper trading only. Not financial advice.
+            </Text>
+          </View>
+        </View>
+
       </View>
     </Screen>
   );

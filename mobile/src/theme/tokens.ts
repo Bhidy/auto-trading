@@ -1,7 +1,7 @@
 /**
- * RiseWealth design tokens — single source of truth for the Auto Trading app.
- * Mirrors docs/branding/risewealth-tokens.css and the CLAUDE.md brand kit.
- * Warm solar palette only; green/red are reserved strictly for P&L semantics.
+ * Design 3.0 "Cloud Pastel" tokens — single source of truth for the Auto Trading app.
+ * White canvas, warm pastel tint cards, one espresso contrast surface, orange reserved
+ * for CTAs/active states. Green/red stay strictly P&L semantics.
  */
 
 export const solar = {
@@ -23,68 +23,82 @@ export interface Palette {
   scheme: ColorScheme;
   page: string;
   surface: string;
-  surfaceAlt: string; // elevated card
-  surfaceInset: string; // wells / inputs
+  surfaceAlt: string; // soft warm row / elevated section
+  surfaceInset: string; // wells / inputs / skeletons
   ink: string;
   inkSoft: string;
   muted: string;
   line: string;
   hairline: string;
-  teal: string; // primary accent
+  teal: string; // primary accent (brand orange)
   tealDark: string; // hover / pressed
-  tealSoft: string; // soft background
+  tealSoft: string; // soft accent background
   up: string; // P&L positive
   down: string; // P&L negative
   upSoft: string;
   downSoft: string;
   overlay: string; // scrim
-  glassTint: string; // blur tint
-  glassFill: string; // translucent card fill over ambient backdrop
-  glassStroke: string; // gradient-ish hairline for glass edges
-  glassHighlight: string; // specular top edge
-  glowTeal: string; // ambient orb color
+  glassTint: string; // legacy glass keys (onboarding / sheets)
+  glassFill: string;
+  glassStroke: string;
+  glassHighlight: string;
+  glowTeal: string; // ambient orb color (dark mode only)
+  tintPeach: string; // pastel card 1
+  tintCream: string; // pastel card 2
+  tintMist: string; // pastel card 3 (neutral)
+  contrast: string; // espresso contrast card bg
+  contrastInk: string; // text on contrast card
+  contrastMuted: string; // secondary text on contrast card
+  chartFill: string; // area under hero chart line
 }
 
 const light: Palette = {
   scheme: 'light',
   page: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceAlt: '#FFFCF8',
-  surfaceInset: '#FBF1E8',
-  ink: '#1A0F08',
-  inkSoft: '#3A2A1E',
-  muted: '#7A6B5E',
-  line: 'rgba(26,15,8,0.07)',
-  hairline: 'rgba(26,15,8,0.12)',
+  surfaceAlt: '#FAF6F2',
+  surfaceInset: '#F5F0EA',
+  ink: '#16120E',
+  inkSoft: '#4A4036',
+  muted: '#9A8F84',
+  line: 'rgba(22,18,14,0.08)',
+  hairline: 'rgba(22,18,14,0.14)',
   teal: '#E55A1F',
   tealDark: '#C9461A',
-  tealSoft: '#FFF1E8',
-  up: '#1E9E5A',
-  down: '#E5484D',
-  upSoft: 'rgba(30,158,90,0.12)',
-  downSoft: 'rgba(229,72,77,0.12)',
-  overlay: 'rgba(26,15,8,0.40)',
-  glassTint: 'rgba(255,247,240,0.72)',
-  glassFill: 'rgba(255,255,255,0.62)',
-  glassStroke: 'rgba(26,15,8,0.10)',
-  glassHighlight: 'rgba(255,255,255,0.85)',
-  glowTeal: 'rgba(229,90,31,0.16)',
+  tealSoft: '#FFEDE2',
+  up: '#1FA05A',
+  down: '#D7402B',
+  upSoft: '#E7F6EC',
+  downSoft: '#FBEAE7',
+  overlay: 'rgba(22,18,14,0.40)',
+  glassTint: 'rgba(255,255,255,0.80)',
+  glassFill: 'rgba(255,255,255,0.88)',
+  glassStroke: 'rgba(22,18,14,0.08)',
+  glassHighlight: 'rgba(255,255,255,0.92)',
+  glowTeal: 'rgba(229,90,31,0.10)',
+  tintPeach: '#FFEDE2',
+  tintCream: '#FFF4EA',
+  tintMist: '#F5F2EF',
+  contrast: '#171210',
+  contrastInk: '#FFFFFF',
+  contrastMuted: 'rgba(255,244,236,0.58)',
+  chartFill: '#FFF1E8',
 };
 
 const dark: Palette = {
   scheme: 'dark',
-  page: '#0E0805',
-  surface: '#1A0F08',
-  surfaceAlt: '#221409',
-  surfaceInset: '#17100A',
-  ink: '#FFF1E8',
-  inkSoft: '#E8D9CC',
-  muted: '#A39A92',
+  page: '#0F0B08',
+  surface: '#1A130D',
+  surfaceAlt: '#211811',
+  surfaceInset: '#271D14',
+  ink: '#FFF4EC',
+  inkSoft: '#E6D8CC',
+  muted: '#A89C90',
   line: 'rgba(255,255,255,0.08)',
   hairline: 'rgba(255,255,255,0.14)',
   teal: '#FF8A3D',
   tealDark: '#FFA86A',
-  tealSoft: 'rgba(229,90,31,0.15)',
+  tealSoft: 'rgba(229,90,31,0.16)',
   up: '#34D399',
   down: '#FB7185',
   upSoft: 'rgba(52,211,153,0.14)',
@@ -94,7 +108,14 @@ const dark: Palette = {
   glassFill: 'rgba(38,22,12,0.42)',
   glassStroke: 'rgba(255,170,106,0.16)',
   glassHighlight: 'rgba(255,217,189,0.20)',
-  glowTeal: 'rgba(242,107,31,0.22)',
+  glowTeal: 'rgba(242,107,31,0.20)',
+  tintPeach: '#2B1D12',
+  tintCream: '#271F14',
+  tintMist: '#221B16',
+  contrast: '#FFF1E8',
+  contrastInk: '#171210',
+  contrastMuted: 'rgba(23,18,16,0.60)',
+  chartFill: 'rgba(229,90,31,0.10)',
 };
 
 export const palettes = { light, dark } as const;
@@ -102,9 +123,9 @@ export const palettes = { light, dark } as const;
 export const radius = {
   xs: 8,
   sm: 12,
-  md: 14, // 0.85rem cards
+  md: 16,
   lg: 20,
-  xl: 28,
+  xl: 26,
   pill: 999,
 } as const;
 
@@ -127,7 +148,15 @@ export const portfolioAccent: Record<string, string> = {
   portfolio_3: '#FF8A3D',
 };
 
-/** Splash / hero gradients (from brand kit). */
+/** Strategy card pastel variants — peach / espresso / cream, in portfolio order. */
+export type CardVariant = 'peach' | 'contrast' | 'cream';
+export const portfolioVariant: Record<string, CardVariant> = {
+  portfolio_1: 'peach',
+  portfolio_2: 'contrast',
+  portfolio_3: 'cream',
+};
+
+/** Splash / hero gradients (from brand kit — onboarding only). */
 export const gradients = {
   embered: ['#2A1208', '#1A0A05', '#0A0403'] as const,
   solar: ['#FFD9BD', '#FF8A3D', '#F26B1F', '#C9461A'] as const,
@@ -145,11 +174,11 @@ export interface Shadow {
 export function cardShadow(scheme: ColorScheme): Shadow {
   return scheme === 'light'
     ? {
-        shadowColor: '#1A0F08',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.07,
-        shadowRadius: 18,
-        elevation: 4,
+        shadowColor: '#2A1A0E',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.05,
+        shadowRadius: 22,
+        elevation: 3,
       }
     : {
         shadowColor: '#000000',
@@ -164,8 +193,8 @@ export function ctaShadow(): Shadow {
   return {
     shadowColor: '#E55A1F',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.32,
-    shadowRadius: 18,
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
     elevation: 6,
   };
 }

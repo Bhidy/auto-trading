@@ -1,28 +1,41 @@
-import React, { useMemo } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Tag } from '@/components/Tag';
 import { DeltaPill } from '@/components/DeltaPill';
 import { Skeleton } from '@/components/Skeleton';
-import { Reveal } from '@/components/Reveal';
-import { GradientText } from '@/components/GradientText';
-import { Wordmark } from '@/components/Wordmark';
-import { IndexStrip } from '@/components/IndexStrip';
-import { CompactPortfolioCard } from '@/components/PortfolioCard';
-import { Sparkline } from '@/charts/Sparkline';
-import { useEquityHistory, useOverview } from '@/api/hooks';
+import { MoneyText } from '@/components/MoneyText';
+import { FilterPills } from '@/components/FilterPills';
+import { PortfolioCard } from '@/components/PortfolioCard';
+import { LineChart } from '@/charts/LineChart';
+import { useEquityHistory, useOverview, useQuotes } from '@/api/hooks';
 import { useTheme } from '@/theme/ThemeProvider';
 import { fonts } from '@/theme/typography';
-import { currency, percent, signedCurrency } from '@/lib/format';
+import { cardShadow, radius } from '@/theme/tokens';
+import { price, percent, signedCurrency } from '@/lib/format';
+import { MARKET_INDICES, OWNER_FIRST_NAME } from '@/lib/constants';
+
+const TIMEFRAMES = ['1D', '1W', '1M', '3M', '6M', '1Y'] as const;
+type TF = (typeof TIMEFRAMES)[number];
+
+const INDEX_NAMES: Record<string, string> = {
+  SPY: 'S&P 500',
+  QQQ: 'Nasdaq',
+  DIA: 'Dow Jones',
+  IWM: 'Russell 2K',
+};
 
 export default function Home() {
-  const { palette } = useTheme();
+  const { palette, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
+  const [tf, setTf] = useState<TF>('3M');
+
   const { data: overview, isLoading, refetch, isRefetching } = useOverview();
-  const { data: allEq } = useEquityHistory('all', '3M');
+  const { data: eqHistory } = useEquityHistory('all', tf);
+  const { data: quotes } = useQuotes(MARKET_INDICES);
 
   const agg = useMemo(() => {
     if (!overview?.length) return null;
@@ -39,125 +52,153 @@ export default function Home() {
     };
   }, [overview]);
 
-  const spark = (allEq?.history ?? []).map((p) => p.equity).filter((v) => isFinite(v));
-  const sparkUp = (agg?.dayPnlPct ?? 0) >= 0;
+  const chartData = (eqHistory?.history ?? []).map((p) => p.equity).filter((v) => isFinite(v));
 
   return (
-    <Screen refreshing={isRefetching} onRefresh={refetch}>
+    <Screen
+      scroll
+      padded={false}
+      ambient={false}
+      refreshing={isRefetching}
+      onRefresh={refetch}
+      contentContainerStyle={{ paddingBottom: 130 }}
+    >
+      {/* ── HEADER ── */}
+      <View style={{ paddingHorizontal: 18, paddingTop: insets.top + 18, marginBottom: 22 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View style={{ gap: 2 }}>
+            <Text style={{ fontFamily: fonts.uiSemibold, fontSize: 13, color: palette.muted }}>
+              Hello, {OWNER_FIRST_NAME} 👋
+            </Text>
+            <Text style={{ fontFamily: fonts.uiExtra, fontSize: 24, letterSpacing: -0.6, lineHeight: 30, color: palette.ink }}>
+              Your portfolio
+            </Text>
+          </View>
+          {agg && (
+            <Tag
+              label={agg.live ? 'Live' : 'Synced'}
+              tone={agg.live ? 'live' : 'neutral'}
+              live={agg.live}
+              style={{ marginTop: 4 }}
+            />
+          )}
+        </View>
+      </View>
 
-      {/* ── MINIMAL HEADER ── */}
-      <View
-        style={{
-          paddingTop: insets.top + 12,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 4,
-        }}
-      >
-        <Wordmark size={22} />
-        {agg && (
-          <Tag
-            label={agg.live ? 'All systems live' : 'Synced'}
-            tone={agg.live ? 'live' : 'neutral'}
-            live={agg.live}
-          />
+      {/* ── HERO BALANCE ── */}
+      <View style={{ alignItems: 'center', gap: 8, paddingHorizontal: 18, marginBottom: 20 }}>
+        <Text style={{ fontFamily: fonts.uiSemibold, fontSize: 12, color: palette.muted, letterSpacing: 1.2 }}>
+          TOTAL VALUE
+        </Text>
+        {isLoading || !agg ? (
+          <View style={{ gap: 10, alignItems: 'center' }}>
+            <Skeleton width={240} height={62} rounded={14} />
+            <Skeleton width={180} height={22} rounded={8} />
+            <Skeleton width={120} height={16} rounded={6} />
+          </View>
+        ) : (
+          <>
+            <MoneyText value={agg.equity} size={54} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <DeltaPill value={agg.dayPnlPct} />
+              <Text style={{ fontFamily: fonts.uiMedium, fontSize: 13.5, color: palette.muted }}>
+                {signedCurrency(agg.dayPnl)} today
+              </Text>
+            </View>
+            <Text style={{ fontFamily: fonts.ui, fontSize: 12.5, color: palette.muted }}>
+              {percent(agg.totalReturnPct, { signed: true, digits: 2 })} all-time return
+            </Text>
+          </>
         )}
       </View>
 
-      <View>
-        {/* ── HERO: CENTERED EQUITY ── */}
-        <Reveal index={0}>
-          <View style={{ alignItems: 'center', paddingTop: 32, paddingBottom: 8, gap: 14 }}>
-            <Text variant="overline" dim style={{ letterSpacing: 2.5 }}>
-              TOTAL PORTFOLIO
-            </Text>
-            {isLoading || !agg ? (
-              <View style={{ gap: 12, alignItems: 'center' }}>
-                <Skeleton width={260} height={68} rounded={14} />
-                <Skeleton width={180} height={22} rounded={8} />
-              </View>
-            ) : (
-              <>
-                <GradientText
-                  text={currency(agg.equity, { cents: false })}
-                  style={{
-                    fontFamily: fonts.serif,
-                    fontSize: 62,
-                    lineHeight: 68,
-                    letterSpacing: -2,
-                    textAlign: 'center',
-                  }}
-                />
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <DeltaPill value={agg.dayPnlPct} />
-                  <Text variant="body" dim>
-                    {signedCurrency(agg.dayPnl)} today
+      {/* ── HERO CHART (edge-to-edge) ── */}
+      {chartData.length > 2 ? (
+        <LineChart data={chartData} width={screenW} height={170} grid tooltip />
+      ) : (
+        <View
+          style={{
+            marginHorizontal: 18,
+            height: 170,
+            borderRadius: radius.lg,
+            backgroundColor: palette.surfaceAlt,
+          }}
+        />
+      )}
+
+      {/* ── TIMEFRAME PILLS ── */}
+      <View style={{ paddingHorizontal: 12, marginTop: 10, marginBottom: 28 }}>
+        <FilterPills
+          options={TIMEFRAMES}
+          value={tf}
+          onChange={(v) => setTf(v as TF)}
+          stretch
+        />
+      </View>
+
+      {/* ── YOUR STRATEGIES ── */}
+      <View style={{ paddingHorizontal: 18, marginBottom: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+          <Text style={{ fontFamily: fonts.uiBold, fontSize: 17, letterSpacing: -0.3, color: palette.ink }}>
+            Your strategies
+          </Text>
+          <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12.5, color: palette.muted }}>
+            3 autonomous books
+          </Text>
+        </View>
+        <View style={{ gap: 12 }}>
+          {isLoading
+            ? [0, 1, 2].map((i) => <Skeleton key={i} width="100%" height={170} rounded={radius.xl} />)
+            : overview?.map((p) => <PortfolioCard key={p.id} data={p} />)}
+        </View>
+      </View>
+
+      {/* ── US MARKETS ── */}
+      <View style={{ paddingHorizontal: 18 }}>
+        <Text style={{ fontFamily: fonts.uiBold, fontSize: 17, letterSpacing: -0.3, color: palette.ink, marginBottom: 14 }}>
+          US markets
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          {MARKET_INDICES.map((sym) => {
+            const q = quotes?.[sym];
+            const up = (q?.changePct ?? 0) >= 0;
+            return (
+              <View
+                key={sym}
+                style={{
+                  width: '47.5%',
+                  backgroundColor: palette.surface,
+                  borderRadius: radius.lg,
+                  borderWidth: 1,
+                  borderColor: palette.line,
+                  padding: 14,
+                  gap: 6,
+                  ...cardShadow(scheme),
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontFamily: fonts.uiBold, fontSize: 11.5, color: palette.teal }}>{sym}</Text>
+                  <Text style={{ fontFamily: fonts.ui, fontSize: 10.5, color: palette.muted }} numberOfLines={1}>
+                    {INDEX_NAMES[sym]}
                   </Text>
                 </View>
-                <Text variant="caption" dim style={{ marginTop: -4 }}>
-                  {percent(agg.totalReturnPct, { signed: true, digits: 2 })} since inception
-                </Text>
-              </>
-            )}
-          </View>
-        </Reveal>
-
-        {/* ── AGGREGATE EQUITY SPARKLINE (edge-to-edge) ── */}
-        <Reveal index={1}>
-          <View style={{ marginHorizontal: -18, marginTop: 12, marginBottom: 44 }}>
-            {spark.length > 2 ? (
-              <Sparkline
-                data={spark}
-                width={screenW}
-                height={96}
-                color={sparkUp ? palette.up : palette.down}
-                strokeWidth={2.5}
-              />
-            ) : (
-              <View style={{ height: 96 }} />
-            )}
-          </View>
-        </Reveal>
-
-        {/* ── YOUR STRATEGIES ── */}
-        <Reveal index={2}>
-          <View style={{ gap: 16, marginBottom: 44 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
-              <Text variant="overline" dim>YOUR STRATEGIES</Text>
-              <Text variant="caption" dim>3 autonomous books</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12, paddingRight: 18 }}
-              style={{ marginHorizontal: -18, paddingLeft: 18 }}
-            >
-              {isLoading
-                ? [0, 1, 2].map((i) => (
-                    <Skeleton key={i} width={226} height={172} rounded={20} />
-                  ))
-                : overview?.map((p) => <CompactPortfolioCard key={p.id} data={p} />)}
-            </ScrollView>
-          </View>
-        </Reveal>
-
-        {/* ── US MARKETS ── */}
-        <Reveal index={3}>
-          <View style={{ gap: 16, marginBottom: 44 }}>
-            <Text variant="overline" dim>US MARKETS</Text>
-            <View style={{ marginHorizontal: -18 }}>
-              <View style={{ paddingHorizontal: 16 }}>
-                <IndexStrip />
+                {!q ? (
+                  <Skeleton width={90} height={19} rounded={5} />
+                ) : (
+                  <>
+                    <Text style={{ fontFamily: fonts.monoMedium, fontSize: 16, color: palette.ink, letterSpacing: -0.3 }}>
+                      ${price(q.price)}
+                    </Text>
+                    <Text style={{ fontFamily: fonts.uiBold, fontSize: 12, color: up ? palette.up : palette.down }}>
+                      {up ? '+' : '−'}
+                      {Math.abs(q.changePct ?? 0).toFixed(2)}%
+                    </Text>
+                  </>
+                )}
               </View>
-            </View>
-          </View>
-        </Reveal>
-
-        {/* ── FOOTER ── */}
-        <Text variant="caption" dim align="center" style={{ marginBottom: 8 }}>
-          Paper trading · autonomous · audited daily
-        </Text>
+            );
+          })}
+        </View>
       </View>
     </Screen>
   );

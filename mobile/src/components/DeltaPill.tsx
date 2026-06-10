@@ -14,15 +14,15 @@ interface Props {
   style?: ViewStyle;
 }
 
-/** P&L delta with directional caret — the canonical bullish/bearish chip. */
+/** P&L delta chip — signed, friendly bold, soft green/red fill. */
 export function DeltaPill({ value, text, size = 'md', filled = true, style }: Props) {
   const { palette } = useTheme();
   const t = trendOf(value ?? 0);
   const color = t === 'up' ? palette.up : t === 'down' ? palette.down : palette.muted;
-  const bg = t === 'up' ? palette.upSoft : t === 'down' ? palette.downSoft : palette.surfaceInset;
-  const caret = t === 'up' ? '▲' : t === 'down' ? '▼' : '•';
-  const label = text ?? `${value != null && isFinite(value) ? Math.abs(value).toFixed(2) : '—'}%`;
-  const fontSize = size === 'sm' ? 11 : 12.5;
+  const bg = t === 'up' ? palette.upSoft : t === 'down' ? palette.downSoft : palette.surfaceAlt;
+  const sign = t === 'up' ? '+' : t === 'down' ? '−' : '';
+  const label = text ?? `${sign}${value != null && isFinite(value) ? Math.abs(value).toFixed(2) : '—'}%`;
+  const fontSize = size === 'sm' ? 11.5 : 12.5;
 
   return (
     <View
@@ -30,17 +30,15 @@ export function DeltaPill({ value, text, size = 'md', filled = true, style }: Pr
         {
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 4,
-          paddingHorizontal: filled ? 8 : 0,
-          paddingVertical: filled ? 3 : 0,
+          paddingHorizontal: filled ? 9 : 0,
+          paddingVertical: filled ? 3.5 : 0,
           borderRadius: radius.pill,
           backgroundColor: filled ? bg : 'transparent',
         },
         style,
       ]}
     >
-      <Text style={{ color, fontSize: fontSize - 2, fontFamily: fonts.uiBold }}>{caret}</Text>
-      <Text style={{ color, fontSize, fontFamily: fonts.monoMedium }}>{label}</Text>
+      <Text style={{ color, fontSize, fontFamily: fonts.uiBold }}>{label}</Text>
     </View>
   );
 }

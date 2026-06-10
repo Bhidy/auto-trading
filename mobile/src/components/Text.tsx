@@ -7,6 +7,7 @@ import type { Palette } from '@/theme/tokens';
 const PALETTE_KEYS = new Set<keyof Palette>([
   'page', 'surface', 'surfaceAlt', 'surfaceInset', 'ink', 'inkSoft', 'muted',
   'line', 'hairline', 'teal', 'tealDark', 'tealSoft', 'up', 'down',
+  'tintPeach', 'tintCream', 'tintMist', 'contrast', 'contrastInk', 'contrastMuted',
 ]);
 
 interface Props extends TextProps {

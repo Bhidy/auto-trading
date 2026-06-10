@@ -11,7 +11,10 @@ const WEB_DEV = Platform.OS === 'web' && typeof __DEV__ !== 'undefined' && __DEV
 
 export const API_BASE_URL: string =
   (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ??
-  (WEB_DEV ? 'http://localhost:3000' : 'https://autotradingportfolios.vercel.app');
+  (WEB_DEV ? 'http://localhost:3001' : 'https://autotradingportfolios.vercel.app');
+
+/** Greeting name for the home header (single-operator personal app). */
+export const OWNER_FIRST_NAME = 'Mohamed';
 
 export type PortfolioId = 'all' | 'portfolio_1' | 'portfolio_2' | 'portfolio_3';
 

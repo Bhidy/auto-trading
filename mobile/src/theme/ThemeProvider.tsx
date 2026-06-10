@@ -1,6 +1,6 @@
 /**
- * Theme context — Dark Solar / Light Paper, persisted, system-aware.
- * Defaults to Dark Solar (the premium terminal experience).
+ * Theme context — Cloud Pastel (light) / Dark Solar, persisted, system-aware.
+ * Defaults to Cloud Pastel — the white-canvas Design 3.0 experience.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme as useDeviceScheme } from 'react-native';
@@ -23,7 +23,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const device = useDeviceScheme();
-  const [pref, setPrefState] = useState<ThemePref>('dark');
+  const [pref, setPrefState] = useState<ThemePref>('light');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {

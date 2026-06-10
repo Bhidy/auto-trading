@@ -2,13 +2,9 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { Card } from '@/components/Card';
-import { GlassCard } from '@/components/GlassCard';
-import { Reveal } from '@/components/Reveal';
+import { PageHeader } from '@/components/PageHeader';
 import { Text } from '@/components/Text';
 import { Tag } from '@/components/Tag';
-import { ClockPill } from '@/components/ClockPill';
 import { DeltaPill } from '@/components/DeltaPill';
 import { PortfolioCard } from '@/components/PortfolioCard';
 import { PressableScale } from '@/components/PressableScale';
@@ -17,12 +13,13 @@ import { Icon } from '@/components/Icon';
 import { Sparkline } from '@/charts/Sparkline';
 import { useEquityHistory, useOverview } from '@/api/hooks';
 import { useTheme } from '@/theme/ThemeProvider';
-import { currency, percent } from '@/lib/format';
+import { cardShadow, radius } from '@/theme/tokens';
+import { currency, percent, signedCurrency } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { fonts } from '@/theme/typography';
 
 export default function Portfolios() {
-  const { palette } = useTheme();
+  const { palette, scheme } = useTheme();
   const { data: overview, isLoading, refetch, isRefetching } = useOverview();
   const { data: allEq } = useEquityHistory('all', '3M');
 
@@ -34,6 +31,7 @@ export default function Portfolios() {
     const prev = equity - dayPnl;
     return {
       equity,
+      dayPnl,
       dayPnlPct: prev > 0 ? (dayPnl / prev) * 100 : 0,
       totalReturnPct: initial > 0 ? ((equity - initial) / initial) * 100 : 0,
       positions: overview.reduce((s, p) => s + (p.positions || 0), 0),
@@ -43,12 +41,18 @@ export default function Portfolios() {
   const spark = (allEq?.history ?? []).map((p) => p.equity).filter((v) => isFinite(v));
 
   return (
-    <Screen refreshing={isRefetching} onRefresh={refetch}>
-      <ScreenHeader title="Portfolios" eyebrow="The book" right={<ClockPill />} />
+    <Screen
+      padded={false}
+      ambient={false}
+      refreshing={isRefetching}
+      onRefresh={refetch}
+      contentContainerStyle={{ paddingBottom: 130, paddingHorizontal: 18 }}
+    >
+      <PageHeader title="Portfolios" sub="Three autonomous books" />
 
       <View style={{ gap: 14 }}>
-        {/* Aggregate book */}
-        <Reveal index={0}>
+
+        {/* ── AGGREGATE CARD ── */}
         <PressableScale
           scaleTo={0.98}
           onPress={() => {
@@ -56,57 +60,77 @@ export default function Portfolios() {
             router.push('/portfolio/all');
           }}
         >
-          <GlassCard glow style={{ gap: 14 }}>
+          <View
+            style={{
+              backgroundColor: palette.contrast,
+              borderRadius: radius.xl,
+              padding: 18,
+              gap: 14,
+            }}
+          >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text variant="overline" dim>
-                All portfolios
+              <Text style={{ fontFamily: fonts.uiSemibold, fontSize: 12.5, color: palette.contrastMuted, letterSpacing: 0.8 }}>
+                ALL PORTFOLIOS
               </Text>
               <Tag label="Aggregate" tone="accent" />
             </View>
+
             {!agg ? (
-              <Skeleton width={220} height={34} />
+              <View style={{ gap: 10 }}>
+                <Skeleton width={200} height={38} rounded={10} />
+                <Skeleton width={160} height={18} rounded={6} />
+              </View>
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                <View style={{ gap: 6 }}>
-                  <Text variant="monoXL" style={{ fontFamily: fonts.serif, fontSize: 34, lineHeight: 40 }}>
+                <View style={{ gap: 6, flex: 1 }}>
+                  <Text
+                    style={{
+                      fontFamily: fonts.uiExtra,
+                      fontSize: 34,
+                      lineHeight: 40,
+                      letterSpacing: -1,
+                      color: palette.contrastInk,
+                    }}
+                  >
                     {currency(agg.equity, { cents: false })}
                   </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <DeltaPill value={agg.dayPnlPct} size="sm" />
-                    <Text variant="caption" dim>
-                      today · {percent(agg.totalReturnPct, { signed: true })} inception · {agg.positions} positions
+                    <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12, color: palette.contrastMuted }}>
+                      {signedCurrency(agg.dayPnl, { compact: true })} ·{' '}
+                      {percent(agg.totalReturnPct, { signed: true })} inception · {agg.positions} pos
                     </Text>
                   </View>
                 </View>
-                {spark.length > 2 && <Sparkline data={spark} width={92} height={40} />}
+                {spark.length > 2 && (
+                  <Sparkline data={spark} width={96} height={42} color="#FF8A3D" strokeWidth={2} fill={false} />
+                )}
               </View>
             )}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text variant="label" color="teal">
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Text style={{ fontFamily: fonts.uiSemibold, fontSize: 12.5, color: palette.contrastInk }}>
                 Open the combined book
               </Text>
-              <Icon name="chevron-right" size={13} color={palette.teal} />
+              <Icon name="chevron-right" size={12} color={palette.contrastInk} strokeWidth={2.4} />
             </View>
-          </GlassCard>
-        </PressableScale>
-        </Reveal>
-
-        {/* Individual strategies */}
-        {isLoading && (
-          <View style={{ gap: 14 }}>
-            {[0, 1, 2].map((i) => (
-              <Card key={i} style={{ gap: 10 }}>
-                <Skeleton width={170} height={18} />
-                <Skeleton width="100%" height={72} rounded={12} />
-              </Card>
-            ))}
           </View>
-        )}
-        {overview?.map((p, i) => (
-          <Reveal key={p.id} index={1 + i}>
-            <PortfolioCard data={p} />
-          </Reveal>
-        ))}
+        </PressableScale>
+
+        {/* ── INDIVIDUAL STRATEGIES ── */}
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 }}>
+          <Text style={{ fontFamily: fonts.uiBold, fontSize: 15, letterSpacing: -0.2, color: palette.ink }}>
+            Strategies
+          </Text>
+          <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12.5, color: palette.muted }}>
+            {overview?.length ?? 3} books
+          </Text>
+        </View>
+
+        {isLoading
+          ? [0, 1, 2].map((i) => <Skeleton key={i} width="100%" height={170} rounded={radius.xl} />)
+          : overview?.map((p) => <PortfolioCard key={p.id} data={p} />)}
+
       </View>
     </Screen>
   );

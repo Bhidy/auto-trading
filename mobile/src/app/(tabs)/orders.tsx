@@ -1,19 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { Card } from '@/components/Card';
+import { PageHeader } from '@/components/PageHeader';
+import { FilterPills } from '@/components/FilterPills';
 import { Text } from '@/components/Text';
 import { Tag } from '@/components/Tag';
 import { Divider } from '@/components/Divider';
 import { Skeleton } from '@/components/Skeleton';
-import { SegmentedControl } from '@/components/SegmentedControl';
-import { ClockPill } from '@/components/ClockPill';
 import { Button } from '@/components/Button';
 import { useCancelOrder, useUnifiedOrders } from '@/api/hooks';
 import { authorizeAction, hasAccessToken } from '@/lib/auth';
 import { useTheme } from '@/theme/ThemeProvider';
 import { fonts } from '@/theme/typography';
+import { cardShadow, radius } from '@/theme/tokens';
 import { metaFor, type PortfolioId } from '@/lib/constants';
 import { price, qty as fmtQty, shortDate, timeOf } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
@@ -35,6 +34,7 @@ const num = (v: unknown) => {
 };
 
 function OrderRow({ order, tab, onCancel }: { order: Annotated; tab: (typeof TABS)[number]; onCancel?: () => void }) {
+  const { palette } = useTheme();
   const side = (order.side ?? '').toUpperCase();
   const buy = side === 'BUY';
   const qtyV = num(order.qty) ?? num(order.filled_qty);
@@ -43,23 +43,23 @@ function OrderRow({ order, tab, onCancel }: { order: Annotated; tab: (typeof TAB
   const pid = order._portfolio_id;
 
   return (
-    <View style={{ paddingVertical: 12, gap: 8 }}>
+    <View style={{ paddingVertical: 13, gap: 7 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
         <Tag label={side || 'ORDER'} tone={buy ? 'up' : 'down'} />
-        <Text variant="bodyStrong" style={{ flex: 1 }}>
+        <Text style={{ fontFamily: fonts.uiBold, fontSize: 14, color: palette.ink, flex: 1 }}>
           {order.symbol}
-          <Text variant="caption" dim>
-            {'  '}
-            {qtyV != null ? fmtQty(qtyV) : '—'} {px != null ? `@ $${price(px)}` : `· ${order.type ?? ''}`}
+          {'  '}
+          <Text style={{ fontFamily: fonts.ui, fontSize: 12.5, color: palette.muted }}>
+            {qtyV != null ? fmtQty(qtyV) : '—'}{px != null ? ` @ $${price(px)}` : ` · ${order.type ?? ''}`}
           </Text>
         </Text>
-        <Text variant="caption" dim style={{ fontFamily: fonts.mono }}>
+        <Text style={{ fontFamily: fonts.mono, fontSize: 11.5, color: palette.muted }}>
           {when ? `${shortDate(when)} ${timeOf(when)}` : ''}
         </Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {pid && <Tag label={metaFor(pid).short} tone="accent" />}
-        <Text variant="caption" dim style={{ flex: 1 }} numberOfLines={1}>
+        <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12, color: palette.muted, flex: 1 }} numberOfLines={1}>
           {order.reason ?? order.status ?? ''}
         </Text>
         {tab === 'Open' && onCancel && (
@@ -67,7 +67,7 @@ function OrderRow({ order, tab, onCancel }: { order: Annotated; tab: (typeof TAB
         )}
       </View>
       {tab === 'Open' && (order.limit_price != null || order.stop_price != null) && (
-        <Text variant="caption" dim style={{ fontFamily: fonts.mono }}>
+        <Text style={{ fontFamily: fonts.mono, fontSize: 11.5, color: palette.muted }}>
           {order.limit_price != null ? `limit $${price(num(order.limit_price))}` : ''}
           {order.stop_price != null ? `  stop $${price(num(order.stop_price))}` : ''}
           {order.time_in_force ? `  ${String(order.time_in_force).toUpperCase()}` : ''}
@@ -78,7 +78,7 @@ function OrderRow({ order, tab, onCancel }: { order: Annotated; tab: (typeof TAB
 }
 
 export default function Orders() {
-  const { palette } = useTheme();
+  const { palette, scheme } = useTheme();
   const [tab, setTab] = useState<(typeof TABS)[number]>('Executed');
   const { data, isLoading, refetch, isRefetching } = useUnifiedOrders('all');
   const [error, setError] = useState<string | null>(null);
@@ -122,59 +122,81 @@ export default function Orders() {
     }
   };
 
+  const flatCard = {
+    backgroundColor: palette.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: palette.line,
+    ...cardShadow(scheme),
+  };
+
   return (
-    <Screen refreshing={isRefetching} onRefresh={refetch}>
-      <ScreenHeader title="Orders" eyebrow="Execution" right={<ClockPill />} />
+    <Screen
+      padded={false}
+      ambient={false}
+      refreshing={isRefetching}
+      onRefresh={refetch}
+      contentContainerStyle={{ paddingBottom: 130, paddingHorizontal: 18 }}
+    >
+      <PageHeader title="Orders" sub="All portfolios" />
 
       <View style={{ gap: 14 }}>
-        <SegmentedControl options={TABS} value={tab} onChange={setTab} />
 
-        {/* Counts strip */}
+        {/* Tab filter */}
+        <FilterPills options={TABS} value={tab} onChange={(v) => setTab(v as typeof tab)} stretch />
+
+        {/* Counts row */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {TABS.map((t) => (
-            <Card key={t} padded={12} style={{ flex: 1, gap: 3, alignItems: 'center' }}>
-              <Text variant="overline" dim>
-                {t}
+            <View key={t} style={{ flex: 1, ...flatCard, padding: 12, gap: 3, alignItems: 'center' }}>
+              <Text style={{ fontFamily: fonts.uiSemibold, fontSize: 11, color: palette.muted, letterSpacing: 0.6 }}>
+                {t.toUpperCase()}
               </Text>
-              <Text variant="monoL">{data ? counts[t] : '—'}</Text>
-            </Card>
+              <Text style={{ fontFamily: fonts.monoMedium, fontSize: 20, color: palette.ink }}>
+                {data ? counts[t] : '—'}
+              </Text>
+            </View>
           ))}
         </View>
 
+        {/* Error banner */}
         {error && (
-          <Card style={{ borderColor: palette.down }}>
-            <Text variant="caption" color="down">
-              {error}
-            </Text>
-          </Card>
+          <View style={{ ...flatCard, borderColor: palette.down, padding: 13 }}>
+            <Text style={{ fontFamily: fonts.uiMedium, fontSize: 13, color: palette.down }}>{error}</Text>
+          </View>
         )}
 
-        <Card padded={false} style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+        {/* Order list */}
+        <View style={flatCard}>
           {isLoading && (
-            <View style={{ gap: 10, paddingVertical: 14 }}>
+            <View style={{ gap: 10, padding: 16 }}>
               {[0, 1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} width="100%" height={48} rounded={10} />
               ))}
             </View>
           )}
           {!isLoading && rows.length === 0 && (
-            <View style={{ paddingVertical: 26, alignItems: 'center', gap: 4 }}>
-              <Text variant="bodyStrong">Nothing here</Text>
-              <Text variant="caption" dim>
+            <View style={{ paddingVertical: 30, alignItems: 'center', gap: 5 }}>
+              <Text style={{ fontFamily: fonts.uiBold, fontSize: 15, color: palette.ink }}>Nothing here</Text>
+              <Text style={{ fontFamily: fonts.uiMedium, fontSize: 13, color: palette.muted }}>
                 No {tab.toLowerCase()} orders across the book.
               </Text>
             </View>
           )}
           {rows.slice(0, 40).map((o, i) => (
-            <View key={`${o.id ?? i}-${i}`}>
+            <View key={`${o.id ?? i}-${i}`} style={{ paddingHorizontal: 16 }}>
               {i > 0 && <Divider />}
-              <OrderRow order={o} tab={tab} onCancel={tab === 'Open' && o.id ? () => handleCancel(o) : undefined} />
+              <OrderRow
+                order={o}
+                tab={tab}
+                onCancel={tab === 'Open' && o.id ? () => handleCancel(o) : undefined}
+              />
             </View>
           ))}
-        </Card>
+        </View>
 
         {data?.fetched_at && (
-          <Text variant="caption" dim align="center">
+          <Text style={{ fontFamily: fonts.uiMedium, fontSize: 12, color: palette.muted, textAlign: 'center' }}>
             Synced {timeOf(data.fetched_at)} · auto-refreshes every 30s
           </Text>
         )}

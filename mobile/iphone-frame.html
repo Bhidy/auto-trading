@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Trading — iPhone 17 Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  }
+
+  .scene {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .label {
+    color: rgba(255,255,255,0.35);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── iPhone 17 frame ── */
+  .phone {
+    position: relative;
+    width: 430px;
+    height: 932px;
+    background: #1a1a1a;
+    border-radius: 54px;
+    box-shadow:
+      0 0 0 1.5px #3a3a3a,
+      0 0 0 3px #1a1a1a,
+      0 0 0 4px #444,
+      0 30px 80px rgba(0,0,0,0.8),
+      0 10px 30px rgba(0,0,0,0.6),
+      inset 0 0 0 1px rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+
+  /* Side buttons */
+  .phone::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 160px;
+    width: 3px;
+    height: 36px;
+    background: #2a2a2a;
+    border-radius: 2px 0 0 2px;
+    box-shadow: 0 56px 0 #2a2a2a, 0 96px 0 #2a2a2a;
+  }
+  .phone::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 210px;
+    width: 3px;
+    height: 70px;
+    background: #2a2a2a;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* Screen area */
+  .screen {
+    position: absolute;
+    inset: 0;
+    border-radius: 54px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* Dynamic Island */
+  .dynamic-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 36px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 10;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* Home indicator */
+  .home-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 130px;
+    height: 5px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+    z-index: 10;
+  }
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tab-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.9); }
+  .tab-btn.active { background: #e55a1f; border-color: #e55a1f; color: #fff; }
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="label">Auto Trading · iPhone 17 · iOS 26.5</div>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="dynamic-island"></div>
+      <iframe
+        id="app"
+        src="http://localhost:8083/(tabs)/home"
+        allow="*"
+      ></iframe>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="nav('home',this)">Home</button>
+    <button class="tab-btn" onclick="nav('portfolios',this)">Portfolios</button>
+    <button class="tab-btn" onclick="nav('markets',this)">Markets</button>
+    <button class="tab-btn" onclick="nav('orders',this)">Orders</button>
+    <button class="tab-btn" onclick="nav('settings',this)">Settings</button>
+  </div>
+</div>
+
+<script>
+  // Set light mode in the iframe on load
+  const iframe = document.getElementById('app');
+  iframe.addEventListener('load', () => {
+    try {
+      iframe.contentWindow.localStorage.setItem('rw.theme.pref', 'light');
+    } catch(e) {}
+  });
+
+  function nav(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    iframe.src = 'http://localhost:8083/(tabs)/' + tab;
+  }
+</script>
+</body>
+</html>
