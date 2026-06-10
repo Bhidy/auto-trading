@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-10T22:27:02.216387+00:00",
-  "total_equity": 294325.8,
-  "gross_exposure_pct": 63.855,
+  "timestamp": "2026-06-10T22:31:07.196543+00:00",
+  "total_equity": 294341.0,
+  "gross_exposure_pct": 63.851,
   "by_symbol": {
     "DIA": {
       "market_value": 17356.19,
@@ -28,7 +28,7 @@
     },
     "XLE": {
       "market_value": 18776.95,
-      "pct_of_total": 6.38,
+      "pct_of_total": 6.379,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -71,7 +71,7 @@
     },
     "SPY": {
       "market_value": 6544.35,
-      "pct_of_total": 2.224,
+      "pct_of_total": 2.223,
       "books": [
         "portfolio_2"
       ]
@@ -120,7 +120,7 @@
     },
     "MPC": {
       "market_value": 14956.5,
-      "pct_of_total": 5.082,
+      "pct_of_total": 5.081,
       "books": [
         "portfolio_3"
       ]
@@ -169,7 +169,7 @@
     },
     "MS": {
       "market_value": 15377.1,
-      "pct_of_total": 5.225,
+      "pct_of_total": 5.224,
       "books": [
         "portfolio_3"
       ]
@@ -192,7 +192,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 116599.85,
-      "pct_of_total": 39.616
+      "pct_of_total": 39.614
     },
     "Energy": {
       "market_value": 15399.96,
@@ -208,7 +208,7 @@
     },
     "Financials": {
       "market_value": 15377.1,
-      "pct_of_total": 5.225
+      "pct_of_total": 5.224
     }
   },
   "single_name_cap_pct": 10.0,
@@ -216,7 +216,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.908
+    "mega_cap_tech_ai": 6.907
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
