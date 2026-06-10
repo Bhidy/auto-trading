@@ -1,5 +1,5 @@
 {
-  "equity": 94445.43,
+  "equity": 94460.44,
   "starting_equity": 100000.0,
   "day_start_equity": 95337.23,
   "week_start_equity": 97149.65,
@@ -23,26 +23,21 @@
       "qty": 201,
       "avg_price": 58.501244,
       "bucket": "sector_momentum"
-    },
-    "XLK": {
-      "qty": 48,
-      "avg_price": 183.847552,
-      "bucket": "sector_momentum"
     }
   },
   "trades_today": 0,
-  "total_exposure": 49538.24,
-  "long_market_value": 49538.24,
+  "total_exposure": 41058.58,
+  "long_market_value": 41058.58,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 44907.19,
-  "day_pnl": -891.8,
-  "day_pnl_pct": -0.009354,
-  "week_pnl": -2704.22,
-  "week_pnl_pct": -0.027836,
+  "cash": 53402.23,
+  "day_pnl": -876.79,
+  "day_pnl_pct": -0.009197,
+  "week_pnl": -2689.21,
+  "week_pnl_pct": -0.027681,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-10T19:12:53.751603+00:00"
+  "last_updated": "2026-06-10T19:41:15.153533+00:00"
 }
