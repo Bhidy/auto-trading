@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-10T23:04:25.880388+00:00",
+  "timestamp": "2026-06-10T23:14:30.342300+00:00",
   "overall": {
     "total_trades": 35,
     "wins": 6,
@@ -49,11 +49,11 @@
     "sharpe_estimate": -0.69
   },
   "by_bucket": {
-    "defensive": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
+    "sector_momentum": {
+      "trades": 11,
+      "win_rate": 0.273,
+      "total_pnl": -41.82,
+      "avg_pnl_pct": -0.34
     },
     "core_equity": {
       "trades": 8,
@@ -61,31 +61,31 @@
       "total_pnl": -1077.34,
       "avg_pnl_pct": -2.4
     },
-    "sector_momentum": {
-      "trades": 11,
-      "win_rate": 0.273,
-      "total_pnl": -41.82,
-      "avg_pnl_pct": -0.34
-    },
     "aggressive_growth": {
       "trades": 13,
       "win_rate": 0.077,
       "total_pnl": -3173.2,
       "avg_pnl_pct": -4.04
+    },
+    "defensive": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
     }
   },
   "by_symbol": {
+    "BIL": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
+    },
     "XLK": {
       "trades": 8,
       "win_rate": 0.375,
       "total_pnl": 332.75,
       "avg_pnl_pct": -0.48
-    },
-    "NVDA": {
-      "trades": 1,
-      "win_rate": 1.0,
-      "total_pnl": 29.04,
-      "avg_pnl_pct": 0.42
     },
     "XLI": {
       "trades": 1,
@@ -99,29 +99,11 @@
       "total_pnl": -776.6,
       "avg_pnl_pct": -5.23
     },
-    "QQQ": {
-      "trades": 4,
-      "win_rate": 0.25,
-      "total_pnl": -645.75,
-      "avg_pnl_pct": -2.96
-    },
-    "BIL": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
-    },
     "XLY": {
       "trades": 4,
       "win_rate": 0.0,
       "total_pnl": -407.08,
       "avg_pnl_pct": -1.9
-    },
-    "SPY": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -468.9,
-      "avg_pnl_pct": -2.75
     },
     "GOOGL": {
       "trades": 4,
@@ -129,30 +111,48 @@
       "total_pnl": -911.89,
       "avg_pnl_pct": -3.91
     },
+    "NVDA": {
+      "trades": 1,
+      "win_rate": 1.0,
+      "total_pnl": 29.04,
+      "avg_pnl_pct": 0.42
+    },
+    "SPY": {
+      "trades": 3,
+      "win_rate": 0.0,
+      "total_pnl": -468.9,
+      "avg_pnl_pct": -2.75
+    },
     "AMZN": {
       "trades": 4,
       "win_rate": 0.0,
       "total_pnl": -1000.42,
       "avg_pnl_pct": -3.76
     },
-    "AAPL": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -513.33,
-      "avg_pnl_pct": -6.61
-    },
     "DIA": {
       "trades": 1,
       "win_rate": 1.0,
       "total_pnl": 37.31,
       "avg_pnl_pct": 0.82
+    },
+    "QQQ": {
+      "trades": 4,
+      "win_rate": 0.25,
+      "total_pnl": -645.75,
+      "avg_pnl_pct": -2.96
+    },
+    "AAPL": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -513.33,
+      "avg_pnl_pct": -6.61
     }
   },
   "insights": [
     "Win rate declining \u2014 tighten entry criteria",
     "Losing money \u2014 reduce exposure and review strategy",
-    "Bucket 'core_equity' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation",
+    "Bucket 'core_equity' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
   ]
 }

@@ -438,5 +438,93 @@
       "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation",
       "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
     ]
+  },
+  {
+    "date": "2026-06-10",
+    "timestamp": "2026-06-10T23:14:30.342954+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 94245.81,
+      "cash": 53402.23,
+      "portfolio_value": 94245.81,
+      "daily_pnl": -49.729999999995925,
+      "daily_pnl_pct": -0.053
+    },
+    "positions": [
+      {
+        "symbol": "DIA",
+        "qty": "21",
+        "market_value": "10466.19",
+        "unrealized_pl": "-372.709995",
+        "unrealized_plpc": "-0.03439"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "40",
+        "market_value": "11193.2",
+        "unrealized_pl": "-307.65",
+        "unrealized_plpc": "-0.02675"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "37",
+        "market_value": "7363.3589",
+        "unrealized_pl": "-500.871109",
+        "unrealized_plpc": "-0.06369"
+      },
+      {
+        "symbol": "XLE",
+        "qty": "201",
+        "market_value": "11820.8301",
+        "unrealized_pl": "62.080056",
+        "unrealized_plpc": "0.00528"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 23,
+        "wins": 1,
+        "losses": 22,
+        "win_rate": 0.043,
+        "avg_pnl_pct": -3.35,
+        "avg_win_pct": 1.98,
+        "avg_loss_pct": -3.6,
+        "win_loss_ratio": 0.55,
+        "max_win_pct": 1.98,
+        "max_loss_pct": -10.8,
+        "total_pnl": -3980.75,
+        "profit_factor": 0.05,
+        "per_trade_sharpe": -1.12,
+        "sharpe_estimate": -1.12
+      },
+      "metrics_30d": {
+        "total_trades": 35,
+        "wins": 6,
+        "losses": 29,
+        "win_rate": 0.171,
+        "avg_pnl_pct": -2.39,
+        "avg_win_pct": 1.95,
+        "avg_loss_pct": -3.29,
+        "win_loss_ratio": 0.59,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -10.8,
+        "total_pnl": -4387.64,
+        "profit_factor": 0.14,
+        "per_trade_sharpe": -0.69,
+        "sharpe_estimate": -0.69
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": [
+      "Win rate declining \u2014 tighten entry criteria",
+      "Losing money \u2014 reduce exposure and review strategy",
+      "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation",
+      "Bucket 'core_equity' underperforming severely \u2014 consider reducing allocation",
+      "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
+    ]
   }
 ]
