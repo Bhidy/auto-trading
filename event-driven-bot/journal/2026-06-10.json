@@ -328,5 +328,170 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-10",
+    "timestamp": "2026-06-10T22:32:47.101556+00:00",
+    "audit": {
+      "equity": 101904.99,
+      "cash": 30406.12,
+      "daily_pnl": -800.92,
+      "daily_pnl_pct": -0.78,
+      "total_open_exposure": 71498.87,
+      "exposure_pct": 70.2,
+      "position_count": 10,
+      "trades_today": 3,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 19608.61,
+        "Energy": 15975.04,
+        "Consumer": 20622.38,
+        "Financials": 15292.84
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "35",
+        "entry": "153.9",
+        "current": "151.76",
+        "market_value": "5311.6",
+        "unrealized_pl": "-74.9",
+        "pnl_pct": -1.39,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "140.28",
+        "market_value": "140.28",
+        "unrealized_pl": "-0.4",
+        "pnl_pct": -0.28,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "F",
+        "qty": "298",
+        "entry": "14.95",
+        "current": "14.31",
+        "market_value": "4264.38",
+        "unrealized_pl": "-190.72",
+        "pnl_pct": -4.28,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "263.28",
+        "market_value": "15533.52",
+        "unrealized_pl": "560.5",
+        "pnl_pct": 3.74,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "1",
+        "entry": "265.44",
+        "current": "246.45",
+        "market_value": "246.45",
+        "unrealized_pl": "-18.99",
+        "pnl_pct": -7.15,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MS",
+        "qty": "74",
+        "entry": "207.798649",
+        "current": "206.66",
+        "market_value": "15292.84",
+        "unrealized_pl": "-84.260026",
+        "pnl_pct": -0.55,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "16",
+        "entry": "924.95",
+        "current": "878.16",
+        "market_value": "14050.56",
+        "unrealized_pl": "-748.64",
+        "pnl_pct": -5.06,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "1",
+        "entry": "122.41",
+        "current": "127.98",
+        "market_value": "127.98",
+        "unrealized_pl": "5.57",
+        "pnl_pct": 4.55,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "120.2224",
+        "market_value": "16230.024",
+        "unrealized_pl": "695.183985",
+        "pnl_pct": 4.47,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "150.62",
+        "market_value": "301.24",
+        "unrealized_pl": "-1.54",
+        "pnl_pct": -0.51,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MS",
+        "side": "buy",
+        "qty": 74,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($202.52)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "ANET",
+        "side": "buy",
+        "qty": 35,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.53,
+        "reasons": [
+          "MACD bullish crossover",
+          "MACD crossover below zero (structural reversal)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "MRVL",
+        "side": "buy",
+        "qty": 1,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+141.7%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
