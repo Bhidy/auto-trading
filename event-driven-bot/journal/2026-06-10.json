@@ -493,5 +493,170 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-10",
+    "timestamp": "2026-06-10T22:57:17.510518+00:00",
+    "audit": {
+      "equity": 101807.22,
+      "cash": 30406.12,
+      "daily_pnl": -898.69,
+      "daily_pnl_pct": -0.875,
+      "total_open_exposure": 71401.1,
+      "exposure_pct": 70.1,
+      "position_count": 10,
+      "trades_today": 3,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 19391.24,
+        "Energy": 16140.72,
+        "Consumer": 20646.11,
+        "Financials": 15223.03
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "35",
+        "entry": "153.9",
+        "current": "149",
+        "market_value": "5215",
+        "unrealized_pl": "-171.5",
+        "pnl_pct": -3.18,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "1",
+        "entry": "140.68",
+        "current": "141.74",
+        "market_value": "141.74",
+        "unrealized_pl": "1.06",
+        "pnl_pct": 0.75,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "F",
+        "qty": "298",
+        "entry": "14.95",
+        "current": "14.29",
+        "market_value": "4258.42",
+        "unrealized_pl": "-196.68",
+        "pnl_pct": -4.42,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "266",
+        "market_value": "15694",
+        "unrealized_pl": "720.98",
+        "pnl_pct": 4.81,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "1",
+        "entry": "265.44",
+        "current": "243.44",
+        "market_value": "243.44",
+        "unrealized_pl": "-22",
+        "pnl_pct": -8.29,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MS",
+        "qty": "74",
+        "entry": "207.798649",
+        "current": "205.7166",
+        "market_value": "15223.0284",
+        "unrealized_pl": "-154.071626",
+        "pnl_pct": -1.0,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "16",
+        "entry": "924.95",
+        "current": "870.8",
+        "market_value": "13932.8",
+        "unrealized_pl": "-866.4",
+        "pnl_pct": -5.85,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "1",
+        "entry": "122.41",
+        "current": "126.94",
+        "market_value": "126.94",
+        "unrealized_pl": "4.53",
+        "pnl_pct": 3.7,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "120.45",
+        "market_value": "16260.75",
+        "unrealized_pl": "725.909985",
+        "pnl_pct": 4.67,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "152.49",
+        "market_value": "304.98",
+        "unrealized_pl": "2.2",
+        "pnl_pct": 0.73,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MS",
+        "side": "buy",
+        "qty": 74,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($202.52)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "ANET",
+        "side": "buy",
+        "qty": 35,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.53,
+        "reasons": [
+          "MACD bullish crossover",
+          "MACD crossover below zero (structural reversal)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "MRVL",
+        "side": "buy",
+        "qty": 1,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+141.7%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
