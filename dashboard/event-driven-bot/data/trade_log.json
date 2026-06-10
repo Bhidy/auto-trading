@@ -529,5 +529,81 @@
     "exit_price": null,
     "pnl": null,
     "realized_pnl": null
+  },
+  {
+    "timestamp": "2026-06-10T14:11:28.945675+00:00",
+    "date": "2026-06-10",
+    "symbol": "MS",
+    "side": "buy",
+    "qty": 74,
+    "entry_price": 207.7986,
+    "stop_loss": 200.88,
+    "take_profit_1": 221.4,
+    "atr": 4.56,
+    "trade_value": 15371.28,
+    "order_id": "8d03249e-ca73-40d3-a0a2-2ad6ab290f0a",
+    "order_status": "filled",
+    "filled_qty": 74.0,
+    "sector": "Financials",
+    "tranche": "core_swing",
+    "signal_score": 0.6,
+    "reasons": [
+      "Breaking upper BB ($202.52)",
+      "MACD bullish crossover",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-06-10T14:11:31.220106+00:00",
+    "date": "2026-06-10",
+    "symbol": "ANET",
+    "side": "buy",
+    "qty": 35,
+    "entry_price": 153.9,
+    "stop_loss": 143.05,
+    "take_profit_1": 175.0,
+    "atr": 7.1,
+    "trade_value": 5379.5,
+    "order_id": "4312152f-c589-44c9-a7b2-0fd1917b40cb",
+    "order_status": "filled",
+    "filled_qty": 35.0,
+    "sector": "Tech",
+    "tranche": "core_swing",
+    "signal_score": 0.53,
+    "reasons": [
+      "MACD bullish crossover",
+      "MACD crossover below zero (structural reversal)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (53)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-06-10T14:11:33.513482+00:00",
+    "date": "2026-06-10",
+    "symbol": "MRVL",
+    "side": "buy",
+    "qty": 1,
+    "entry_price": 265.44,
+    "stop_loss": 246.51,
+    "take_profit_1": 302.53,
+    "atr": 12.45,
+    "trade_value": 265.19,
+    "order_id": "b4f38a76-f855-4117-8235-9cc75efe98b4",
+    "order_status": "filled",
+    "filled_qty": 1.0,
+    "sector": "Tech",
+    "tranche": "core_swing",
+    "signal_score": 0.45,
+    "reasons": [
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+141.7%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]

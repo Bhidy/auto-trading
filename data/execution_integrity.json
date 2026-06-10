@@ -1,35 +1,20 @@
 {
-  "timestamp": "2026-06-09T14:14:08.815373+00:00",
+  "timestamp": "2026-06-10T14:11:24.228284+00:00",
   "portfolio_id": "portfolio_1",
   "total_signals": 23,
-  "approved": 8,
-  "placed": 3,
-  "filled": 1,
+  "approved": 9,
+  "placed": 7,
+  "filled": 6,
   "unexplained": 0,
   "skipped": [
-    {
-      "symbol": "IWM",
-      "reason": "already hold 11.9%",
-      "benign": true
-    },
     {
       "symbol": "DIA",
       "reason": "already hold 11.1%",
       "benign": true
     },
     {
-      "symbol": "AMZN",
-      "reason": "already hold 7.1%",
-      "benign": true
-    },
-    {
-      "symbol": "TSLA",
-      "reason": "already hold 7.6%",
-      "benign": true
-    },
-    {
-      "symbol": "SPY",
-      "reason": "already hold 10.7%",
+      "symbol": "QQQ",
+      "reason": "insufficient cash",
       "benign": true
     }
   ],
