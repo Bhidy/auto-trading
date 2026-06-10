@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-10T22:31:07.993378+00:00",
+  "timestamp": "2026-06-10T22:56:36.045227+00:00",
   "overall": {
     "total_trades": 35,
     "wins": 6,
@@ -17,20 +17,20 @@
     "sharpe_estimate": -0.69
   },
   "last_7_days": {
-    "total_trades": 24,
+    "total_trades": 23,
     "wins": 1,
-    "losses": 23,
-    "win_rate": 0.042,
-    "avg_pnl_pct": -3.56,
+    "losses": 22,
+    "win_rate": 0.043,
+    "avg_pnl_pct": -3.35,
     "avg_win_pct": 1.98,
-    "avg_loss_pct": -3.8,
-    "win_loss_ratio": 0.52,
+    "avg_loss_pct": -3.6,
+    "win_loss_ratio": 0.55,
     "max_win_pct": 1.98,
     "max_loss_pct": -10.8,
-    "total_pnl": -4461.95,
+    "total_pnl": -3980.75,
     "profit_factor": 0.05,
-    "per_trade_sharpe": -1.15,
-    "sharpe_estimate": -1.15
+    "per_trade_sharpe": -1.12,
+    "sharpe_estimate": -1.12
   },
   "last_30_days": {
     "total_trades": 35,
@@ -49,11 +49,11 @@
     "sharpe_estimate": -0.69
   },
   "by_bucket": {
-    "defensive": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
+    "aggressive_growth": {
+      "trades": 13,
+      "win_rate": 0.077,
+      "total_pnl": -3173.2,
+      "avg_pnl_pct": -4.04
     },
     "sector_momentum": {
       "trades": 11,
@@ -61,11 +61,11 @@
       "total_pnl": -41.82,
       "avg_pnl_pct": -0.34
     },
-    "aggressive_growth": {
-      "trades": 13,
-      "win_rate": 0.077,
-      "total_pnl": -3173.2,
-      "avg_pnl_pct": -4.04
+    "defensive": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
     },
     "core_equity": {
       "trades": 8,
@@ -75,42 +75,6 @@
     }
   },
   "by_symbol": {
-    "SPY": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -468.9,
-      "avg_pnl_pct": -2.75
-    },
-    "TSLA": {
-      "trades": 3,
-      "win_rate": 0.0,
-      "total_pnl": -776.6,
-      "avg_pnl_pct": -5.23
-    },
-    "XLI": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -16.38,
-      "avg_pnl_pct": -0.34
-    },
-    "BIL": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
-    },
-    "GOOGL": {
-      "trades": 4,
-      "win_rate": 0.0,
-      "total_pnl": -911.89,
-      "avg_pnl_pct": -3.91
-    },
-    "XLK": {
-      "trades": 8,
-      "win_rate": 0.375,
-      "total_pnl": 332.75,
-      "avg_pnl_pct": -0.48
-    },
     "AAPL": {
       "trades": 1,
       "win_rate": 0.0,
@@ -129,30 +93,66 @@
       "total_pnl": -407.08,
       "avg_pnl_pct": -1.9
     },
+    "SPY": {
+      "trades": 3,
+      "win_rate": 0.0,
+      "total_pnl": -468.9,
+      "avg_pnl_pct": -2.75
+    },
+    "XLK": {
+      "trades": 8,
+      "win_rate": 0.375,
+      "total_pnl": 332.75,
+      "avg_pnl_pct": -0.48
+    },
     "DIA": {
       "trades": 1,
       "win_rate": 1.0,
       "total_pnl": 37.31,
       "avg_pnl_pct": 0.82
     },
-    "AMZN": {
+    "BIL": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
+    },
+    "GOOGL": {
       "trades": 4,
       "win_rate": 0.0,
-      "total_pnl": -1000.42,
-      "avg_pnl_pct": -3.76
+      "total_pnl": -911.89,
+      "avg_pnl_pct": -3.91
     },
     "NVDA": {
       "trades": 1,
       "win_rate": 1.0,
       "total_pnl": 29.04,
       "avg_pnl_pct": 0.42
+    },
+    "XLI": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -16.38,
+      "avg_pnl_pct": -0.34
+    },
+    "TSLA": {
+      "trades": 3,
+      "win_rate": 0.0,
+      "total_pnl": -776.6,
+      "avg_pnl_pct": -5.23
+    },
+    "AMZN": {
+      "trades": 4,
+      "win_rate": 0.0,
+      "total_pnl": -1000.42,
+      "avg_pnl_pct": -3.76
     }
   },
   "insights": [
     "Win rate declining \u2014 tighten entry criteria",
     "Losing money \u2014 reduce exposure and review strategy",
-    "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation",
+    "Bucket 'sector_momentum' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'core_equity' underperforming severely \u2014 consider reducing allocation"
   ]
 }
