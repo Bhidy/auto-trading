@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-11T22:28:26.751012+00:00",
+  "timestamp": "2026-06-11T22:58:46.900870+00:00",
   "overall": {
     "total_trades": 42,
     "wins": 13,
@@ -49,12 +49,6 @@
     "sharpe_estimate": -0.53
   },
   "by_bucket": {
-    "sector_momentum": {
-      "trades": 13,
-      "win_rate": 0.385,
-      "total_pnl": 76.3,
-      "avg_pnl_pct": -0.15
-    },
     "aggressive_growth": {
       "trades": 16,
       "win_rate": 0.25,
@@ -72,25 +66,19 @@
       "win_rate": 0.4,
       "total_pnl": -889.84,
       "avg_pnl_pct": -1.75
+    },
+    "sector_momentum": {
+      "trades": 13,
+      "win_rate": 0.385,
+      "total_pnl": 76.3,
+      "avg_pnl_pct": -0.15
     }
   },
   "by_symbol": {
-    "SPY": {
-      "trades": 4,
-      "win_rate": 0.25,
-      "total_pnl": -384.01,
-      "avg_pnl_pct": -1.86
-    },
-    "QQQ": {
-      "trades": 5,
-      "win_rate": 0.4,
-      "total_pnl": -543.14,
-      "avg_pnl_pct": -2.17
-    },
-    "XLI": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -16.38,
+    "XLK": {
+      "trades": 9,
+      "win_rate": 0.444,
+      "total_pnl": 341.45,
       "avg_pnl_pct": -0.34
     },
     "XLY": {
@@ -99,11 +87,11 @@
       "total_pnl": -297.66,
       "avg_pnl_pct": -1.31
     },
-    "XLK": {
-      "trades": 9,
-      "win_rate": 0.444,
-      "total_pnl": 341.45,
-      "avg_pnl_pct": -0.34
+    "AAPL": {
+      "trades": 2,
+      "win_rate": 0.5,
+      "total_pnl": -378.05,
+      "avg_pnl_pct": -2.33
     },
     "AMZN": {
       "trades": 5,
@@ -111,17 +99,35 @@
       "total_pnl": -960.5,
       "avg_pnl_pct": -2.88
     },
+    "GOOGL": {
+      "trades": 4,
+      "win_rate": 0.0,
+      "total_pnl": -911.89,
+      "avg_pnl_pct": -3.91
+    },
+    "XLI": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -16.38,
+      "avg_pnl_pct": -0.34
+    },
+    "QQQ": {
+      "trades": 5,
+      "win_rate": 0.4,
+      "total_pnl": -543.14,
+      "avg_pnl_pct": -2.17
+    },
     "NVDA": {
       "trades": 1,
       "win_rate": 1.0,
       "total_pnl": 29.04,
       "avg_pnl_pct": 0.42
     },
-    "AAPL": {
-      "trades": 2,
-      "win_rate": 0.5,
-      "total_pnl": -378.05,
-      "avg_pnl_pct": -2.33
+    "BIL": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -46.39,
+      "avg_pnl_pct": -0.23
     },
     "TSLA": {
       "trades": 4,
@@ -129,23 +135,17 @@
       "total_pnl": -689.66,
       "avg_pnl_pct": -3.59
     },
-    "GOOGL": {
-      "trades": 4,
-      "win_rate": 0.0,
-      "total_pnl": -911.89,
-      "avg_pnl_pct": -3.91
-    },
     "DIA": {
       "trades": 1,
       "win_rate": 1.0,
       "total_pnl": 37.31,
       "avg_pnl_pct": 0.82
     },
-    "BIL": {
-      "trades": 1,
-      "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
+    "SPY": {
+      "trades": 4,
+      "win_rate": 0.25,
+      "total_pnl": -384.01,
+      "avg_pnl_pct": -1.86
     }
   },
   "insights": [
