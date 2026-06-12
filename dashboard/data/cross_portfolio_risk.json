@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-12T22:14:59.839879+00:00",
-  "total_equity": 300797.78,
-  "gross_exposure_pct": 66.568,
+  "timestamp": "2026-06-12T22:47:15.595848+00:00",
+  "total_equity": 300780.71,
+  "gross_exposure_pct": 66.572,
   "by_symbol": {
     "DIA": {
       "market_value": 17515.05,
@@ -20,7 +20,7 @@
     },
     "IWM": {
       "market_value": 18548.69,
-      "pct_of_total": 6.166,
+      "pct_of_total": 6.167,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -36,7 +36,7 @@
     },
     "XLE": {
       "market_value": 18674.95,
-      "pct_of_total": 6.208,
+      "pct_of_total": 6.209,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -121,7 +121,7 @@
     },
     "MPC": {
       "market_value": 14956.5,
-      "pct_of_total": 4.972,
+      "pct_of_total": 4.973,
       "books": [
         "portfolio_3"
       ]
@@ -186,7 +186,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 128751.2,
-      "pct_of_total": 42.803
+      "pct_of_total": 42.806
     },
     "Energy": {
       "market_value": 15259.28,
