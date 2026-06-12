@@ -1076,5 +1076,28 @@
       ],
       "approved": false
     }
+  },
+  {
+    "timestamp": "2026-06-12T22:15:00.640764+00:00",
+    "approved": false,
+    "changed_knobs": {},
+    "n_changes": 0,
+    "gate": {
+      "current_oos_sharpe": 1.479,
+      "candidate_oos_sharpe": 1.439,
+      "n_windows": 1,
+      "min_oos_windows": 2,
+      "small_n_refused": true,
+      "sharpe_ok": true,
+      "challenger_sharpe": 2.361,
+      "pbo": null,
+      "deflated_sharpe": null,
+      "beats_challenger": false,
+      "screen_reasons": [
+        "candidate OOS Sharpe 1.439 below challenger 2.361 (no edge over buy-and-hold)",
+        "insufficient OOS windows (N=1 < 2) to deflate \u2014 refusing change on small sample (fail-closed)"
+      ],
+      "approved": false
+    }
   }
 ]
