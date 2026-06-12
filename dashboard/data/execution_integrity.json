@@ -1,25 +1,15 @@
 {
-  "timestamp": "2026-06-11T14:10:54.059395+00:00",
+  "timestamp": "2026-06-12T14:11:05.496199+00:00",
   "portfolio_id": "portfolio_1",
   "total_signals": 23,
-  "approved": 10,
-  "placed": 7,
-  "filled": 7,
+  "approved": 6,
+  "placed": 5,
+  "filled": 4,
   "unexplained": 0,
   "skipped": [
     {
       "symbol": "DIA",
       "reason": "already hold 11.2%",
-      "benign": true
-    },
-    {
-      "symbol": "BIL",
-      "reason": "below min notional",
-      "benign": true
-    },
-    {
-      "symbol": "GOOGL",
-      "reason": "insufficient cash",
       "benign": true
     }
   ],

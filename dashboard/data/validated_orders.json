@@ -1,67 +1,27 @@
 {
-  "timestamp": "2026-06-11T14:10:33.919222+00:00",
-  "portfolio_equity": 94649.18,
+  "timestamp": "2026-06-12T14:10:38.980784+00:00",
+  "portfolio_equity": 95720.92,
   "trades_today": 0,
   "approved_orders": [
     {
       "approved": true,
-      "symbol": "XLY",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
-      "approved_qty": 93,
-      "price": 120.87,
-      "stop_loss": 116.06,
-      "take_profit": 128.57,
-      "confidence": 0.756,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:2.1% 3M:4.7%)",
-        "RSI neutral (60)",
-        "MACD bullish",
-        "Regime (STRONG_BULL) adjusting score x1.2"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "AMZN",
+      "symbol": "AAPL",
       "signal": "BUY",
       "rejections": [],
       "approved_position_pct": 8.0,
-      "approved_dollar_amount": 7571.93,
-      "approved_qty": 27,
-      "price": 270.64,
-      "stop_loss": 254.05,
-      "take_profit": 297.19,
-      "confidence": 0.738,
+      "approved_dollar_amount": 7657.67,
+      "approved_qty": 24,
+      "price": 306.31,
+      "stop_loss": 292.13,
+      "take_profit": 328.99,
+      "confidence": 0.846,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:2.1% 3M:29.9%)",
-        "RSI neutral (60)",
+        "Positive momentum (1M:9.3% 3M:16.1%)",
+        "RSI neutral (67)",
+        "MACD bullish",
         "Regime (STRONG_BULL) adjusting score x1.2",
-        "Top 10% relative strength (rank #3)"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "TSLA",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 8.0,
-      "approved_dollar_amount": 7571.93,
-      "approved_qty": 17,
-      "price": 435.79,
-      "stop_loss": 398.34,
-      "take_profit": 495.71,
-      "confidence": 0.724,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:14.2% 3M:8.1%)",
-        "RSI neutral (60)",
-        "MACD bullish",
-        "Volume declining -22% \u2014 weak confirmation",
-        "Regime (STRONG_BULL) adjusting score x1.2"
+        "Top 15% relative strength (rank #4)"
       ]
     },
     {
@@ -70,121 +30,17 @@
       "signal": "BUY",
       "rejections": [],
       "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
+      "approved_dollar_amount": 11486.51,
       "approved_qty": 22,
-      "price": 510.78,
-      "stop_loss": 497.82,
-      "take_profit": 531.52,
-      "confidence": 0.702,
+      "price": 511.44,
+      "stop_loss": 498.78,
+      "take_profit": 531.7,
+      "confidence": 0.756,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:2.8% 3M:4.4%)",
+        "Positive momentum (1M:3.3% 3M:5.3%)",
         "RSI neutral (69)",
         "MACD bullish",
-        "Price above upper Bollinger Band \u2014 stretched",
-        "Regime (STRONG_BULL) adjusting score x1.2"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "SPY",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
-      "approved_qty": 15,
-      "price": 756.48,
-      "stop_loss": 739.02,
-      "take_profit": 784.42,
-      "confidence": 0.648,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:5.3% 3M:10.2%)",
-        "RSI neutral (74)",
-        "Regime (STRONG_BULL) adjusting score x1.2"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "QQQ",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
-      "approved_qty": 15,
-      "price": 738.31,
-      "stop_loss": 712.44,
-      "take_profit": 779.7,
-      "confidence": 0.63,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:10.6% 3M:21.4%)",
-        "RSI overbought (77)",
-        "MACD bullish",
-        "Regime (STRONG_BULL) adjusting score x1.2",
-        "Top 5% relative strength (rank #2)"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "AAPL",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 8.0,
-      "approved_dollar_amount": 7571.93,
-      "approved_qty": 24,
-      "price": 312.06,
-      "stop_loss": 298.15,
-      "take_profit": 334.32,
-      "confidence": 0.63,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:15.0% 3M:17.9%)",
-        "RSI overbought (79)",
-        "MACD bullish",
-        "Regime (STRONG_BULL) adjusting score x1.2",
-        "Top 15% relative strength (rank #4)"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "XLK",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
-      "approved_qty": 59,
-      "price": 191.02,
-      "stop_loss": 181.2,
-      "take_profit": 206.73,
-      "confidence": 0.63,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:19.8% 3M:36.9%)",
-        "RSI overbought (80)",
-        "MACD bullish",
-        "Regime (STRONG_BULL) adjusting score x1.2",
-        "Top 0% relative strength (rank #1)"
-      ]
-    },
-    {
-      "approved": true,
-      "symbol": "BIL",
-      "signal": "BUY",
-      "rejections": [],
-      "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
-      "approved_qty": 123,
-      "price": 91.66,
-      "stop_loss": 91.6,
-      "take_profit": 91.76,
-      "confidence": 0.572,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:0.0% 3M:0.3%)",
-        "RSI neutral (71)",
-        "MACD bullish",
-        "Volume declining -23% \u2014 weak confirmation",
         "Regime (STRONG_BULL) adjusting score x1.2"
       ]
     },
@@ -194,18 +50,84 @@
       "signal": "BUY",
       "rejections": [],
       "approved_position_pct": 8.0,
-      "approved_dollar_amount": 7571.93,
-      "approved_qty": 19,
-      "price": 380.34,
-      "stop_loss": 356.59,
-      "take_profit": 418.34,
-      "confidence": 0.565,
+      "approved_dollar_amount": 7657.67,
+      "approved_qty": 20,
+      "price": 376.37,
+      "stop_loss": 353.1,
+      "take_profit": 413.6,
+      "confidence": 0.673,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:-1.2% 3M:24.1%)",
-        "RSI neutral (53)",
+        "Positive momentum (1M:-2.4% 3M:24.0%)",
+        "RSI in buy zone (50)",
+        "Price below lower Bollinger Band \u2014 mean reversion opportunity",
         "Regime (STRONG_BULL) adjusting score x1.2",
         "Top 20% relative strength (rank #5)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "QQQ",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 12.0,
+      "approved_dollar_amount": 11486.51,
+      "approved_qty": 15,
+      "price": 742.74,
+      "stop_loss": 716.99,
+      "take_profit": 783.93,
+      "confidence": 0.63,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:10.2% 3M:23.5%)",
+        "RSI overbought (78)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 10% relative strength (rank #3)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "XLK",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 12.0,
+      "approved_dollar_amount": 11486.51,
+      "approved_qty": 58,
+      "price": 195.76,
+      "stop_loss": 185.67,
+      "take_profit": 211.91,
+      "confidence": 0.63,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:20.9% 3M:42.4%)",
+        "RSI overbought (82)",
+        "MACD bullish",
+        "Price above upper Bollinger Band \u2014 stretched",
+        "Volume surging +24% \u2014 confirms trend",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 0% relative strength (rank #1)"
+      ]
+    },
+    {
+      "approved": true,
+      "symbol": "MSFT",
+      "signal": "BUY",
+      "rejections": [],
+      "approved_position_pct": 8.0,
+      "approved_dollar_amount": 7657.67,
+      "approved_qty": 16,
+      "price": 460.52,
+      "stop_loss": 430.36,
+      "take_profit": 508.78,
+      "confidence": 0.551,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:11.1% 3M:14.0%)",
+        "RSI neutral (73)",
+        "MACD bullish",
+        "Price above upper Bollinger Band \u2014 stretched",
+        "Regime (STRONG_BULL) adjusting score x1.2"
       ]
     }
   ],
@@ -215,19 +137,19 @@
       "symbol": "IWM",
       "signal": "BUY",
       "rejections": [
-        "IWM already at single-stock cap (12.3% >= 12.0%) \u2014 no new add"
+        "IWM already at single-stock cap (12.1% >= 12.0%) \u2014 no new add"
       ],
       "approved_position_pct": 12.0,
-      "approved_dollar_amount": 11357.9,
+      "approved_dollar_amount": 11486.51,
       "approved_qty": 39,
-      "price": 290.43,
-      "stop_loss": 278.49,
-      "take_profit": 309.53,
+      "price": 288.98,
+      "stop_loss": 277.12,
+      "take_profit": 307.96,
       "confidence": 0.756,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:4.5% 3M:10.1%)",
-        "RSI neutral (64)",
+        "Positive momentum (1M:3.5% 3M:11.5%)",
+        "RSI neutral (62)",
         "MACD bullish",
         "Regime (STRONG_BULL) adjusting score x1.2"
       ]
@@ -237,19 +159,113 @@
       "symbol": "NVDA",
       "signal": "BUY",
       "rejections": [
-        "NVDA already at single-stock cap (8.3% >= 8.0%) \u2014 no new add"
+        "NVDA already at single-stock cap (8.7% >= 8.0%) \u2014 no new add"
       ],
       "approved_position_pct": 8.0,
-      "approved_dollar_amount": 7571.93,
-      "approved_qty": 35,
-      "price": 211.14,
-      "stop_loss": 193.3,
-      "take_profit": 239.68,
-      "confidence": 0.702,
+      "approved_dollar_amount": 7657.67,
+      "approved_qty": 34,
+      "price": 224.36,
+      "stop_loss": 205.35,
+      "take_profit": 254.78,
+      "confidence": 0.738,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
-        "Positive momentum (1M:5.8% 3M:15.7%)",
+        "Positive momentum (1M:13.1% 3M:24.6%)",
+        "RSI neutral (60)",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Top 5% relative strength (rank #2)"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "AMZN",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.497,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:-2.6% 3M:25.2%)",
         "RSI in buy zone (49)",
+        "Volume declining -21% \u2014 weak confirmation",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "TLT",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": -0.495,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-0.2% 3M:-4.4%)",
+        "RSI neutral (52)",
+        "Bottom 10% relative strength"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "XLY",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.486,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Negative momentum (1M:-0.4% 3M:3.3%)",
+        "RSI in buy zone (50)",
+        "MACD bullish",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "TSLA",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.464,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:6.4% 3M:6.0%)",
+        "RSI neutral (50)",
+        "Volume declining -23% \u2014 weak confirmation",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "META",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": -0.45,
+      "reasons": [
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:-1.4% 3M:-8.3%)",
+        "RSI in buy zone (42)",
+        "Bottom 0% relative strength"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "SPY",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.432,
+      "reasons": [
+        "Uptrend: price above MA50 & MA200",
+        "Positive momentum (1M:5.3% 3M:11.5%)",
+        "RSI overbought (75)",
         "Regime (STRONG_BULL) adjusting score x1.2"
       ]
     },
@@ -260,44 +276,12 @@
       "rejections": [
         "Signal is HOLD, no action needed"
       ],
-      "confidence": -0.495,
+      "confidence": -0.36,
       "reasons": [
         "Downtrend: price below both MAs",
-        "Negative momentum (1M:-0.2% 3M:-0.6%)",
-        "RSI neutral (53)",
-        "Bottom 20% relative strength"
-      ]
-    },
-    {
-      "approved": false,
-      "symbol": "TLT",
-      "signal": "HOLD",
-      "rejections": [
-        "Signal is HOLD, no action needed"
-      ],
-      "confidence": -0.351,
-      "reasons": [
-        "Downtrend: price below both MAs",
-        "Negative momentum (1M:0.2% 3M:-4.3%)",
-        "RSI neutral (54)",
-        "Bottom 5% relative strength"
-      ]
-    },
-    {
-      "approved": false,
-      "symbol": "XLV",
-      "signal": "HOLD",
-      "rejections": [
-        "Signal is HOLD, no action needed"
-      ],
-      "confidence": 0.344,
-      "reasons": [
-        "Uptrend: price above MA50 & MA200",
-        "Negative momentum (1M:2.4% 3M:-5.7%)",
-        "RSI neutral (58)",
-        "MACD bullish",
-        "Regime (STRONG_BULL) adjusting score x1.2",
-        "Bottom 10% relative strength"
+        "Negative momentum (1M:-0.3% 3M:-1.0%)",
+        "RSI in buy zone (38)",
+        "Price below lower Bollinger Band \u2014 mean reversion opportunity"
       ]
     },
     {
@@ -310,26 +294,23 @@
       "confidence": 0.259,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
-        "Negative momentum (1M:-0.8% 3M:-3.2%)",
-        "RSI neutral (52)",
+        "Negative momentum (1M:-0.3% 3M:-1.7%)",
+        "RSI neutral (50)",
         "Regime (STRONG_BULL) adjusting score x1.2"
       ]
     },
     {
       "approved": false,
-      "symbol": "MSFT",
+      "symbol": "BIL",
       "signal": "HOLD",
       "rejections": [
         "Signal is HOLD, no action needed"
       ],
-      "confidence": 0.227,
+      "confidence": -0.243,
       "reasons": [
-        "Mixed trend",
-        "Positive momentum (1M:10.4% 3M:13.0%)",
-        "RSI neutral (70)",
-        "MACD bullish",
-        "Price above upper Bollinger Band \u2014 stretched",
-        "Regime (STRONG_BULL) adjusting score x1.2"
+        "Downtrend: price below both MAs",
+        "Negative momentum (1M:0.0% 3M:0.0%)",
+        "RSI in buy zone (35)"
       ]
     },
     {
@@ -342,10 +323,10 @@
       "confidence": -0.144,
       "reasons": [
         "Mixed trend",
-        "Negative momentum (1M:-1.5% 3M:-14.9%)",
-        "RSI in buy zone (45)",
+        "Negative momentum (1M:-2.8% 3M:-12.2%)",
+        "RSI in buy zone (41)",
         "MACD bearish",
-        "Bottom 0% relative strength"
+        "Bottom 5% relative strength"
       ]
     },
     {
@@ -355,12 +336,31 @@
       "rejections": [
         "Signal is HOLD, no action needed"
       ],
-      "confidence": -0.099,
+      "confidence": 0.097,
       "reasons": [
         "Mixed trend",
-        "Negative momentum (1M:-5.6% 3M:-1.3%)",
-        "RSI in buy zone (41)",
-        "MACD bearish"
+        "Positive momentum (1M:-2.6% 3M:1.4%)",
+        "RSI in buy zone (47)",
+        "MACD bearish",
+        "Regime (STRONG_BULL) adjusting score x1.2"
+      ]
+    },
+    {
+      "approved": false,
+      "symbol": "XLV",
+      "signal": "HOLD",
+      "rejections": [
+        "Signal is HOLD, no action needed"
+      ],
+      "confidence": 0.074,
+      "reasons": [
+        "Mixed trend",
+        "Negative momentum (1M:1.8% 3M:-5.7%)",
+        "RSI neutral (52)",
+        "MACD bullish",
+        "Volume surging +21% \u2014 confirms trend",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Bottom 15% relative strength"
       ]
     },
     {
@@ -370,26 +370,13 @@
       "rejections": [
         "Signal is HOLD, no action needed"
       ],
-      "confidence": -0.045,
+      "confidence": 0.009,
       "reasons": [
         "Mixed trend",
-        "Negative momentum (1M:-1.1% 3M:0.5%)",
-        "RSI neutral (51)",
-        "Bottom 15% relative strength"
-      ]
-    },
-    {
-      "approved": false,
-      "symbol": "META",
-      "signal": "HOLD",
-      "rejections": [
-        "Signal is HOLD, no action needed"
-      ],
-      "confidence": -0.036,
-      "reasons": [
-        "Mixed trend",
-        "Negative momentum (1M:3.4% 3M:-3.2%)",
-        "RSI neutral (55)"
+        "Negative momentum (1M:-0.9% 3M:0.4%)",
+        "RSI in buy zone (50)",
+        "Regime (STRONG_BULL) adjusting score x1.2",
+        "Bottom 20% relative strength"
       ]
     },
     {
@@ -415,7 +402,7 @@
   ],
   "summary": {
     "total_signals": 23,
-    "approved": 10,
-    "rejected": 13
+    "approved": 6,
+    "rejected": 17
   }
 }
