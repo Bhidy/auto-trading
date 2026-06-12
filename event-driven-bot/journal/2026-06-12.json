@@ -127,5 +127,134 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-12",
+    "timestamp": "2026-06-12T22:11:38.810572+00:00",
+    "audit": {
+      "equity": 104846.66,
+      "cash": 30270.15,
+      "daily_pnl": 413.84,
+      "daily_pnl_pct": 0.396,
+      "total_open_exposure": 74576.51,
+      "exposure_pct": 71.1,
+      "position_count": 9,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 21762.34,
+        "Consumer": 21130.11,
+        "Energy": 15845.1,
+        "Financials": 15838.96
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "35",
+        "entry": "153.9",
+        "current": "163.6",
+        "market_value": "5726",
+        "unrealized_pl": "339.5",
+        "pnl_pct": 6.3,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "F",
+        "qty": "298",
+        "entry": "14.95",
+        "current": "14.81",
+        "market_value": "4413.38",
+        "unrealized_pl": "-41.72",
+        "pnl_pct": -0.94,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "263.58",
+        "market_value": "15551.22",
+        "unrealized_pl": "578.2",
+        "pnl_pct": 3.86,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "1",
+        "entry": "265.44",
+        "current": "280.4964",
+        "market_value": "280.4964",
+        "unrealized_pl": "15.0564",
+        "pnl_pct": 5.67,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MS",
+        "qty": "74",
+        "entry": "207.798649",
+        "current": "214.04",
+        "market_value": "15838.96",
+        "unrealized_pl": "461.859974",
+        "pnl_pct": 3.0,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "16",
+        "entry": "924.95",
+        "current": "984.74",
+        "market_value": "15755.84",
+        "unrealized_pl": "956.64",
+        "pnl_pct": 6.46,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "3",
+        "entry": "135.69",
+        "current": "135.3436",
+        "market_value": "406.0308",
+        "unrealized_pl": "-1.0392",
+        "pnl_pct": -0.26,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "120.82",
+        "market_value": "16310.7",
+        "unrealized_pl": "775.859985",
+        "pnl_pct": 4.99,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "XOM",
+        "qty": "2",
+        "entry": "151.39",
+        "current": "146.94",
+        "market_value": "293.88",
+        "unrealized_pl": "-8.9",
+        "pnl_pct": -2.94,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "TGT",
+        "side": "buy",
+        "qty": 3,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "High RVOL (1.5x)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
