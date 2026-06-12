@@ -1,11 +1,24 @@
 {
-  "timestamp": "2026-06-11T23:10:57.831097+00:00",
-  "positions_held": 10,
-  "open_trades_logged": 10,
+  "timestamp": "2026-06-12T22:01:57.870209+00:00",
+  "positions_held": 9,
+  "open_trades_logged": 9,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "close_orphan",
+      "symbol": "EOG",
+      "lots": 1,
+      "qty": 1.0
+    },
+    {
+      "action": "trim_qty",
+      "symbol": "TGT",
+      "removed_qty": 1.0,
+      "broker_qty": 3.0
+    }
+  ]
 }
