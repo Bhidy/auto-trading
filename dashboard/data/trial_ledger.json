@@ -740,5 +740,19 @@
     "pbo": null,
     "approved": false,
     "timestamp": "2026-06-15T23:14:18.219997+00:00"
+  },
+  {
+    "knobs": {
+      "position_size_multiplier": 1.0,
+      "rsi_overbought": 75,
+      "trailing_stop_atr_mult": 2.5,
+      "confidence_buy_threshold": 0.5
+    },
+    "n_obs": 1,
+    "oos_sharpe": 1.781,
+    "dsr": null,
+    "pbo": null,
+    "approved": false,
+    "timestamp": "2026-06-15T23:22:45.701969+00:00"
   }
 ]
