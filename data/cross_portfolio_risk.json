@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-06-15T22:50:38.031938+00:00",
-  "total_equity": 303158.64,
-  "gross_exposure_pct": 82.088,
+  "timestamp": "2026-06-15T23:09:06.512534+00:00",
+  "total_equity": 303141.21,
+  "gross_exposure_pct": 82.092,
   "by_symbol": {
     "AAPL": {
       "market_value": 7095.15,
-      "pct_of_total": 2.34,
+      "pct_of_total": 2.341,
       "books": [
         "portfolio_1"
       ]
@@ -34,7 +34,7 @@
     },
     "IWM": {
       "market_value": 18569.57,
-      "pct_of_total": 6.125,
+      "pct_of_total": 6.126,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -49,7 +49,7 @@
     },
     "QQQ": {
       "market_value": 17490.52,
-      "pct_of_total": 5.769,
+      "pct_of_total": 5.77,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -73,7 +73,7 @@
     },
     "XLI": {
       "market_value": 18969.24,
-      "pct_of_total": 6.257,
+      "pct_of_total": 6.258,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -152,7 +152,7 @@
     },
     "WMT": {
       "market_value": 15534.84,
-      "pct_of_total": 5.124,
+      "pct_of_total": 5.125,
       "books": [
         "portfolio_3"
       ]
@@ -166,7 +166,7 @@
     },
     "MS": {
       "market_value": 15377.1,
-      "pct_of_total": 5.072,
+      "pct_of_total": 5.073,
       "books": [
         "portfolio_3"
       ]
@@ -203,7 +203,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 172861.53,
-      "pct_of_total": 57.02
+      "pct_of_total": 57.023
     },
     "Energy": {
       "market_value": 20959.35,
@@ -211,11 +211,11 @@
     },
     "Consumer": {
       "market_value": 20397.01,
-      "pct_of_total": 6.728
+      "pct_of_total": 6.729
     },
     "Financials": {
       "market_value": 15377.1,
-      "pct_of_total": 5.072
+      "pct_of_total": 5.073
     },
     "Tech": {
       "market_value": 3517.2,
@@ -231,7 +231,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 20.169
+    "mega_cap_tech_ai": 20.17
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
