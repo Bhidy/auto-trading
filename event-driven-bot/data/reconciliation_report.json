@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-15T22:30:47.497515+00:00",
+  "timestamp": "2026-06-15T22:36:28.646476+00:00",
   "positions_held": 8,
   "open_trades_logged": 8,
   "orphan_open_trades": [],
@@ -7,30 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "XOM",
-      "lots": 1,
-      "qty": 2.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "MU",
-      "lots": 1,
-      "qty": 16.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "ANET",
-      "lots": 1,
-      "qty": 35.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "MRVL",
-      "lots": 1,
-      "qty": 1.0
-    }
-  ]
+  "reconcile_actions": []
 }
