@@ -268,5 +268,140 @@
       "Losing money \u2014 reduce exposure and review strategy",
       "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
     ]
+  },
+  {
+    "date": "2026-06-15",
+    "timestamp": "2026-06-15T22:50:38.843477+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 96072.47,
+      "cash": 339.44,
+      "portfolio_value": 96072.47,
+      "daily_pnl": -22.569999999992433,
+      "daily_pnl_pct": -0.023
+    },
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "qty": "24",
+        "market_value": "7090.08",
+        "unrealized_pl": "-5.07",
+        "unrealized_plpc": "-0.00071"
+      },
+      {
+        "symbol": "AMZN",
+        "qty": "3",
+        "market_value": "744.15",
+        "unrealized_pl": "7.08",
+        "unrealized_plpc": "0.00961"
+      },
+      {
+        "symbol": "DIA",
+        "qty": "21",
+        "market_value": "10884.72",
+        "unrealized_pl": "45.820005",
+        "unrealized_plpc": "0.00423"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "20",
+        "market_value": "7379.998",
+        "unrealized_pl": "164.698",
+        "unrealized_plpc": "0.02283"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "40",
+        "market_value": "11770",
+        "unrealized_pl": "269.15",
+        "unrealized_plpc": "0.0234"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "35",
+        "market_value": "7403.6865",
+        "unrealized_pl": "84.996485",
+        "unrealized_plpc": "0.01161"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "15",
+        "market_value": "11122.8",
+        "unrealized_pl": "324.949995",
+        "unrealized_plpc": "0.03009"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "7",
+        "market_value": "5273.8",
+        "unrealized_pl": "3.060001",
+        "unrealized_plpc": "0.00058"
+      },
+      {
+        "symbol": "XLE",
+        "qty": "201",
+        "market_value": "11183.64",
+        "unrealized_pl": "-575.110044",
+        "unrealized_plpc": "-0.04891"
+      },
+      {
+        "symbol": "XLI",
+        "qty": "66",
+        "market_value": "11792.88",
+        "unrealized_pl": "-30.36",
+        "unrealized_plpc": "-0.00257"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "58",
+        "market_value": "11087.28",
+        "unrealized_pl": "29.58",
+        "unrealized_plpc": "0.00268"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 25,
+        "wins": 9,
+        "losses": 16,
+        "win_rate": 0.36,
+        "avg_pnl_pct": -2.25,
+        "avg_win_pct": 0.95,
+        "avg_loss_pct": -4.05,
+        "win_loss_ratio": 0.24,
+        "max_win_pct": 1.94,
+        "max_loss_pct": -10.8,
+        "total_pnl": -2782.7,
+        "profit_factor": 0.19,
+        "per_trade_sharpe": -0.69,
+        "sharpe_estimate": -0.69
+      },
+      "metrics_30d": {
+        "total_trades": 45,
+        "wins": 15,
+        "losses": 30,
+        "win_rate": 0.333,
+        "avg_pnl_pct": -1.75,
+        "avg_win_pct": 1.35,
+        "avg_loss_pct": -3.3,
+        "win_loss_ratio": 0.41,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -10.8,
+        "total_pnl": -4010.47,
+        "profit_factor": 0.26,
+        "per_trade_sharpe": -0.52,
+        "sharpe_estimate": -0.52
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 1.0,
+        "confidence_buy_threshold": 0.5,
+        "trailing_stop_atr_mult": 2.5
+      }
+    },
+    "insights": [
+      "Win rate declining \u2014 tighten entry criteria",
+      "Losing money \u2014 reduce exposure and review strategy",
+      "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
+    ]
   }
 ]
