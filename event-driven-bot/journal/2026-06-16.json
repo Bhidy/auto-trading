@@ -236,5 +236,124 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-16",
+    "timestamp": "2026-06-16T22:44:59.271448+00:00",
+    "audit": {
+      "equity": 104415.91,
+      "cash": 27738.18,
+      "daily_pnl": -1686.1,
+      "daily_pnl_pct": -1.589,
+      "total_open_exposure": 76677.73,
+      "exposure_pct": 73.4,
+      "position_count": 8,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 19279.07,
+        "Consumer": 21038.37,
+        "Materials": 15562.56,
+        "Energy": 20797.73
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AVGO",
+        "qty": "9",
+        "entry": "390.8",
+        "current": "377.31",
+        "market_value": "3395.79",
+        "unrealized_pl": "-121.41",
+        "pnl_pct": -3.45,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "F",
+        "qty": "298",
+        "entry": "14.95",
+        "current": "14.49",
+        "market_value": "4318.02",
+        "unrealized_pl": "-137.08",
+        "pnl_pct": -3.08,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "FCX",
+        "qty": "222",
+        "entry": "70.916532",
+        "current": "70.1016",
+        "market_value": "15562.5552",
+        "unrealized_pl": "-180.914904",
+        "pnl_pct": -1.15,
+        "sector": "Materials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "253.78",
+        "current": "250.47",
+        "market_value": "14777.73",
+        "unrealized_pl": "-195.29",
+        "pnl_pct": -1.3,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "56",
+        "entry": "312.991429",
+        "current": "283.63",
+        "market_value": "15883.28",
+        "unrealized_pl": "-1644.240024",
+        "pnl_pct": -9.38,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "35",
+        "entry": "171.51",
+        "current": "172",
+        "market_value": "6020",
+        "unrealized_pl": "17.15",
+        "pnl_pct": 0.29,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "3",
+        "entry": "135.69",
+        "current": "133.4",
+        "market_value": "400.2",
+        "unrealized_pl": "-6.87",
+        "pnl_pct": -1.69,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "120.89",
+        "market_value": "16320.15",
+        "unrealized_pl": "785.309985",
+        "pnl_pct": 5.05,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MRVL",
+        "side": "buy",
+        "qty": 56,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($270.00)",
+          "MACD bullish crossover",
+          "High RVOL (1.8x)"
+        ]
+      }
+    ]
   }
 ]
