@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-16T22:23:27.484149+00:00",
+  "timestamp": "2026-06-16T22:33:17.232993+00:00",
   "positions_held": 8,
   "open_trades_logged": 8,
   "orphan_open_trades": [],
@@ -7,12 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "MS",
-      "lots": 1,
-      "qty": 74.0
-    }
-  ]
+  "reconcile_actions": []
 }
