@@ -1,0 +1,19 @@
+{
+  "spec_id": "p2-capitol-shadow-v1",
+  "portfolio": "portfolio_2",
+  "universe": "US-listed equities from tracked US-politician disclosures (Capitol Trades feed via MCP)",
+  "timeframe": "1Day",
+  "indicators": [
+    {"name": "SMA", "params": {"period": 50}},
+    {"name": "RSI", "params": {"period": 14, "overbought": 70}}
+  ],
+  "entry_rule": "politician BUY disclosure with disclosure_age <= max_disclosure_age_days (45, ADVISORY/assumed) AND technical confirmation (price > SMA50 or RSI not overbought); conviction-bucket sizing",
+  "exit_rule": "stop-loss; time-based holding period; mirror a disclosed politician SELL",
+  "signal_bar": "t (disclosure observed by close of day t)",
+  "fill": {"model": "limit", "bar": "t+1", "look_ahead_ack": false},
+  "sizing": "conviction-bucket trade size; min_trade_value_usd floor; limit_offset_pct from mid price",
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "benchmark": "buy & hold SPY with identical friction",
+  "notes": "max_disclosure_age_days and the holding period are ASSUMED, not yet measured against the actual disclosure-lag decay curve. Backtesting the formalized rule to find the profit-maximizing (lag, holding, max-age) is COMMITTEE-GATED and must pass PBO + deflated-Sharpe with a hard N-floor; on thin/survivorship-biased history it is expected to refuse to assert."
+}

@@ -1,0 +1,20 @@
+{
+  "spec_id": "p3-cautious-sniper-v1",
+  "portfolio": "portfolio_3",
+  "universe": "fundamental screen (market cap > $2B, ADV > 2M shares, relative strength > 0) over the event-driven watchlist",
+  "timeframe": "1Day",
+  "indicators": [
+    {"name": "ATR", "params": {"period": 14}},
+    {"name": "BreakoutBand", "params": {"lookback": 20}},
+    {"name": "RVOL", "params": {"period": 20}}
+  ],
+  "entry_rule": "technical breakout above the 20-day band with RVOL above threshold AND a fresh catalyst/news within the recency window AND the fundamental screen passed",
+  "exit_rule": "bracket: stop = entry - ATR*stop_mult, take-profit = entry + ATR*tp_mult",
+  "signal_bar": "t (breakout/news confirmed at close of day t)",
+  "fill": {"model": "next_open", "bar": "t+1", "look_ahead_ack": false},
+  "sizing": "risk-based; sector cap + sector rotation; 1% max-loss-per-trade; hardcoded caps never relaxed",
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "benchmark": "buy & hold SPY with identical friction",
+  "notes": "P3 executes bracket MARKET entries (highest-slippage path), modeled here as next_open for backtesting. Each NEW catalyst pattern must be formalized as its own spec and backtested vs buy&hold-with-friction (Teaching Five) before it is allowed to place orders. The movers/most-active funnel widening reuses this same fundamental screen — the quality bar is held constant."
+}

@@ -1,0 +1,23 @@
+{
+  "spec_id": "p1-multifactor-v2",
+  "portfolio": "portfolio_1",
+  "universe": "config/watchlist.json buckets (core equity, aggressive growth, sector momentum, crypto, penny lab, defensive)",
+  "timeframe": "1Day",
+  "indicators": [
+    {"name": "SMA", "params": {"period": 50}},
+    {"name": "SMA", "params": {"period": 200}},
+    {"name": "RSI", "params": {"period": 14, "oversold": 35, "overbought": 70}},
+    {"name": "MACD", "params": {"fast": 12, "slow": 26, "signal": 9}},
+    {"name": "BollingerBands", "params": {"period": 20, "num_std": 2}},
+    {"name": "ATR", "params": {"period": 14}}
+  ],
+  "entry_rule": "composite multifactor score >= confidence_buy_threshold (0.50, adaptive within [0.30,0.70]) with market-regime multiplier and cross-asset relative-strength tilt",
+  "exit_rule": "ATR trailing stop; breakeven+0.5% after +3%; take-profit at entry + ATR*tp_mult (sell 50%); or composite score <= confidence_exit_threshold",
+  "signal_bar": "t (decision computed from bars[:t+1], close of day t)",
+  "fill": {"model": "next_open", "bar": "t+1", "look_ahead_ack": false},
+  "sizing": "max_loss_per_trade = equity * 1%; shares = max_loss / (ATR * stop_mult); position_size_multiplier adaptive within [0.5,1.5]; hardcoded caps in config/risk_limits.json are never relaxed",
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "benchmark": "buy & hold SPY with identical friction",
+  "notes": "Formalized contract for P1's live multifactor engine. fees/slippage are the documented default; calibrated friction (data/fee_source.json) overrides advisorily and is floored at the default. This spec is the front door for any self-learning knob change."
+}
