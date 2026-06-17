@@ -776,8 +776,9 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     signals_data = load_json(DATA_DIR / "signals.json", {})
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     open_trades = [t for t in trade_log if isinstance(t, dict) and t.get("status") == "open"]
+    strategy_params = load_json(DATA_DIR / "strategy_params.json", {})
     from portfolio_manager import check_stop_triggers
-    triggers = check_stop_triggers(positions, signals_data, open_trades)
+    triggers = check_stop_triggers(positions, signals_data, open_trades, strategy_params)
 
     for trigger in triggers:
         sym = trigger["symbol"]

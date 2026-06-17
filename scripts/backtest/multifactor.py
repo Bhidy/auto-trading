@@ -55,17 +55,26 @@ def _atr(bars, end_idx, period=14):
     return (sum(trs) / len(trs)) if trs else None
 
 
+def _num(params, key, default):
+    """Null-safe numeric read — a None in strategy_params falls back to the default."""
+    v = params.get(key, default)
+    try:
+        return float(v) if v is not None else float(default)
+    except (TypeError, ValueError):
+        return float(default)
+
+
 def _exit_params(params):
     """Exit knobs with defaults that reproduce current production behavior."""
     return {
-        "trailing_stop_atr_mult": float(params.get("trailing_stop_atr_mult", 2.5)),
-        "take_profit_atr_mult": float(params.get("take_profit_atr_mult", 4.0)),
-        "breakeven_trigger_pct": float(params.get("breakeven_trigger_pct", 0.03)),
-        "breakeven_lock_pct": float(params.get("breakeven_lock_pct", 0.005)),
-        "take_profit_trim": float(params.get("take_profit_trim", 0.5)),
+        "trailing_stop_atr_mult": _num(params, "trailing_stop_atr_mult", 2.5),
+        "take_profit_atr_mult": _num(params, "take_profit_atr_mult", 4.0),
+        "breakeven_trigger_pct": _num(params, "breakeven_trigger_pct", 0.03),
+        "breakeven_lock_pct": _num(params, "breakeven_lock_pct", 0.005),
+        "take_profit_trim": _num(params, "take_profit_trim", 0.5),
         # 0/None disables the time-stop (current production has none).
-        "time_stop_days": int(params.get("time_stop_days", 0) or 0),
-        "time_stop_min_gain_pct": float(params.get("time_stop_min_gain_pct", 0.01)),
+        "time_stop_days": int(_num(params, "time_stop_days", 0)),
+        "time_stop_min_gain_pct": _num(params, "time_stop_min_gain_pct", 0.01),
     }
 
 
@@ -144,7 +153,7 @@ def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=No
     slip = slippage_bps / 10_000.0
     ep = _exit_params(params)
 
-    symbols = list(symbol_bars.keys())
+    symbols = sorted(symbol_bars.keys())  # deterministic iteration (no hash-order dependence)
     n = len(spy_bars)
     # Defensive: require aligned lengths.
     for s in symbols:
@@ -203,8 +212,9 @@ def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=No
         # 1) Execute the rebalance decided yesterday, at today's open.
         if pending is not None:
             target = pending
-            for s in list(holdings.keys()):           # sell holdings not in target
-                if s not in target:
+            target_set = set(target)
+            for s in sorted(holdings.keys()):         # sell holdings not in target
+                if s not in target_set:
                     _close_chunk(s, holdings[s], sym_opens[s][t])
                     exit_reasons.append("rotation")
                     _drop(s)
@@ -224,7 +234,7 @@ def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=No
 
         # 1b) Intraday exit management (stop / take-profit / breakeven / time-stop).
         if model_exits:
-            for s in list(holdings.keys()):
+            for s in sorted(holdings.keys()):
                 st = pos[s]
                 state = {"shares": holdings[s], "entry": entry_px[s], "stop": st["stop"],
                          "hwm": st["hwm"], "trimmed": st["trimmed"], "entry_t": st["entry_t"]}
@@ -250,17 +260,19 @@ def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=No
             res = analyze_symbol_v2(window[s], s, itype, regime, rs_data, params)
             if res.get("signal") == "BUY" and res.get("score", 0) >= buy_threshold:
                 buys.append((s, res["score"]))
-        buys.sort(key=lambda x: x[1], reverse=True)
-        target = {s for s, _ in buys[:max_positions]}
+        # Deterministic: break score ties by symbol and keep RANKED order — a set's
+        # hash-randomized iteration made backtests non-reproducible across processes
+        # (it changed which names got bought first when cash-constrained).
+        buys.sort(key=lambda x: (-x[1], x[0]))
         signals_per_day.append({"t": t, "regime": regime, "n_buys": len(buys)})
-        pending = target
+        pending = [s for s, _ in buys[:max_positions]]
 
         # 3) Mark to market at today's close.
         equity_curve.append(portfolio_value(t))
 
     # Liquidate at the final close (last bar — no look-ahead).
     last = n - 1
-    for s in list(holdings.keys()):
+    for s in sorted(holdings.keys()):
         _close_chunk(s, holdings[s], sym_closes[s][last])
         exit_reasons.append("final")
         _drop(s)

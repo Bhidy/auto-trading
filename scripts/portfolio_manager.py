@@ -23,7 +23,15 @@ def save_json(path, data):
 # STOP-LOSS MANAGEMENT
 # ---------------------------------------------------------------------------
 
-def compute_stop_levels(positions, signals_data, open_trades=None):
+def _pnum(params, key, default):
+    v = (params or {}).get(key, default)
+    try:
+        return float(v) if v is not None else float(default)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def compute_stop_levels(positions, signals_data, open_trades=None, params=None):
     """Stop/take-profit levels per position.
 
     open_trades (optional): the trade log's currently-OPEN entries. A held
@@ -73,9 +81,14 @@ def compute_stop_levels(positions, signals_data, open_trades=None):
             if stop is None or trailing_stop > stop:
                 stop = trailing_stop
 
-        # Breakeven stop: once up 3%+, don't let it become a loss
-        if side == "long" and current > entry * 1.03:
-            breakeven_stop = round(entry * 1.005, 2)
+        # Breakeven stop: once up the trigger %, lock in a small gain. The trigger
+        # is parameterized (breakeven_trigger_pct) — the validated optimization
+        # raised it 0.03 -> 0.08 so a normal pullback stops killing winners (the
+        # documented disposition error). Defaults reproduce the old +3%/+0.5%.
+        be_trigger = _pnum(params, "breakeven_trigger_pct", 0.03)
+        be_lock = _pnum(params, "breakeven_lock_pct", 0.005)
+        if side == "long" and current > entry * (1 + be_trigger):
+            breakeven_stop = round(entry * (1 + be_lock), 2)
             if stop is None or breakeven_stop > stop:
                 stop = breakeven_stop
 
@@ -138,8 +151,8 @@ def compute_cap_trims(positions, equity, limits, bucket_map, buffer_pct=0.5):
     return trims
 
 
-def check_stop_triggers(positions, signals_data, open_trades=None):
-    stops = compute_stop_levels(positions, signals_data, open_trades)
+def check_stop_triggers(positions, signals_data, open_trades=None, params=None):
+    stops = compute_stop_levels(positions, signals_data, open_trades, params)
     triggers = []
 
     for sym, stop_info in stops.items():

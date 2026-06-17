@@ -1,0 +1,40 @@
+{
+  "as_of": "2026-06-17T22:29:11.172541+00:00",
+  "study": "p1_strategy_optimization",
+  "source": "data/ cached bucket bars (real OHLC), exit-aware backtester + walk-forward",
+  "baseline_oos_sharpe": 1.532,
+  "n_candidates": 48,
+  "disclosure": "Hypothetical/paper research \u2014 not investment advice. A CANDIDATE only; adoption is committee + human-approval gated (rule #14). Validated on ~220 bars / 21 symbols; small sample \u2014 treat as directional.",
+  "verdict": "VALIDATED_CANDIDATE",
+  "best_candidate": {
+    "delta": {
+      "breakeven_trigger_pct": 0.08,
+      "trailing_stop_atr_mult": 3.2,
+      "take_profit_atr_mult": 5.0,
+      "time_stop_days": 7,
+      "confidence_buy_threshold": 0.5
+    },
+    "oos_sharpe": 2.025,
+    "n_windows": 3,
+    "full_sharpe": -0.136,
+    "full_return": -0.002,
+    "max_drawdown": 0.0331,
+    "n_trades": 38
+  },
+  "oos_improvement": 0.493,
+  "gate_approved": true,
+  "gate_detail": {
+    "current_oos_sharpe": 1.532,
+    "candidate_oos_sharpe": 2.025,
+    "n_windows": 3,
+    "min_oos_windows": 2,
+    "small_n_refused": false,
+    "sharpe_ok": true,
+    "challenger_sharpe": 1.072,
+    "pbo": null,
+    "deflated_sharpe": 0.8666102529520423,
+    "beats_challenger": true,
+    "screen_reasons": [],
+    "approved": true
+  }
+}
