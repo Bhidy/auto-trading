@@ -23,16 +23,32 @@ from backtest.multifactor import backtest_multifactor  # noqa: E402
 from backtest import metrics as _metrics  # noqa: E402
 
 
-def walk_forward(symbol_bars, spy_bars, params, test_days=63, warmup=150,
+def auto_test_days(n_bars, warmup, target_windows=3, min_test=21, max_test=63):
+    """Pick a test-window length so the available history yields ~target_windows
+    out-of-sample windows. Fixes C4: a fixed test_days=63 on the standard ~220-bar
+    cache produced only 1 window, so gate_param_change (floor 2) ALWAYS refused —
+    the self-learning loop could never approve anything. Caps the WINDOW at a
+    quarter (max_test) so abundant history buys MORE windows, not huge ones."""
+    usable = n_bars - warmup - 1
+    if usable < min_test:
+        return min_test
+    return max(min_test, min(max_test, usable // target_windows))
+
+
+def walk_forward(symbol_bars, spy_bars, params, test_days=None, warmup=150,
                  max_positions=10, cost_bps=5.0, slippage_bps=5.0):
     """Roll consecutive out-of-sample windows of `test_days` and aggregate.
 
     Because params are FIXED (not fit on the train portion), every window is a
     genuine out-of-sample test of the param set's robustness across regimes.
+    `test_days=None` (default) sizes the window adaptively via auto_test_days so
+    the standard cache yields enough OOS windows to deflate honestly.
     Returns {windows: [...], aggregate: {mean_sharpe, mean_return,
     worst_drawdown, n_windows}}.
     """
     n = len(spy_bars)
+    if test_days is None:
+        test_days = auto_test_days(n, warmup)
     windows = []
     start = warmup
     while start + test_days < n:
