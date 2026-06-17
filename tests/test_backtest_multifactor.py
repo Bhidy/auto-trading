@@ -128,6 +128,33 @@ def test_gate_small_n_floor_exempts_equal_params():
     assert detail["small_n_refused"] is False
 
 
+def test_auto_test_days_targets_multiple_windows():
+    # C4: the standard ~220-bar cache must size windows so >=2 OOS windows exist.
+    td = wf.auto_test_days(220, warmup=150)
+    # warmup + k*td < 220 must hold for k=1 and k=2 (i.e. >= 2 windows).
+    assert 150 + 2 * td < 220
+    assert 21 <= td <= 63
+
+
+def test_default_windowing_yields_enough_oos_windows():
+    # C4 regression: default (adaptive) windowing on 220 bars must NOT collapse to
+    # a single window (which made gate_param_change always refuse on small N).
+    syms, spy = _universe(220)
+    out = wf.walk_forward(syms, spy, params={})
+    assert out["aggregate"] is not None
+    assert out["aggregate"]["n_windows"] >= 2
+
+
+def test_real_change_not_small_n_refused_on_standard_cache():
+    # The whole point of C4: a genuine change on the standard cache now gets
+    # EVALUATED, not auto-refused for having too few OOS windows.
+    syms, spy = _universe(220)
+    _, detail = wf.gate_param_change(
+        {"confidence_buy_threshold": 0.5}, {"confidence_buy_threshold": 0.6},
+        syms, spy)
+    assert detail.get("small_n_refused") is False
+
+
 def test_load_aligned_bars_from_cache(tmp_path):
     import json
     # Two bucket files sharing a date axis with SPY.
