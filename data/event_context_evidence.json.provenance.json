@@ -1,0 +1,32 @@
+{
+  "artifact": "data/event_context_evidence.json",
+  "source": "P1 + P3 closed trades vs historized event-context labels",
+  "fingerprint": {
+    "as_of": "2026-06-17T20:01:33.820515+00:00",
+    "inputs": [
+      {
+        "path": "data/trade_log.json",
+        "exists": true,
+        "sha256": "1d871b32547f0a6f273f7dfac8550e6f6a456c855e14edfd688caee8d62a2ca4",
+        "bytes": 53673
+      },
+      {
+        "path": "event-driven-bot/data/trade_log.json",
+        "exists": true,
+        "sha256": "6927b068ee2c113842efe88d56331ba33880583d9dc1449368d30f92f796e199",
+        "bytes": 23021
+      },
+      {
+        "path": "data/event_context_history.json",
+        "exists": false,
+        "sha256": null,
+        "bytes": 0
+      }
+    ],
+    "combined_sha256": "280a629321a9860280ca486d6342dc0bc653a1b9f846781325fdae0ee4c43c3f"
+  },
+  "warnings": [
+    "no historized event-context labels at entry time (data/event_context_history.json absent) \u2014 the advisory overlay is point-in-time, so its veto effect cannot be attributed to past trades. Start logging a per-entry snapshot to enable this."
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}
