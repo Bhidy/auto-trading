@@ -2,7 +2,38 @@
 closes carry realized P&L instead of pnl=None — the fix that makes P3 (and P2)
 strategy edge measurable."""
 from shared.accounting import realized_pnl
-from shared.reconcile import exit_prices_from_fills, reconcile_log_to_broker
+from shared.reconcile import (exit_prices_from_fills, guarded_pnl_fn,
+                              reconcile_log_to_broker)
+
+
+def _fake_realized(side, qty, entry, ex):
+    return {"net_pnl": (ex - entry) * qty}
+
+
+def test_guarded_pnl_computes_on_valid_entry():
+    assert guarded_pnl_fn(_fake_realized)("buy", 10, 100.0, 110.0) == 100.0
+
+
+def test_guarded_pnl_returns_none_on_missing_or_zero_entry():
+    fn = guarded_pnl_fn(_fake_realized)
+    assert fn("buy", 10, 0, 110.0) is None      # zero cost basis -> no fabrication
+    assert fn("buy", 10, None, 110.0) is None    # missing entry
+    assert fn("buy", 0, 100.0, 110.0) is None    # no qty
+
+
+def test_guarded_pnl_swallows_errors():
+    def boom(*a):
+        raise ValueError("bad")
+    assert guarded_pnl_fn(boom)("buy", 10, 100.0, 110.0) is None
+
+
+def test_reconcile_entryless_lot_is_not_fabricated():
+    # A legacy P2-style open lot with limit_price but NO entry_price + a real exit
+    # must NOT invent P&L off a 0 cost basis.
+    log = [{"symbol": "OLD", "side": "buy", "qty": 5, "limit_price": 50.0, "status": "open"}]
+    new_log, _ = reconcile_log_to_broker(
+        log, positions=[], exit_prices={"OLD": 60.0}, pnl_fn=guarded_pnl_fn(realized_pnl))
+    assert new_log[0]["realized_pnl"] is None
 
 
 def test_exit_prices_sells_only_most_recent_wins():

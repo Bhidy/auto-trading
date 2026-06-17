@@ -888,7 +888,7 @@ def run_eod_journal(alpaca: AlpacaClient):
     # a real exit is known), trims double-logged qty, and logs unlogged positions.
     # Places NO orders; never fabricates P&L.
     from shared.reconcile import (compute_drift, exit_prices_from_fills,
-                                  reconcile_log_to_broker, is_open_trade)
+                                  guarded_pnl_fn, reconcile_log_to_broker, is_open_trade)
     from shared.accounting import realized_pnl
     # Source REAL exit prices from the broker's sell fills so an orphaned bracket
     # close becomes a genuine realized-P&L trade (was always pnl=None before, which
@@ -900,7 +900,7 @@ def run_eod_journal(alpaca: AlpacaClient):
         log.warning(f"  Could not fetch fills for exit pricing: {e}")
     repaired, recon_actions = reconcile_log_to_broker(
         trade_log, positions, exit_prices=exit_prices,
-        pnl_fn=lambda side, qty, entry, ex: realized_pnl(side, qty, entry, ex)["net_pnl"],
+        pnl_fn=guarded_pnl_fn(realized_pnl),  # never fabricates on a missing entry
     )
     if recon_actions:
         save_json(DATA_DIR / "trade_log.json", repaired)

@@ -277,6 +277,21 @@ def exit_prices_from_fills(fill_activities):
     return {s: v[1] for s, v in by_sym.items()}
 
 
+def guarded_pnl_fn(realized_pnl):
+    """Wrap ``shared.accounting.realized_pnl`` so it NEVER computes P&L on a
+    missing/zero entry price or qty — closing an entry-less legacy lot off a 0
+    cost basis would fabricate a huge fake result. Returns None instead, so the
+    lot closes honestly with pnl=None. Used by P2/P3 reconcile."""
+    def _fn(side, qty, entry, exit_price):
+        try:
+            if not qty or not entry or float(entry) <= 0:
+                return None
+            return realized_pnl(side, qty, entry, exit_price)["net_pnl"]
+        except (TypeError, ValueError, KeyError):
+            return None
+    return _fn
+
+
 def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconciled"):
     """Turn an open lot into a reconciled close (mutates `trade`).
 
