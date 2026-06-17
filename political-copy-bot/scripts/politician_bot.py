@@ -736,6 +736,13 @@ class PoliticianBot:
                 "qty": qty,
                 "limit_price": limit_price,
                 "entry_price": round(entry_price, 4),
+                # Fill-fidelity (Phase 1): normalize intended_price + slippage_pct
+                # across all three bots so friction calibration + reconciliation
+                # cover the full $300k (P2 entry = its limit price).
+                "intended_price": limit_price,
+                "slippage_pct": (round((entry_price - limit_price) / limit_price * 100, 4)
+                                 if limit_price else None),
+                "client_order_id": coid,
                 "filled_qty": filled_qty,
                 "estimated_value": round(qty * limit_price, 2),
                 "order_id": order.get("id"),

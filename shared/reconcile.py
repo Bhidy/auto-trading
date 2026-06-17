@@ -137,6 +137,113 @@ def working_orders_report(open_orders):
     }
 
 
+def _slip_bps(side, intended, fill):
+    """Signed ADVERSE slippage in bps: positive = worse than intended for either
+    side (buy filled above intended, or sell filled below intended)."""
+    if not intended or not fill:
+        return None
+    if str(side).lower().startswith("s"):  # sell
+        return (intended - fill) / intended * 10_000.0
+    return (fill - intended) / intended * 10_000.0  # buy (default)
+
+
+def fill_reconciliation_report(trade_log, fill_activities, *, slippage_p90_bps=None):
+    """Expected-vs-actual FILL reconciliation (READ-ONLY; places NO orders).
+
+    ``compute_drift`` checks symbol/qty/cost-basis vs live *positions*; this is the
+    complementary check against the broker's authoritative *FILL activities*
+    (Alpaca account activities, ``activity_type == 'FILL'``). It joins each logged
+    order to its broker fills on ``order_id`` (preferred) or ``client_order_id`` and
+    surfaces three classes of execution problem:
+
+      * slippage_outliers — realized adverse slippage (vs the logged
+        ``intended_price``, falling back to ``limit_price``) exceeds
+        ``slippage_p90_bps`` (the calibrated p90 from ``data/fee_source.json``).
+        Catches a systematically bad route / worse-than-intended execution.
+      * unmatched_logged  — a logged order with no matching broker FILL (logged as
+        filled but the broker shows none, or a still-working limit order).
+      * unmatched_broker  — a broker FILL with no matching logged order (filled but
+        never written to the trade log).
+
+    Inputs are plain dicts so each bot builds them from its own schema. Slippage is
+    only computed where the bot logged an intended price; legacy entries with no
+    joinable id are skipped (not flagged) so this stays backward compatible.
+    """
+    fills_by_order = {}
+    for a in fill_activities or []:
+        oid = a.get("order_id") or a.get("client_order_id")
+        if oid:
+            fills_by_order.setdefault(str(oid), []).append(a)
+
+    logged_order_ids = set()
+    slippage_outliers = []
+    unmatched_logged = []
+
+    for t in trade_log or []:
+        oid = t.get("order_id") or t.get("client_order_id")
+        if not oid:
+            continue  # legacy entry with nothing to join on — skip, not an error
+        oid = str(oid)
+        logged_order_ids.add(oid)
+        broker_fills = fills_by_order.get(oid)
+        if not broker_fills:
+            unmatched_logged.append({
+                "symbol": t.get("symbol"),
+                "order_id": oid,
+                "side": t.get("side"),
+                "status": t.get("status", t.get("order_status")),
+            })
+            continue
+
+        intended = t.get("intended_price")
+        if intended is None:
+            intended = t.get("limit_price")
+        num = den = 0.0
+        for f in broker_fills:
+            q = _num(f.get("qty"))
+            p = _num(f.get("price") if f.get("price") is not None
+                     else f.get("filled_avg_price"))
+            if q and p:
+                num += q * p
+                den += q
+        fill_price = (num / den) if den else None
+
+        slip = _slip_bps(t.get("side", "buy"), _num(intended), fill_price)
+        if (slip is not None and slippage_p90_bps is not None
+                and slip > slippage_p90_bps):
+            slippage_outliers.append({
+                "symbol": t.get("symbol"),
+                "order_id": oid,
+                "side": t.get("side"),
+                "intended_price": intended,
+                "fill_price": round(fill_price, 4) if fill_price else None,
+                "slippage_bps": round(slip, 2),
+                "p90_bps": slippage_p90_bps,
+            })
+
+    unmatched_broker = []
+    for oid, fills in fills_by_order.items():
+        if oid not in logged_order_ids:
+            f0 = fills[0]
+            unmatched_broker.append({
+                "symbol": f0.get("symbol"),
+                "order_id": oid,
+                "side": f0.get("side"),
+                "fills": len(fills),
+            })
+
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "logged_orders": len(logged_order_ids),
+        "broker_fill_orders": len(fills_by_order),
+        "slippage_p90_bps": slippage_p90_bps,
+        "slippage_outliers": slippage_outliers,
+        "unmatched_logged": sorted(unmatched_logged, key=lambda x: x["order_id"]),
+        "unmatched_broker": sorted(unmatched_broker, key=lambda x: x["order_id"]),
+        "clean": not slippage_outliers and not unmatched_logged and not unmatched_broker,
+    }
+
+
 # ---------------------------------------------------------------------------
 # AUDIT-TRAIL REPAIR (broker is ground truth) — places NO orders.
 # compute_drift() *detects* drift; this *repairs* the trade log so the audit
