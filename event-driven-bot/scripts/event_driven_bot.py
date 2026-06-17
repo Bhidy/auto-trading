@@ -887,11 +887,19 @@ def run_eod_journal(alpaca: AlpacaClient):
     # permanent orphan; this closes such lots (closed_reconciled, pnl=None unless
     # a real exit is known), trims double-logged qty, and logs unlogged positions.
     # Places NO orders; never fabricates P&L.
-    from shared.reconcile import (compute_drift, reconcile_log_to_broker,
-                                  is_open_trade)
+    from shared.reconcile import (compute_drift, exit_prices_from_fills,
+                                  reconcile_log_to_broker, is_open_trade)
     from shared.accounting import realized_pnl
+    # Source REAL exit prices from the broker's sell fills so an orphaned bracket
+    # close becomes a genuine realized-P&L trade (was always pnl=None before, which
+    # left P3 edge unmeasurable). Fail-open: no fills -> closed_reconciled as before.
+    exit_prices = {}
+    try:
+        exit_prices = exit_prices_from_fills(alpaca.get_account_activities("FILL"))
+    except Exception as e:
+        log.warning(f"  Could not fetch fills for exit pricing: {e}")
     repaired, recon_actions = reconcile_log_to_broker(
-        trade_log, positions,
+        trade_log, positions, exit_prices=exit_prices,
         pnl_fn=lambda side, qty, entry, ex: realized_pnl(side, qty, entry, ex)["net_pnl"],
     )
     if recon_actions:
