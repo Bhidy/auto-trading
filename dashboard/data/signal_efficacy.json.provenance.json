@@ -1,0 +1,20 @@
+{
+  "artifact": "data/signal_efficacy.json",
+  "source": "data/trade_log.json closed trades (signal_score vs pnl_pct)",
+  "fingerprint": {
+    "as_of": "2026-06-17T22:01:29.029918+00:00",
+    "inputs": [
+      {
+        "path": "data/trade_log.json",
+        "exists": true,
+        "sha256": "decbbc925435fbc46b44e6f614e094b1bf3269c1dad0040a4832da34d1fe41a5",
+        "bytes": 53706
+      }
+    ],
+    "combined_sha256": "e18989ab8d510f2f463e9eefcd4f609069415b06372f9d99b551a81ca7e58d76"
+  },
+  "warnings": [
+    "score carries no statistically significant predictive edge"
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}
