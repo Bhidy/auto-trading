@@ -824,6 +824,32 @@ def run_intraday_monitor(alpaca: AlpacaClient):
         except Exception as e:
             log.error(f"  Stop/TP order failed for {sym}: {e}")
 
+    # Cap-maintenance trims (H1): entry-time caps don't catch a position that
+    # DRIFTS past its asset-class cap as it appreciates (IWM/XLI breached 12%).
+    # Trim the breach back to the cap — risk-REDUCING, limit SELLs only.
+    try:
+        from performance_tracker import reduce_open_position
+        from portfolio_manager import compute_cap_trims
+        cfg_limits = load_json(CONFIG_DIR / "risk_limits.json", {})
+        bucket_map = portfolio_state.get("positions", {})
+        for trim in compute_cap_trims(positions, equity, cfg_limits, bucket_map):
+            sym, tq = trim["symbol"], trim["trim_qty"]
+            quote = alpaca.get_latest_quote(sym)
+            bid = float(quote.get("quote", {}).get("bp", 0))
+            limit_price = round(bid * 0.999, 2) if bid > 0 else None
+            order_result = alpaca.place_order(
+                symbol=sym, qty=tq, side="sell",
+                order_type="limit" if limit_price else "market",
+                limit_price=limit_price,
+                client_order_id=make_client_order_id("p1cap", sym, "sell"))
+            fill_price = float(order_result.get("filled_avg_price", 0) or limit_price or 0)
+            if fill_price > 0:
+                reduce_open_position(sym, tq, fill_price, reason=trim["reason"])
+            log.warning(f"  CAP TRIM: sold {tq} {sym} "
+                        f"({trim['weight_pct']}% > {trim['cap_pct']}% cap)")
+    except Exception as e:
+        log.warning(f"  Cap-maintenance trim skipped: {e}")
+
     # Portfolio health
     from portfolio_manager import portfolio_health_check
     health = portfolio_health_check(account, positions)

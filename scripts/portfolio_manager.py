@@ -91,6 +91,53 @@ def compute_stop_levels(positions, signals_data, open_trades=None):
 
     return stops
 
+_BUCKET_ASSET = {
+    "core_equity": "etf", "sector_momentum": "etf", "defensive": "etf",
+    "defensive_cash": "etf", "aggressive_growth": "stock", "crypto": "crypto",
+    "penny_lab": "penny", "penny": "penny",
+}
+
+
+def compute_cap_trims(positions, equity, limits, bucket_map, buffer_pct=0.5):
+    """Trim-only plan (H1): any single position above its asset-class
+    max_single_position_pct (ETF 12 / stock 8 / crypto 5 / penny 1) is trimmed
+    back to the cap. The risk officer caps positions at ENTRY but nothing trims a
+    position that DRIFTS past the cap as it appreciates (IWM/XLI breached 12%).
+
+    Risk-REDUCING only: produces SELLs, never buys; skips sub-min-notional trims;
+    whole shares (limit-order safe); unknown bucket -> the tighter 'stock' cap.
+    Returns [{symbol, trim_qty, reason, weight_pct, cap_pct, trim_value}].
+    """
+    caps = limits.get("max_single_position_pct", {})
+    min_notional = float(limits.get("min_position_notional_usd", 500))
+    trims = []
+    if equity <= 0:
+        return trims
+    for pos in positions:
+        sym = pos.get("symbol")
+        mv = float(pos.get("market_value", 0) or 0)
+        price = float(pos.get("current_price", 0) or 0)
+        qty = float(pos.get("qty", 0) or 0)
+        if not sym or mv <= 0 or price <= 0 or qty <= 0:
+            continue
+        asset = _BUCKET_ASSET.get(bucket_map.get(sym, {}).get("bucket", ""), "stock")
+        cap_pct = float(caps.get(asset, 8.0))
+        weight_pct = mv / equity * 100
+        if weight_pct <= cap_pct + buffer_pct:
+            continue
+        trim_value = mv - (cap_pct / 100.0) * equity
+        trim_qty = min(int(trim_value / price), int(qty))
+        if trim_qty <= 0 or trim_qty * price < min_notional:
+            continue
+        trims.append({
+            "symbol": sym, "trim_qty": trim_qty,
+            "reason": f"cap_maintenance_{asset}_{cap_pct:g}pct",
+            "weight_pct": round(weight_pct, 2), "cap_pct": cap_pct,
+            "trim_value": round(trim_qty * price, 2),
+        })
+    return trims
+
+
 def check_stop_triggers(positions, signals_data, open_trades=None):
     stops = compute_stop_levels(positions, signals_data, open_trades)
     triggers = []

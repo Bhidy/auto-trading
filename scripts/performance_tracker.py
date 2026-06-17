@@ -111,6 +111,59 @@ def close_trade(trade_id, exit_price):
             break
     save_json("trade_log.json", log)
 
+def reduce_open_position(symbol, trim_qty, exit_price, reason="trim"):
+    """FIFO PARTIAL close (H1): book net-of-fee realized P&L on `trim_qty` shares
+    across the oldest open lots for `symbol`, leaving the remainder open. Honest
+    accounting for cap-maintenance / rebalance trims — close_trade only does full
+    closes. Returns the shares actually reduced.
+    """
+    log = load_json("trade_log.json", [])
+    remaining = float(trim_qty)
+    now = datetime.now(timezone.utc).isoformat()
+    new_records = []
+    for trade in log:
+        if remaining <= 1e-9:
+            break
+        if trade.get("symbol") != symbol or trade.get("status") != "open":
+            continue
+        lot_qty = float(trade.get("qty", 0) or 0)
+        if lot_qty <= 0:
+            continue
+        take = min(lot_qty, remaining)
+        entry = float(trade.get("entry_price", 0) or 0)
+        r = realized_pnl(trade.get("side", "buy"), take, entry, exit_price)
+        notional = abs(entry * take) or 1.0
+        if take >= lot_qty - 1e-9:               # whole lot exits
+            trade["exit_price"] = exit_price
+            trade["exit_timestamp"] = now
+            trade["hold_days"] = (datetime.now(timezone.utc)
+                                  - datetime.fromisoformat(trade["timestamp"])).days \
+                if trade.get("timestamp") else None
+            trade["gross_pnl"] = r["gross_pnl"]
+            trade["fees"] = r["fees"]
+            trade["pnl"] = r["net_pnl"]
+            trade["realized_pnl"] = r["net_pnl"]
+            trade["pnl_pct"] = round(r["net_pnl"] / notional * 100, 2)
+            trade["status"] = "closed"
+            trade["exit_reason"] = reason
+        else:                                    # partial: reduce lot, emit closed slice
+            trade["qty"] = round(lot_qty - take, 6)
+            rec = dict(trade)
+            rec.update({
+                "id": f"{trade.get('id')}-trim-{now}", "qty": round(take, 6),
+                "exit_price": exit_price, "exit_timestamp": now,
+                "gross_pnl": r["gross_pnl"], "fees": r["fees"],
+                "pnl": r["net_pnl"], "realized_pnl": r["net_pnl"],
+                "pnl_pct": round(r["net_pnl"] / notional * 100, 2),
+                "status": "closed", "exit_reason": reason,
+            })
+            new_records.append(rec)
+        remaining -= take
+    log.extend(new_records)
+    save_json("trade_log.json", log)
+    return float(trim_qty) - remaining
+
+
 def find_open_trade(symbol):
     log = load_json("trade_log.json", [])
     for trade in reversed(log):
