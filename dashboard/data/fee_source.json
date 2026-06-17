@@ -1,0 +1,41 @@
+{
+  "as_of": "2026-06-17T17:21:23.686181+00:00",
+  "source": "trade_log realized fills (Alpaca PAPER)",
+  "basis": "paper",
+  "default_cost_bps": 5.0,
+  "default_slippage_bps": 5.0,
+  "policy": "applied_slippage_bps = max(p90_adverse_measured, default); never lowers friction on favorable paper fills; refuse-on-small-N below min_sample_n; p90 (not median) used",
+  "portfolios": {
+    "portfolio_1": {
+      "sample_n": 27,
+      "min_sample_n": 25,
+      "below_floor": false,
+      "median_adverse_slippage_bps": -14.162,
+      "p90_adverse_slippage_bps": -12.838,
+      "applied_slippage_bps": 5.0,
+      "applied_cost_bps": 5.0,
+      "note": "favorable paper fills -> floored at default"
+    },
+    "portfolio_2": {
+      "sample_n": 0,
+      "min_sample_n": 25,
+      "below_floor": true,
+      "median_adverse_slippage_bps": null,
+      "p90_adverse_slippage_bps": null,
+      "applied_slippage_bps": 5.0,
+      "applied_cost_bps": 5.0,
+      "note": "below sample floor -> default used (refuse-on-small-N)"
+    },
+    "portfolio_3": {
+      "sample_n": 0,
+      "min_sample_n": 25,
+      "below_floor": true,
+      "median_adverse_slippage_bps": null,
+      "p90_adverse_slippage_bps": null,
+      "applied_slippage_bps": 5.0,
+      "applied_cost_bps": 5.0,
+      "note": "below sample floor -> default used (refuse-on-small-N)"
+    }
+  },
+  "disclosure": "Hypothetical/paper friction for research only \u2014 not investment advice. Paper fills may differ materially from live fills (market impact, liquidity, latency). Recalibrate against LIVE fills before any go-live."
+}
