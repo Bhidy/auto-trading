@@ -179,6 +179,32 @@ All three bots' broker calls route through this module. **Do not duplicate or by
 ## Live-readiness gate — `docs/LIVE_READINESS.md`
 System is **PAPER ONLY**. The doc defines the engineering + strategy + ops gates (90d paper, OOS Sharpe ≥ 1.0, max DD ≤ 15%, etc.) and fractional go-live procedure. Do not deploy real capital until all gates are signed off.
 
+## Alpaca Skills Library / CLI / MCP adoption (2026-06) — READ docs/ALPACA_TOOLING.md
+We adopted Alpaca's open-source agent-skill library as an OPERATING STANDARD + an
+independent backtest oracle — NOT a new engine (ours is deeper: CPCV/DSR/PBO). Two
+hard invariants gate it, now ENFORCED IN CI, not just by convention:
+- **Cloud-path purity** (`tests/test_trading_path_purity.py`): the trading/EOD path
+  (scripts, shared, both bots; `scripts/research/` is the excluded T2 lane) imports
+  NO heavy/ML/LLM/CLI package, and `requirements.txt` stays `requests`-only. This is
+  the machine-enforced form of the dependency-tiering law + "no Claude/LLM in the
+  autonomous loop." Never relax it.
+- **Tool pinning** (`tests/test_skills_lock_pinned.py` + `config/vendored_tools.lock.json`):
+  the Alpaca skill is vendored at a pinned commit + sha256 (the global `skills-lock.json`
+  is gitignored, so the COMMITTED `config/vendored_tools.lock.json` is the CI source of
+  truth). The CLI is PREVIEW — pin a release tag, never float `main`.
+What landed: friction calibration (`scripts/research/calibrate_friction.py` →
+`data/fee_source.json`, read by `scripts/backtest/friction.py`; p90, FLOORED at the
+documented 5bps so favorable PAPER fills never cheapen a backtest, refuse-on-small-N —
+today everything is at the 5bps floor); P2/P3 fill-fidelity parity + read-only
+`shared/reconcile.fill_reconciliation_report`; research provenance sidecars
+(`shared/research_provenance.py`); a no-look-ahead CI parity fixture
+(`tests/test_reference_parity.py`); the strategy-spec validator
+(`scripts/backtest/strategy_spec.py` + `docs/specs/*.json`); and an advisory,
+fail-open event-context capability (`shared/event_context.py`). The Alpaca skill/CLI/MCP
+are INTERACTIVE/research-lane only — never invoked by any Actions trading workflow.
+**Deliberately deferred (committee-gated, behind LIVE_READINESS):** wiring advisory
+event-context vetoes into live bot entries; the options sleeve; P2 disclosure-lag tuning.
+
 ## Still open (deliberate, not bugs)
 Full sole-source migration (retire git-JSON state in favor of Supabase); P2/P3 active fill-backfill (currently read-only audits); time-on-paper to meet live-readiness gates.
 
