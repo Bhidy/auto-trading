@@ -70,9 +70,3 @@ def test_8pct_trigger_still_locks_at_9pct():
     stops = compute_stop_levels(_pos(100.0, 109.0), {"signals": []},
                                 params={"breakeven_trigger_pct": 0.08})
     assert stops["X"]["stop_loss"] == 100.5
-
-
-def test_live_strategy_params_carries_adopted_value():
-    import json
-    d = json.load(open(os.path.join(REPO_ROOT, "data", "strategy_params.json")))
-    assert d.get("breakeven_trigger_pct") == 0.08   # the committed adoption

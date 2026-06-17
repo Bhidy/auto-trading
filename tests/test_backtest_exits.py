@@ -97,8 +97,10 @@ def test_backtest_exit_machinery_engages_end_to_end():
     spy = bars([400 * (1.0006 ** i) for i in range(n)])
     syms = {"SPY": spy, "AAA": bars(closes),
             "BBB": bars([100 * (1.0003 ** i) for i in range(n)])}
-    on = backtest_multifactor(syms, spy, max_positions=2, warmup=200, model_exits=True)
-    off = backtest_multifactor(syms, spy, max_positions=2, warmup=200, model_exits=False)
+    # Explicit buy_threshold so the test is independent of the mutable live
+    # strategy_params (which the EOD loop can raise when de-risking).
+    on = backtest_multifactor(syms, spy, max_positions=2, warmup=200, model_exits=True, buy_threshold=0.3)
+    off = backtest_multifactor(syms, spy, max_positions=2, warmup=200, model_exits=False, buy_threshold=0.3)
 
     assert on["exit_reasons"]                       # exits engaged
     assert set(on["exit_reasons"]) & {"stop", "take_profit", "rotation", "final"}
