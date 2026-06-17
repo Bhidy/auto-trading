@@ -770,10 +770,14 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             portfolio_state["halt_reason"] = None
             portfolio_state["halt_until"] = None
 
-    # Stop-loss and take-profit checks
+    # Stop-loss and take-profit checks. Pass the OPEN trade log so a held position
+    # absent from today's signals still gets its persisted entry stop enforced
+    # (otherwise it would be left unprotected — the -10.8% no-stop failure mode).
     signals_data = load_json(DATA_DIR / "signals.json", {})
+    trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    open_trades = [t for t in trade_log if isinstance(t, dict) and t.get("status") == "open"]
     from portfolio_manager import check_stop_triggers
-    triggers = check_stop_triggers(positions, signals_data)
+    triggers = check_stop_triggers(positions, signals_data, open_trades)
 
     for trigger in triggers:
         sym = trigger["symbol"]

@@ -23,8 +23,21 @@ def save_json(path, data):
 # STOP-LOSS MANAGEMENT
 # ---------------------------------------------------------------------------
 
-def compute_stop_levels(positions, signals_data):
+def compute_stop_levels(positions, signals_data, open_trades=None):
+    """Stop/take-profit levels per position.
+
+    open_trades (optional): the trade log's currently-OPEN entries. A held
+    position that is absent from TODAY's signals would otherwise get stop=None
+    and be left UNPROTECTED (this is how a 1%-risk-sized trade ran to -10.8%).
+    We fall back to the position's PERSISTED entry stop/take-profit so protection
+    survives even when the symbol drops out of the daily signal payload. This is
+    risk-REDUCING only — trailing/breakeven below can tighten it, never loosen it.
+    """
     signals = {s["symbol"]: s for s in signals_data.get("signals", [])}
+    entry_stops = {}
+    for t in (open_trades or []):
+        if isinstance(t, dict) and t.get("status") == "open" and t.get("symbol"):
+            entry_stops[t["symbol"]] = t  # most-recent open lot wins
     stops = {}
     for pos in positions:
         sym = pos["symbol"]
@@ -38,6 +51,13 @@ def compute_stop_levels(positions, signals_data):
         stop = rm.get("stop_loss")
         trailing_pct = rm.get("trailing_stop_pct")
         take_profit = rm.get("take_profit")
+
+        # Persisted-stop fallback: never leave a held position unprotected.
+        fb = entry_stops.get(sym, {})
+        if stop is None and fb.get("stop_loss") not in (None, 0):
+            stop = fb.get("stop_loss")
+        if take_profit is None and fb.get("take_profit") not in (None, 0):
+            take_profit = fb.get("take_profit")
 
         # For longs: trailing stop rises with price
         if side == "long" and trailing_pct and current > entry:
@@ -71,8 +91,8 @@ def compute_stop_levels(positions, signals_data):
 
     return stops
 
-def check_stop_triggers(positions, signals_data):
-    stops = compute_stop_levels(positions, signals_data)
+def check_stop_triggers(positions, signals_data, open_trades=None):
+    stops = compute_stop_levels(positions, signals_data, open_trades)
     triggers = []
 
     for sym, stop_info in stops.items():
