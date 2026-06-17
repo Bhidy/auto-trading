@@ -618,6 +618,13 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 "side": "buy",
                 "qty": shares,
                 "entry_price": round(entry_price, 4),
+                # Fill-fidelity (Phase 1): P3 uses bracket MARKET entries — the
+                # highest-slippage path in the system — so capture intended vs
+                # realized like P1, enabling friction calibration + reconciliation.
+                "intended_price": round(price, 4),
+                "slippage_pct": (round((entry_price - price) / price * 100, 4)
+                                 if price else None),
+                "client_order_id": coid,
                 "stop_loss": stop_price,
                 "take_profit_1": tp1_price,
                 "atr": atr_val,

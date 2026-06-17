@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "description": "Tamper-evident pins for vendored Alpaca tooling. Interactive/research lane ONLY — never imported on the cloud trading path (invariants A/B). Verified in CI by tests/test_skills_lock_pinned.py. NOTE: the global installer's skills-lock.json is gitignored (.gitignore:26) and is NOT the CI source of truth; this committed file is.",
+  "tools": {
+    "alpaca-trading-backtest": {
+      "kind": "claude-agent-skill",
+      "source": "alpacahq/alpaca-skills",
+      "sourceType": "github",
+      "skillPath": "skills/trading-api/backtest/SKILL.md",
+      "pinnedCommit": "8b2d86b5d22e8b3395e3b59c2431b007a43837a0",
+      "computedHash": "830db169959a852e75e88250f49678611944c83fb1bc6e8703ecbeac5f42da3c",
+      "localPath": ".claude/skills/alpaca-trading-backtest/SKILL.md",
+      "scope": "interactive-research-only"
+    },
+    "alpaca-cli": {
+      "kind": "binary-cli",
+      "source": "alpacahq/cli",
+      "sourceType": "github",
+      "installPin": "go install github.com/alpacahq/cli/cmd/alpaca@<PINNED_TAG>",
+      "scope": "interactive-research-only",
+      "note": "PREVIEW upstream — pin a release tag before any use; never @latest/main. Binary, not vendored (no localPath). See docs/ALPACA_TOOLING.md."
+    }
+  }
+}

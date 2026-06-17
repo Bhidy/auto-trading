@@ -1,0 +1,46 @@
+name: "Friction Calibration (manual) — fee_source artifact"
+
+# OFFLINE artifact lane. MANUAL ONLY (workflow_dispatch) — deliberately NO cron,
+# isolated concurrency group, so it can never race the 14 trading/monitor/EOD
+# workflows or consume schedule budget. Pure-stdlib (NO heavy deps): it reads the
+# committed trade logs' realized fills and emits data/fee_source.json — the
+# calibrated friction the pure-Python backtest / self-learning gate reads via
+# scripts/backtest/friction.py (invariant A: heavy/CLI work stays off the trading
+# path; this lane emits a STATIC artifact the trading path READS). Places no
+# orders; touches no live state.
+on:
+  workflow_dispatch:
+    inputs:
+      min_sample_n:
+        description: "Minimum realized fills before a portfolio's calibration is trusted"
+        default: "25"
+
+concurrency:
+  group: friction-calibration
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # NOTE: intentionally NO pip install — calibrate_friction.py is pure-stdlib.
+
+      - name: Calibrate friction -> data/fee_source.json
+        env:
+          MIN_SAMPLE_N: ${{ github.event.inputs.min_sample_n }}
+        run: |
+          python3 scripts/research/calibrate_friction.py --min-sample-n "$MIN_SAMPLE_N"
+
+      - name: Commit artifact if changed
+        run: |
+          bash scripts/commit_and_push.sh "research: refresh fee_source friction artifact [skip ci]" data/fee_source.json
