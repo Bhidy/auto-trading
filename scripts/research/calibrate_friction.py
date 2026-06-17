@@ -27,6 +27,7 @@ Usage:
 import argparse
 import json
 import os
+import sys
 from datetime import datetime, timezone
 
 DEFAULT_COST_BPS = 5.0
@@ -154,6 +155,24 @@ def main(argv=None):
     with open(args.out, "w") as f:
         json.dump(artifact, f, indent=2)
         f.write("\n")
+
+    # Provenance sidecar: fingerprint the input trade logs + record warnings, so
+    # the artifact's lineage is machine-checkable (reproducibility contract).
+    try:
+        sys.path.insert(0, ROOT)
+        from shared.research_provenance import write_provenance
+        warnings = []
+        for pid, pf in artifact["portfolios"].items():
+            if pf["below_floor"]:
+                warnings.append(f"{pid}: below sample floor (n={pf['sample_n']}) — default friction used")
+            elif (pf["p90_adverse_slippage_bps"] is not None
+                  and pf["p90_adverse_slippage_bps"] <= artifact["default_slippage_bps"]):
+                warnings.append(f"{pid}: favorable paper fills (p90={pf['p90_adverse_slippage_bps']}bps) — "
+                                "floored at default; recalibrate vs LIVE fills before go-live")
+        write_provenance(args.out, list(LOGS.values()),
+                         warnings=warnings, source=artifact["source"])
+    except Exception as e:  # provenance must never block the artifact write
+        print(f"  (provenance sidecar skipped: {e})")
 
     print(f"Wrote {args.out}")
     for pid, pf in artifact["portfolios"].items():

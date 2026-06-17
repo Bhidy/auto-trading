@@ -1,0 +1,34 @@
+{
+  "artifact": "data/fee_source.json",
+  "source": "trade_log realized fills (Alpaca PAPER)",
+  "fingerprint": {
+    "as_of": "2026-06-17T17:21:23.691693+00:00",
+    "inputs": [
+      {
+        "path": "data/trade_log.json",
+        "exists": true,
+        "sha256": "78012cddfddbc688a2e284d6f6e9831ae5d60a73f7e07b47e3974679d24b6202",
+        "bytes": 34496
+      },
+      {
+        "path": "political-copy-bot/data/trade_log.json",
+        "exists": true,
+        "sha256": "4d5481acb3a602ecb6878882e1247ed019a6e877f99007c82e333c21a957f5e6",
+        "bytes": 10815
+      },
+      {
+        "path": "event-driven-bot/data/trade_log.json",
+        "exists": true,
+        "sha256": "0bb0d439091f106946c446ba72caacebeb0d84e9e74b9539942d3c0f1460f8dd",
+        "bytes": 16088
+      }
+    ],
+    "combined_sha256": "c6e85c369ccd22b4b5ffe345ad66aa8c1f1f0dae80ff4b5901a493eb60f3f328"
+  },
+  "warnings": [
+    "portfolio_1: favorable paper fills (p90=-12.838bps) \u2014 floored at default; recalibrate vs LIVE fills before go-live",
+    "portfolio_2: below sample floor (n=0) \u2014 default friction used",
+    "portfolio_3: below sample floor (n=0) \u2014 default friction used"
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}
