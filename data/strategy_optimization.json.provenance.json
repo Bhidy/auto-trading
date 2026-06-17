@@ -1,0 +1,18 @@
+{
+  "artifact": "data/strategy_optimization.json",
+  "source": "data/ cached bucket bars (real OHLC), exit-aware backtester + walk-forward",
+  "fingerprint": {
+    "as_of": "2026-06-17T22:29:13.233613+00:00",
+    "inputs": [
+      {
+        "path": "data/core_equity.json",
+        "exists": true,
+        "sha256": "6868669d7df67838766fb292a30c015094b15107fbfb545cd3e2d7f854c0a2c4",
+        "bytes": 140664
+      }
+    ],
+    "combined_sha256": "9eac41bfd7b6b8d27db2bea87c89e89fcc863729e232d1ce673f620d2a782199"
+  },
+  "warnings": [],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}
