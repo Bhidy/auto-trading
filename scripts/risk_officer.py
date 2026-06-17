@@ -16,7 +16,7 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 from shared.alpaca_http import evaluate_asset_gate  # noqa: E402
-from shared.portfolio_risk import would_breach_cluster_cap  # noqa: E402
+from shared.portfolio_risk import exceeds_aggregate_cap, would_breach_cluster_cap  # noqa: E402
 
 
 def _f(x):
@@ -77,7 +77,7 @@ def save_portfolio_state(state):
 MIN_CRYPTO_NOTIONAL_USD = 1.0
 
 
-def validate_trade(signal, portfolio, limits, asset_info=None):
+def validate_trade(signal, portfolio, limits, asset_info=None, cross_books=None):
     """Validate a single signal against hardcoded limits.
 
     `asset_info`: optional dict from a fresh Alpaca asset lookup (tradable,
@@ -254,6 +254,18 @@ def validate_trade(signal, portfolio, limits, asset_info=None):
                     f"{symbol} in correlated cluster '{cname}': adding would push "
                     f"cluster exposure to {proj:.1f}% > {cap:.1f}% cap (de-correlation gate)")
 
+        # (c) Cross-portfolio single-name cap (H2): the same name held across
+        # P1/P2/P3 is ONE bet on the total book. Block an add that pushes its
+        # COMBINED exposure over the cross-portfolio single-name cap (was a
+        # report-only flag before — now an actual veto).
+        xcfg = limits.get("cross_portfolio") or {}
+        x_cap = xcfg.get("single_name_cap_pct")
+        if cross_books and x_cap and exceeds_aggregate_cap(
+                cross_books, symbol, dollar_amount, x_cap):
+            rejections.append(
+                f"{symbol} combined P1+P2+P3 exposure would exceed the "
+                f"{x_cap:.0f}% cross-portfolio single-name cap")
+
     approved = len(rejections) == 0
 
     result = {
@@ -287,6 +299,14 @@ def run_validation(asset_lookup=None):
     approved_orders = []
     rejected_orders = []
 
+    # Cross-portfolio books (P1+P2+P3 committed state) for the single-name veto (H2).
+    try:
+        from shared.cross_portfolio import load_books
+        _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cross_books = load_books(_root)
+    except Exception:
+        cross_books = None
+
     for signal in signals.get("signals", []):
         asset_info = None
         if asset_lookup is not None:
@@ -294,7 +314,8 @@ def run_validation(asset_lookup=None):
                 asset_info = asset_lookup(signal.get("symbol"))
             except Exception:
                 asset_info = None  # fail-closed (shorts get rejected downstream)
-        result = validate_trade(signal, portfolio, limits, asset_info=asset_info)
+        result = validate_trade(signal, portfolio, limits, asset_info=asset_info,
+                                cross_books=cross_books)
         result["confidence"] = signal.get("score", signal.get("confidence", 0))
         result["reasons"] = signal.get("reasons", [])
         if result["approved"]:

@@ -59,6 +59,42 @@ def test_valid_buy_is_approved(limits, portfolio):
     assert result["price"] == 500.0
 
 
+# --- H2: cross-portfolio single-name veto ------------------------------------
+
+def test_cross_portfolio_single_name_veto_blocks_overlap(limits, portfolio):
+    # SPY is fine standalone, but combined P1+P3 SPY already exceeds the 10%
+    # cross-portfolio single-name cap -> the add must be vetoed.
+    limits = {**limits, "cross_portfolio": {"single_name_cap_pct": 10.0}}
+    cross_books = [
+        {"portfolio_id": "portfolio_1", "equity": 100000,
+         "positions": [{"symbol": "SPY", "market_value": 20000}]},
+        {"portfolio_id": "portfolio_3", "equity": 100000,
+         "positions": [{"symbol": "SPY", "market_value": 12000}]},
+        {"portfolio_id": "portfolio_2", "equity": 100000, "positions": []},
+    ]
+    res = ro.validate_trade(_buy(symbol="SPY"), portfolio, limits, cross_books=cross_books)
+    assert res["approved"] is False
+    assert any("cross-portfolio" in r for r in res["rejections"])
+
+
+def test_cross_portfolio_veto_silent_within_cap(limits, portfolio):
+    limits = {**limits, "cross_portfolio": {"single_name_cap_pct": 10.0}}
+    cross_books = [
+        {"portfolio_id": "portfolio_1", "equity": 100000,
+         "positions": [{"symbol": "SPY", "market_value": 1000}]},
+        {"portfolio_id": "portfolio_3", "equity": 100000, "positions": []},
+        {"portfolio_id": "portfolio_2", "equity": 100000, "positions": []},
+    ]
+    res = ro.validate_trade(_buy(symbol="SPY"), portfolio, limits, cross_books=cross_books)
+    assert res["approved"] is True  # within cap -> behaves exactly as before
+
+
+def test_cross_portfolio_veto_skipped_without_books(limits, portfolio):
+    # Backward-compatible: no cross_books -> no cross-portfolio rejection.
+    res = ro.validate_trade(_buy(symbol="SPY"), portfolio, limits)
+    assert res["approved"] is True
+
+
 def test_position_size_capped_to_instrument_max(limits, portfolio):
     # Request 50% on a stock; stock cap is 8%.
     result = ro.validate_trade(_buy(symbol="NVDA", itype="stock", pct=50.0), portfolio, limits)
