@@ -250,6 +250,48 @@ def fill_reconciliation_report(trade_log, fill_activities, *, slippage_p90_bps=N
 # trail reaches in_sync. It never touches the broker and never fabricates P&L.
 # ---------------------------------------------------------------------------
 
+def exit_prices_from_fills(fill_activities):
+    """Map ``{symbol: most-recent SELL fill price}`` from Alpaca FILL activities.
+
+    Sources REAL exit prices so ``reconcile_log_to_broker`` can close orphan lots
+    as genuine realized-P&L ``closed`` trades instead of ``pnl=None``
+    ``closed_reconciled`` — the fix that makes P2/P3 edge measurable. Never
+    fabricates: only an actual broker sell fill yields an exit price.
+    """
+    by_sym = {}
+    for f in fill_activities or []:
+        if not isinstance(f, dict):
+            continue
+        if not str(f.get("side", "")).lower().startswith("s"):  # sells only
+            continue
+        sym, px = f.get("symbol"), f.get("price")
+        if not sym or px in (None, ""):
+            continue
+        try:
+            px = float(px)
+        except (TypeError, ValueError):
+            continue
+        ttime = f.get("transaction_time") or f.get("date") or ""
+        if sym not in by_sym or ttime >= by_sym[sym][0]:
+            by_sym[sym] = (ttime, px)
+    return {s: v[1] for s, v in by_sym.items()}
+
+
+def guarded_pnl_fn(realized_pnl):
+    """Wrap ``shared.accounting.realized_pnl`` so it NEVER computes P&L on a
+    missing/zero entry price or qty — closing an entry-less legacy lot off a 0
+    cost basis would fabricate a huge fake result. Returns None instead, so the
+    lot closes honestly with pnl=None. Used by P2/P3 reconcile."""
+    def _fn(side, qty, entry, exit_price):
+        try:
+            if not qty or not entry or float(entry) <= 0:
+                return None
+            return realized_pnl(side, qty, entry, exit_price)["net_pnl"]
+        except (TypeError, ValueError, KeyError):
+            return None
+    return _fn
+
+
 def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconciled"):
     """Turn an open lot into a reconciled close (mutates `trade`).
 

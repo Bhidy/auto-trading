@@ -73,6 +73,12 @@ class AlpacaClient:
     def get_orders(self, status="open"):
         return self._get(f"{self.base_url}/v2/orders", {"status": status})
 
+    def get_account_activities(self, activity_type="FILL", page_size=100):
+        """Account activities (default FILL) — used to source real exit-fill prices
+        so reconciled closes carry realized P&L instead of pnl=None."""
+        return self._get(f"{self.base_url}/v2/account/activities/{activity_type}",
+                         {"page_size": page_size})
+
     def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
         params = {"timeframe": timeframe, "limit": limit, "feed": "sip"}
         if start:

@@ -297,6 +297,11 @@ class AlpacaClient:
     def get_orders(self, status: str = "open") -> list:
         return self.get("/v2/orders", {"status": status})
 
+    def get_account_activities(self, activity_type: str = "FILL", page_size: int = 100) -> list:
+        """Account activities (default FILL) — source real exit-fill prices so
+        reconciled closes carry realized P&L instead of pnl=None."""
+        return self.get(f"/v2/account/activities/{activity_type}", {"page_size": page_size})
+
     def get_latest_quote(self, symbol: str) -> dict:
         return self.get(f"/v2/stocks/{symbol}/quotes/latest", use_data_url=True)
 
@@ -1156,15 +1161,42 @@ class PoliticianBot:
         self.reconcile_orders()
 
     def reconcile_orders(self):
-        """Read-only audit of still-working (unfilled) limit orders — P2 uses
-        limit entries, so a limit that didn't fill in the confirm window lingers
-        as a working day-order. Surfaces it to data/reconciliation_report.json."""
+        """Audit working (unfilled) limit orders AND reconcile positions to broker
+        truth. P2 previously never closed a round-trip, so its edge was
+        unmeasurable; this closes completed exits with REAL fill prices (realized
+        P&L) and trims/cleans orphan lots. Honest: missing entry/exit -> pnl=None,
+        never fabricated. Read-only on the broker — places NO orders."""
         try:
-            from shared.reconcile import working_orders_report
+            from shared.accounting import realized_pnl
+            from shared.reconcile import (exit_prices_from_fills, guarded_pnl_fn,
+                                          reconcile_log_to_broker, working_orders_report)
             open_orders = self.alpaca.get_orders("open")
             report = working_orders_report(open_orders)
             positions = self.alpaca.get_positions()
             report["positions_held"] = len(positions)
+
+            # Close completed round-trips to broker truth with real exit fills.
+            tl_path = BASE_DIR / "data" / "trade_log.json"
+            try:
+                with open(tl_path) as f:
+                    trade_log = json.load(f)
+            except (OSError, ValueError):
+                trade_log = []
+            if isinstance(trade_log, list) and trade_log:
+                exit_prices = {}
+                try:
+                    exit_prices = exit_prices_from_fills(self.alpaca.get_account_activities("FILL"))
+                except Exception as e:
+                    log.warning(f"P2 exit-fill fetch skipped: {e}")
+                repaired, actions = reconcile_log_to_broker(
+                    trade_log, positions, exit_prices=exit_prices,
+                    pnl_fn=guarded_pnl_fn(realized_pnl))
+                if actions:
+                    with open(tl_path, "w") as f:
+                        json.dump(repaired, f, indent=2)
+                    report["position_reconcile_actions"] = len(actions)
+                    log.info(f"P2 position reconcile: {len(actions)} action(s)")
+
             with open(BASE_DIR / "data" / "reconciliation_report.json", "w") as f:
                 json.dump(report, f, indent=2)
             if report["working_count"]:
