@@ -1,0 +1,48 @@
+{
+  "as_of": "2026-06-17T20:01:33.784267+00:00",
+  "study": "options_sleeve_feasibility",
+  "verdict": "NO_GO",
+  "readiness_score": "3/5",
+  "blocking_gates": [
+    "equity_book_live_ready",
+    "pure_python_options_data_path"
+  ],
+  "gates": [
+    {
+      "gate": "spec_conforms",
+      "pass": true,
+      "flips_when": "the spec validates against backtest.strategy_spec",
+      "detail": "valid"
+    },
+    {
+      "gate": "defined_risk_only",
+      "pass": true,
+      "flips_when": "structures stay limited to bounded-loss verticals",
+      "detail": [
+        "bull_call_spread",
+        "bear_put_spread"
+      ]
+    },
+    {
+      "gate": "sizing_within_caps",
+      "pass": true,
+      "flips_when": "sleeve 5% + per-trade 1% stay within config/risk_limits.json",
+      "detail": "ok"
+    },
+    {
+      "gate": "equity_book_live_ready",
+      "pass": false,
+      "flips_when": "the equity book clears LIVE_READINESS (>=90 paper days, OOS Sharpe >= 1.0, max DD <= 15%)",
+      "detail": "PAPER ONLY"
+    },
+    {
+      "gate": "pure_python_options_data_path",
+      "pass": false,
+      "flips_when": "a requests-only options chain/quote path exists for the cloud loop (today option data is research-lane MCP/CLI only -> not on the money path)",
+      "detail": "not implemented (deliberate \u2014 no LLM/CLI in the autonomous loop)"
+    }
+  ],
+  "sleeve_cap_pct": 0.05,
+  "max_loss_per_trade_pct": 0.01,
+  "disclosure": "Research feasibility only \u2014 not investment advice. The options sleeve stays NO-GO until every gate passes; defined-risk caps and the hardcoded risk limits are never relaxed by this sleeve."
+}

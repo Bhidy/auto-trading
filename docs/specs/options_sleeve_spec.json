@@ -1,0 +1,49 @@
+{
+  "spec_id": "options-sleeve-defined-risk-v1",
+  "portfolio": "portfolio_1",
+  "universe": "liquid optionable underlyings: SPY, QQQ, AAPL, MSFT, NVDA",
+  "timeframe": "1Day",
+  "indicators": [
+    {
+      "name": "IV_rank",
+      "params": {
+        "lookback_days": 252,
+        "entry_max": 0.5
+      }
+    },
+    {
+      "name": "ATR",
+      "params": {
+        "period": 14
+      }
+    },
+    {
+      "name": "trend_filter",
+      "params": {
+        "ma_fast": 20,
+        "ma_slow": 50
+      }
+    }
+  ],
+  "entry_rule": "open a DEFINED-RISK vertical spread aligned with the underlying's trend filter ONLY when quoted spread <= 10% of mid AND open_interest >= 500 AND debit <= per-trade max loss",
+  "exit_rule": "close at 50% of max profit, or at 21 DTE, or if the underlying trend filter flips; max loss is structurally capped by the spread width",
+  "signal_bar": "t (close)",
+  "fill": {
+    "model": "limit",
+    "bar": "t+1",
+    "look_ahead_ack": false
+  },
+  "sizing": "sleeve <= 5% of equity; per-trade debit (max loss) <= 1% of equity; defined-risk verticals only",
+  "fees_bps": 10.0,
+  "slippage_bps": 25.0,
+  "benchmark": "SPY buy & hold, friction-matched",
+  "structures": [
+    "bull_call_spread",
+    "bear_put_spread"
+  ],
+  "spread_filter": {
+    "max_spread_frac_of_mid": 0.1,
+    "min_open_interest": 500
+  },
+  "notes": "Defined-risk ONLY (no naked/undefined exposure). Activation is gated behind LIVE_READINESS; see data/options_sleeve_feasibility.json for the current go/no-go and the exact conditions that flip it."
+}
