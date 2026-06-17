@@ -317,6 +317,7 @@ def adapt_parameters(validate_with_bars=None):
 
     gate_detail = None
     approved = None
+    friction_bps = None
     knobs_changed = any(original.get(k) != params.get(k) for k in _GATED_KNOBS)
     if validate_with_bars is not None and knobs_changed:
         # Deflate the gate's Sharpe against the CUMULATIVE trial history (not just
@@ -328,10 +329,19 @@ def adapt_parameters(validate_with_bars=None):
             hist_sharpes = []
         try:
             from backtest.walk_forward import gate_param_change
+            from backtest.friction import load_friction
+            # Validate the candidate under CALIBRATED friction (advisory; floored
+            # at the documented default so favorable PAPER fills can never make a
+            # change look better than a flat 5bps assumption). Static artifact
+            # produced offline by scripts/research/calibrate_friction.py; absent or
+            # below-sample-floor -> documented default (refuse-on-small-N).
+            fric_cost_bps, fric_slip_bps = load_friction("portfolio_1", data_dir=DATA_DIR)
+            friction_bps = {"cost_bps": fric_cost_bps, "slippage_bps": fric_slip_bps}
             symbol_bars, spy_bars = validate_with_bars
             approved, gate_detail = gate_param_change(
                 original, params, symbol_bars, spy_bars,
-                extra_trial_sharpes=hist_sharpes)
+                extra_trial_sharpes=hist_sharpes,
+                cost_bps=fric_cost_bps, slippage_bps=fric_slip_bps)
             if not approved:
                 # Revert ONLY the strategy knobs; keep refreshed metric fields.
                 for k in _GATED_KNOBS:
@@ -378,6 +388,7 @@ def adapt_parameters(validate_with_bars=None):
         "metrics_all": metrics_all,
         "updated_params": params,
         "walk_forward_gate": gate_detail,
+        "friction_bps": friction_bps,
     }
 
 # ---------------------------------------------------------------------------
