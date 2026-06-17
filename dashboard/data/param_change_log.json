@@ -1521,5 +1521,17 @@
     },
     "n_changes": 1,
     "gate": null
+  },
+  {
+    "timestamp": "2026-06-17T23:07:01.625325+00:00",
+    "approved": false,
+    "changed_knobs": {
+      "trailing_stop_atr_mult": {
+        "from": 1.9999999999999996,
+        "to": 1.8999999999999995
+      }
+    },
+    "n_changes": 1,
+    "gate": null
   }
 ]
