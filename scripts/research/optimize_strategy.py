@@ -69,10 +69,12 @@ def main(argv=None):
     ap.add_argument("--baseline-only", action="store_true")
     ap.add_argument("--validate", default=None,
                     help="JSON param-delta — run the REAL gate_param_change on it (for verifiers)")
+    ap.add_argument("--data-dir", default=DATA_DIR,
+                    help="bar cache dir (use data/deep for the 3y deep-history unlock -> PBO computable)")
     ap.add_argument("--out", default=os.path.join(DATA_DIR, "strategy_optimization.json"))
     args = ap.parse_args(argv)
 
-    symbol_bars, spy_bars = load_aligned_bars(DATA_DIR, min_coverage=0.85)
+    symbol_bars, spy_bars = load_aligned_bars(args.data_dir, min_coverage=0.85)
     if not symbol_bars or not spy_bars:
         print(json.dumps({"verdict": "INSUFFICIENT_DATA", "reason": "no aligned cached bars"}))
         return 0
@@ -148,4 +150,11 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    # Belt-and-suspenders: pin PYTHONHASHSEED so the OOS-Sharpe / gate verdict this
+    # CLI prints is reproducible across separate invocations (the root-cause
+    # ordering fixes already make it deterministic; this is defense-in-depth). Only
+    # in __main__ so importing the module under pytest never re-execs.
+    from shared.determinism import ensure_hash_seed_pinned  # noqa: E402
+
+    ensure_hash_seed_pinned()
     raise SystemExit(main())
