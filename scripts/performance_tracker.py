@@ -252,6 +252,23 @@ _GATED_KNOBS = (
 )
 
 
+def _is_risk_increasing(knob, old, new):
+    """Direction of a proposed knob change. The committee principle: gate adding
+    risk; NEVER gate removing it. Risk-DECREASING moves (smaller size, more
+    selective entry, tighter stop) are capital preservation and apply immediately;
+    only risk-INCREASING moves need walk-forward proof. Unknown knobs are treated
+    conservatively as risk-increasing (so they stay gated)."""
+    if old is None or new is None or new == old:
+        return False
+    if knob == "position_size_multiplier":
+        return new > old           # bigger size = more risk
+    if knob == "confidence_buy_threshold":
+        return new < old           # lower bar = more (lower-quality) trades = more risk
+    if knob == "trailing_stop_atr_mult":
+        return new > old           # wider stop = larger per-trade loss = more risk
+    return True                    # rsi_overbought / anything else: gate it
+
+
 def adapt_parameters(validate_with_bars=None):
     """Adapt strategy parameters from rolling performance.
 
@@ -315,11 +332,24 @@ def adapt_parameters(validate_with_bars=None):
         elif wr_30d < 0.40:
             params["confidence_buy_threshold"] = min(params["confidence_buy_threshold"] + 0.02, 0.70)
 
+    # Losing-state risk-off (committee rule: "when losing, reduce risk"). When the
+    # 30-day profit factor is below break-even on a non-trivial sample, force a
+    # de-risk step — smaller size + a more selective entry bar. This is capital
+    # preservation, so it is applied UNGATED (see the asymmetric gate below); it
+    # never requires out-of-sample proof the way ADDING risk does.
+    params["risk_off_active"] = bool(metrics_30d["total_trades"] >= 5 and pf_30d < 1.0)
+    if params["risk_off_active"]:
+        params["position_size_multiplier"] = max(params["position_size_multiplier"] * 0.85, 0.5)
+        params["confidence_buy_threshold"] = min(params["confidence_buy_threshold"] + 0.03, 0.70)
+
     gate_detail = None
     approved = None
     friction_bps = None
-    knobs_changed = any(original.get(k) != params.get(k) for k in _GATED_KNOBS)
-    if validate_with_bars is not None and knobs_changed:
+    # Asymmetric gate: only RISK-INCREASING knob moves require validation. Any
+    # risk-decreasing move (the lines above) is kept regardless of the gate.
+    risk_on_changed = any(_is_risk_increasing(k, original.get(k), params.get(k))
+                          for k in _GATED_KNOBS)
+    if validate_with_bars is not None and risk_on_changed:
         # Deflate the gate's Sharpe against the CUMULATIVE trial history (not just
         # this run's windows), so multiple-testing selection bias is corrected.
         try:
@@ -343,16 +373,16 @@ def adapt_parameters(validate_with_bars=None):
                 extra_trial_sharpes=hist_sharpes,
                 cost_bps=fric_cost_bps, slippage_bps=fric_slip_bps)
             if not approved:
-                # Revert ONLY the strategy knobs; keep refreshed metric fields.
+                # Revert ONLY risk-INCREASING knobs; de-risk moves stay (ungated).
                 for k in _GATED_KNOBS:
-                    if k in original:
+                    if k in original and _is_risk_increasing(k, original[k], params[k]):
                         params[k] = original[k]
         except Exception as e:
-            # Fail closed: an un-validatable change is not applied.
+            # Fail closed: an un-validatable risk INCREASE is not applied. De-risk stays.
             approved = False
             gate_detail = {"error": str(e)}
             for k in _GATED_KNOBS:
-                if k in original:
+                if k in original and _is_risk_increasing(k, original[k], params[k]):
                     params[k] = original[k]
         # Record this evaluation in the persistent trial ledger (best-effort) so a
         # future DSR deflates against a truthful N. Never breaks the trading loop.
