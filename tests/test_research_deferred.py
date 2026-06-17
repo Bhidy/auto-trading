@@ -68,7 +68,7 @@ def test_p2_machinery_activates_on_sufficient_sample(tmp_path):
         base = 100.0
         r = rets[i % len(rets)]
         log.append({"symbol": f"S{i}", "side": "buy", "entry_price": base,
-                    "date": f"2026-01-{(i % 27) + 1:02d}", "disclosure_age_days": i % 60})
+                    "date": f"2026-01-{(i % 27) + 1:02d}", "disclosure_age_days": (i * 7) % 60})
         log.append({"symbol": f"S{i}", "side": "sell", "exit_price": base * (1 + r),
                     "date": f"2026-02-{(i % 27) + 1:02d}"})
     p = tmp_path / "p2_log.json"
@@ -81,6 +81,9 @@ def test_p2_machinery_activates_on_sufficient_sample(tmp_path):
     assert study["pbo"] is not None
     assert study["deflated_sharpe"] is not None
     assert study["best_combo"] is not None
+    # The inert holding_days dimension must NOT reappear; the reported Sharpe is annualized.
+    assert "holding_days" not in study["best_combo"]
+    assert "sharpe_annualized" in study["best_combo"]
 
 
 # --- Event-context evidence ----------------------------------------------

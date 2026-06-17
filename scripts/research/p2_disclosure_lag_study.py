@@ -2,23 +2,31 @@
 """P2 (Capitol Shadow) disclosure-lag tuning study — OFFLINE research lane.
 
 Formalizes the deferred P2 question: is there a profit-maximizing
-``(max_disclosure_age_days, holding_days)`` for copy-trading US-politician
-disclosures? Per the red-team this is COMMITTEE-GATED and must clear PBO +
-deflated-Sharpe with a hard N-floor; on thin, survivorship-biased disclosure
-history it is EXPECTED to refuse to assert. This script builds the real
-machinery that produces that honest verdict now and a real number the moment
-enough closed round-trips exist.
+``max_disclosure_age_days`` for copy-trading US-politician disclosures? Per the
+red-team this is COMMITTEE-GATED and must clear PBO + deflated-Sharpe with a
+hard N-floor; on thin, survivorship-biased disclosure history it is EXPECTED to
+refuse to assert. This script builds the real machinery that produces that
+honest verdict now and a real number the moment enough closed round-trips exist.
 
 Emits a STATIC artifact (``data/p2_disclosure_lag_study.json``) the cloud path
-may READ but never imports — invariant A. Pure-stdlib; reuses the project's
-own deflated-Sharpe / PBO implementations (no numpy/pandas).
+may READ but never imports — invariant A. Pure-stdlib; reuses the project's own
+deflated-Sharpe / PBO / friction implementations (no numpy/pandas).
 
 Honesty policy (mirrors calibrate_friction):
   * Below ``--min-sample-n`` closed round-trips -> verdict REFUSE_TO_ASSERT.
-  * GO requires ALL of: PBO <= pbo_max, DSR >= dsr_min, best out-of-sample
-    Sharpe >= oos_sharpe_min. Anything else is NO_GO. Failing closed is correct.
-  * P2 currently logs ENTRIES ONLY (no exit price / realized P&L / disclosure
-    age) -> 0 round-trips -> REFUSE_TO_ASSERT, with the exact data gap named.
+  * Returns are NET of round-trip friction (entry + exit) read from the same
+    ``data/fee_source.json`` the rest of the backtest stack uses — never a
+    gross, friction-blind Sharpe.
+  * The grid searches ``max_disclosure_age_days`` ONLY. Holding-period tuning is
+    deliberately NOT searched: re-simulating a different holding period needs
+    per-trade price paths (bar data), which closed round-trips do not carry —
+    so claiming an optimized holding period would be fabricated. It is listed as
+    a further data requirement instead.
+  * DSR is fed PER-PERIOD Sharpes (its contract); the >= floor gate uses the
+    ANNUALIZED Sharpe (the LIVE_READINESS bar is annualized). PBO is the
+    overfitting / out-of-sample guard; the Sharpe floor is in-sample.
+  * GO requires ALL of: PBO <= pbo_max, DSR >= dsr_min, best annualized Sharpe
+    >= sharpe_min. Anything else is NO_GO. Failing closed is correct.
 """
 import argparse
 import json
@@ -30,6 +38,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, ROOT)
 
+from backtest.friction import load_friction  # noqa: E402
 from backtest.metrics import (  # noqa: E402
     deflated_sharpe_ratio,
     probability_of_backtest_overfitting,
@@ -38,11 +47,10 @@ from backtest.metrics import (  # noqa: E402
 
 P2_LOG = os.path.join(ROOT, "political-copy-bot", "data", "trade_log.json")
 
-# Parameter grid the study searches (the "profit-maximizing triple" the spec defers).
+# The single dimension the study can honestly search from closed round-trips.
 AGE_GRID = [15, 30, 45, 60]        # max_disclosure_age_days
-HOLD_GRID = [10, 20, 40, 60]       # holding_days
 N_TIME_SLICES = 8                  # PBO needs >= 4 columns
-GATE = {"pbo_max": 0.5, "dsr_min": 0.95, "oos_sharpe_min": 1.0}
+GATE = {"pbo_max": 0.5, "dsr_min": 0.95, "sharpe_min": 1.0}
 
 
 def _price(rec):
@@ -112,26 +120,33 @@ def _slice_returns(rets, n_slices):
     return out
 
 
-def run_grid(round_trips):
-    """Return per-combo Sharpe, the PBO matrix, DSR, and the best combo."""
+def round_trip_friction(portfolio="portfolio_2"):
+    """Net round-trip friction (entry + exit) as a return fraction, from fee_source."""
+    cost_bps, slip_bps = load_friction(portfolio)
+    return 2.0 * (cost_bps + slip_bps) / 10_000.0
+
+
+def run_grid(round_trips, rt_friction):
+    """Per-age Sharpe (net of friction), the PBO matrix, DSR, and the best age."""
     combos = []
     perf_matrix = []
     for age in AGE_GRID:
-        for hold in HOLD_GRID:  # holding rule is a label here; realized ret already closed
-            rets = [t["ret"] for t in round_trips
-                    if t["disclosure_age_days"] is None or t["disclosure_age_days"] <= age]
-            sr = sharpe_ratio(rets) if len(rets) >= 2 else None
-            row = _slice_returns(rets, N_TIME_SLICES)
-            combos.append({"max_disclosure_age_days": age, "holding_days": hold,
-                           "n": len(rets), "sharpe": round(sr, 4) if sr is not None else None})
-            if row is not None:
-                perf_matrix.append(row)
-    sharpes = [c["sharpe"] for c in combos if c["sharpe"] is not None]
+        rets = [t["ret"] - rt_friction for t in round_trips
+                if t["disclosure_age_days"] is None or t["disclosure_age_days"] <= age]
+        sr_ann = sharpe_ratio(rets) if len(rets) >= 2 else None              # annualized (reported + gate)
+        sr_pp = sharpe_ratio(rets, periods_per_year=1) if len(rets) >= 2 else None  # per-period (DSR contract)
+        row = _slice_returns(rets, N_TIME_SLICES)
+        combos.append({"max_disclosure_age_days": age, "n": len(rets),
+                       "sharpe_annualized": round(sr_ann, 4) if sr_ann is not None else None,
+                       "sharpe_per_period": round(sr_pp, 6) if sr_pp is not None else None})
+        if row is not None:
+            perf_matrix.append(row)
+    pp_sharpes = [c["sharpe_per_period"] for c in combos if c["sharpe_per_period"] is not None]
     n_obs = max((c["n"] for c in combos), default=0)
     pbo = probability_of_backtest_overfitting(perf_matrix) if len(perf_matrix) >= 2 else None
-    dsr = deflated_sharpe_ratio(sharpes, n_obs) if sharpes and n_obs >= 2 else None
-    best = max((c for c in combos if c["sharpe"] is not None),
-               key=lambda c: c["sharpe"], default=None)
+    dsr = deflated_sharpe_ratio(pp_sharpes, n_obs) if pp_sharpes and n_obs >= 2 else None
+    best = max((c for c in combos if c["sharpe_annualized"] is not None),
+               key=lambda c: c["sharpe_annualized"], default=None)
     return combos, pbo, dsr, best
 
 
@@ -144,18 +159,23 @@ def build_study(min_sample_n, log_path=P2_LOG):
 
     trips = reconstruct_round_trips(log)
     n = len(trips)
+    rt_friction = round_trip_friction()
     result = {
         "as_of": datetime.now(timezone.utc).isoformat(),
         "study": "p2_disclosure_lag_tuning",
         "source": "political-copy-bot/data/trade_log.json (Alpaca PAPER)",
         "min_sample_n": min_sample_n,
         "n_round_trips": n,
-        "grid": {"max_disclosure_age_days": AGE_GRID, "holding_days": HOLD_GRID},
+        "round_trip_friction_pct": round(rt_friction * 100, 4),
+        "search": {"max_disclosure_age_days": AGE_GRID},
+        "holding_days": ("NOT searched — re-simulating a holding period requires per-trade "
+                         "price paths (bar data) absent from closed round-trips; listed as a "
+                         "further data requirement, never reported as optimized"),
         "gate_thresholds": GATE,
         "disclosure": ("Hypothetical/paper research only — not investment advice. "
                        "Politician-disclosure history is thin and survivorship-biased; "
-                       "a positive in-sample triple is presumed overfit until it clears "
-                       "PBO + deflated-Sharpe with N >= min_sample_n."),
+                       "a positive in-sample age clears nothing until it passes PBO + "
+                       "deflated-Sharpe with N >= min_sample_n. Returns are net of friction."),
     }
 
     if n < min_sample_n:
@@ -167,21 +187,24 @@ def build_study(min_sample_n, log_path=P2_LOG):
         result["data_needed"] = [
             "closed round-trips (matched BUY->SELL) with entry_price + exit_price",
             "per-entry disclosure_date AND observed_date (to derive disclosure_age_days)",
+            "per-trade bar data if holding-period tuning is later in scope",
             f"at least {min_sample_n} such round-trips before any tuning is trusted",
         ]
         return result
 
-    combos, pbo, dsr, best = run_grid(trips)
-    passes = (pbo is not None and dsr is not None and best is not None
+    combos, pbo, dsr, best = run_grid(trips, rt_friction)
+    best_sr = best["sharpe_annualized"] if best else None
+    passes = (pbo is not None and dsr is not None and best_sr is not None
               and pbo <= GATE["pbo_max"] and dsr >= GATE["dsr_min"]
-              and best["sharpe"] is not None and best["sharpe"] >= GATE["oos_sharpe_min"])
+              and best_sr >= GATE["sharpe_min"])
     result.update({
         "verdict": "GO" if passes else "NO_GO",
         "pbo": round(pbo, 4) if pbo is not None else None,
         "deflated_sharpe": round(dsr, 4) if dsr is not None else None,
         "best_combo": best,
         "combos": combos,
-        "reason": ("cleared PBO + deflated-Sharpe + OOS Sharpe floor"
+        "reason": ("cleared PBO + deflated-Sharpe + in-sample annualized Sharpe floor "
+                   "(PBO is the overfitting / out-of-sample guard)"
                    if passes else "failed one or more gates -> fail closed (correct on thin data)"),
     })
     return result

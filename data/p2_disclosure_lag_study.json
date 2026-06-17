@@ -1,34 +1,31 @@
 {
-  "as_of": "2026-06-17T20:01:33.750173+00:00",
+  "as_of": "2026-06-17T20:20:27.658132+00:00",
   "study": "p2_disclosure_lag_tuning",
   "source": "political-copy-bot/data/trade_log.json (Alpaca PAPER)",
   "min_sample_n": 30,
   "n_round_trips": 0,
-  "grid": {
+  "round_trip_friction_pct": 0.2,
+  "search": {
     "max_disclosure_age_days": [
       15,
       30,
       45,
       60
-    ],
-    "holding_days": [
-      10,
-      20,
-      40,
-      60
     ]
   },
+  "holding_days": "NOT searched \u2014 re-simulating a holding period requires per-trade price paths (bar data) absent from closed round-trips; listed as a further data requirement, never reported as optimized",
   "gate_thresholds": {
     "pbo_max": 0.5,
     "dsr_min": 0.95,
-    "oos_sharpe_min": 1.0
+    "sharpe_min": 1.0
   },
-  "disclosure": "Hypothetical/paper research only \u2014 not investment advice. Politician-disclosure history is thin and survivorship-biased; a positive in-sample triple is presumed overfit until it clears PBO + deflated-Sharpe with N >= min_sample_n.",
+  "disclosure": "Hypothetical/paper research only \u2014 not investment advice. Politician-disclosure history is thin and survivorship-biased; a positive in-sample age clears nothing until it passes PBO + deflated-Sharpe with N >= min_sample_n. Returns are net of friction.",
   "verdict": "REFUSE_TO_ASSERT",
   "reason": "0 closed round-trips < N-floor 30. P2 currently logs ENTRIES ONLY \u2014 no exit price, realized P&L, or disclosure age \u2014 so no round-trip return series can be formed.",
   "data_needed": [
     "closed round-trips (matched BUY->SELL) with entry_price + exit_price",
     "per-entry disclosure_date AND observed_date (to derive disclosure_age_days)",
+    "per-trade bar data if holding-period tuning is later in scope",
     "at least 30 such round-trips before any tuning is trusted"
   ]
 }

@@ -124,9 +124,11 @@ def build_feasibility(spec):
          "detail": "ok" if sizing_ok else "exceeds a hardcoded cap"},
         {"gate": "equity_book_live_ready",
          "pass": bool(live_ready),
-         "flips_when": "the equity book clears LIVE_READINESS (>=90 paper days, "
-                       "OOS Sharpe >= 1.0, max DD <= 15%)",
-         "detail": "PAPER ONLY" if not live_ready else "cleared"},
+         "flips_when": "LIVE_READINESS.md is no longer marked 'PAPER ONLY' (this gate is a "
+                       "status-flag check on that doc; the doc's own gates — >=90 paper days, "
+                       "OOS Sharpe >= 1.0, max DD <= 15% — must be signed off there first)",
+         "detail": "LIVE_READINESS.md marked PAPER ONLY" if not live_ready
+                   else "LIVE_READINESS.md no longer marked PAPER ONLY"},
         {"gate": "pure_python_options_data_path",
          "pass": False,
          "flips_when": "a requests-only options chain/quote path exists for the cloud loop "
