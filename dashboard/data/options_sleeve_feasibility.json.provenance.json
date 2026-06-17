@@ -1,0 +1,32 @@
+{
+  "artifact": "data/options_sleeve_feasibility.json",
+  "source": "options_sleeve_spec + risk_limits + LIVE_READINESS",
+  "fingerprint": {
+    "as_of": "2026-06-17T20:20:27.694726+00:00",
+    "inputs": [
+      {
+        "path": "docs/specs/options_sleeve_spec.json",
+        "exists": true,
+        "sha256": "bdbcf8950ad144721c39af709ba576af7bc0480006d55fd2fb792820e8c36c7d",
+        "bytes": 1550
+      },
+      {
+        "path": "config/risk_limits.json",
+        "exists": true,
+        "sha256": "d80e347eab9cca53b2a9a72fb76463c38fc37808c7cc07efd7c4158b9ec009ae",
+        "bytes": 1270
+      },
+      {
+        "path": "docs/LIVE_READINESS.md",
+        "exists": true,
+        "sha256": "b5c6cc242b21b83bbac4e021c167d9dd2768b9fb47145b433c987598b497f691",
+        "bytes": 4813
+      }
+    ],
+    "combined_sha256": "a08a001f1b6ba1ebe54fae56060a8646fb7aad1a61a2092367a0e5553bf04c89"
+  },
+  "warnings": [
+    "blocking gates: ['equity_book_live_ready', 'pure_python_options_data_path']"
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}

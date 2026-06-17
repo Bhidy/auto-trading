@@ -1,0 +1,31 @@
+{
+  "as_of": "2026-06-17T20:01:33.817449+00:00",
+  "study": "event_context_advisory_evidence",
+  "source": "P1 + P3 closed trades vs historized event-context labels",
+  "labels_available": false,
+  "min_sample_per_group": 20,
+  "closed_trade_stats": {
+    "portfolio_1": {
+      "n_closed": 50,
+      "win_rate": 0.32,
+      "profit_factor": 0.2261,
+      "mean_pnl": -95.73
+    },
+    "portfolio_3": {
+      "n_closed": 0,
+      "win_rate": null,
+      "profit_factor": null,
+      "mean_pnl": null
+    }
+  },
+  "forward_metric": {
+    "definition": "one-sided test of mean realized return for entries the overlay WOULD have vetoed vs entries it kept; require each arm >= min_sample_per_group; conclude 'veto helps' only if vetoed-arm mean return is materially worse with the difference significant",
+    "needs": [
+      "per-entry event_context snapshot logged AT entry time (symbol, date, pending_corporate_action, fresh_news, liquidity_rank)",
+      ">= 20 closed trades in EACH arm"
+    ]
+  },
+  "disclosure": "Research evidence only \u2014 not investment advice. No retrospective attribution is possible without point-in-time event labels; the veto stays committee-gated until this evidence exists.",
+  "verdict": "REFUSE_TO_ASSERT",
+  "reason": "no historized event-context labels at entry time (data/event_context_history.json absent) \u2014 the advisory overlay is point-in-time, so its veto effect cannot be attributed to past trades. Start logging a per-entry snapshot to enable this."
+}

@@ -1,0 +1,20 @@
+{
+  "artifact": "data/p2_disclosure_lag_study.json",
+  "source": "political-copy-bot/data/trade_log.json (Alpaca PAPER)",
+  "fingerprint": {
+    "as_of": "2026-06-17T20:20:27.661829+00:00",
+    "inputs": [
+      {
+        "path": "political-copy-bot/data/trade_log.json",
+        "exists": true,
+        "sha256": "4d5481acb3a602ecb6878882e1247ed019a6e877f99007c82e333c21a957f5e6",
+        "bytes": 10815
+      }
+    ],
+    "combined_sha256": "605fdaafe0176eccefad14f6abde1cdca93eb47ccbfc5926f1ea685c0177d1d4"
+  },
+  "warnings": [
+    "0 closed round-trips < N-floor 30. P2 currently logs ENTRIES ONLY \u2014 no exit price, realized P&L, or disclosure age \u2014 so no round-trip return series can be formed."
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}
