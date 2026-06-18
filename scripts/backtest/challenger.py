@@ -32,7 +32,7 @@ def challenger_backtest(symbol_bars, spy_bars, starting_equity=100_000.0,
     `regime_ma`-day SMA; moves fully to cash otherwise. Rebalances at the next
     day's open (no look-ahead), marks to close. Returns equity_curve + metrics.
     """
-    symbols = list(symbol_bars.keys())
+    symbols = sorted(symbol_bars.keys())  # deterministic iteration (no hash-order dependence)
     n = len(spy_bars)
     for s in symbols:
         if len(symbol_bars[s]) != n:
@@ -63,7 +63,7 @@ def challenger_backtest(symbol_bars, spy_bars, starting_equity=100_000.0,
         if pending_invested is not None:
             want_invested = pending_invested
             if not want_invested and holdings:
-                for s in list(holdings.keys()):
+                for s in sorted(holdings.keys()):
                     fill = sym_opens[s][t] * (1 - slip)
                     proceeds = holdings[s] * fill * (1 - cost)
                     trade_pnls.append(proceeds - holdings[s] * entry_px[s])
@@ -87,7 +87,7 @@ def challenger_backtest(symbol_bars, spy_bars, starting_equity=100_000.0,
         equity_curve.append(portfolio_value(t))
 
     last = n - 1
-    for s in list(holdings.keys()):
+    for s in sorted(holdings.keys()):
         proceeds = holdings[s] * sym_closes[s][last] * (1 - cost)
         trade_pnls.append(proceeds - holdings[s] * entry_px[s])
         cash += proceeds
