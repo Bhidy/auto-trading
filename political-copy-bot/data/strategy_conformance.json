@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-18T14:14:31.290139+00:00",
+  "timestamp": "2026-06-18T17:32:44.227801+00:00",
   "portfolio_id": "portfolio_2",
-  "conformant": true,
+  "conformant": false,
   "checks": [
     {
       "name": "sizing_in_band",
@@ -17,7 +17,18 @@
       "name": "disclosure_dates_parseable",
       "ok": true,
       "detail": "0/0 unparseable"
+    },
+    {
+      "name": "disclosure_feed_reachable",
+      "ok": false,
+      "detail": "FEED DARK: 14/14 fetches failed"
     }
   ],
-  "violations": []
+  "violations": [
+    {
+      "name": "disclosure_feed_reachable",
+      "ok": false,
+      "detail": "FEED DARK: 14/14 fetches failed"
+    }
+  ]
 }
