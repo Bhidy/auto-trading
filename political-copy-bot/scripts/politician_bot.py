@@ -214,6 +214,18 @@ def classify_capital(positions, sleeve_symbols, cash, equity):
 # CONVICTION MODEL — politician track-record weighting + cluster-buy detection
 # ---------------------------------------------------------------------------
 
+def trailing_stop_triggered(current_plpc, peak_plpc, stop_pct):
+    """True TRAILING stop (committee fix 2026-06-18) — exit when price has fallen
+    ``stop_pct``% from the position's HIGH-WATER MARK, NOT a fixed stop from entry.
+    This matches the mechanism the P2 backtest actually validated
+    (``current_price <= peak_price*(1-stop)``). All plpc are percentages
+    (12.5 == +12.5%). A pure loser (peak≈entry) still floors at ~ -stop_pct%; a
+    winner that pulls back locks in gains stop_pct% below its peak."""
+    if stop_pct is None or stop_pct <= 0:
+        return False
+    return (1.0 + current_plpc / 100.0) <= (1.0 + peak_plpc / 100.0) * (1.0 - stop_pct / 100.0)
+
+
 def disclosure_feed_status(attempts, failures):
     """Health of the Capitol Trades disclosure feed for one scan cycle.
 
@@ -889,28 +901,47 @@ class PoliticianBot:
         sleeve_cfg = self.risk.limits.get("benchmark_sleeve", {}) or {}
         sleeve_syms = set(sleeve_cfg.get("symbols") or SLEEVE_SYMBOLS) if sleeve_cfg.get("enabled") else set()
 
+        # True TRAILING stop: track each position's HIGH-WATER MARK (peak unrealized
+        # P&L %) across monitor runs and exit when it falls trailing_stop_pct% from
+        # that peak — the mechanism the backtest validated (the old code stopped at a
+        # FIXED % from entry despite the "trailing" name). Persisted per-symbol.
+        peaks_path = BASE_DIR / "data" / "trailing_peaks.json"
+        try:
+            peaks = json.loads(peaks_path.read_text())
+        except Exception:
+            peaks = {}
+
         positions = self.alpaca.get_positions()
+        held = set()
         for pos in positions:
             symbol = pos.get("symbol", "")
             # The passive benchmark sleeve is rebalanced by run_benchmark_sleeve,
-            # not stop-managed — an 8% trailing stop would churn it on every dip.
+            # not stop-managed — a trailing stop would churn it on every dip.
             if symbol in sleeve_syms:
                 continue
             unrealized_plpc = float(pos.get("unrealized_plpc", 0)) * 100
             qty = int(float(pos.get("qty", 0)))
             age_days = self._position_age_days(symbol)
+            held.add(symbol)
 
-            if unrealized_plpc <= -trailing_stop_pct:
-                log.warning(f"STOP LOSS triggered for {symbol}: {unrealized_plpc:.1f}% loss")
+            # Update the high-water mark before evaluating the trail.
+            peak_plpc = max(peaks.get(symbol, unrealized_plpc), unrealized_plpc)
+            peaks[symbol] = peak_plpc
+
+            if trailing_stop_triggered(unrealized_plpc, peak_plpc, trailing_stop_pct):
+                log.warning(f"TRAILING STOP for {symbol}: now {unrealized_plpc:+.1f}% "
+                            f"(peak {peak_plpc:+.1f}%, {trailing_stop_pct:.0f}% trail)")
                 try:
                     self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
                                             order_type="market", time_in_force="day")
                     self.risk.log_trade({
                         "symbol": symbol, "side": "sell", "qty": qty,
-                        "reason": f"Stop loss at {unrealized_plpc:.1f}%",
+                        "reason": (f"Trailing stop {trailing_stop_pct:.0f}% from peak "
+                                   f"{peak_plpc:+.1f}% (now {unrealized_plpc:+.1f}%)"),
                     })
+                    peaks.pop(symbol, None)
                 except Exception as e:
-                    log.error(f"Stop loss order failed for {symbol}: {e}")
+                    log.error(f"Trailing stop order failed for {symbol}: {e}")
 
             elif age_days is not None and age_days >= max_hold_days:
                 log.warning(f"MAX HOLD reached for {symbol}: held {age_days}d "
@@ -922,6 +953,7 @@ class PoliticianBot:
                         "symbol": symbol, "side": "sell", "qty": qty,
                         "reason": f"Max hold {age_days}d at {unrealized_plpc:+.1f}%",
                     })
+                    peaks.pop(symbol, None)
                 except Exception as e:
                     log.error(f"Max-hold exit failed for {symbol}: {e}")
 
@@ -943,6 +975,15 @@ class PoliticianBot:
                     })
                 except Exception as e:
                     log.error(f"Take profit order failed for {symbol}: {e}")
+
+        # Drop high-water marks for names no longer held (closed/sold) so the trail
+        # store can't grow unbounded or apply a stale peak to a re-bought name.
+        for s in [k for k in peaks if k not in held]:
+            peaks.pop(s, None)
+        try:
+            peaks_path.write_text(json.dumps(peaks, indent=2))
+        except Exception as e:
+            log.error(f"Could not persist trailing peaks: {e}")
 
     def save_portfolio_state(self):
         account = self.alpaca.get_account()
