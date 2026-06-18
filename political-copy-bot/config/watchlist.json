@@ -31,8 +31,8 @@
   },
   "sell_logic": {
     "copy_politician_sells": true,
-    "trailing_stop_pct": 8.0,
+    "trailing_stop_pct": 15.0,
     "take_profit_pct": 25.0,
-    "max_hold_days": 180
+    "max_hold_days": 252
   }
 }

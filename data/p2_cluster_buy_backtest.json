@@ -1,0 +1,1456 @@
+{
+  "as_of": "2026-06-18T16:59:45.404652",
+  "experiment": "cluster_buy_signal_convergence",
+  "cluster_window_days": 30,
+  "n_copy_events": 1763,
+  "n_normalized_members": 10,
+  "cluster_size_distribution": {
+    "2": 187,
+    "1": 1557,
+    "3": 17,
+    "5": 2
+  },
+  "cohort_sizes": {
+    "lone": 1557,
+    "cluster_ge2": 206,
+    "cluster_ge3": 19
+  },
+  "friction_bps_each_side": {
+    "cost": 5.0,
+    "slippage": 5.0
+  },
+  "cohorts": {
+    "lone": {
+      "fills": {
+        "filled": 1329,
+        "no_price": 0,
+        "no_future_bar": 1,
+        "stale_skipped": 227
+      },
+      "strategies": {
+        "hold_21d": {
+          "overall": {
+            "n": 1312,
+            "mean_ret_pct": 1.464,
+            "median_ret_pct": 1.126,
+            "stdev_pct": 9.723,
+            "win_rate_pct": 55.0,
+            "profit_factor": 1.505,
+            "mean_alpha_vs_spy_pct": 0.418,
+            "alpha_win_rate_pct": 50.4,
+            "t_stat_mean": 5.45,
+            "t_stat_alpha": 1.75,
+            "matched_n": 1312,
+            "spy_mean_pct": 1.046
+          },
+          "by_year": {
+            "2020": {
+              "n": 57,
+              "mean_ret_pct": 9.401,
+              "median_ret_pct": 7.582,
+              "stdev_pct": 13.769,
+              "win_rate_pct": 78.9,
+              "profit_factor": 7.38,
+              "mean_alpha_vs_spy_pct": 6.801,
+              "alpha_win_rate_pct": 68.4,
+              "t_stat_mean": 5.16,
+              "t_stat_alpha": 3.73,
+              "matched_n": 57,
+              "spy_mean_pct": 2.601
+            },
+            "2021": {
+              "n": 244,
+              "mean_ret_pct": 0.456,
+              "median_ret_pct": 0.006,
+              "stdev_pct": 8.439,
+              "win_rate_pct": 50.4,
+              "profit_factor": 1.167,
+              "mean_alpha_vs_spy_pct": -1.09,
+              "alpha_win_rate_pct": 41.4,
+              "t_stat_mean": 0.84,
+              "t_stat_alpha": -2.18,
+              "matched_n": 244,
+              "spy_mean_pct": 1.547
+            },
+            "2022": {
+              "n": 259,
+              "mean_ret_pct": -0.482,
+              "median_ret_pct": -1.917,
+              "stdev_pct": 9.703,
+              "win_rate_pct": 44.0,
+              "profit_factor": 0.883,
+              "mean_alpha_vs_spy_pct": 1.418,
+              "alpha_win_rate_pct": 57.1,
+              "t_stat_mean": -0.8,
+              "t_stat_alpha": 2.78,
+              "matched_n": 259,
+              "spy_mean_pct": -1.9
+            },
+            "2023": {
+              "n": 273,
+              "mean_ret_pct": 2.704,
+              "median_ret_pct": 2.208,
+              "stdev_pct": 9.06,
+              "win_rate_pct": 62.6,
+              "profit_factor": 2.212,
+              "mean_alpha_vs_spy_pct": 0.608,
+              "alpha_win_rate_pct": 52.4,
+              "t_stat_mean": 4.93,
+              "t_stat_alpha": 1.23,
+              "matched_n": 273,
+              "spy_mean_pct": 2.096
+            },
+            "2024": {
+              "n": 203,
+              "mean_ret_pct": 1.479,
+              "median_ret_pct": 1.283,
+              "stdev_pct": 9.251,
+              "win_rate_pct": 55.7,
+              "profit_factor": 1.611,
+              "mean_alpha_vs_spy_pct": -0.317,
+              "alpha_win_rate_pct": 44.3,
+              "t_stat_mean": 2.28,
+              "t_stat_alpha": -0.5,
+              "matched_n": 203,
+              "spy_mean_pct": 1.796
+            },
+            "2025": {
+              "n": 227,
+              "mean_ret_pct": 1.527,
+              "median_ret_pct": 2.182,
+              "stdev_pct": 10.257,
+              "win_rate_pct": 58.1,
+              "profit_factor": 1.462,
+              "mean_alpha_vs_spy_pct": -0.162,
+              "alpha_win_rate_pct": 49.8,
+              "t_stat_mean": 2.24,
+              "t_stat_alpha": -0.31,
+              "matched_n": 227,
+              "spy_mean_pct": 1.689
+            },
+            "2026": {
+              "n": 49,
+              "mean_ret_pct": 0.261,
+              "median_ret_pct": -0.11,
+              "stdev_pct": 7.935,
+              "win_rate_pct": 49.0,
+              "profit_factor": 1.09,
+              "mean_alpha_vs_spy_pct": -0.119,
+              "alpha_win_rate_pct": 55.1,
+              "t_stat_mean": 0.23,
+              "t_stat_alpha": -0.1,
+              "matched_n": 49,
+              "spy_mean_pct": 0.38
+            }
+          }
+        },
+        "hold_63d": {
+          "overall": {
+            "n": 1302,
+            "mean_ret_pct": 4.772,
+            "median_ret_pct": 2.909,
+            "stdev_pct": 18.904,
+            "win_rate_pct": 58.1,
+            "profit_factor": 2.064,
+            "mean_alpha_vs_spy_pct": 1.724,
+            "alpha_win_rate_pct": 50.4,
+            "t_stat_mean": 9.11,
+            "t_stat_alpha": 3.61,
+            "matched_n": 1302,
+            "spy_mean_pct": 3.048
+          },
+          "by_year": {
+            "2020": {
+              "n": 57,
+              "mean_ret_pct": 22.238,
+              "median_ret_pct": 18.259,
+              "stdev_pct": 22.31,
+              "win_rate_pct": 86.0,
+              "profit_factor": 19.404,
+              "mean_alpha_vs_spy_pct": 17.229,
+              "alpha_win_rate_pct": 77.2,
+              "t_stat_mean": 7.53,
+              "t_stat_alpha": 5.83,
+              "matched_n": 57,
+              "spy_mean_pct": 5.009
+            },
+            "2021": {
+              "n": 244,
+              "mean_ret_pct": 0.614,
+              "median_ret_pct": 0.442,
+              "stdev_pct": 14.846,
+              "win_rate_pct": 51.6,
+              "profit_factor": 1.116,
+              "mean_alpha_vs_spy_pct": -1.546,
+              "alpha_win_rate_pct": 44.3,
+              "t_stat_mean": 0.65,
+              "t_stat_alpha": -1.75,
+              "matched_n": 244,
+              "spy_mean_pct": 2.16
+            },
+            "2022": {
+              "n": 259,
+              "mean_ret_pct": -0.178,
+              "median_ret_pct": -1.516,
+              "stdev_pct": 18.827,
+              "win_rate_pct": 46.3,
+              "profit_factor": 0.973,
+              "mean_alpha_vs_spy_pct": 3.806,
+              "alpha_win_rate_pct": 59.5,
+              "t_stat_mean": -0.15,
+              "t_stat_alpha": 3.57,
+              "matched_n": 259,
+              "spy_mean_pct": -3.984
+            },
+            "2023": {
+              "n": 273,
+              "mean_ret_pct": 8.699,
+              "median_ret_pct": 5.587,
+              "stdev_pct": 21.467,
+              "win_rate_pct": 64.5,
+              "profit_factor": 3.352,
+              "mean_alpha_vs_spy_pct": 2.23,
+              "alpha_win_rate_pct": 48.4,
+              "t_stat_mean": 6.7,
+              "t_stat_alpha": 1.84,
+              "matched_n": 273,
+              "spy_mean_pct": 6.469
+            },
+            "2024": {
+              "n": 203,
+              "mean_ret_pct": 3.815,
+              "median_ret_pct": 2.571,
+              "stdev_pct": 15.119,
+              "win_rate_pct": 60.1,
+              "profit_factor": 2.007,
+              "mean_alpha_vs_spy_pct": 0.05,
+              "alpha_win_rate_pct": 44.8,
+              "t_stat_mean": 3.6,
+              "t_stat_alpha": 0.05,
+              "matched_n": 203,
+              "spy_mean_pct": 3.766
+            },
+            "2025": {
+              "n": 227,
+              "mean_ret_pct": 6.621,
+              "median_ret_pct": 4.708,
+              "stdev_pct": 18.972,
+              "win_rate_pct": 62.1,
+              "profit_factor": 2.66,
+              "mean_alpha_vs_spy_pct": 0.412,
+              "alpha_win_rate_pct": 48.0,
+              "t_stat_mean": 5.26,
+              "t_stat_alpha": 0.38,
+              "matched_n": 227,
+              "spy_mean_pct": 6.209
+            },
+            "2026": {
+              "n": 39,
+              "mean_ret_pct": 4.876,
+              "median_ret_pct": 3.361,
+              "stdev_pct": 12.656,
+              "win_rate_pct": 56.4,
+              "profit_factor": 2.941,
+              "mean_alpha_vs_spy_pct": -1.491,
+              "alpha_win_rate_pct": 46.2,
+              "t_stat_mean": 2.41,
+              "t_stat_alpha": -0.75,
+              "matched_n": 39,
+              "spy_mean_pct": 6.368
+            }
+          }
+        },
+        "hold_126d": {
+          "overall": {
+            "n": 1253,
+            "mean_ret_pct": 7.105,
+            "median_ret_pct": 4.687,
+            "stdev_pct": 26.373,
+            "win_rate_pct": 58.5,
+            "profit_factor": 2.182,
+            "mean_alpha_vs_spy_pct": 1.517,
+            "alpha_win_rate_pct": 47.3,
+            "t_stat_mean": 9.54,
+            "t_stat_alpha": 2.25,
+            "matched_n": 1253,
+            "spy_mean_pct": 5.588
+          },
+          "by_year": {
+            "2020": {
+              "n": 56,
+              "mean_ret_pct": 24.017,
+              "median_ret_pct": 21.382,
+              "stdev_pct": 27.551,
+              "win_rate_pct": 87.5,
+              "profit_factor": 11.285,
+              "mean_alpha_vs_spy_pct": 13.34,
+              "alpha_win_rate_pct": 60.7,
+              "t_stat_mean": 6.52,
+              "t_stat_alpha": 3.62,
+              "matched_n": 56,
+              "spy_mean_pct": 10.678
+            },
+            "2021": {
+              "n": 242,
+              "mean_ret_pct": -1.918,
+              "median_ret_pct": -2.876,
+              "stdev_pct": 24.861,
+              "win_rate_pct": 41.3,
+              "profit_factor": 0.813,
+              "mean_alpha_vs_spy_pct": -3.11,
+              "alpha_win_rate_pct": 37.6,
+              "t_stat_mean": -1.2,
+              "t_stat_alpha": -2.19,
+              "matched_n": 242,
+              "spy_mean_pct": 1.192
+            },
+            "2022": {
+              "n": 256,
+              "mean_ret_pct": -0.664,
+              "median_ret_pct": -3.705,
+              "stdev_pct": 22.262,
+              "win_rate_pct": 44.5,
+              "profit_factor": 0.923,
+              "mean_alpha_vs_spy_pct": 4.128,
+              "alpha_win_rate_pct": 57.0,
+              "t_stat_mean": -0.48,
+              "t_stat_alpha": 3.25,
+              "matched_n": 256,
+              "spy_mean_pct": -4.792
+            },
+            "2023": {
+              "n": 272,
+              "mean_ret_pct": 13.026,
+              "median_ret_pct": 12.545,
+              "stdev_pct": 25.124,
+              "win_rate_pct": 71.3,
+              "profit_factor": 4.161,
+              "mean_alpha_vs_spy_pct": 1.31,
+              "alpha_win_rate_pct": 50.0,
+              "t_stat_mean": 8.55,
+              "t_stat_alpha": 0.88,
+              "matched_n": 272,
+              "spy_mean_pct": 11.716
+            },
+            "2024": {
+              "n": 203,
+              "mean_ret_pct": 5.677,
+              "median_ret_pct": 2.47,
+              "stdev_pct": 19.248,
+              "win_rate_pct": 59.6,
+              "profit_factor": 2.562,
+              "mean_alpha_vs_spy_pct": -0.208,
+              "alpha_win_rate_pct": 44.8,
+              "t_stat_mean": 4.2,
+              "t_stat_alpha": -0.16,
+              "matched_n": 203,
+              "spy_mean_pct": 5.885
+            },
+            "2025": {
+              "n": 224,
+              "mean_ret_pct": 15.61,
+              "median_ret_pct": 9.813,
+              "stdev_pct": 32.149,
+              "win_rate_pct": 69.2,
+              "profit_factor": 5.129,
+              "mean_alpha_vs_spy_pct": 2.393,
+              "alpha_win_rate_pct": 42.4,
+              "t_stat_mean": 7.27,
+              "t_stat_alpha": 1.19,
+              "matched_n": 224,
+              "spy_mean_pct": 13.216
+            }
+          }
+        },
+        "p2_rules": {
+          "overall": {
+            "n": 1329,
+            "mean_ret_pct": 1.421,
+            "median_ret_pct": -2.503,
+            "stdev_pct": 12.027,
+            "win_rate_pct": 40.6,
+            "profit_factor": 1.379,
+            "mean_alpha_vs_spy_pct": -0.006,
+            "alpha_win_rate_pct": 38.7,
+            "t_stat_mean": 4.31,
+            "t_stat_alpha": -0.02,
+            "matched_n": 1327,
+            "spy_mean_pct": 1.435
+          },
+          "by_year": {
+            "2020": {
+              "n": 57,
+              "mean_ret_pct": 3.128,
+              "median_ret_pct": -1.946,
+              "stdev_pct": 13.962,
+              "win_rate_pct": 40.4,
+              "profit_factor": 1.892,
+              "mean_alpha_vs_spy_pct": 1.511,
+              "alpha_win_rate_pct": 33.3,
+              "t_stat_mean": 1.69,
+              "t_stat_alpha": 0.82,
+              "matched_n": 57,
+              "spy_mean_pct": 1.617
+            },
+            "2021": {
+              "n": 244,
+              "mean_ret_pct": 0.694,
+              "median_ret_pct": -2.474,
+              "stdev_pct": 10.956,
+              "win_rate_pct": 38.9,
+              "profit_factor": 1.185,
+              "mean_alpha_vs_spy_pct": -0.847,
+              "alpha_win_rate_pct": 33.6,
+              "t_stat_mean": 0.99,
+              "t_stat_alpha": -1.33,
+              "matched_n": 244,
+              "spy_mean_pct": 1.541
+            },
+            "2022": {
+              "n": 259,
+              "mean_ret_pct": -2.064,
+              "median_ret_pct": -4.155,
+              "stdev_pct": 8.711,
+              "win_rate_pct": 27.8,
+              "profit_factor": 0.54,
+              "mean_alpha_vs_spy_pct": 0.54,
+              "alpha_win_rate_pct": 46.3,
+              "t_stat_mean": -3.81,
+              "t_stat_alpha": 1.0,
+              "matched_n": 259,
+              "spy_mean_pct": -2.604
+            },
+            "2023": {
+              "n": 273,
+              "mean_ret_pct": 4.002,
+              "median_ret_pct": -0.449,
+              "stdev_pct": 13.898,
+              "win_rate_pct": 48.4,
+              "profit_factor": 2.206,
+              "mean_alpha_vs_spy_pct": 1.135,
+              "alpha_win_rate_pct": 38.8,
+              "t_stat_mean": 4.76,
+              "t_stat_alpha": 1.61,
+              "matched_n": 273,
+              "spy_mean_pct": 2.867
+            },
+            "2024": {
+              "n": 203,
+              "mean_ret_pct": 2.461,
+              "median_ret_pct": -1.724,
+              "stdev_pct": 11.966,
+              "win_rate_pct": 43.8,
+              "profit_factor": 1.746,
+              "mean_alpha_vs_spy_pct": -0.183,
+              "alpha_win_rate_pct": 36.0,
+              "t_stat_mean": 2.93,
+              "t_stat_alpha": -0.24,
+              "matched_n": 203,
+              "spy_mean_pct": 2.644
+            },
+            "2025": {
+              "n": 227,
+              "mean_ret_pct": 2.626,
+              "median_ret_pct": -1.229,
+              "stdev_pct": 13.133,
+              "win_rate_pct": 45.8,
+              "profit_factor": 1.708,
+              "mean_alpha_vs_spy_pct": -0.997,
+              "alpha_win_rate_pct": 39.2,
+              "t_stat_mean": 3.01,
+              "t_stat_alpha": -1.33,
+              "matched_n": 227,
+              "spy_mean_pct": 3.623
+            },
+            "2026": {
+              "n": 66,
+              "mean_ret_pct": -1.704,
+              "median_ret_pct": -3.818,
+              "stdev_pct": 9.239,
+              "win_rate_pct": 36.4,
+              "profit_factor": 0.611,
+              "mean_alpha_vs_spy_pct": -1.161,
+              "alpha_win_rate_pct": 37.5,
+              "t_stat_mean": -1.5,
+              "t_stat_alpha": -1.12,
+              "matched_n": 64,
+              "spy_mean_pct": -0.492
+            }
+          }
+        },
+        "p2_rules_wide": {
+          "overall": {
+            "n": 1329,
+            "mean_ret_pct": 4.143,
+            "median_ret_pct": -2.123,
+            "stdev_pct": 18.723,
+            "win_rate_pct": 46.6,
+            "profit_factor": 1.652,
+            "mean_alpha_vs_spy_pct": 0.039,
+            "alpha_win_rate_pct": 44.5,
+            "t_stat_mean": 8.07,
+            "t_stat_alpha": 0.08,
+            "matched_n": 1325,
+            "spy_mean_pct": 4.121
+          },
+          "by_year": {
+            "2020": {
+              "n": 57,
+              "mean_ret_pct": 17.482,
+              "median_ret_pct": 25.706,
+              "stdev_pct": 15.661,
+              "win_rate_pct": 77.2,
+              "profit_factor": 11.725,
+              "mean_alpha_vs_spy_pct": 15.283,
+              "alpha_win_rate_pct": 75.4,
+              "t_stat_mean": 8.43,
+              "t_stat_alpha": 7.11,
+              "matched_n": 57,
+              "spy_mean_pct": 2.198
+            },
+            "2021": {
+              "n": 244,
+              "mean_ret_pct": -0.865,
+              "median_ret_pct": -7.873,
+              "stdev_pct": 17.946,
+              "win_rate_pct": 32.0,
+              "profit_factor": 0.897,
+              "mean_alpha_vs_spy_pct": -1.036,
+              "alpha_win_rate_pct": 36.5,
+              "t_stat_mean": -0.75,
+              "t_stat_alpha": -0.95,
+              "matched_n": 244,
+              "spy_mean_pct": 0.171
+            },
+            "2022": {
+              "n": 259,
+              "mean_ret_pct": -2.446,
+              "median_ret_pct": -9.545,
+              "stdev_pct": 16.862,
+              "win_rate_pct": 30.1,
+              "profit_factor": 0.718,
+              "mean_alpha_vs_spy_pct": 1.033,
+              "alpha_win_rate_pct": 42.1,
+              "t_stat_mean": -2.33,
+              "t_stat_alpha": 1.09,
+              "matched_n": 259,
+              "spy_mean_pct": -3.479
+            },
+            "2023": {
+              "n": 273,
+              "mean_ret_pct": 11.63,
+              "median_ret_pct": 24.926,
+              "stdev_pct": 18.756,
+              "win_rate_pct": 65.2,
+              "profit_factor": 3.73,
+              "mean_alpha_vs_spy_pct": 0.97,
+              "alpha_win_rate_pct": 52.4,
+              "t_stat_mean": 10.25,
+              "t_stat_alpha": 0.89,
+              "matched_n": 273,
+              "spy_mean_pct": 10.66
+            },
+            "2024": {
+              "n": 203,
+              "mean_ret_pct": 4.974,
+              "median_ret_pct": -0.842,
+              "stdev_pct": 17.975,
+              "win_rate_pct": 48.8,
+              "profit_factor": 1.894,
+              "mean_alpha_vs_spy_pct": -0.693,
+              "alpha_win_rate_pct": 41.4,
+              "t_stat_mean": 3.94,
+              "t_stat_alpha": -0.6,
+              "matched_n": 203,
+              "spy_mean_pct": 5.667
+            },
+            "2025": {
+              "n": 227,
+              "mean_ret_pct": 4.35,
+              "median_ret_pct": -2.757,
+              "stdev_pct": 19.003,
+              "win_rate_pct": 48.0,
+              "profit_factor": 1.668,
+              "mean_alpha_vs_spy_pct": -3.905,
+              "alpha_win_rate_pct": 42.2,
+              "t_stat_mean": 3.45,
+              "t_stat_alpha": -3.41,
+              "matched_n": 225,
+              "spy_mean_pct": 8.291
+            },
+            "2026": {
+              "n": 66,
+              "mean_ret_pct": 2.757,
+              "median_ret_pct": 0.02,
+              "stdev_pct": 14.954,
+              "win_rate_pct": 50.0,
+              "profit_factor": 1.623,
+              "mean_alpha_vs_spy_pct": -1.245,
+              "alpha_win_rate_pct": 42.2,
+              "t_stat_mean": 1.5,
+              "t_stat_alpha": -0.71,
+              "matched_n": 64,
+              "spy_mean_pct": 4.192
+            }
+          }
+        }
+      }
+    },
+    "cluster_ge2": {
+      "fills": {
+        "filled": 163,
+        "no_price": 0,
+        "no_future_bar": 0,
+        "stale_skipped": 43
+      },
+      "strategies": {
+        "hold_21d": {
+          "overall": {
+            "n": 163,
+            "mean_ret_pct": 0.04,
+            "median_ret_pct": -0.531,
+            "stdev_pct": 8.864,
+            "win_rate_pct": 48.5,
+            "profit_factor": 1.012,
+            "mean_alpha_vs_spy_pct": 0.338,
+            "alpha_win_rate_pct": 54.6,
+            "t_stat_mean": 0.06,
+            "t_stat_alpha": 0.57,
+            "matched_n": 163,
+            "spy_mean_pct": -0.298
+          },
+          "by_year": {
+            "2021": {
+              "n": 34,
+              "mean_ret_pct": 3.27,
+              "median_ret_pct": 3.61,
+              "stdev_pct": 6.762,
+              "win_rate_pct": 70.6,
+              "profit_factor": 3.126,
+              "mean_alpha_vs_spy_pct": 1.862,
+              "alpha_win_rate_pct": 64.7,
+              "t_stat_mean": 2.82,
+              "t_stat_alpha": 1.95,
+              "matched_n": 34,
+              "spy_mean_pct": 1.408
+            },
+            "2022": {
+              "n": 32,
+              "mean_ret_pct": -0.553,
+              "median_ret_pct": -1.881,
+              "stdev_pct": 8.957,
+              "win_rate_pct": 34.4,
+              "profit_factor": 0.857,
+              "mean_alpha_vs_spy_pct": 1.232,
+              "alpha_win_rate_pct": 62.5,
+              "t_stat_mean": -0.35,
+              "t_stat_alpha": 0.87,
+              "matched_n": 32,
+              "spy_mean_pct": -1.785
+            },
+            "2023": {
+              "n": 10,
+              "mean_ret_pct": -0.749,
+              "median_ret_pct": -0.634,
+              "stdev_pct": 4.703,
+              "win_rate_pct": 30.0,
+              "profit_factor": 0.67,
+              "mean_alpha_vs_spy_pct": -2.87,
+              "alpha_win_rate_pct": 10.0,
+              "t_stat_mean": -0.5,
+              "t_stat_alpha": -2.33,
+              "matched_n": 10,
+              "spy_mean_pct": 2.12
+            },
+            "2024": {
+              "n": 34,
+              "mean_ret_pct": 1.824,
+              "median_ret_pct": 4.499,
+              "stdev_pct": 7.755,
+              "win_rate_pct": 61.8,
+              "profit_factor": 1.792,
+              "mean_alpha_vs_spy_pct": 2.007,
+              "alpha_win_rate_pct": 58.8,
+              "t_stat_mean": 1.37,
+              "t_stat_alpha": 1.61,
+              "matched_n": 34,
+              "spy_mean_pct": -0.183
+            },
+            "2025": {
+              "n": 50,
+              "mean_ret_pct": -2.53,
+              "median_ret_pct": -1.482,
+              "stdev_pct": 10.695,
+              "win_rate_pct": 40.0,
+              "profit_factor": 0.508,
+              "mean_alpha_vs_spy_pct": -1.64,
+              "alpha_win_rate_pct": 50.0,
+              "t_stat_mean": -1.67,
+              "t_stat_alpha": -1.3,
+              "matched_n": 50,
+              "spy_mean_pct": -0.889
+            },
+            "2026": {
+              "n": 3,
+              "mean_ret_pct": -4.991,
+              "median_ret_pct": -3.525,
+              "stdev_pct": 5.319,
+              "win_rate_pct": 0.0,
+              "profit_factor": 0.0,
+              "mean_alpha_vs_spy_pct": -1.702,
+              "alpha_win_rate_pct": 33.3,
+              "t_stat_mean": -1.63,
+              "t_stat_alpha": -0.44,
+              "matched_n": 3,
+              "spy_mean_pct": -3.29
+            }
+          }
+        },
+        "hold_63d": {
+          "overall": {
+            "n": 163,
+            "mean_ret_pct": 0.428,
+            "median_ret_pct": 1.984,
+            "stdev_pct": 15.058,
+            "win_rate_pct": 55.2,
+            "profit_factor": 1.077,
+            "mean_alpha_vs_spy_pct": 0.989,
+            "alpha_win_rate_pct": 58.9,
+            "t_stat_mean": 0.36,
+            "t_stat_alpha": 1.07,
+            "matched_n": 163,
+            "spy_mean_pct": -0.561
+          },
+          "by_year": {
+            "2021": {
+              "n": 34,
+              "mean_ret_pct": 3.295,
+              "median_ret_pct": 5.77,
+              "stdev_pct": 13.94,
+              "win_rate_pct": 61.8,
+              "profit_factor": 1.952,
+              "mean_alpha_vs_spy_pct": 3.268,
+              "alpha_win_rate_pct": 67.6,
+              "t_stat_mean": 1.38,
+              "t_stat_alpha": 1.63,
+              "matched_n": 34,
+              "spy_mean_pct": 0.027
+            },
+            "2022": {
+              "n": 32,
+              "mean_ret_pct": -3.667,
+              "median_ret_pct": -1.135,
+              "stdev_pct": 13.895,
+              "win_rate_pct": 43.8,
+              "profit_factor": 0.485,
+              "mean_alpha_vs_spy_pct": 2.589,
+              "alpha_win_rate_pct": 68.8,
+              "t_stat_mean": -1.49,
+              "t_stat_alpha": 1.2,
+              "matched_n": 32,
+              "spy_mean_pct": -6.257
+            },
+            "2023": {
+              "n": 10,
+              "mean_ret_pct": 0.618,
+              "median_ret_pct": 2.309,
+              "stdev_pct": 6.709,
+              "win_rate_pct": 50.0,
+              "profit_factor": 1.273,
+              "mean_alpha_vs_spy_pct": -2.885,
+              "alpha_win_rate_pct": 30.0,
+              "t_stat_mean": 0.29,
+              "t_stat_alpha": -1.41,
+              "matched_n": 10,
+              "spy_mean_pct": 3.503
+            },
+            "2024": {
+              "n": 34,
+              "mean_ret_pct": -2.417,
+              "median_ret_pct": 3.318,
+              "stdev_pct": 17.12,
+              "win_rate_pct": 58.8,
+              "profit_factor": 0.687,
+              "mean_alpha_vs_spy_pct": -2.203,
+              "alpha_win_rate_pct": 55.9,
+              "t_stat_mean": -0.82,
+              "t_stat_alpha": -0.95,
+              "matched_n": 34,
+              "spy_mean_pct": -0.214
+            },
+            "2025": {
+              "n": 50,
+              "mean_ret_pct": 2.133,
+              "median_ret_pct": 1.984,
+              "stdev_pct": 15.735,
+              "win_rate_pct": 54.0,
+              "profit_factor": 1.393,
+              "mean_alpha_vs_spy_pct": 0.845,
+              "alpha_win_rate_pct": 52.0,
+              "t_stat_mean": 0.96,
+              "t_stat_alpha": 0.56,
+              "matched_n": 50,
+              "spy_mean_pct": 1.288
+            },
+            "2026": {
+              "n": 3,
+              "mean_ret_pct": 14.82,
+              "median_ret_pct": 11.375,
+              "stdev_pct": 11.588,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 9.595,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 2.22,
+              "t_stat_alpha": 1.82,
+              "matched_n": 3,
+              "spy_mean_pct": 5.225
+            }
+          }
+        },
+        "hold_126d": {
+          "overall": {
+            "n": 160,
+            "mean_ret_pct": 5.72,
+            "median_ret_pct": 5.157,
+            "stdev_pct": 18.444,
+            "win_rate_pct": 58.8,
+            "profit_factor": 2.241,
+            "mean_alpha_vs_spy_pct": 1.857,
+            "alpha_win_rate_pct": 51.9,
+            "t_stat_mean": 3.92,
+            "t_stat_alpha": 1.64,
+            "matched_n": 160,
+            "spy_mean_pct": 3.863
+          },
+          "by_year": {
+            "2021": {
+              "n": 34,
+              "mean_ret_pct": 8.355,
+              "median_ret_pct": 12.217,
+              "stdev_pct": 21.297,
+              "win_rate_pct": 73.5,
+              "profit_factor": 2.583,
+              "mean_alpha_vs_spy_pct": 5.208,
+              "alpha_win_rate_pct": 67.6,
+              "t_stat_mean": 2.29,
+              "t_stat_alpha": 2.0,
+              "matched_n": 34,
+              "spy_mean_pct": 3.148
+            },
+            "2022": {
+              "n": 32,
+              "mean_ret_pct": -3.097,
+              "median_ret_pct": -0.559,
+              "stdev_pct": 16.071,
+              "win_rate_pct": 40.6,
+              "profit_factor": 0.615,
+              "mean_alpha_vs_spy_pct": 3.503,
+              "alpha_win_rate_pct": 62.5,
+              "t_stat_mean": -1.09,
+              "t_stat_alpha": 1.44,
+              "matched_n": 32,
+              "spy_mean_pct": -6.599
+            },
+            "2023": {
+              "n": 10,
+              "mean_ret_pct": 14.471,
+              "median_ret_pct": 13.427,
+              "stdev_pct": 13.097,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 1.328,
+              "alpha_win_rate_pct": 50.0,
+              "t_stat_mean": 3.49,
+              "t_stat_alpha": 0.4,
+              "matched_n": 10,
+              "spy_mean_pct": 13.142
+            },
+            "2024": {
+              "n": 34,
+              "mean_ret_pct": -2.086,
+              "median_ret_pct": -0.584,
+              "stdev_pct": 13.355,
+              "win_rate_pct": 47.1,
+              "profit_factor": 0.687,
+              "mean_alpha_vs_spy_pct": -3.434,
+              "alpha_win_rate_pct": 35.3,
+              "t_stat_mean": -0.91,
+              "t_stat_alpha": -2.14,
+              "matched_n": 34,
+              "spy_mean_pct": 1.349
+            },
+            "2025": {
+              "n": 50,
+              "mean_ret_pct": 13.129,
+              "median_ret_pct": 11.465,
+              "stdev_pct": 17.717,
+              "win_rate_pct": 60.0,
+              "profit_factor": 9.841,
+              "mean_alpha_vs_spy_pct": 2.229,
+              "alpha_win_rate_pct": 46.0,
+              "t_stat_mean": 5.24,
+              "t_stat_alpha": 0.93,
+              "matched_n": 50,
+              "spy_mean_pct": 10.9
+            }
+          }
+        },
+        "p2_rules": {
+          "overall": {
+            "n": 163,
+            "mean_ret_pct": 1.204,
+            "median_ret_pct": -2.198,
+            "stdev_pct": 11.176,
+            "win_rate_pct": 41.1,
+            "profit_factor": 1.331,
+            "mean_alpha_vs_spy_pct": 1.078,
+            "alpha_win_rate_pct": 45.4,
+            "t_stat_mean": 1.38,
+            "t_stat_alpha": 1.41,
+            "matched_n": 163,
+            "spy_mean_pct": 0.126
+          },
+          "by_year": {
+            "2021": {
+              "n": 34,
+              "mean_ret_pct": 3.35,
+              "median_ret_pct": 5.585,
+              "stdev_pct": 10.488,
+              "win_rate_pct": 55.9,
+              "profit_factor": 2.172,
+              "mean_alpha_vs_spy_pct": 0.831,
+              "alpha_win_rate_pct": 52.9,
+              "t_stat_mean": 1.86,
+              "t_stat_alpha": 0.55,
+              "matched_n": 34,
+              "spy_mean_pct": 2.519
+            },
+            "2022": {
+              "n": 32,
+              "mean_ret_pct": -2.293,
+              "median_ret_pct": -5.671,
+              "stdev_pct": 9.2,
+              "win_rate_pct": 31.2,
+              "profit_factor": 0.527,
+              "mean_alpha_vs_spy_pct": 1.443,
+              "alpha_win_rate_pct": 46.9,
+              "t_stat_mean": -1.41,
+              "t_stat_alpha": 0.92,
+              "matched_n": 32,
+              "spy_mean_pct": -3.737
+            },
+            "2023": {
+              "n": 10,
+              "mean_ret_pct": -3.763,
+              "median_ret_pct": -1.962,
+              "stdev_pct": 4.572,
+              "win_rate_pct": 10.0,
+              "profit_factor": 0.116,
+              "mean_alpha_vs_spy_pct": -3.468,
+              "alpha_win_rate_pct": 10.0,
+              "t_stat_mean": -2.6,
+              "t_stat_alpha": -2.44,
+              "matched_n": 10,
+              "spy_mean_pct": -0.294
+            },
+            "2024": {
+              "n": 34,
+              "mean_ret_pct": 5.91,
+              "median_ret_pct": 3.535,
+              "stdev_pct": 12.86,
+              "win_rate_pct": 64.7,
+              "profit_factor": 3.645,
+              "mean_alpha_vs_spy_pct": 5.605,
+              "alpha_win_rate_pct": 55.9,
+              "t_stat_mean": 2.68,
+              "t_stat_alpha": 2.6,
+              "matched_n": 34,
+              "spy_mean_pct": 0.305
+            },
+            "2025": {
+              "n": 50,
+              "mean_ret_pct": 0.328,
+              "median_ret_pct": -4.044,
+              "stdev_pct": 11.458,
+              "win_rate_pct": 30.0,
+              "profit_factor": 1.082,
+              "mean_alpha_vs_spy_pct": -0.838,
+              "alpha_win_rate_pct": 40.0,
+              "t_stat_mean": 0.2,
+              "t_stat_alpha": -0.68,
+              "matched_n": 50,
+              "spy_mean_pct": 1.166
+            },
+            "2026": {
+              "n": 3,
+              "mean_ret_pct": -7.981,
+              "median_ret_pct": -5.191,
+              "stdev_pct": 5.573,
+              "win_rate_pct": 0.0,
+              "profit_factor": 0.0,
+              "mean_alpha_vs_spy_pct": -4.22,
+              "alpha_win_rate_pct": 33.3,
+              "t_stat_mean": -2.48,
+              "t_stat_alpha": -0.85,
+              "matched_n": 3,
+              "spy_mean_pct": -3.762
+            }
+          }
+        },
+        "p2_rules_wide": {
+          "overall": {
+            "n": 163,
+            "mean_ret_pct": 4.656,
+            "median_ret_pct": -3.117,
+            "stdev_pct": 18.439,
+            "win_rate_pct": 44.8,
+            "profit_factor": 1.764,
+            "mean_alpha_vs_spy_pct": 1.893,
+            "alpha_win_rate_pct": 50.9,
+            "t_stat_mean": 3.22,
+            "t_stat_alpha": 1.53,
+            "matched_n": 163,
+            "spy_mean_pct": 2.763
+          },
+          "by_year": {
+            "2021": {
+              "n": 34,
+              "mean_ret_pct": 6.706,
+              "median_ret_pct": -0.762,
+              "stdev_pct": 17.516,
+              "win_rate_pct": 47.1,
+              "profit_factor": 2.472,
+              "mean_alpha_vs_spy_pct": 6.4,
+              "alpha_win_rate_pct": 58.8,
+              "t_stat_mean": 2.23,
+              "t_stat_alpha": 2.94,
+              "matched_n": 34,
+              "spy_mean_pct": 0.306
+            },
+            "2022": {
+              "n": 32,
+              "mean_ret_pct": -1.409,
+              "median_ret_pct": -7.806,
+              "stdev_pct": 17.032,
+              "win_rate_pct": 28.1,
+              "profit_factor": 0.826,
+              "mean_alpha_vs_spy_pct": 2.299,
+              "alpha_win_rate_pct": 50.0,
+              "t_stat_mean": -0.47,
+              "t_stat_alpha": 0.73,
+              "matched_n": 32,
+              "spy_mean_pct": -3.708
+            },
+            "2023": {
+              "n": 10,
+              "mean_ret_pct": 17.778,
+              "median_ret_pct": 24.979,
+              "stdev_pct": 12.557,
+              "win_rate_pct": 90.0,
+              "profit_factor": 17.841,
+              "mean_alpha_vs_spy_pct": -1.901,
+              "alpha_win_rate_pct": 50.0,
+              "t_stat_mean": 4.48,
+              "t_stat_alpha": -0.41,
+              "matched_n": 10,
+              "spy_mean_pct": 19.679
+            },
+            "2024": {
+              "n": 34,
+              "mean_ret_pct": 6.082,
+              "median_ret_pct": -0.36,
+              "stdev_pct": 19.677,
+              "win_rate_pct": 47.1,
+              "profit_factor": 2.0,
+              "mean_alpha_vs_spy_pct": 5.101,
+              "alpha_win_rate_pct": 52.9,
+              "t_stat_mean": 1.8,
+              "t_stat_alpha": 1.99,
+              "matched_n": 34,
+              "spy_mean_pct": 0.98
+            },
+            "2025": {
+              "n": 50,
+              "mean_ret_pct": 3.167,
+              "median_ret_pct": -6.582,
+              "stdev_pct": 19.153,
+              "win_rate_pct": 42.0,
+              "profit_factor": 1.442,
+              "mean_alpha_vs_spy_pct": -3.083,
+              "alpha_win_rate_pct": 44.0,
+              "t_stat_mean": 1.17,
+              "t_stat_alpha": -1.35,
+              "matched_n": 50,
+              "spy_mean_pct": 6.25
+            },
+            "2026": {
+              "n": 3,
+              "mean_ret_pct": 11.037,
+              "median_ret_pct": 9.754,
+              "stdev_pct": 14.995,
+              "win_rate_pct": 66.7,
+              "profit_factor": 11.108,
+              "mean_alpha_vs_spy_pct": 5.69,
+              "alpha_win_rate_pct": 66.7,
+              "t_stat_mean": 1.27,
+              "t_stat_alpha": 0.6,
+              "matched_n": 3,
+              "spy_mean_pct": 5.346
+            }
+          }
+        }
+      }
+    },
+    "cluster_ge3": {
+      "fills": {
+        "filled": 5,
+        "no_price": 0,
+        "no_future_bar": 0,
+        "stale_skipped": 14
+      },
+      "strategies": {
+        "hold_21d": {
+          "overall": {
+            "n": 5,
+            "mean_ret_pct": 0.523,
+            "median_ret_pct": 3.61,
+            "stdev_pct": 7.911,
+            "win_rate_pct": 80.0,
+            "profit_factor": 1.192,
+            "mean_alpha_vs_spy_pct": -0.111,
+            "alpha_win_rate_pct": 80.0,
+            "t_stat_mean": 0.15,
+            "t_stat_alpha": -0.05,
+            "matched_n": 5,
+            "spy_mean_pct": 0.634
+          },
+          "by_year": {
+            "2021": {
+              "n": 4,
+              "mean_ret_pct": 4.055,
+              "median_ret_pct": 4.304,
+              "stdev_pct": 0.538,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 2.063,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 15.06,
+              "t_stat_alpha": 3.59,
+              "matched_n": 4,
+              "spy_mean_pct": 1.993
+            },
+            "2022": {
+              "n": 1,
+              "mean_ret_pct": -13.604,
+              "median_ret_pct": -13.604,
+              "stdev_pct": 0.0,
+              "win_rate_pct": 0.0,
+              "profit_factor": 0.0,
+              "mean_alpha_vs_spy_pct": -8.804,
+              "alpha_win_rate_pct": 0.0,
+              "t_stat_mean": 0.0,
+              "t_stat_alpha": 0.0,
+              "matched_n": 1,
+              "spy_mean_pct": -4.8
+            }
+          }
+        },
+        "hold_63d": {
+          "overall": {
+            "n": 5,
+            "mean_ret_pct": 3.921,
+            "median_ret_pct": 4.873,
+            "stdev_pct": 2.948,
+            "win_rate_pct": 80.0,
+            "profit_factor": 24.024,
+            "mean_alpha_vs_spy_pct": 4.24,
+            "alpha_win_rate_pct": 100.0,
+            "t_stat_mean": 2.97,
+            "t_stat_alpha": 4.55,
+            "matched_n": 5,
+            "spy_mean_pct": -0.319
+          },
+          "by_year": {
+            "2021": {
+              "n": 4,
+              "mean_ret_pct": 3.998,
+              "median_ret_pct": 4.873,
+              "stdev_pct": 3.398,
+              "win_rate_pct": 75.0,
+              "profit_factor": 19.779,
+              "mean_alpha_vs_spy_pct": 4.098,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 2.35,
+              "t_stat_alpha": 3.45,
+              "matched_n": 4,
+              "spy_mean_pct": -0.1
+            },
+            "2022": {
+              "n": 1,
+              "mean_ret_pct": 3.614,
+              "median_ret_pct": 3.614,
+              "stdev_pct": 0.0,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 4.808,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 0.0,
+              "t_stat_alpha": 0.0,
+              "matched_n": 1,
+              "spy_mean_pct": -1.193
+            }
+          }
+        },
+        "hold_126d": {
+          "overall": {
+            "n": 5,
+            "mean_ret_pct": 17.018,
+            "median_ret_pct": 12.589,
+            "stdev_pct": 8.788,
+            "win_rate_pct": 100.0,
+            "profit_factor": "inf",
+            "mean_alpha_vs_spy_pct": 9.277,
+            "alpha_win_rate_pct": 100.0,
+            "t_stat_mean": 4.33,
+            "t_stat_alpha": 2.56,
+            "matched_n": 5,
+            "spy_mean_pct": 7.741
+          },
+          "by_year": {
+            "2021": {
+              "n": 4,
+              "mean_ret_pct": 15.651,
+              "median_ret_pct": 12.589,
+              "stdev_pct": 9.513,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 7.521,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 3.29,
+              "t_stat_alpha": 1.84,
+              "matched_n": 4,
+              "spy_mean_pct": 8.13
+            },
+            "2022": {
+              "n": 1,
+              "mean_ret_pct": 22.488,
+              "median_ret_pct": 22.488,
+              "stdev_pct": 0.0,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 16.303,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 0.0,
+              "t_stat_alpha": 0.0,
+              "matched_n": 1,
+              "spy_mean_pct": 6.184
+            }
+          }
+        },
+        "p2_rules": {
+          "overall": {
+            "n": 5,
+            "mean_ret_pct": 5.4,
+            "median_ret_pct": 11.05,
+            "stdev_pct": 8.5,
+            "win_rate_pct": 80.0,
+            "profit_factor": 4.358,
+            "mean_alpha_vs_spy_pct": 2.033,
+            "alpha_win_rate_pct": 80.0,
+            "t_stat_mean": 1.42,
+            "t_stat_alpha": 1.52,
+            "matched_n": 5,
+            "spy_mean_pct": 3.367
+          },
+          "by_year": {
+            "2021": {
+              "n": 4,
+              "mean_ret_pct": 8.76,
+              "median_ret_pct": 11.05,
+              "stdev_pct": 4.591,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 3.326,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 3.82,
+              "t_stat_alpha": 7.65,
+              "matched_n": 4,
+              "spy_mean_pct": 5.434
+            },
+            "2022": {
+              "n": 1,
+              "mean_ret_pct": -8.04,
+              "median_ret_pct": -8.04,
+              "stdev_pct": 0.0,
+              "win_rate_pct": 0.0,
+              "profit_factor": 0.0,
+              "mean_alpha_vs_spy_pct": -3.141,
+              "alpha_win_rate_pct": 0.0,
+              "t_stat_mean": 0.0,
+              "t_stat_alpha": 0.0,
+              "matched_n": 1,
+              "spy_mean_pct": -4.9
+            }
+          }
+        },
+        "p2_rules_wide": {
+          "overall": {
+            "n": 5,
+            "mean_ret_pct": 9.63,
+            "median_ret_pct": -0.762,
+            "stdev_pct": 14.247,
+            "win_rate_pct": 40.0,
+            "profit_factor": 21.798,
+            "mean_alpha_vs_spy_pct": 8.44,
+            "alpha_win_rate_pct": 100.0,
+            "t_stat_mean": 1.51,
+            "t_stat_alpha": 2.3,
+            "matched_n": 5,
+            "spy_mean_pct": 1.19
+          },
+          "by_year": {
+            "2021": {
+              "n": 4,
+              "mean_ret_pct": 5.622,
+              "median_ret_pct": -0.762,
+              "stdev_pct": 12.788,
+              "win_rate_pct": 25.0,
+              "profit_factor": 10.713,
+              "mean_alpha_vs_spy_pct": 6.039,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 0.88,
+              "t_stat_alpha": 1.68,
+              "matched_n": 4,
+              "spy_mean_pct": -0.417
+            },
+            "2022": {
+              "n": 1,
+              "mean_ret_pct": 25.663,
+              "median_ret_pct": 25.663,
+              "stdev_pct": 0.0,
+              "win_rate_pct": 100.0,
+              "profit_factor": "inf",
+              "mean_alpha_vs_spy_pct": 18.042,
+              "alpha_win_rate_pct": 100.0,
+              "t_stat_mean": 0.0,
+              "t_stat_alpha": 0.0,
+              "matched_n": 1,
+              "spy_mean_pct": 7.621
+            }
+          }
+        }
+      }
+    }
+  },
+  "cluster_vs_lone_diff": {
+    "hold_21d": {
+      "cluster_ge2": {
+        "delta_alpha_pct": -0.079,
+        "welch_t": -0.12,
+        "n_cluster": 163,
+        "n_lone": 1312
+      },
+      "cluster_ge3": {
+        "delta_alpha_pct": -0.528,
+        "welch_t": -0.24,
+        "n_cluster": 5,
+        "n_lone": 1312
+      }
+    },
+    "hold_63d": {
+      "cluster_ge2": {
+        "delta_alpha_pct": -0.735,
+        "welch_t": -0.71,
+        "n_cluster": 163,
+        "n_lone": 1302
+      },
+      "cluster_ge3": {
+        "delta_alpha_pct": 2.516,
+        "welch_t": 2.4,
+        "n_cluster": 5,
+        "n_lone": 1302
+      }
+    },
+    "hold_126d": {
+      "cluster_ge2": {
+        "delta_alpha_pct": 0.339,
+        "welch_t": 0.26,
+        "n_cluster": 160,
+        "n_lone": 1253
+      },
+      "cluster_ge3": {
+        "delta_alpha_pct": 7.76,
+        "welch_t": 2.1,
+        "n_cluster": 5,
+        "n_lone": 1253
+      }
+    },
+    "p2_rules": {
+      "cluster_ge2": {
+        "delta_alpha_pct": 1.085,
+        "welch_t": 1.32,
+        "n_cluster": 163,
+        "n_lone": 1327
+      },
+      "cluster_ge3": {
+        "delta_alpha_pct": 2.039,
+        "welch_t": 1.49,
+        "n_cluster": 5,
+        "n_lone": 1327
+      }
+    },
+    "p2_rules_wide": {
+      "cluster_ge2": {
+        "delta_alpha_pct": 1.854,
+        "welch_t": 1.4,
+        "n_cluster": 163,
+        "n_lone": 1325
+      },
+      "cluster_ge3": {
+        "delta_alpha_pct": 8.401,
+        "welch_t": 2.27,
+        "n_cluster": 5,
+        "n_lone": 1325
+      }
+    }
+  },
+  "cluster_ge2_vs_lone_by_year_hold63d": {
+    "2021": {
+      "delta_alpha_pct": 4.813,
+      "welch_t": 2.19,
+      "n_cluster": 34,
+      "n_lone": 244
+    },
+    "2022": {
+      "delta_alpha_pct": -1.217,
+      "welch_t": -0.5,
+      "n_cluster": 32,
+      "n_lone": 259
+    },
+    "2023": {
+      "delta_alpha_pct": -5.115,
+      "welch_t": -2.16,
+      "n_cluster": 10,
+      "n_lone": 273
+    },
+    "2024": {
+      "delta_alpha_pct": -2.253,
+      "welch_t": -0.89,
+      "n_cluster": 34,
+      "n_lone": 203
+    },
+    "2025": {
+      "delta_alpha_pct": 0.434,
+      "welch_t": 0.23,
+      "n_cluster": 50,
+      "n_lone": 227
+    },
+    "2026": {
+      "delta_alpha_pct": 11.086,
+      "welch_t": 1.97,
+      "n_cluster": 3,
+      "n_lone": 39
+    }
+  }
+}

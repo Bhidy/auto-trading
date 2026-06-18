@@ -410,6 +410,36 @@ def scan_news(alpaca: AlpacaClient, watchlist_symbols: list) -> list:
 # ORDER EXECUTION
 # ---------------------------------------------------------------------------
 
+def symbols_on_reentry_cooldown(trade_log, cooldown_days, now=None):
+    """Symbols CLOSED within the last ``cooldown_days`` — block immediate re-entry.
+
+    Backtest (2026-06-18) showed the breakout strategy churned a single name
+    (INTC bought -> stopped out -> rebought ~14x), turning one deteriorating stock
+    into the bulk of trades. A post-exit cooldown stops that churn. Reads the real
+    ``exit_timestamp`` on closed trades; additive guardrail — never relaxes a limit.
+    """
+    if not cooldown_days or cooldown_days <= 0:
+        return set()
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=cooldown_days)
+    on_cd = set()
+    for t in trade_log or []:
+        if "closed" not in str(t.get("status", "")):
+            continue
+        ts = t.get("exit_timestamp")
+        if not ts:
+            continue
+        try:
+            xt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            continue
+        if xt.tzinfo is None:
+            xt = xt.replace(tzinfo=timezone.utc)
+        if xt >= cutoff:
+            on_cd.add(t.get("symbol"))
+    return on_cd
+
+
 def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     """Execute approved signals with ATR-based position sizing and bracket orders."""
     limits = load_json(CONFIG_DIR / "risk_limits.json")
@@ -441,6 +471,10 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     trades_today = len([t for t in trade_log if t.get("date", "").startswith(today)])
+    # Per-symbol re-entry cooldown — block names exited within the cooldown window
+    # so a single deteriorating stock can't be churned (backtest 2026-06-18).
+    cooldown_days = limits.get("symbol_reentry_cooldown_days", 0)
+    on_cooldown = symbols_on_reentry_cooldown(trade_log, cooldown_days)
 
     executed = []
     placed_count = 0       # bracket orders submitted to the broker (or idempotent dup)
@@ -470,6 +504,11 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
         if sym in position_symbols:
             log.info(f"  Already hold {sym}, skipping")
             skips.append({"symbol": sym, "reason": "already hold", "benign": True})
+            continue
+
+        if sym in on_cooldown:
+            log.info(f"  {sym} on {cooldown_days}d re-entry cooldown since last exit, skipping")
+            skips.append({"symbol": sym, "reason": "re-entry cooldown", "benign": True})
             continue
 
         # Sector limit check — if the sector is full, try a WITHIN-SECTOR swap
@@ -559,6 +598,19 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             if shares <= 0:
                 skips.append({"symbol": sym, "reason": "tranche capital exhausted", "benign": True})
                 continue
+            trade_value = shares * price
+
+        # Per-symbol hard cap (additive guardrail, 2026-06-18): never put more than
+        # max_position_pct_per_symbol% of equity into a single name (caps single-name
+        # tail risk; never relaxes a limit).
+        per_sym_cap = limits.get("max_position_pct_per_symbol")
+        if per_sym_cap and trade_value > equity * per_sym_cap / 100.0:
+            capped = int(equity * per_sym_cap / 100.0 / price)
+            if capped <= 0:
+                skips.append({"symbol": sym, "reason": f"per-symbol {per_sym_cap}% cap leaves 0 sh", "benign": True})
+                continue
+            log.info(f"  Capping {sym} {shares}->{capped} sh to per-symbol {per_sym_cap}% cap")
+            shares = capped
             trade_value = shares * price
 
         # After a within-sector rotation the freed room may be smaller than the full

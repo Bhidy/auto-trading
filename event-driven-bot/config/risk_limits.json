@@ -1,6 +1,9 @@
 {
   "max_risk_per_trade_pct": 1.5,
   "max_sector_exposure_pct": 20.0,
+  "max_position_pct_per_symbol": 8.0,
+  "max_concurrent_trades_per_symbol": 1,
+  "symbol_reentry_cooldown_days": 10,
   "kill_switch_daily_loss_pct": 5.0,
   "kill_switch_halt_hours": 24,
   "max_trades_per_day": 15,
