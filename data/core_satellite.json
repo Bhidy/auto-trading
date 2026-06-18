@@ -1,0 +1,50 @@
+{
+  "as_of": "2026-06-18T09:03:31.284869+00:00",
+  "study": "core_satellite_allocation",
+  "source": "/Users/home/Documents/Auto Trading/data/deep_wide (120 symbols x 646 bars), 7 OOS windows",
+  "core_basket": [
+    "SPY",
+    "QQQ"
+  ],
+  "by_core_weight": [
+    {
+      "core_weight": 0.0,
+      "active_weight": 1.0,
+      "mean_oos_sharpe": -0.3322
+    },
+    {
+      "core_weight": 0.25,
+      "active_weight": 0.75,
+      "mean_oos_sharpe": 0.2884
+    },
+    {
+      "core_weight": 0.5,
+      "active_weight": 0.5,
+      "mean_oos_sharpe": 0.9148
+    },
+    {
+      "core_weight": 0.75,
+      "active_weight": 0.25,
+      "mean_oos_sharpe": 1.4276
+    },
+    {
+      "core_weight": 0.9,
+      "active_weight": 0.1,
+      "mean_oos_sharpe": 1.6833
+    },
+    {
+      "core_weight": 1.0,
+      "active_weight": 0.0,
+      "mean_oos_sharpe": 1.834
+    }
+  ],
+  "optimal": {
+    "core_weight": 1.0,
+    "active_weight": 0.0,
+    "mean_oos_sharpe": 1.834
+  },
+  "active_only_oos_sharpe": -0.3322,
+  "verdict": "PASSIVE_CORE_DOMINATES",
+  "recommendation": "Allocate the optimal core weight to a passive SPY/QQQ index; keep the active multifactor as the residual satellite. Grow the satellite only when it earns OOS edge over the benchmark (it does not today).",
+  "disclosure": "Hypothetical/paper research \u2014 not investment advice. Net of modeled costs."
+}

@@ -61,6 +61,8 @@ def main(argv=None):
     ap.add_argument("--years", type=float, default=3.0)
     ap.add_argument("--feed", default="iex")
     ap.add_argument("--out-dir", default=OUT_DIR)
+    ap.add_argument("--watchlist", default=WATCHLIST,
+                    help="universe config (e.g. config/universe_wide.json for the breadth expansion)")
     args = ap.parse_args(argv)
 
     key, sec, data_url = _creds()
@@ -68,7 +70,7 @@ def main(argv=None):
         print("No Alpaca credentials (config/alpaca_config.json or APCA_* env). Cannot fetch.")
         return 1
 
-    w = json.load(open(WATCHLIST))
+    w = json.load(open(args.watchlist))
     buckets = w.get("buckets", w)
     start = (date.today() - timedelta(days=int(args.years * 366))).isoformat()
     os.makedirs(args.out_dir, exist_ok=True)
