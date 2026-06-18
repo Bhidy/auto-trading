@@ -396,6 +396,44 @@ def run_trading_session(alpaca: AlpacaClient):
     portfolio_state["crypto_exposure"] = 0
     save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
 
+    # --- Passive index core (regime-aware) — the evidence-mandated allocation ----
+    # core_satellite study: a passive broad-ETF core dominates the active multifactor
+    # strategy out-of-sample by ~+2.16 Sharpe (-0.33 -> +1.83). Allocate core_weight x
+    # equity across SPY/QQQ/IWM/DIA, each capped strictly UNDER the 12% ETF limit and
+    # scaled down in bears. Runs BEFORE active execution so the core gets first call on
+    # cash; gradual (active positions free cash as they close). core_weight=0 -> off.
+    _params = load_adaptive_params()
+    if _params.get("core_weight"):
+        from portfolio_manager import compute_core_orders
+        _regime = (_signals or {}).get("regime", "BULL")
+        _basket = _params.get("core_basket") or ["SPY", "QQQ", "IWM", "DIA"]
+        _prices = {}
+        for _s in _basket:
+            try:
+                _q = alpaca.get_latest_quote(_s).get("quote", {})
+                _prices[_s] = float(_q.get("ap", 0) or 0) or float(_q.get("bp", 0) or 0)
+            except Exception:
+                pass
+        for _co in compute_core_orders(positions, equity, cash, _params, _regime, _prices, limits):
+            try:
+                _ask = _prices.get(_co["symbol"], 0)
+                _lp = round(_ask * 1.001, 2) if _ask else None
+                _r = alpaca.place_order(
+                    symbol=_co["symbol"], qty=_co["qty"], side="buy",
+                    order_type="limit" if _lp else "market", limit_price=_lp,
+                    client_order_id=make_client_order_id("p1core", _co["symbol"], "buy"))
+                log.info(f"  CORE: buy {_co['qty']} x {_co['symbol']} — {_co['reason']}")
+                _st, _fq, _fp = confirm_fill(alpaca, _r.get("id"))
+                if _fq > 0:
+                    _px = _fp or _lp or _ask
+                    cash -= _fq * _px
+                    from performance_tracker import log_trade
+                    log_trade(_co["symbol"], "buy", _fq, round(_px, 4), "core_equity",
+                              None, [_co["reason"]], intended_price=_lp, order_class="passive_core")
+            except Exception as _e:
+                log.error(f"  Core buy failed for {_co['symbol']}: {_e}")
+        positions = alpaca.get_positions()  # refresh after core buys
+
     validated = run_validation(asset_lookup=_build_asset_lookup(alpaca))
     approved = validated.get("approved_orders", [])
     log.info(f"Validated: {validated['summary']['approved']} approved, {validated['summary']['rejected']} rejected")
@@ -1231,4 +1269,13 @@ def main():
 
 
 if __name__ == "__main__":
+    # Belt-and-suspenders reproducibility: pin PYTHONHASHSEED for the EOD
+    # self-learning run so its walk-forward gate_param_change decision is
+    # bit-for-bit reproducible across invocations. Scoped to the EOD mode (peeked
+    # from argv before re-exec) so the intraday money path's process is untouched.
+    # Runs in __main__ only, so importing this module under pytest never re-execs.
+    if (sys.argv[1:2] or [None])[0] == "end-of-day-journal":
+        from shared.determinism import ensure_hash_seed_pinned
+
+        ensure_hash_seed_pinned()
     main()
