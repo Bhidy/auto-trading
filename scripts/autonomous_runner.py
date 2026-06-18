@@ -402,10 +402,18 @@ def run_trading_session(alpaca: AlpacaClient):
     # equity across SPY/QQQ/IWM/DIA, each capped strictly UNDER the 12% ETF limit and
     # scaled down in bears. Runs BEFORE active execution so the core gets first call on
     # cash; gradual (active positions free cash as they close). core_weight=0 -> off.
+    # Trade budget is shared with the active sleeve below so core buys COUNT against
+    # the hardcoded max_trades_per_day (audit fix: core was bypassing the 12/day cap).
+    trades_executed = 0
+    max_trades = limits["max_trades_per_day"] - portfolio_state["trades_today"]
     _params = load_adaptive_params()
-    if _params.get("core_weight"):
-        from portfolio_manager import compute_core_orders
-        _regime = (_signals or {}).get("regime", "BULL")
+    # Fail-closed on stale data: only allocate the core when signals are fresh, so a
+    # missing/old regime can't silently size a full-weight core (audit fix).
+    if _params.get("core_weight") and _data_fresh:
+        from portfolio_manager import compute_core_orders, core_regime
+        # FIX: signals.json stores the regime under "market_regime" — the old
+        # "regime" key always fell back to BULL, so bear de-risking never engaged.
+        _regime = core_regime(_signals)
         _basket = _params.get("core_basket") or ["SPY", "QQQ", "IWM", "DIA"]
         _prices = {}
         for _s in _basket:
@@ -415,6 +423,8 @@ def run_trading_session(alpaca: AlpacaClient):
             except Exception:
                 pass
         for _co in compute_core_orders(positions, equity, cash, _params, _regime, _prices, limits):
+            if trades_executed >= max_trades:
+                break
             try:
                 _ask = _prices.get(_co["symbol"], 0)
                 _lp = round(_ask * 1.001, 2) if _ask else None
@@ -422,6 +432,7 @@ def run_trading_session(alpaca: AlpacaClient):
                     symbol=_co["symbol"], qty=_co["qty"], side="buy",
                     order_type="limit" if _lp else "market", limit_price=_lp,
                     client_order_id=make_client_order_id("p1core", _co["symbol"], "buy"))
+                trades_executed += 1
                 log.info(f"  CORE: buy {_co['qty']} x {_co['symbol']} — {_co['reason']}")
                 _st, _fq, _fp = confirm_fill(alpaca, _r.get("id"))
                 if _fq > 0:
@@ -433,6 +444,11 @@ def run_trading_session(alpaca: AlpacaClient):
             except Exception as _e:
                 log.error(f"  Core buy failed for {_co['symbol']}: {_e}")
         positions = alpaca.get_positions()  # refresh after core buys
+        # FIX: re-sync exposure so the risk officer validates the active sleeve
+        # AGAINST the core just deployed (was reading pre-core total_exposure ->
+        # the combined book could breach the 160% gross cap).
+        portfolio_state["total_exposure"] = sum(abs(float(p.get("market_value", 0))) for p in positions)
+        save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
 
     validated = run_validation(asset_lookup=_build_asset_lookup(alpaca))
     approved = validated.get("approved_orders", [])
@@ -443,11 +459,11 @@ def run_trading_session(alpaca: AlpacaClient):
         _sync_portfolio_state(alpaca, portfolio_state)
         return
 
-    trades_executed = 0
+    # trades_executed / max_trades are initialized BEFORE the passive-core block so
+    # core + active orders share one daily budget (audit fix); do not reset here.
     placed_count = 0       # orders submitted to the broker (or idempotent dup)
     filled_count = 0       # orders confirmed filled this run
     skips = []             # [{symbol, reason}] for approved orders we did not place
-    max_trades = limits["max_trades_per_day"] - portfolio_state["trades_today"]
 
     # --- Capital recycling (rotation) ----------------------------------------
     # If the book is cash-starved, exit the lowest-conviction HOLD names to fund

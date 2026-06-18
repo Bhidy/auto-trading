@@ -1,7 +1,16 @@
 """Live passive-core allocation (compute_core_orders): the evidence-mandated
 +2.16-Sharpe move. Regime-aware, BUYS ONLY, and HARD-capped strictly under the
 12% ETF limit so the hardcoded risk limit is never breached."""
-from portfolio_manager import compute_core_orders
+from portfolio_manager import compute_core_orders, core_regime
+
+
+def test_core_regime_reads_the_correct_signals_key():
+    # Audit regression: the live core read "regime" (always None -> BULL), so bear
+    # de-risking never fired. It must read "market_regime" (what analyst_v2 writes).
+    assert core_regime({"market_regime": "STRONG_BEAR"}) == "STRONG_BEAR"
+    assert core_regime({"regime": "STRONG_BEAR"}) == "BULL"   # old buggy key ignored
+    assert core_regime({}) == "BULL"
+    assert core_regime(None) == "BULL"
 
 LIMITS = {"max_single_position_pct": {"etf": 12.0}, "min_position_notional_usd": 500}
 PRICES = {"SPY": 600.0, "QQQ": 500.0, "IWM": 220.0, "DIA": 430.0}

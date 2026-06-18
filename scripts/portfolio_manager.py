@@ -111,6 +111,13 @@ _BUCKET_ASSET = {
 }
 
 
+def core_regime(signals):
+    """Market regime for the passive core, read from the SAME key analyst_v2 writes
+    (``market_regime``). The old ``regime`` key always missed -> the core sized at
+    full BULL weight even in bears (audit fix); this pins the correct contract."""
+    return (signals or {}).get("market_regime", "BULL")
+
+
 def compute_core_orders(positions, equity, cash, params, regime, prices, limits):
     """Passive index-core allocation (regime-aware), BUYS ONLY.
 

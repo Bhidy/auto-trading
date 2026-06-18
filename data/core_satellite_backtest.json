@@ -1,0 +1,45 @@
+{
+  "as_of": "2026-06-18T09:23:51.457164+00:00",
+  "study": "deployed_core_satellite_backtest",
+  "source": "/Users/home/Documents/Auto Trading/data/deep_wide (124 symbols x 646 bars), 7 OOS windows",
+  "core_weight": 0.85,
+  "basket": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "DIA",
+    "TLT",
+    "GLD",
+    "SHY"
+  ],
+  "cap_constrained_core_ceiling": 0.798,
+  "active_only": {
+    "sharpe": -0.4046,
+    "total_return": -0.0967,
+    "max_drawdown": 0.2106,
+    "win_rate_days": 0.4467,
+    "worst_day": -0.0251,
+    "mean_oos_sharpe": -0.3165,
+    "losing_windows": 5
+  },
+  "core_only": {
+    "sharpe": 1.5109,
+    "total_return": 0.3213,
+    "max_drawdown": 0.1155,
+    "win_rate_days": 0.5624,
+    "worst_day": -0.0326,
+    "mean_oos_sharpe": 2.0755,
+    "losing_windows": 1
+  },
+  "deployed": {
+    "sharpe": 1.2142,
+    "total_return": 0.2096,
+    "max_drawdown": 0.0829,
+    "win_rate_days": 0.542,
+    "worst_day": -0.0242,
+    "mean_oos_sharpe": 1.3932,
+    "losing_windows": 2
+  },
+  "disclosure": "Hypothetical/paper, net of modeled costs. No strategy avoids all losing days.",
+  "verdict": "DEPLOYED_IMPROVES"
+}
