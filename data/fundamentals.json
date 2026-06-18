@@ -1,0 +1,781 @@
+{
+  "as_of": "2026-06-18T08:40:40.970200+00:00",
+  "source": "SEC EDGAR companyfacts (10-K/FY, point-in-time by filed date)",
+  "scoring": "quality_score = 0.4*margin + 0.3*growth + 0.3*roe, each in [-1,1]",
+  "fundamentals": {
+    "NVDA": [
+      {
+        "effective": "2019-02-21",
+        "fiscal_end": "2017-04-30",
+        "revenue_growth": -0.7197,
+        "net_margin": 0.2617,
+        "roe": 0.0,
+        "quality_score": -0.4765
+      },
+      {
+        "effective": "2019-02-21",
+        "fiscal_end": "2017-07-30",
+        "revenue_growth": 0.1513,
+        "net_margin": 0.2614,
+        "roe": 0.0,
+        "quality_score": 0.0498
+      },
+      {
+        "effective": "2019-02-21",
+        "fiscal_end": "2017-10-29",
+        "revenue_growth": 0.1821,
+        "net_margin": 0.3179,
+        "roe": 0.0,
+        "quality_score": 0.2089
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2018-01-28",
+        "revenue_growth": 2.6851,
+        "net_margin": 0.3137,
+        "roe": 0.4078,
+        "quality_score": 0.7168
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2018-04-29",
+        "revenue_growth": -0.6699,
+        "net_margin": 0.3879,
+        "roe": 0.0,
+        "quality_score": -0.2242
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2018-07-29",
+        "revenue_growth": -0.0262,
+        "net_margin": 0.3525,
+        "roe": 0.0,
+        "quality_score": -0.0342
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2018-10-28",
+        "revenue_growth": 0.0186,
+        "net_margin": 0.3867,
+        "roe": 0.0,
+        "quality_score": 0.1012
+      },
+      {
+        "effective": "2021-02-26",
+        "fiscal_end": "2019-01-27",
+        "revenue_growth": 2.6831,
+        "net_margin": 0.3534,
+        "roe": 0.4433,
+        "quality_score": 0.8388
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2019-04-28",
+        "revenue_growth": -0.8105,
+        "net_margin": 0.1775,
+        "roe": 0.0,
+        "quality_score": -0.645
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2019-07-28",
+        "revenue_growth": 0.1617,
+        "net_margin": 0.214,
+        "roe": 0.0,
+        "quality_score": -0.0294
+      },
+      {
+        "effective": "2020-02-20",
+        "fiscal_end": "2019-10-27",
+        "revenue_growth": 0.1687,
+        "net_margin": 0.2983,
+        "roe": 0.0,
+        "quality_score": 0.1496
+      },
+      {
+        "effective": "2022-03-18",
+        "fiscal_end": "2020-01-26",
+        "revenue_growth": 2.6224,
+        "net_margin": 0.2561,
+        "roe": 0.2291,
+        "quality_score": 0.3871
+      },
+      {
+        "effective": "2022-03-18",
+        "fiscal_end": "2021-01-31",
+        "revenue_growth": 0.5273,
+        "net_margin": 0.2598,
+        "roe": 0.2564,
+        "quality_score": 0.4273
+      },
+      {
+        "effective": "2022-03-18",
+        "fiscal_end": "2022-01-30",
+        "revenue_growth": 0.614,
+        "net_margin": 0.3623,
+        "roe": 0.3665,
+        "quality_score": 0.7644
+      }
+    ],
+    "TSLA": [
+      {
+        "effective": "2024-01-29",
+        "fiscal_end": "2021-12-31",
+        "revenue_growth": 1.5079,
+        "net_margin": 0.1025,
+        "roe": 0.1828,
+        "quality_score": 0.0245
+      },
+      {
+        "effective": "2025-01-30",
+        "fiscal_end": "2022-12-31",
+        "revenue_growth": 0.5135,
+        "net_margin": 0.1541,
+        "roe": 0.2809,
+        "quality_score": 0.2453
+      },
+      {
+        "effective": "2026-01-29",
+        "fiscal_end": "2023-12-31",
+        "revenue_growth": 0.188,
+        "net_margin": 0.155,
+        "roe": 0.2394,
+        "quality_score": 0.1792
+      },
+      {
+        "effective": "2026-01-29",
+        "fiscal_end": "2024-12-31",
+        "revenue_growth": 0.0095,
+        "net_margin": 0.0726,
+        "roe": 0.0973,
+        "quality_score": -0.4239
+      },
+      {
+        "effective": "2026-01-29",
+        "fiscal_end": "2025-12-31",
+        "revenue_growth": -0.0293,
+        "net_margin": 0.04,
+        "roe": 0.0462,
+        "quality_score": -0.6085
+      }
+    ],
+    "META": [
+      {
+        "effective": "2020-01-30",
+        "fiscal_end": "2017-12-31",
+        "revenue_growth": 0.4709,
+        "net_margin": 0.392,
+        "roe": 0.2143,
+        "quality_score": 0.6411
+      },
+      {
+        "effective": "2021-01-28",
+        "fiscal_end": "2018-12-31",
+        "revenue_growth": 0.3735,
+        "net_margin": 0.396,
+        "roe": 0.2628,
+        "quality_score": 0.7074
+      },
+      {
+        "effective": "2022-02-03",
+        "fiscal_end": "2019-12-31",
+        "revenue_growth": 0.2661,
+        "net_margin": 0.2615,
+        "roe": 0.1829,
+        "quality_score": 0.3424
+      },
+      {
+        "effective": "2023-02-02",
+        "fiscal_end": "2020-12-31",
+        "revenue_growth": 0.216,
+        "net_margin": 0.339,
+        "roe": 0.2272,
+        "quality_score": 0.5507
+      },
+      {
+        "effective": "2024-02-02",
+        "fiscal_end": "2021-12-31",
+        "revenue_growth": 0.3718,
+        "net_margin": 0.3338,
+        "roe": 0.3153,
+        "quality_score": 0.646
+      },
+      {
+        "effective": "2025-01-30",
+        "fiscal_end": "2022-12-31",
+        "revenue_growth": -0.0112,
+        "net_margin": 0.199,
+        "roe": 0.1845,
+        "quality_score": -0.0974
+      },
+      {
+        "effective": "2026-01-29",
+        "fiscal_end": "2023-12-31",
+        "revenue_growth": 0.1569,
+        "net_margin": 0.2898,
+        "roe": 0.2553,
+        "quality_score": 0.4213
+      },
+      {
+        "effective": "2026-01-29",
+        "fiscal_end": "2024-12-31",
+        "revenue_growth": 0.2194,
+        "net_margin": 0.3791,
+        "roe": 0.3414,
+        "quality_score": 0.7679
+      },
+      {
+        "effective": "2026-01-29",
+        "fiscal_end": "2025-12-31",
+        "revenue_growth": 0.2217,
+        "net_margin": 0.3008,
+        "roe": 0.2783,
+        "quality_score": 0.5356
+      }
+    ],
+    "AMZN": [
+      {
+        "effective": "2019-02-01",
+        "fiscal_end": "2017-03-31",
+        "revenue_growth": -0.7374,
+        "net_margin": 0.0203,
+        "roe": 0.0,
+        "quality_score": -0.9595
+      },
+      {
+        "effective": "2019-02-01",
+        "fiscal_end": "2017-06-30",
+        "revenue_growth": 0.0627,
+        "net_margin": 0.0052,
+        "roe": 0.0,
+        "quality_score": -0.5955
+      },
+      {
+        "effective": "2019-02-01",
+        "fiscal_end": "2017-09-30",
+        "revenue_growth": 0.1525,
+        "net_margin": 0.0059,
+        "roe": 0.0,
+        "quality_score": -0.4595
+      },
+      {
+        "effective": "2020-01-31",
+        "fiscal_end": "2017-12-31",
+        "revenue_growth": 3.0661,
+        "net_margin": 0.0171,
+        "roe": 0.1095,
+        "quality_score": -0.2345
+      },
+      {
+        "effective": "2020-01-31",
+        "fiscal_end": "2018-03-31",
+        "revenue_growth": -0.713,
+        "net_margin": 0.0319,
+        "roe": 0.0,
+        "quality_score": -0.9362
+      },
+      {
+        "effective": "2020-01-31",
+        "fiscal_end": "2018-06-30",
+        "revenue_growth": 0.0361,
+        "net_margin": 0.0479,
+        "roe": 0.0,
+        "quality_score": -0.55
+      },
+      {
+        "effective": "2020-01-31",
+        "fiscal_end": "2018-09-30",
+        "revenue_growth": 0.0698,
+        "net_margin": 0.051,
+        "roe": 0.0,
+        "quality_score": -0.4934
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2018-12-31",
+        "revenue_growth": 3.1164,
+        "net_margin": 0.0433,
+        "roe": 0.2313,
+        "quality_score": -0.0359
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2019-03-31",
+        "revenue_growth": -0.7437,
+        "net_margin": 0.0596,
+        "roe": 0.0,
+        "quality_score": -0.8807
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2019-06-30",
+        "revenue_growth": 0.062,
+        "net_margin": 0.0414,
+        "roe": 0.0,
+        "quality_score": -0.5241
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2019-09-30",
+        "revenue_growth": 0.1037,
+        "net_margin": 0.0305,
+        "roe": 0.0,
+        "quality_score": -0.4834
+      },
+      {
+        "effective": "2022-02-04",
+        "fiscal_end": "2019-12-31",
+        "revenue_growth": 3.0085,
+        "net_margin": 0.0413,
+        "roe": 0.1867,
+        "quality_score": -0.0933
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2020-03-31",
+        "revenue_growth": -0.731,
+        "net_margin": 0.0336,
+        "roe": 0.0,
+        "quality_score": -0.9328
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2020-06-30",
+        "revenue_growth": 0.1784,
+        "net_margin": 0.059,
+        "roe": 0.0,
+        "quality_score": -0.3145
+      },
+      {
+        "effective": "2021-02-03",
+        "fiscal_end": "2020-09-30",
+        "revenue_growth": 0.0814,
+        "net_margin": 0.0658,
+        "roe": 0.0,
+        "quality_score": -0.4463
+      },
+      {
+        "effective": "2023-02-03",
+        "fiscal_end": "2020-12-31",
+        "revenue_growth": 3.0154,
+        "net_margin": 0.0553,
+        "roe": 0.2284,
+        "quality_score": -0.0154
+      },
+      {
+        "effective": "2024-02-02",
+        "fiscal_end": "2021-12-31",
+        "revenue_growth": 0.217,
+        "net_margin": 0.071,
+        "roe": 0.2413,
+        "quality_score": 0.0316
+      },
+      {
+        "effective": "2025-02-07",
+        "fiscal_end": "2022-12-31",
+        "revenue_growth": 0.094,
+        "net_margin": -0.0053,
+        "roe": -0.0186,
+        "quality_score": -0.559
+      },
+      {
+        "effective": "2026-02-06",
+        "fiscal_end": "2023-12-31",
+        "revenue_growth": 0.1183,
+        "net_margin": 0.0529,
+        "roe": 0.1507,
+        "quality_score": -0.2358
+      },
+      {
+        "effective": "2026-02-06",
+        "fiscal_end": "2024-12-31",
+        "revenue_growth": 0.1099,
+        "net_margin": 0.0929,
+        "roe": 0.2072,
+        "quality_score": -0.1008
+      },
+      {
+        "effective": "2026-02-06",
+        "fiscal_end": "2025-12-31",
+        "revenue_growth": 0.1238,
+        "net_margin": 0.1083,
+        "roe": 0.1889,
+        "quality_score": -0.0709
+      }
+    ],
+    "MSFT": [
+      {
+        "effective": "2018-08-03",
+        "fiscal_end": "2016-09-30",
+        "revenue_growth": -0.7594,
+        "net_margin": 0.2584,
+        "roe": 0.0,
+        "quality_score": -0.4831
+      },
+      {
+        "effective": "2018-08-03",
+        "fiscal_end": "2016-12-31",
+        "revenue_growth": 0.1778,
+        "net_margin": 0.2427,
+        "roe": 0.0,
+        "quality_score": 0.052
+      },
+      {
+        "effective": "2018-08-03",
+        "fiscal_end": "2017-03-31",
+        "revenue_growth": -0.1012,
+        "net_margin": 0.2363,
+        "roe": 0.0,
+        "quality_score": -0.3791
+      },
+      {
+        "effective": "2019-08-01",
+        "fiscal_end": "2017-06-30",
+        "revenue_growth": 3.1604,
+        "net_margin": 0.2639,
+        "roe": 0.2906,
+        "quality_score": 0.4766
+      },
+      {
+        "effective": "2019-08-01",
+        "fiscal_end": "2017-09-30",
+        "revenue_growth": -0.7459,
+        "net_margin": 0.268,
+        "roe": 0.0,
+        "quality_score": -0.464
+      },
+      {
+        "effective": "2019-08-01",
+        "fiscal_end": "2017-12-31",
+        "revenue_growth": 0.1785,
+        "net_margin": -0.2179,
+        "roe": 0.0,
+        "quality_score": -0.4323
+      },
+      {
+        "effective": "2019-08-01",
+        "fiscal_end": "2018-03-31",
+        "revenue_growth": -0.0726,
+        "net_margin": 0.2768,
+        "roe": 0.0,
+        "quality_score": -0.2552
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2018-06-30",
+        "revenue_growth": 3.115,
+        "net_margin": 0.1502,
+        "roe": 0.2003,
+        "quality_score": 0.1407
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2018-09-30",
+        "revenue_growth": -0.7365,
+        "net_margin": 0.3034,
+        "roe": 0.0,
+        "quality_score": -0.3932
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2018-12-31",
+        "revenue_growth": 0.1165,
+        "net_margin": 0.2593,
+        "roe": 0.0,
+        "quality_score": -0.0067
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2019-03-31",
+        "revenue_growth": -0.0585,
+        "net_margin": 0.2881,
+        "roe": 0.0,
+        "quality_score": -0.2115
+      },
+      {
+        "effective": "2021-07-29",
+        "fiscal_end": "2019-06-30",
+        "revenue_growth": 3.1164,
+        "net_margin": 0.3118,
+        "roe": 0.3835,
+        "quality_score": 0.6838
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2019-09-30",
+        "revenue_growth": -0.7373,
+        "net_margin": 0.323,
+        "roe": 0.0,
+        "quality_score": -0.3539
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2019-12-31",
+        "revenue_growth": 0.1165,
+        "net_margin": 0.3156,
+        "roe": 0.0,
+        "quality_score": 0.106
+      },
+      {
+        "effective": "2020-07-30",
+        "fiscal_end": "2020-03-31",
+        "revenue_growth": -0.0511,
+        "net_margin": 0.307,
+        "roe": 0.0,
+        "quality_score": -0.1626
+      },
+      {
+        "effective": "2022-07-28",
+        "fiscal_end": "2020-06-30",
+        "revenue_growth": 3.0837,
+        "net_margin": 0.3096,
+        "roe": 0.3743,
+        "quality_score": 0.6684
+      },
+      {
+        "effective": "2023-07-27",
+        "fiscal_end": "2021-06-30",
+        "revenue_growth": 0.1753,
+        "net_margin": 0.3645,
+        "roe": 0.4315,
+        "quality_score": 0.8098
+      },
+      {
+        "effective": "2024-07-30",
+        "fiscal_end": "2022-06-30",
+        "revenue_growth": 0.1796,
+        "net_margin": 0.3669,
+        "roe": 0.4368,
+        "quality_score": 0.8272
+      },
+      {
+        "effective": "2025-07-30",
+        "fiscal_end": "2023-06-30",
+        "revenue_growth": 0.0688,
+        "net_margin": 0.3415,
+        "roe": 0.3509,
+        "quality_score": 0.5072
+      },
+      {
+        "effective": "2025-07-30",
+        "fiscal_end": "2024-06-30",
+        "revenue_growth": 0.1567,
+        "net_margin": 0.3596,
+        "roe": 0.3283,
+        "quality_score": 0.6481
+      },
+      {
+        "effective": "2025-07-30",
+        "fiscal_end": "2025-06-30",
+        "revenue_growth": 0.1493,
+        "net_margin": 0.3615,
+        "roe": 0.2965,
+        "quality_score": 0.6027
+      }
+    ],
+    "GOOGL": [
+      {
+        "effective": "2020-02-04",
+        "fiscal_end": "2017-12-31",
+        "revenue_growth": 0.228,
+        "net_margin": 0.1142,
+        "roe": 0.083,
+        "quality_score": -0.0719
+      },
+      {
+        "effective": "2020-02-04",
+        "fiscal_end": "2018-12-31",
+        "revenue_growth": 0.2342,
+        "net_margin": 0.2246,
+        "roe": 0.173,
+        "quality_score": 0.2569
+      },
+      {
+        "effective": "2020-02-04",
+        "fiscal_end": "2019-12-31",
+        "revenue_growth": 0.183,
+        "net_margin": 0.2122,
+        "roe": 0.1705,
+        "quality_score": 0.2034
+      },
+      {
+        "effective": "2023-02-03",
+        "fiscal_end": "2020-12-31",
+        "revenue_growth": 0.1277,
+        "net_margin": 0.2206,
+        "roe": 0.1809,
+        "quality_score": 0.1499
+      },
+      {
+        "effective": "2024-01-31",
+        "fiscal_end": "2021-12-31",
+        "revenue_growth": 0.4115,
+        "net_margin": 0.2951,
+        "roe": 0.3022,
+        "quality_score": 0.5528
+      },
+      {
+        "effective": "2025-02-05",
+        "fiscal_end": "2022-12-31",
+        "revenue_growth": 0.0978,
+        "net_margin": 0.212,
+        "roe": 0.2341,
+        "quality_score": 0.1517
+      },
+      {
+        "effective": "2025-02-05",
+        "fiscal_end": "2023-12-31",
+        "revenue_growth": 0.0868,
+        "net_margin": 0.2401,
+        "roe": 0.2604,
+        "quality_score": 0.2229
+      },
+      {
+        "effective": "2025-02-05",
+        "fiscal_end": "2024-12-31",
+        "revenue_growth": 0.1387,
+        "net_margin": 0.286,
+        "roe": 0.308,
+        "quality_score": 0.4496
+      }
+    ],
+    "AAPL": [
+      {
+        "effective": "2019-10-31",
+        "fiscal_end": "2017-12-30",
+        "revenue_growth": -0.6148,
+        "net_margin": 0.2273,
+        "roe": 0.0,
+        "quality_score": -0.5455
+      },
+      {
+        "effective": "2019-10-31",
+        "fiscal_end": "2018-03-31",
+        "revenue_growth": -0.3076,
+        "net_margin": 0.2261,
+        "roe": 0.0,
+        "quality_score": -0.5478
+      },
+      {
+        "effective": "2019-10-31",
+        "fiscal_end": "2018-06-30",
+        "revenue_growth": -0.1288,
+        "net_margin": 0.2163,
+        "roe": 0.0,
+        "quality_score": -0.4606
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2018-09-29",
+        "revenue_growth": 3.9863,
+        "net_margin": 0.2241,
+        "roe": 0.5556,
+        "quality_score": 0.6483
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2018-12-29",
+        "revenue_growth": -0.6826,
+        "net_margin": 0.2368,
+        "roe": 0.0,
+        "quality_score": -0.5264
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2019-03-30",
+        "revenue_growth": -0.3119,
+        "net_margin": 0.1993,
+        "roe": 0.0,
+        "quality_score": -0.6014
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2019-06-29",
+        "revenue_growth": -0.0725,
+        "net_margin": 0.1867,
+        "roe": 0.0,
+        "quality_score": -0.4354
+      },
+      {
+        "effective": "2021-10-29",
+        "fiscal_end": "2019-09-28",
+        "revenue_growth": 3.8351,
+        "net_margin": 0.2124,
+        "roe": 0.6106,
+        "quality_score": 0.6248
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2019-12-28",
+        "revenue_growth": -0.6471,
+        "net_margin": 0.2422,
+        "roe": 0.0,
+        "quality_score": -0.5157
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2020-03-28",
+        "revenue_growth": -0.3649,
+        "net_margin": 0.1929,
+        "roe": 0.0,
+        "quality_score": -0.6142
+      },
+      {
+        "effective": "2020-10-30",
+        "fiscal_end": "2020-06-27",
+        "revenue_growth": 0.0235,
+        "net_margin": 0.1885,
+        "roe": 0.0,
+        "quality_score": -0.2876
+      },
+      {
+        "effective": "2022-10-28",
+        "fiscal_end": "2020-09-26",
+        "revenue_growth": 3.5994,
+        "net_margin": 0.2091,
+        "roe": 0.8787,
+        "quality_score": 0.6183
+      },
+      {
+        "effective": "2023-11-03",
+        "fiscal_end": "2021-09-25",
+        "revenue_growth": 0.3326,
+        "net_margin": 0.2588,
+        "roe": 1.5007,
+        "quality_score": 0.7176
+      },
+      {
+        "effective": "2024-11-01",
+        "fiscal_end": "2022-09-24",
+        "revenue_growth": 0.0779,
+        "net_margin": 0.2531,
+        "roe": 1.9696,
+        "quality_score": 0.5231
+      },
+      {
+        "effective": "2025-10-31",
+        "fiscal_end": "2023-09-30",
+        "revenue_growth": -0.028,
+        "net_margin": 0.2531,
+        "roe": 1.5608,
+        "quality_score": 0.3641
+      },
+      {
+        "effective": "2025-10-31",
+        "fiscal_end": "2024-09-28",
+        "revenue_growth": 0.0202,
+        "net_margin": 0.2397,
+        "roe": 1.6459,
+        "quality_score": 0.4098
+      },
+      {
+        "effective": "2025-10-31",
+        "fiscal_end": "2025-09-27",
+        "revenue_growth": 0.0643,
+        "net_margin": 0.2692,
+        "roe": 1.5191,
+        "quality_score": 0.5347
+      }
+    ]
+  }
+}

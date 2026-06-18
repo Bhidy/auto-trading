@@ -170,7 +170,13 @@ def rank_by_relative_strength(symbols_data):
         m6 = momentum(closes, 126) if len(closes) >= 127 else 0
         rs_score = m1 * 0.4 + m3 * 0.35 + (m6 or 0) * 0.25
         scores.append({"symbol": sym, "rs_score": round(rs_score, 2), "m1": round(m1, 2), "m3": round(m3, 2), "m6": round(m6, 2)})
-    scores.sort(key=lambda x: x["rs_score"], reverse=True)
+    # Deterministic order: rs_score DESC, ties broken by symbol ASC. A stable sort
+    # on rs_score alone left tied symbols in caller insertion order, so rank/percentile
+    # (which feed analyze_symbol_v2's composite score) flipped under hash-randomized
+    # dict iteration -> backtests/the walk-forward gate were non-reproducible across
+    # processes. Mirrors multifactor's buys.sort tiebreak; self-deterministic now
+    # regardless of how the caller built symbols_data.
+    scores.sort(key=lambda x: (-x["rs_score"], x["symbol"]))
     for i, s in enumerate(scores):
         s["rank"] = i + 1
         s["percentile"] = round((1 - i / max(len(scores) - 1, 1)) * 100, 1)
@@ -218,7 +224,8 @@ def save_adaptive_params(params):
 # ENHANCED SIGNAL GENERATION
 # ---------------------------------------------------------------------------
 
-def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params):
+def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params,
+                      fundamental_score=None):
     if not bars or len(bars) < 50:
         return {"symbol": symbol, "signal": "INSUFFICIENT_DATA", "reason": f"Only {len(bars)} bars"}
 
@@ -359,6 +366,15 @@ def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params):
     elif params["win_rate_30d"] < 0.40:
         score *= 0.90
 
+    # 10) FUNDAMENTAL QUALITY TILT (param-gated; OFF by default -> exact parity).
+    #     Quality/value/growth from SEC EDGAR (point-in-time, no look-ahead). Only
+    #     tilts named stocks; ETFs have no fundamentals -> fundamental_score is None
+    #     -> no effect. Adds orthogonal alpha the pure price/momentum score lacks.
+    fund_w = params.get("fundamental_weight", 0.0)
+    if fund_w and fundamental_score is not None:
+        score += fund_w * fundamental_score
+        reasons.append(f"Fundamental quality tilt {fund_w * fundamental_score:+.3f}")
+
     # --- SIGNAL DETERMINATION ---
     signal = "HOLD"
     if score >= params["confidence_buy_threshold"]:
@@ -455,8 +471,10 @@ def run_full_analysis():
                 result = analyze_symbol_v2(all_bars[s], s, itype, regime, rs_data, params)
                 signals.append(result)
 
-    # Sort by absolute score descending (strongest signals first)
-    signals.sort(key=lambda x: abs(x.get("score", 0)), reverse=True)
+    # Sort by absolute score descending (strongest signals first), symbol ASC as a
+    # tie-break so equal-|score| signals order deterministically across processes
+    # (hash-order independence — see rank_by_relative_strength).
+    signals.sort(key=lambda x: (-abs(x.get("score", 0)), x.get("symbol", "")))
 
     output = {
         "timestamp": datetime.now(timezone.utc).isoformat(),

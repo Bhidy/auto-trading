@@ -36,7 +36,7 @@ def auto_test_days(n_bars, warmup, target_windows=3, min_test=21, max_test=63):
 
 
 def walk_forward(symbol_bars, spy_bars, params, test_days=None, warmup=150,
-                 max_positions=10, cost_bps=5.0, slippage_bps=5.0):
+                 max_positions=10, cost_bps=5.0, slippage_bps=5.0, fundamentals=None):
     """Roll consecutive out-of-sample windows of `test_days` and aggregate.
 
     Because params are FIXED (not fit on the train portion), every window is a
@@ -60,6 +60,7 @@ def walk_forward(symbol_bars, spy_bars, params, test_days=None, warmup=150,
             res = backtest_multifactor(
                 sub_syms, sub_spy, params=params, max_positions=max_positions,
                 cost_bps=cost_bps, slippage_bps=slippage_bps, warmup=start,
+                fundamentals=fundamentals,
             )
             m = res["metrics"]
             windows.append({
