@@ -42,6 +42,22 @@ def _closes(bars):
     return [b["c"] for b in bars]
 
 
+def _fundamental_at(series, date_str):
+    """Point-in-time quality_score: the latest fundamental whose FILED (effective)
+    date is <= date_str. No look-ahead — only data public at the bar's date.
+    `series` is assumed sorted by effective ascending."""
+    if not series or not date_str:
+        return None
+    d = date_str[:10]
+    best = None
+    for e in series:
+        if e.get("effective", "") <= d:
+            best = e.get("quality_score")
+        else:
+            break
+    return best
+
+
 def _atr(bars, end_idx, period=14):
     """ATR through day ``end_idx`` (inclusive) from OHLC; point-in-time (no future
     bars). Returns None if there isn't enough history."""
@@ -132,7 +148,7 @@ def _position_exit(state, bar, atr, t, ep):
 def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=None,
                          starting_equity=100_000.0, max_positions=10,
                          buy_threshold=None, cost_bps=5.0, slippage_bps=5.0,
-                         warmup=200, model_exits=True):
+                         warmup=200, model_exits=True, fundamentals=None):
     """Long-only, equal-weight top-N backtest using the production multi-factor
     score, with intraday stop/take-profit/breakeven/time-stop exit modeling
     (``model_exits=True``). Returns equity_curve, trade_pnls, exit_reasons,
@@ -147,6 +163,7 @@ def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=No
         base.update(params)
     params = base
     instrument_types = instrument_types or {}
+    fundamentals = fundamentals or {}
     if buy_threshold is None:
         buy_threshold = params.get("confidence_buy_threshold", 0.50)
     cost = cost_bps / 10_000.0
@@ -257,7 +274,8 @@ def backtest_multifactor(symbol_bars, spy_bars, params=None, instrument_types=No
         buys = []
         for s in symbols:
             itype = instrument_types.get(s, "stock")
-            res = analyze_symbol_v2(window[s], s, itype, regime, rs_data, params)
+            fsc = _fundamental_at(fundamentals.get(s), window[s][-1].get("t", "")) if fundamentals else None
+            res = analyze_symbol_v2(window[s], s, itype, regime, rs_data, params, fundamental_score=fsc)
             if res.get("signal") == "BUY" and res.get("score", 0) >= buy_threshold:
                 buys.append((s, res["score"]))
         # Deterministic: break score ties by symbol and keep RANKED order — a set's
