@@ -23,7 +23,8 @@
   "risk_off_active": true,
   "breakeven_trigger_pct": 0.08,
   "breakeven_lock_pct": 0.005,
-  "core_weight": 0.9,
+  "active_entries_enabled": false,
+  "core_weight": 1.0,
   "core_basket": [
     "SPY",
     "QQQ",
