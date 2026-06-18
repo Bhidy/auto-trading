@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-18T23:05:07.050428+00:00",
-  "total_equity": 300593.44,
-  "gross_exposure_pct": 87.919,
+  "timestamp": "2026-06-18T23:14:27.925742+00:00",
+  "total_equity": 300605.42,
+  "gross_exposure_pct": 87.915,
   "by_symbol": {
     "DIA": {
       "market_value": 17551.97,
@@ -73,7 +73,7 @@
     },
     "XLK": {
       "market_value": 17757.75,
-      "pct_of_total": 5.908,
+      "pct_of_total": 5.907,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -209,7 +209,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 171860.88,
-      "pct_of_total": 57.174
+      "pct_of_total": 57.172
     },
     "Consumer": {
       "market_value": 20365.0,
@@ -237,7 +237,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 17.72
+    "mega_cap_tech_ai": 17.719
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
