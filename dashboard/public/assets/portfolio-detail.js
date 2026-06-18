@@ -541,7 +541,15 @@
         var intraday = period === '1D';
         function viaAlpaca() {
             return PFStore.loadEquityHistory(pfId, period)
-                .then(function (d) { return (d && d.history) ? d.history : []; })
+                .then(function (d) {
+                    var h = (d && d.history) ? d.history : [];
+                    // Carry the previous-close baseline so the 1D chart measures "today"
+                    // the SAME way the Today's P/L KPI does (equity vs PRIOR close), not
+                    // vs the first intraday bar (market open) — which silently dropped the
+                    // overnight gap and flipped the sign (audit 2026-06-18).
+                    if (intraday && d && parseFloat(d.base_value) > 0) h._baseValue = parseFloat(d.base_value);
+                    return h;
+                })
                 .catch(function () { return []; });
         }
         if (intraday) return viaAlpaca();
@@ -567,9 +575,18 @@
     function bmFetchSpy(period, startDate, endDate, intraday) {
         if (intraday) {
             var iurl = '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(startDate + 'T13:30:00Z') + '&end=' + encodeURIComponent(startDate + 'T21:00:00Z');
-            return fetch(iurl).then(function (r) { return r.ok ? r.json() : []; })
-                .then(function (bars) { return bmSpyMapFromAlpaca(bars, true); })
-                .catch(function () { return {}; });
+            // Fetch SPY's PREVIOUS CLOSE too, so SPY is baselined the same way the
+            // portfolio is (vs prior close) — keeping the relative figure apples-to-apples.
+            return Promise.all([
+                fetch(iurl).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
+                fetch('/api/stock/SPY/details', { cache: 'no-store' })
+                    .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+            ]).then(function (res) {
+                var map = bmSpyMapFromAlpaca(res[0], true);
+                var prev = (res[1] && res[1].quote) ? parseFloat(res[1].quote.prev) : 0;
+                if (prev > 0) map._prevClose = prev;
+                return map;
+            });
         }
         function viaAlpaca() {
             var aurl = '/api/market/bars/SPY?timeframe=1Day&limit=400&start=' + encodeURIComponent(startDate) + '&end=' + encodeURIComponent(endDate);
@@ -593,7 +610,10 @@
             return last;
         });
         if (spyFirst === null) return null;
-        return aligned.map(function (c) { var v = (c === null ? spyFirst : c); return (v / spyFirst) * 100; });
+        // For 1D, baseline to SPY's PREVIOUS CLOSE (same convention as the portfolio's
+        // base_value) so both lines and the relative figure are measured vs prior close.
+        var base = (intraday && spyMap._prevClose > 0) ? spyMap._prevClose : spyFirst;
+        return aligned.map(function (c) { var v = (c === null ? spyFirst : c); return (v / base) * 100; });
     }
 
     /* ── Reusable component builders (HTML-string components) ─────────────── */
@@ -690,7 +710,7 @@
             '</div>' +
             '<div class="pf-bench-note">' +
                 '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>' +
-                bl('Both lines start at 100 so you can compare performance fairly.', 'يبدأ كلا الخطين من 100 لتتمكن من مقارنة الأداء بإنصاف.') +
+                '<span id="benchBaselineNote">' + bl('Both lines start at 100 so you can compare performance fairly.', 'يبدأ كلا الخطين من 100 لتتمكن من مقارنة الأداء بإنصاف.') + '</span>' +
             '</div>' +
             '<div class="pf-chart-wrap" style="height:340px;position:relative;"><canvas id="perfChart"></canvas></div>' +
             MetricSummaryRow();
@@ -775,7 +795,9 @@
 
         var labels     = equityRows.map(function (h) { return bmLabel(h.date || '', intraday); });
         var equityVals = equityRows.map(function (h) { return parseFloat(h.equity) || 0; });
-        var startEq    = equityVals[0] || 1;
+        // 1D: baseline to the PREVIOUS CLOSE (base_value) so Portfolio Return equals
+        // Today's P/L. Other periods baseline to the first point (return over the window).
+        var startEq    = (intraday && equityRows._baseValue > 0) ? equityRows._baseValue : (equityVals[0] || 1);
         var pIndex     = bmNormalize(equityVals, startEq);
         var spyIndex   = bmAlignSpyIndex(equityRows, spyMap, intraday); // may be null
 
@@ -794,7 +816,9 @@
         var yTitle, pData, sData;
         if (chartMode === 'return') {
             yTitle = bl('Return %', 'العائد %');
-            pData = toReturn(equityVals);
+            // Derive from pIndex (not equityVals) so Return% uses the SAME baseline as
+            // the KPI and the index line — vs prior close for 1D, vs window-start otherwise.
+            pData = pIndex.map(function (v) { return v - 100; });
             sData = spyIndex ? spyIndex.map(function (v) { return v - 100; }) : null;
         } else if (chartMode === 'drawdown') {
             yTitle = bl('Drawdown %', 'التراجع %');
@@ -933,6 +957,28 @@
             }
         }
 
+        // ── 1D note: state the baseline explicitly so "today" matches Today's P/L. ──
+        var baseNote = document.getElementById('benchBaselineNote');
+        if (intraday) {
+            var subEl1d = document.querySelector('.pf-bench-sub');
+            if (subEl1d) subEl1d.textContent = bl(
+                'Today vs previous close — indexed to 100 at the prior close (matches Today’s P/L)',
+                'اليوم مقابل الإغلاق السابق — مُرتكز على 100 عند الإغلاق السابق (يطابق ربح/خسارة اليوم)');
+            if (baseNote) baseNote.textContent = bl(
+                'Both lines are indexed to 100 at yesterday’s close, so the move shown is today’s.',
+                'كلا الخطين مُرتكز على 100 عند إغلاق أمس، فالحركة المعروضة هي حركة اليوم.');
+        } else {
+            // Non-1D: restore the default note + subtitle (the short-history block below
+            // may further refine the subtitle). Without this reset, switching 1D -> 1M
+            // left the stale "Today vs previous close" subtitle showing.
+            if (baseNote) baseNote.textContent = bl(
+                'Both lines start at 100 so you can compare performance fairly.',
+                'يبدأ كلا الخطين من 100 لتتمكن من مقارنة الأداء بإنصاف.');
+            var subElDef = document.querySelector('.pf-bench-sub');
+            if (subElDef) subElDef.textContent = bl(
+                'Normalized performance, indexed to 100 at start date',
+                'أداء مُطبَّع، مُرتكز على 100 من تاريخ البداية');
+        }
         // ── Data-window note: warn when short history makes all periods look identical ──
         if (!intraday && equityRows.length < 15) {
             var subEl = document.querySelector('.pf-bench-sub');
