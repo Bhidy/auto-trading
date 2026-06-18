@@ -23,11 +23,15 @@
   "risk_off_active": true,
   "breakeven_trigger_pct": 0.08,
   "breakeven_lock_pct": 0.005,
-  "core_weight": 0.5,
+  "core_weight": 0.9,
   "core_basket": [
     "SPY",
     "QQQ",
     "IWM",
-    "DIA"
+    "DIA",
+    "TLT",
+    "GLD",
+    "SHY",
+    "BIL"
   ]
 }
