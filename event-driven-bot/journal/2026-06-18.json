@@ -427,5 +427,148 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-18",
+    "timestamp": "2026-06-18T23:05:37.066513+00:00",
+    "audit": {
+      "equity": 104382.92,
+      "cash": 10822.36,
+      "daily_pnl": 1097.79,
+      "daily_pnl_pct": 1.063,
+      "total_open_exposure": 93560.56,
+      "exposure_pct": 89.6,
+      "position_count": 9,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 22058.27,
+        "Consumer": 20710.01,
+        "Materials": 15246.96,
+        "Energy": 20146.59,
+        "Financials": 15398.73
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AVGO",
+        "qty": "9",
+        "entry": "390.8",
+        "current": "411.65",
+        "market_value": "3704.85",
+        "unrealized_pl": "187.65",
+        "pnl_pct": 5.33,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.05",
+        "market_value": "4903.45",
+        "unrealized_pl": "73.29",
+        "pnl_pct": 1.52,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "FCX",
+        "qty": "222",
+        "entry": "70.916532",
+        "current": "68.68",
+        "market_value": "15246.96",
+        "unrealized_pl": "-496.510104",
+        "pnl_pct": -3.15,
+        "sector": "Materials"
+      },
+      {
+        "symbol": "LRCX",
+        "qty": "3",
+        "entry": "390.38",
+        "current": "390",
+        "market_value": "1170",
+        "unrealized_pl": "-1.14",
+        "pnl_pct": -0.1,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "240.21",
+        "current": "242.91",
+        "market_value": "14331.69",
+        "unrealized_pl": "159.3",
+        "pnl_pct": 1.12,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "55",
+        "entry": "287.16",
+        "current": "312.4258",
+        "market_value": "17183.419",
+        "unrealized_pl": "1389.619",
+        "pnl_pct": 8.8,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MS",
+        "qty": "69",
+        "entry": "226.84",
+        "current": "223.17",
+        "market_value": "15398.73",
+        "unrealized_pl": "-253.23",
+        "pnl_pct": -1.62,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "35",
+        "entry": "171.51",
+        "current": "166.14",
+        "market_value": "5814.9",
+        "unrealized_pl": "-187.95",
+        "pnl_pct": -3.13,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "117.0856",
+        "market_value": "15806.556",
+        "unrealized_pl": "271.715985",
+        "pnl_pct": 1.75,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MPC",
+        "side": "buy",
+        "qty": 59,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.8,
+        "reasons": [
+          "Breaking upper BB ($266.21)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+12.2%)"
+        ]
+      },
+      {
+        "symbol": "F",
+        "side": "buy",
+        "qty": 349,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+16.6%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
