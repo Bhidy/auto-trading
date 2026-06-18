@@ -23,20 +23,17 @@
         .gauge svg { transform: rotate(-90deg); }
         .gauge .pct { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .gauge .pct b { font-family: 'DM Serif Display', serif; font-size: 2.1rem; color: var(--teal); line-height: 1; }
-        .gauge .pct span { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: .3rem; }
+        .gauge .pct span { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: .3rem; text-align: center; }
         .verdict-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .4rem .9rem; border-radius: 999px;
-            font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+            font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; margin-top: .6rem; }
         .vp-paper { background: rgba(229,90,31,.12); color: var(--teal-dark, #C9461A); }
         .vp-go { background: rgba(34,160,90,.14); color: #1f8a4d; }
-        .eta { margin-top: .6rem; font-size: .82rem; color: var(--muted); }
+        .eta { margin-top: .6rem; font-size: .82rem; color: var(--muted); line-height: 1.6; }
         .eta b { color: var(--ink); }
         .rd-banner { display: flex; gap: .85rem; align-items: flex-start; background: var(--teal-soft, #FFF1E8);
             border: 1px solid var(--line); border-radius: .85rem; padding: 1rem 1.15rem; margin-bottom: 1.5rem; font-size: .9rem; color: var(--ink); line-height: 1.65; }
-        .rd-banner .ic { font-size: 1.1rem; }
-        .rd-banner .rd-ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; text-align: right; display: none; }
-        html[lang="ar"] .rd-banner .rd-en { display: none; }
-        html[lang="ar"] .rd-banner .rd-ar { display: block; }
-        .lang-toggle { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: .3rem .85rem; font-weight: 700; font-size: .7rem; cursor: pointer; }
+        .rd-banner .ic { font-size: 1.1rem; flex-shrink: 0; }
+        .rd-banner b { color: var(--ink); }
         .gate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1rem; }
         .gate { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: 1.1rem 1.2rem; }
         .gate .top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-bottom: .55rem; }
@@ -56,6 +53,14 @@
         .chip .v { color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
         .sec-title { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--ink); margin: 0 0 .9rem; font-weight: 400; }
         .foot { margin-top: 1.75rem; font-size: .78rem; color: var(--muted); line-height: 1.6; }
+        /* Arabic mode: serif headings have no Arabic glyphs — switch them to the Arabic UI face. */
+        html[dir="rtl"] .rd-hero h1,
+        html[dir="rtl"] .sec-title { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        html[dir="rtl"] .gate .name,
+        html[dir="rtl"] .rd-hero p,
+        html[dir="rtl"] .rd-banner,
+        html[dir="rtl"] .eta,
+        html[dir="rtl"] .foot { font-family: 'IBM Plex Sans Arabic', sans-serif; }
     </style>
 </head>
 <body>
@@ -64,11 +69,18 @@
     <nav class="site-nav">
         <div class="nav-inner">
             <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
-                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px; box-shadow: 0 4px 10px rgba(229,90,31,0.25);" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <path d="M 660 175 L 715 295 L 690 250 L 678 220 Z" fill="#FFF7EE" opacity="0.95"/>
                     <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
                     <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
                     <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                    <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/>
+                    <rect x="335" y="552" width="280" height="54" fill="#FFC396"/>
+                    <ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
+                    <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/>
+                    <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
+                    <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
                 </svg>
                 <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
                     <span style="color: var(--ink);">Auto</span>
@@ -76,21 +88,44 @@
                 </span>
             </a>
             <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/portfolio-detail.html?id=all">Portfolios</a>
-                <a href="/market-pulse.html">Market Pulse</a>
-                <a href="/orders.html">Orders</a>
-                <a href="/readiness.html" class="active">Readiness</a>
+                <a href="/" data-key="nav_home">Home</a>
+                <a href="/portfolio-detail.html?id=all" data-key="nav_portfolios">Portfolios</a>
+                <a href="/market-pulse.html" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #E55A1F; animation: pulse-blink 1.5s infinite;" aria-hidden="true"></span>
+                    <span data-key="nav_market_pulse">Market Pulse</span>
+                </a>
+                <a href="/crypto-terminal.html" data-key="nav_crypto_link">Crypto</a>
+                <a href="/orders.html" data-key="nav_orders">Orders</a>
+                <a href="/readiness.html" class="active" data-key="nav_readiness">Readiness</a>
+                <div class="nav-dropdown-wrap">
+                    <a href="/intelligence.html" class="nav-dropdown-trigger" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span data-key="nav_workspace">Workspace</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </a>
+                    <div class="nav-dropdown-menu">
+                        <a href="/intelligence.html" data-key="nav_intelligence">Intelligence</a>
+                        <a href="/research.html" data-key="nav_research">Research &amp; AI</a>
+                        <a href="/screener.html" data-key="nav_screener">Screener</a>
+                        <a href="/account-history.html" data-key="nav_history">Account History</a>
+                    </div>
+                </div>
+                <a href="/settings.html" data-key="nav_settings">Settings</a>
             </div>
-            <button id="langToggle" class="lang-toggle" type="button">AR</button>
+            <div class="nav-controls" style="display:flex;align-items:center;gap:.55rem;">
+                <button id="themeToggle" class="control-btn" type="button" aria-label="Toggle theme">
+                    <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
+            </div>
         </div>
     </nav>
 
     <main class="rd-wrap">
         <section class="rd-hero">
             <div>
-                <h1>Live-Readiness</h1>
-                <p>How close P1 is to deploying <b>real capital</b>. Strategy: regime-aware diversified passive core + small de-risked satellite. Real money stays locked until every gate below is green.</p>
+                <h1 data-key="hero_title">Live-Readiness</h1>
+                <p data-key="hero_desc">How close P1 is to deploying real capital. Strategy: regime-aware diversified passive core + small de-risked satellite. Real money stays locked until every gate below is green.</p>
                 <div id="verdict"></div>
                 <div class="eta" id="eta"></div>
             </div>
@@ -100,126 +135,198 @@
                     <circle id="ring" cx="84" cy="84" r="72" fill="none" stroke="url(#g)" stroke-width="14" stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452"/>
                     <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFA86A"/><stop offset="1" stop-color="#E55A1F"/></linearGradient></defs>
                 </svg>
-                <div class="pct"><b id="pct">0%</b><span>real-money ready</span></div>
+                <div class="pct"><b id="pct">0%</b><span data-key="ready_label">real-money ready</span></div>
             </div>
         </section>
 
         <div class="rd-banner">
             <span class="ic">🛈</span>
-            <div>
-                <span class="rd-en"><b>Backtested through the 2022 bear, robust — but a live track record is required before real money.</b> The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.</span>
-                <span class="rd-ar"><b>النظام متأكد عليه بالباك-تيست عبر هبوط 2022 وقوي — بس لازم ٩٠ يوم تداول ورقي حقيقي قبل أي فلوس حقيقية.</b> أثبت قوته بالباك-تيست (Sharpe ١٫٠٨، أقصى هبوط ١٦٫٤٪ مقابل ٢٥٫٤٪ للمؤشر في 2022). تحت بتشوف إنت وصلت لكام في كل شرط قبل أي فلوس حقيقية.</span>
-            </div>
+            <div><b data-key="banner_lead">Backtested through the 2022 bear, robust — but a live track record is required before real money.</b> <span data-key="banner_body">The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.</span></div>
         </div>
 
-        <h2 class="sec-title">Go-live gates</h2>
+        <h2 class="sec-title" data-key="gates_title">Go-live gates</h2>
         <div class="gate-grid" id="gates"></div>
 
-        <p class="foot" id="foot">Loading live data…</p>
+        <p class="foot" id="foot" data-key="foot_loading">Loading live data…</p>
     </main>
 
     <script>
-    // Language: respect the global selection (set on other pages) + a local toggle.
-    // Arabic text only renders when lang === 'ar'; English mode never shows Arabic.
     (function(){
-        function applyLang(l){
-            document.documentElement.lang = l;
-            document.documentElement.dir = (l === 'ar') ? 'rtl' : 'ltr';
-            try { localStorage.setItem('starta-lang', l); } catch(e){}
-            var t = document.getElementById('langToggle');
-            if (t) t.textContent = (l === 'ar') ? 'EN' : 'AR';
+        'use strict';
+
+        var T = {
+            en: {
+                nav_home:'Home', nav_portfolios:'Portfolios', nav_market_pulse:'Market Pulse',
+                nav_crypto_link:'Crypto', nav_orders:'Orders', nav_readiness:'Readiness',
+                nav_workspace:'Workspace', nav_intelligence:'Intelligence', nav_research:'Research & AI',
+                nav_screener:'Screener', nav_history:'Account History', nav_settings:'Settings',
+                hero_title:'Live-Readiness',
+                hero_desc:'How close P1 is to deploying real capital. Strategy: regime-aware diversified passive core + small de-risked satellite. Real money stays locked until every gate below is green.',
+                ready_label:'real-money ready',
+                vp_paper:'● Paper only — not yet for real money',
+                vp_go:'● Ready for fractional go-live',
+                banner_lead:'Backtested through the 2022 bear, robust — but a live track record is required before real money.',
+                banner_body:"The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.",
+                gates_title:'Go-live gates',
+                g_paper:'Paper track record', g_sharpe:'Out-of-sample Sharpe', g_maxdd:'Max drawdown',
+                g_pf:'Profit factor', g_sample:'Closed-trade sample', g_regime:'Regime coverage',
+                lbl_target:'Target', lbl_backtest:'Backtest', lbl_live:'Live now',
+                st_pass:'PASSED', st_warn:'NEEDS WORK', st_pend:'IN PROGRESS',
+                tgt_days:'≥ 90 trading days', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
+                tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 closed', tgt_regime:'≥ 2 distinct regimes',
+                bt_5yrs:'5 yrs', bt_bullbear:'bull + 2022 bear', v_dash:'—',
+                v_days:'{n} days', v_pending:'pending', v_tracking:'tracking',
+                v_no_closes:'no closes yet', v_closed:'{n} closed', v_1bull:'1 (bull)',
+                eta_ready:'All gates green — start with <b>5–10% of capital</b> for 2 weeks.',
+                eta_pending:'Earliest review: <b>{date}</b> (after the 90-day paper gate — then fractional 5–10%).',
+                win_rate:'{n}% win rate', win_pending:'win rate pending',
+                foot_tmpl:'Live data: {closed} closed P1 trades, {win}. Gates per docs/LIVE_READINESS.md. Backtest figures are 5-year out-of-sample including the 2022 bear; live figures accrue as the paper strategy runs.',
+                foot_loading:'Loading live data…',
+                foot_unreachable:'Showing backtest-proven gates; live trade data not reachable from here.'
+            },
+            ar: {
+                nav_home:'الرئيسية', nav_portfolios:'المحافظ', nav_market_pulse:'نبض السوق',
+                nav_crypto_link:'الكريبتو', nav_orders:'الأوامر', nav_readiness:'الجاهزية',
+                nav_workspace:'مساحة العمل', nav_intelligence:'الذكاء', nav_research:'البحث والذكاء',
+                nav_screener:'الفرز', nav_history:'سجل الحساب', nav_settings:'الإعدادات',
+                hero_title:'الجاهزية للتداول الحقيقي',
+                hero_desc:'قد إيه المحفظة الأولى قريبة من تشغيل فلوس حقيقية. الاستراتيجية: نواة سلبية متنوّعة واعية بحالة السوق + قمر صناعي صغير مخفّف المخاطر. الفلوس الحقيقية تفضل مقفولة لحد ما كل شرط تحت يبقى أخضر.',
+                ready_label:'الجاهزية للفلوس الحقيقية',
+                vp_paper:'● ورقي فقط — لسه مش جاهز للفلوس الحقيقية',
+                vp_go:'● جاهز للإطلاق الجزئي',
+                banner_lead:'النظام متأكد عليه بالباك-تيست عبر هبوط 2022 وقوي — بس لازم ٩٠ يوم تداول ورقي حقيقي قبل أي فلوس حقيقية.',
+                banner_body:'أثبت قوته بالباك-تيست (Sharpe ١٫٠٨، أقصى هبوط ١٦٫٤٪ مقابل ٢٥٫٤٪ للمؤشر في 2022). الفلوس الحقيقية لسه محتاجة حوالي ٩٠ يوم تداول ورقي للتأكيد المباشر الأول.',
+                gates_title:'شروط الإطلاق الحقيقي',
+                g_paper:'سجل التداول الورقي', g_sharpe:'Sharpe خارج العينة', g_maxdd:'أقصى هبوط',
+                g_pf:'معامل الربح', g_sample:'عيّنة الصفقات المغلقة', g_regime:'تغطية حالات السوق',
+                lbl_target:'الهدف', lbl_backtest:'باك-تيست', lbl_live:'الآن مباشر',
+                st_pass:'تحقّق', st_warn:'يحتاج عمل', st_pend:'قيد التقدّم',
+                tgt_days:'≥ 90 يوم تداول', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15٪',
+                tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 مغلقة', tgt_regime:'≥ حالتين مختلفتين',
+                bt_5yrs:'5 سنوات', bt_bullbear:'صاعد + هبوط 2022', v_dash:'—',
+                v_days:'{n} يوم', v_pending:'قيد الانتظار', v_tracking:'بيتتبّع',
+                v_no_closes:'لا إغلاقات بعد', v_closed:'{n} مغلقة', v_1bull:'1 (صاعد)',
+                eta_ready:'كل الشروط خضراء — ابدأ بـ <b>٥–١٠٪ من رأس المال</b> لمدة أسبوعين.',
+                eta_pending:'أقرب مراجعة: <b>{date}</b> (بعد شرط الـ٩٠ يوم الورقي — وبعدين جزئي ٥–١٠٪).',
+                win_rate:'{n}٪ معدل فوز', win_pending:'معدل الفوز قيد الانتظار',
+                foot_tmpl:'بيانات مباشرة: {closed} صفقة P1 مغلقة، {win}. الشروط حسب docs/LIVE_READINESS.md. أرقام الباك-تيست لخمس سنوات خارج العينة شاملة هبوط 2022؛ الأرقام المباشرة بتتجمّع مع تشغيل الاستراتيجية الورقية.',
+                foot_loading:'جاري تحميل البيانات المباشرة…',
+                foot_unreachable:'بعرض الشروط المثبتة بالباك-تيست؛ بيانات التداول المباشرة مش متاحة من هنا.'
+            }
+        };
+
+        var lang = localStorage.getItem('starta-lang') || localStorage.getItem('lang') || 'en';
+        var lastLog = null;
+
+        // Activation of the new passive-core strategy — the live-paper clock starts here.
+        var STRATEGY_START = "2026-06-17";
+        // Backtest-proven figures (5y incl. 2022 bear) — the validated reference.
+        var BT = { sharpe: 1.08, maxdd: 16.4 };
+
+        function t(key){ return (T[lang] && T[lang][key] != null) ? T[lang][key] : ((T.en && T.en[key] != null) ? T.en[key] : key); }
+        function tmpl(key, vars){ var s = t(key); for (var k in vars) s = s.replace('{'+k+'}', vars[k]); return s; }
+        function sum(a){ return a.reduce(function(x,y){return x+y;},0); }
+        function daysSince(d){ return Math.max(0, Math.floor((Date.now() - new Date(d+"T00:00:00Z"))/86400000)); }
+        function clampPct(x){ return Math.max(0, Math.min(100, x)); }
+
+        function gateCard(g){
+            var statusCls = g.status==='pass'?'s-pass':(g.status==='warn'?'s-warn':'s-pend');
+            var statusTxt = g.status==='pass'?t('st_pass'):(g.status==='warn'?t('st_warn'):t('st_pend'));
+            var barCls = g.progress>=100 ? 'bar done' : 'bar';
+            return '<div class="gate"><div class="top"><span class="name">'+t(g.key)+'</span>'+
+                '<span class="status '+statusCls+'">'+statusTxt+'</span></div>'+
+                '<div class="meta">'+t('lbl_target')+': <b>'+t(g.target)+'</b></div>'+
+                '<div class="'+barCls+'"><i style="width:'+clampPct(g.progress)+'%"></i></div>'+
+                '<div class="row2"><div class="chip"><span class="k">'+t('lbl_backtest')+'</span><span class="v">'+g.backtest+'</span></div>'+
+                '<div class="chip"><span class="k">'+t('lbl_live')+'</span><span class="v">'+g.live+'</span></div></div></div>';
         }
-        var saved = 'en';
-        try { saved = localStorage.getItem('starta-lang') || 'en'; } catch(e){}
-        applyLang(saved);
+
+        function render(log){
+            lastLog = log;
+            // Only count trades UNDER THE NEW strategy (the readiness clock starts at
+            // activation) — old active-strategy trades must not inflate the gates.
+            var closed = (log||[]).filter(function(tr){
+                var p = (tr.realized_pnl!=null)?tr.realized_pnl:tr.pnl;
+                var when = (tr.exit_timestamp||tr.timestamp||'').slice(0,10);
+                return tr.status==='closed' && typeof p==='number' && when >= STRATEGY_START;
+            });
+            var pnls = closed.map(function(tr){ return (tr.realized_pnl!=null)?tr.realized_pnl:tr.pnl; });
+            var wins = pnls.filter(function(p){return p>0;}), losses = pnls.filter(function(p){return p<0;});
+            var pf = losses.length ? (sum(wins)/Math.abs(sum(losses))) : null;
+            var winRate = pnls.length ? Math.round(wins.length/pnls.length*100) : null;
+            var days = daysSince(STRATEGY_START);
+
+            var gates = [
+                { key:'g_paper', target:'tgt_days', backtest:t('bt_5yrs'), live:tmpl('v_days',{n:days}),
+                  progress: days/90*100, status: days>=90?'pass':'pend' },
+                { key:'g_sharpe', target:'tgt_sharpe', backtest:BT.sharpe.toFixed(2), live: pnls.length>=20? t('v_dash'):t('v_pending'),
+                  progress: Math.min(100, BT.sharpe/1.0*100), status: BT.sharpe>=1.0 ? (pnls.length>=50?'pass':'pend') : 'warn' },
+                { key:'g_maxdd', target:'tgt_maxdd', backtest:BT.maxdd.toFixed(1)+'%', live:t('v_tracking'),
+                  progress: Math.min(100, 15/BT.maxdd*100), status: BT.maxdd<=15 ? 'pass':'warn' },
+                { key:'g_pf', target:'tgt_pf', backtest:t('v_dash'), live: pf!=null? pf.toFixed(2):t('v_no_closes'),
+                  progress: pf!=null? Math.min(100, pf/1.3*100):0, status: pf!=null&&pf>=1.3?'pass':'pend' },
+                { key:'g_sample', target:'tgt_sample', backtest:t('v_dash'), live:tmpl('v_closed',{n:closed.length}),
+                  progress: closed.length/50*100, status: closed.length>=50?'pass':'pend' },
+                { key:'g_regime', target:'tgt_regime', backtest:t('bt_bullbear'), live:t('v_1bull'),
+                  progress: 50, status:'pend' }
+            ];
+
+            document.getElementById('gates').innerHTML = gates.map(gateCard).join('');
+
+            // Overall readiness = the live track record is the binding constraint, weighted with the mean gate progress.
+            var meanProgress = sum(gates.map(function(g){return clampPct(g.progress);}))/gates.length;
+            var overall = clampPct(Math.round((days/90*100)*0.5 + meanProgress*0.5));
+            document.getElementById('pct').textContent = overall+'%';
+            document.getElementById('ring').style.strokeDashoffset = 452 - (452*overall/100);
+
+            var allPass = gates.every(function(g){return g.status==='pass';});
+            document.getElementById('verdict').innerHTML = allPass
+                ? '<span class="verdict-pill vp-go">'+t('vp_go')+'</span>'
+                : '<span class="verdict-pill vp-paper">'+t('vp_paper')+'</span>';
+
+            var remaining = Math.max(0, 90 - days);
+            var eta = new Date(Date.now() + remaining*86400000);
+            document.getElementById('eta').innerHTML = allPass
+                ? t('eta_ready')
+                : tmpl('eta_pending', { date: eta.toISOString().slice(0,10) });
+
+            var winTxt = (winRate!=null) ? tmpl('win_rate',{n:winRate}) : t('win_pending');
+            var foot = document.getElementById('foot');
+            foot.removeAttribute('data-key');   // dynamic now — applyLang must not overwrite it
+            foot.innerHTML = tmpl('foot_tmpl', { closed: closed.length, win: winTxt });
+        }
+
+        function applyLang(){
+            document.documentElement.lang = lang;
+            document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-key]').forEach(function(el){
+                var k = el.getAttribute('data-key');
+                if (T[lang] && T[lang][k] != null) el.textContent = T[lang][k];
+            });
+            var tg = document.getElementById('langToggle');
+            if (tg) tg.textContent = (lang === 'ar') ? 'EN' : 'AR';
+            if (lastLog != null) render(lastLog);   // re-render the dynamic gates/verdict/eta/foot
+        }
+
+        applyLang();   // paint static text + lang/dir before data arrives
+
         var tg = document.getElementById('langToggle');
         if (tg) tg.addEventListener('click', function(){
-            applyLang((document.documentElement.lang === 'ar') ? 'en' : 'ar');
+            lang = (lang === 'ar') ? 'en' : 'ar';
+            try { localStorage.setItem('starta-lang', lang); } catch(e){}
+            applyLang();
         });
+
+        fetch('/api/portfolio/portfolio_1/details')
+            .then(function(r){ return r.json(); })
+            .then(function(d){ render(d.trade_log || []); })
+            .catch(function(){
+                render([]);
+                var foot = document.getElementById('foot');
+                foot.removeAttribute('data-key');
+                foot.textContent = t('foot_unreachable');
+            });
     })();
-
-    // Activation of the new passive-core strategy — the live-paper clock starts here.
-    var STRATEGY_START = "2026-06-17";
-    // Backtest-proven figures (5y incl. 2022 bear) — the validated reference.
-    var BT = { sharpe: 1.08, maxdd: 16.4 };
-
-    function sum(a){ return a.reduce(function(x,y){return x+y;},0); }
-    function daysSince(d){ return Math.max(0, Math.floor((Date.now() - new Date(d+"T00:00:00Z"))/86400000)); }
-    function clampPct(x){ return Math.max(0, Math.min(100, x)); }
-
-    function gateCard(g){
-        var statusCls = g.status==='pass'?'s-pass':(g.status==='warn'?'s-warn':'s-pend');
-        var statusTxt = g.status==='pass'?'PASSED':(g.status==='warn'?'NEEDS WORK':'IN PROGRESS');
-        var barCls = g.progress>=100 ? 'bar done' : 'bar';
-        return '<div class="gate"><div class="top"><span class="name">'+g.name+'</span>'+
-            '<span class="status '+statusCls+'">'+statusTxt+'</span></div>'+
-            '<div class="meta">Target: <b>'+g.target+'</b></div>'+
-            '<div class="'+barCls+'"><i style="width:'+clampPct(g.progress)+'%"></i></div>'+
-            '<div class="row2"><div class="chip"><span class="k">Backtest</span><span class="v">'+g.backtest+'</span></div>'+
-            '<div class="chip"><span class="k">Live now</span><span class="v">'+g.live+'</span></div></div></div>';
-    }
-
-    function render(log){
-        // Only count trades UNDER THE NEW strategy (the readiness clock starts at
-        // activation) — old active-strategy trades must not inflate the gates.
-        var closed = (log||[]).filter(function(t){
-            var p = (t.realized_pnl!=null)?t.realized_pnl:t.pnl;
-            var when = (t.exit_timestamp||t.timestamp||'').slice(0,10);
-            return t.status==='closed' && typeof p==='number' && when >= STRATEGY_START;
-        });
-        var pnls = closed.map(function(t){ return (t.realized_pnl!=null)?t.realized_pnl:t.pnl; });
-        var wins = pnls.filter(function(p){return p>0;}), losses = pnls.filter(function(p){return p<0;});
-        var pf = losses.length ? (sum(wins)/Math.abs(sum(losses))) : null;
-        var winRate = pnls.length ? Math.round(wins.length/pnls.length*100) : null;
-        var days = daysSince(STRATEGY_START);
-
-        var gates = [
-            { name:'Paper track record', target:'≥ 90 trading days', backtest:'5 yrs', live:days+' days',
-              progress: days/90*100, status: days>=90?'pass':'pend' },
-            { name:'Out-of-sample Sharpe', target:'≥ 1.0', backtest:BT.sharpe.toFixed(2), live: pnls.length>=20? '—':'pending',
-              progress: Math.min(100, BT.sharpe/1.0*100), status: BT.sharpe>=1.0 ? (pnls.length>=50?'pass':'pend') : 'warn' },
-            { name:'Max drawdown', target:'≤ 15%', backtest:BT.maxdd.toFixed(1)+'%', live:'tracking',
-              progress: Math.min(100, 15/BT.maxdd*100), status: BT.maxdd<=15 ? 'pass':'warn' },
-            { name:'Profit factor', target:'≥ 1.3', backtest:'—', live: pf!=null? pf.toFixed(2):'no closes yet',
-              progress: pf!=null? Math.min(100, pf/1.3*100):0, status: pf!=null&&pf>=1.3?'pass':'pend' },
-            { name:'Closed-trade sample', target:'≥ 50 closed', backtest:'—', live: closed.length+' closed',
-              progress: closed.length/50*100, status: closed.length>=50?'pass':'pend' },
-            { name:'Regime coverage', target:'≥ 2 distinct regimes', backtest:'bull + 2022 bear', live:'1 (bull)',
-              progress: 50, status:'pend' }
-        ];
-
-        document.getElementById('gates').innerHTML = gates.map(gateCard).join('');
-
-        // Overall readiness = mean of the LIVE gate progress (real money needs live, not backtest).
-        var overall = Math.round(sum(gates.map(function(g){return clampPct(g.progress);}))/gates.length);
-        // the live track record is the binding constraint — weight it
-        overall = Math.round((days/90*100)*0.5 + overall*0.5);
-        overall = clampPct(overall);
-        document.getElementById('pct').textContent = overall+'%';
-        var ring = document.getElementById('ring');
-        ring.style.strokeDashoffset = 452 - (452*overall/100);
-
-        var allPass = gates.every(function(g){return g.status==='pass';});
-        document.getElementById('verdict').innerHTML = allPass
-            ? '<span class="verdict-pill vp-go">● Ready for fractional go-live</span>'
-            : '<span class="verdict-pill vp-paper">● Paper only — not yet for real money</span>';
-
-        var remaining = Math.max(0, 90 - days);
-        var eta = new Date(Date.now() + remaining*86400000);
-        document.getElementById('eta').innerHTML = allPass
-            ? 'All gates green — start with <b>5–10% of capital</b> for 2 weeks.'
-            : 'Earliest review: <b>'+eta.toISOString().slice(0,10)+'</b> (after the 90-day paper gate — then fractional 5–10%).';
-
-        document.getElementById('foot').innerHTML = 'Live data: '+closed.length+' closed P1 trades, '+
-            (winRate!=null?winRate+'% win rate':'win rate pending')+'. Gates per docs/LIVE_READINESS.md. '+
-            'Backtest figures are 5-year out-of-sample including the 2022 bear; live figures accrue as the paper strategy runs.';
-    }
-
-    fetch('/api/portfolio/portfolio_1/details')
-        .then(function(r){ return r.json(); })
-        .then(function(d){ render(d.trade_log || []); })
-        .catch(function(){ render([]); document.getElementById('foot').textContent =
-            'Showing backtest-proven gates; live trade data not reachable from here.'; });
     </script>
 </body>
 </html>
