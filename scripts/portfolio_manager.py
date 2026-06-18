@@ -111,6 +111,50 @@ _BUCKET_ASSET = {
 }
 
 
+def compute_core_orders(positions, equity, cash, params, regime, prices, limits):
+    """Passive index-core allocation (regime-aware), BUYS ONLY.
+
+    Evidence (core_satellite study): a passive broad-ETF core dominates the active
+    multifactor strategy out-of-sample by ~+2.16 Sharpe. Allocate ``core_weight`` x
+    equity across a diversified broad-market ETF basket (SPY/QQQ/IWM/DIA), scaled
+    DOWN in bear regimes by the existing regime equity multiplier.
+
+    HARD SAFETY: each ETF is capped strictly UNDER ``max_single_position_pct.etf``
+    (the 12% hardcoded limit is never breached) — so a high core_weight simply
+    spreads across the basket rather than over-concentrating. Gradual: spends only
+    available cash each session (active positions free cash as they close).
+    ``core_weight=0`` -> no-op. Returns [{symbol, qty, target_value, reason}].
+    """
+    core_weight = float(params.get("core_weight", 0.0) or 0.0)
+    if core_weight <= 0 or equity <= 0 or cash <= 0:
+        return []
+    from analyst_v2 import regime_allocation_modifier
+    basket = params.get("core_basket") or ["SPY", "QQQ", "IWM", "DIA"]
+    etf_cap = float((limits.get("max_single_position_pct") or {}).get("etf", 12.0)) / 100.0
+    per_cap = etf_cap * 0.95 * equity                      # strict buffer under the hard cap
+    eq_mult = float(regime_allocation_modifier(regime).get("equity_mult", 1.0))
+    target_each = min(core_weight * eq_mult * equity / len(basket), per_cap)
+    min_notional = float(limits.get("min_position_notional_usd", 500))
+
+    held = {p.get("symbol"): float(p.get("market_value", 0) or 0) for p in positions}
+    orders, avail = [], float(cash)
+    for s in basket:
+        price = float((prices or {}).get(s, 0) or 0)
+        if price <= 0:
+            continue
+        gap = target_each - held.get(s, 0.0)
+        if gap <= target_each * 0.05:                      # within 5% drift band -> skip
+            continue
+        spend = min(gap, avail)
+        qty = int(spend / price)
+        if qty <= 0 or qty * price < min_notional:
+            continue
+        avail -= qty * price
+        orders.append({"symbol": s, "qty": qty, "target_value": round(target_each, 2),
+                       "reason": f"passive_core_w{core_weight:g}_regime_{regime}"})
+    return orders
+
+
 def compute_cap_trims(positions, equity, limits, bucket_map, buffer_pct=0.5):
     """Trim-only plan (H1): any single position above its asset-class
     max_single_position_pct (ETF 12 / stock 8 / crypto 5 / penny 1) is trimmed
