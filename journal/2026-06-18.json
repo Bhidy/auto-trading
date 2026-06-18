@@ -1,0 +1,130 @@
+[
+  {
+    "date": "2026-06-18",
+    "timestamp": "2026-06-18T22:41:28.542751+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 95660.99,
+      "cash": 81.16,
+      "portfolio_value": 95660.99,
+      "daily_pnl": 520.3600000000006,
+      "daily_pnl_pct": 0.547
+    },
+    "positions": [
+      {
+        "symbol": "DIA",
+        "qty": "21",
+        "market_value": "10827.81",
+        "unrealized_pl": "-11.089995",
+        "unrealized_plpc": "-0.00102"
+      },
+      {
+        "symbol": "GLD",
+        "qty": "6",
+        "market_value": "2314.92",
+        "unrealized_pl": "-21.3",
+        "unrealized_plpc": "-0.00912"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "20",
+        "market_value": "7300",
+        "unrealized_pl": "84.7",
+        "unrealized_plpc": "0.01174"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "40",
+        "market_value": "11797.6",
+        "unrealized_pl": "296.75",
+        "unrealized_plpc": "0.0258"
+      },
+      {
+        "symbol": "NVDA",
+        "qty": "35",
+        "market_value": "7346.5",
+        "unrealized_pl": "27.809985",
+        "unrealized_plpc": "0.0038"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "15",
+        "market_value": "11083.5",
+        "unrealized_pl": "285.649995",
+        "unrealized_plpc": "0.02645"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "15",
+        "market_value": "11197.2",
+        "unrealized_pl": "-113.779995",
+        "unrealized_plpc": "-0.01006"
+      },
+      {
+        "symbol": "TLT",
+        "qty": "123",
+        "market_value": "10673.94",
+        "unrealized_pl": "-27.06",
+        "unrealized_plpc": "-0.00253"
+      },
+      {
+        "symbol": "XLI",
+        "qty": "66",
+        "market_value": "11940.06",
+        "unrealized_pl": "116.82",
+        "unrealized_plpc": "0.00988"
+      },
+      {
+        "symbol": "XLK",
+        "qty": "58",
+        "market_value": "11098.3",
+        "unrealized_pl": "40.6",
+        "unrealized_plpc": "0.00367"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 10,
+        "wins": 4,
+        "losses": 6,
+        "win_rate": 0.4,
+        "avg_pnl_pct": -2.2,
+        "avg_win_pct": 0.36,
+        "avg_loss_pct": -3.91,
+        "win_loss_ratio": 0.09,
+        "max_win_pct": 0.79,
+        "max_loss_pct": -6.21,
+        "total_pnl": -962.44,
+        "profit_factor": 0.1,
+        "per_trade_sharpe": -0.84,
+        "sharpe_estimate": -0.84
+      },
+      "metrics_30d": {
+        "total_trades": 52,
+        "wins": 17,
+        "losses": 35,
+        "win_rate": 0.327,
+        "avg_pnl_pct": -1.89,
+        "avg_win_pct": 1.21,
+        "avg_loss_pct": -3.4,
+        "win_loss_ratio": 0.36,
+        "max_win_pct": 7.77,
+        "max_loss_pct": -10.8,
+        "total_pnl": -4782.32,
+        "profit_factor": 0.23,
+        "per_trade_sharpe": -0.58,
+        "sharpe_estimate": -0.58
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 0.5,
+        "confidence_buy_threshold": 0.7,
+        "trailing_stop_atr_mult": 1.7999999999999994
+      }
+    },
+    "insights": [
+      "Win rate declining \u2014 tighten entry criteria",
+      "Losing money \u2014 reduce exposure and review strategy",
+      "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
+    ]
+  }
+]
