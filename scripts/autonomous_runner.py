@@ -422,27 +422,50 @@ def run_trading_session(alpaca: AlpacaClient):
                 _prices[_s] = float(_q.get("ap", 0) or 0) or float(_q.get("bp", 0) or 0)
             except Exception:
                 pass
+        # Core sub-budget so it never starves the active sleeve of the daily trade
+        # cap (audit fix): keep at least half the budget for active + rotation.
+        _core_budget = max(2, max_trades // 2)
+        _core_placed = 0
         for _co in compute_core_orders(positions, equity, cash, _params, _regime, _prices, limits):
-            if trades_executed >= max_trades:
+            if trades_executed >= max_trades or _core_placed >= _core_budget:
                 break
+            _sym = _co["symbol"]
+            # Tradability gate (audit fix): never buy a non-tradable / inactive ETF.
             try:
-                _ask = _prices.get(_co["symbol"], 0)
+                _asset = alpaca.get_asset(_sym)
+            except Exception:
+                _asset = None
+            if not _asset or not _asset.get("tradable") or _asset.get("status") != "active":
+                log.warning(f"  CORE: skip {_sym} — not tradable/active")
+                continue
+            try:
+                _ask = _prices.get(_sym, 0)
                 _lp = round(_ask * 1.001, 2) if _ask else None
                 _r = alpaca.place_order(
-                    symbol=_co["symbol"], qty=_co["qty"], side="buy",
+                    symbol=_sym, qty=_co["qty"], side="buy",
                     order_type="limit" if _lp else "market", limit_price=_lp,
-                    client_order_id=make_client_order_id("p1core", _co["symbol"], "buy"))
+                    client_order_id=make_client_order_id("p1core", _sym, "buy"))
                 trades_executed += 1
-                log.info(f"  CORE: buy {_co['qty']} x {_co['symbol']} — {_co['reason']}")
+                _core_placed += 1
+                log.info(f"  CORE: buy {_co['qty']} x {_sym} — {_co['reason']}")
                 _st, _fq, _fp = confirm_fill(alpaca, _r.get("id"))
                 if _fq > 0:
                     _px = _fp or _lp or _ask
                     cash -= _fq * _px
                     from performance_tracker import log_trade
-                    log_trade(_co["symbol"], "buy", _fq, round(_px, 4), "core_equity",
+                    log_trade(_sym, "buy", _fq, round(_px, 4), "core_equity",
                               None, [_co["reason"]], intended_price=_lp, order_class="passive_core")
+            except requests.HTTPError as _e:
+                # Duplicate client_order_id (422) on a retried/double-fired run means
+                # this core buy already exists — an idempotent skip, not a failure.
+                if getattr(_e, "response", None) is not None and _e.response.status_code == 422:
+                    trades_executed += 1
+                    _core_placed += 1
+                    log.info(f"  CORE: {_sym} already placed (idempotent skip)")
+                else:
+                    log.error(f"  Core buy failed for {_sym}: {_e}")
             except Exception as _e:
-                log.error(f"  Core buy failed for {_co['symbol']}: {_e}")
+                log.error(f"  Core buy failed for {_sym}: {_e}")
         positions = alpaca.get_positions()  # refresh after core buys
         # FIX: re-sync exposure so the risk officer validates the active sleeve
         # AGAINST the core just deployed (was reading pre-core total_exposure ->
