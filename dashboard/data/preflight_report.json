@@ -8,23 +8,37 @@
     "rsi_oversold": 30,
     "rsi_buy_zone_upper": 50,
     "momentum_threshold": 0,
-    "confidence_buy_threshold": 0.5,
+    "confidence_buy_threshold": 0.7,
     "confidence_short_threshold": 0.5,
-    "position_size_multiplier": 1.0,
+    "position_size_multiplier": 0.5,
     "ma_fast": 50,
     "ma_slow": 200,
     "atr_risk_target_pct": 1.0,
-    "trailing_stop_atr_mult": 2.5,
+    "trailing_stop_atr_mult": 1.8999999999999995,
     "take_profit_atr_mult": 4.0,
     "regime_weight": 0.15,
     "rs_weight": 0.1,
     "volume_weight": 0.05,
     "macd_weight": 0.1,
     "bb_weight": 0.05,
-    "win_rate_7d": 0.429,
-    "win_rate_30d": 0.312,
-    "avg_win_loss_ratio": 0.39,
-    "last_updated": "2026-05-27T14:30:00Z"
+    "win_rate_7d": 0.647,
+    "win_rate_30d": 0.327,
+    "avg_win_loss_ratio": 0.36,
+    "last_updated": "2026-05-27T14:30:00Z",
+    "risk_off_active": true,
+    "breakeven_trigger_pct": 0.08,
+    "breakeven_lock_pct": 0.005,
+    "core_weight": 0.9,
+    "core_basket": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "DIA",
+      "TLT",
+      "GLD",
+      "SHY",
+      "BIL"
+    ]
   },
   "checks": {
     "account_health": {
@@ -42,7 +56,7 @@
     },
     "crypto_canary": {
       "ok": true,
-      "detail": "$100k/$3kATR -> 12.0% ($12,000 notional)"
+      "detail": "$100k/$3kATR -> 8.77% ($8,770 notional)"
     },
     "data_fresh": true
   }

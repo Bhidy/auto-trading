@@ -1,0 +1,46 @@
+{
+  "as_of": "2026-06-18T11:56:04.010614+00:00",
+  "study": "deployed_core_satellite_backtest",
+  "source": "data/deep_wide5 (124 symbols x 1143 bars), 15 OOS windows",
+  "core_weight": 0.9,
+  "basket": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "DIA",
+    "TLT",
+    "GLD",
+    "SHY",
+    "BIL"
+  ],
+  "cap_constrained_core_ceiling": 0.912,
+  "active_only": {
+    "sharpe": -1.1548,
+    "total_return": -0.4332,
+    "max_drawdown": 0.473,
+    "win_rate_days": 0.3873,
+    "worst_day": -0.0576,
+    "mean_oos_sharpe": -1.1082,
+    "losing_windows": 11
+  },
+  "core_only": {
+    "sharpe": 0.7251,
+    "total_return": 0.3044,
+    "max_drawdown": 0.1643,
+    "win_rate_days": 0.5333,
+    "worst_day": -0.0285,
+    "mean_oos_sharpe": 1.0798,
+    "losing_windows": 5
+  },
+  "deployed": {
+    "sharpe": 0.3837,
+    "total_return": 0.1175,
+    "max_drawdown": 0.1688,
+    "win_rate_days": 0.5153,
+    "worst_day": -0.0265,
+    "mean_oos_sharpe": 0.5864,
+    "losing_windows": 6
+  },
+  "disclosure": "Hypothetical/paper, net of modeled costs. No strategy avoids all losing days.",
+  "verdict": "DEPLOYED_IMPROVES"
+}

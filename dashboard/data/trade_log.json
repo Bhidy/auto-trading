@@ -2047,5 +2047,63 @@
     "status": "closed",
     "stop_loss": 55.48,
     "take_profit": 63.99
+  },
+  {
+    "id": 65,
+    "schema_version": 2,
+    "timestamp": "2026-06-18T14:10:34.634514+00:00",
+    "symbol": "TLT",
+    "side": "buy",
+    "qty": 123.0,
+    "entry_price": 87.0,
+    "intended_price": 87.09,
+    "slippage_pct": -0.1033,
+    "bucket": "core_equity",
+    "signal_score": null,
+    "reasons": [
+      "passive_core_w0.9_regime_BULL"
+    ],
+    "borrow_status": null,
+    "order_class": "passive_core",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": null,
+    "exit_timestamp": null,
+    "gross_pnl": null,
+    "fees": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "realized_pnl": null,
+    "hold_days": null,
+    "status": "open"
+  },
+  {
+    "id": 66,
+    "schema_version": 2,
+    "timestamp": "2026-06-18T14:10:38.024028+00:00",
+    "symbol": "GLD",
+    "side": "buy",
+    "qty": 6.0,
+    "entry_price": 389.37,
+    "intended_price": 389.95,
+    "slippage_pct": -0.1487,
+    "bucket": "core_equity",
+    "signal_score": null,
+    "reasons": [
+      "passive_core_w0.9_regime_BULL"
+    ],
+    "borrow_status": null,
+    "order_class": "passive_core",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": null,
+    "exit_timestamp": null,
+    "gross_pnl": null,
+    "fees": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "realized_pnl": null,
+    "hold_days": null,
+    "status": "open"
   }
 ]
