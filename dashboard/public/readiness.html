@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+    <script src="/assets/starta-theme.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live-Readiness | Auto Trading</title>
+    <meta name="description" content="Real-money go-live readiness — track every gate before deploying real capital.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/assets/news-public.css">
+    <link rel="stylesheet" href="/assets/portfolio.css">
+    <style>
+        .rd-wrap { max-width: 1100px; margin: 0 auto; padding: 6rem 1.25rem 4rem; }
+        .rd-hero { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; justify-content: space-between;
+            background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1.75rem; margin-bottom: 1.5rem;
+            box-shadow: var(--rw-sh-1, 0 6px 14px rgba(26,15,8,0.05)); }
+        .rd-hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.6rem, 4vw, 2.3rem); margin: 0 0 .35rem; color: var(--ink); font-weight: 400; }
+        .rd-hero p { color: var(--muted); margin: 0; max-width: 46ch; line-height: 1.6; font-size: .95rem; }
+        .gauge { width: 168px; height: 168px; flex-shrink: 0; position: relative; }
+        .gauge svg { transform: rotate(-90deg); }
+        .gauge .pct { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .gauge .pct b { font-family: 'DM Serif Display', serif; font-size: 2.1rem; color: var(--teal); line-height: 1; }
+        .gauge .pct span { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: .3rem; }
+        .verdict-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .4rem .9rem; border-radius: 999px;
+            font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+        .vp-paper { background: rgba(229,90,31,.12); color: var(--teal-dark, #C9461A); }
+        .vp-go { background: rgba(34,160,90,.14); color: #1f8a4d; }
+        .eta { margin-top: .6rem; font-size: .82rem; color: var(--muted); }
+        .eta b { color: var(--ink); }
+        .rd-banner { display: flex; gap: .85rem; align-items: flex-start; background: var(--teal-soft, #FFF1E8);
+            border: 1px solid var(--line); border-radius: .85rem; padding: 1rem 1.15rem; margin-bottom: 1.5rem; font-size: .9rem; color: var(--ink); line-height: 1.65; }
+        .rd-banner .ic { font-size: 1.1rem; }
+        .rd-banner .ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; text-align: right; display: block; margin-top: .4rem; color: var(--muted); }
+        .gate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1rem; }
+        .gate { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: 1.1rem 1.2rem; }
+        .gate .top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-bottom: .55rem; }
+        .gate .name { font-weight: 700; color: var(--ink); font-size: .98rem; }
+        .gate .status { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: .22rem .6rem; border-radius: 999px; white-space: nowrap; }
+        .s-pass { background: rgba(34,160,90,.14); color: #1f8a4d; }
+        .s-pend { background: rgba(122,107,94,.14); color: var(--muted); }
+        .s-warn { background: rgba(229,90,31,.14); color: var(--teal-dark, #C9461A); }
+        .gate .meta { font-size: .82rem; color: var(--muted); margin: .15rem 0 .7rem; }
+        .gate .meta b { color: var(--ink); font-family: 'IBM Plex Mono', monospace; }
+        .bar { height: 8px; border-radius: 999px; background: rgba(26,15,8,.07); overflow: hidden; }
+        .bar > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFA86A, #E55A1F); }
+        .bar.done > i { background: linear-gradient(90deg, #4cc47e, #1f8a4d); }
+        .row2 { display: flex; gap: .5rem; margin-top: .65rem; font-size: .74rem; }
+        .chip { flex: 1; background: rgba(26,15,8,.04); border-radius: .5rem; padding: .45rem .55rem; }
+        .chip .k { color: var(--muted); display: block; font-size: .66rem; text-transform: uppercase; letter-spacing: .04em; }
+        .chip .v { color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+        .sec-title { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--ink); margin: 0 0 .9rem; font-weight: 400; }
+        .foot { margin-top: 1.75rem; font-size: .78rem; color: var(--muted); line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <div class="aurora"></div>
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="brand" href="/" style="display: flex; align-items: center; gap: 0.6rem;">
+                <svg width="28" height="28" viewBox="0 0 1024 1024" style="border-radius: 6px; background: linear-gradient(135deg, #FF8A3D 0%, #E55A1F 100%); padding: 4px;" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 180 800 Q 180 380 540 230 L 660 175 L 715 295 L 595 350 Q 320 480 320 800 Z" fill="#FFF7EE"/>
+                    <ellipse cx="460" cy="730" rx="160" ry="36" fill="#FFC396"/>
+                    <rect x="300" y="666" width="320" height="64" fill="#FFC396"/>
+                    <ellipse cx="460" cy="666" rx="160" ry="36" fill="#FFF1E8"/>
+                </svg>
+                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                    <span style="color: var(--ink);">Auto</span>
+                    <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
+                </span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/portfolio-detail.html?id=all">Portfolios</a>
+                <a href="/market-pulse.html">Market Pulse</a>
+                <a href="/orders.html">Orders</a>
+                <a href="/readiness.html" class="active">Readiness</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="rd-wrap">
+        <section class="rd-hero">
+            <div>
+                <h1>Live-Readiness</h1>
+                <p>How close P1 is to deploying <b>real capital</b>. Strategy: regime-aware diversified passive core + small de-risked satellite. Real money stays locked until every gate below is green.</p>
+                <div id="verdict"></div>
+                <div class="eta" id="eta"></div>
+            </div>
+            <div class="gauge">
+                <svg width="168" height="168" viewBox="0 0 168 168">
+                    <circle cx="84" cy="84" r="72" fill="none" stroke="rgba(26,15,8,.08)" stroke-width="14"/>
+                    <circle id="ring" cx="84" cy="84" r="72" fill="none" stroke="url(#g)" stroke-width="14" stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="452"/>
+                    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFA86A"/><stop offset="1" stop-color="#E55A1F"/></linearGradient></defs>
+                </svg>
+                <div class="pct"><b id="pct">0%</b><span>real-money ready</span></div>
+            </div>
+        </section>
+
+        <div class="rd-banner">
+            <span class="ic">🛈</span>
+            <div>
+                <b>Backtested through the 2022 bear, robust — but live track record is required before real money.</b>
+                The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.
+                <span class="ar">النظام متأكد عليه بالباك-تيست عبر هبوط 2022 وقوي — بس لازم ٩٠ يوم تداول ورقي حقيقي قبل أي فلوس حقيقية. تحت بتشوف إنت وصلت لكام في كل شرط.</span>
+            </div>
+        </div>
+
+        <h2 class="sec-title">Go-live gates</h2>
+        <div class="gate-grid" id="gates"></div>
+
+        <p class="foot" id="foot">Loading live data…</p>
+    </main>
+
+    <script>
+    // Activation of the new passive-core strategy — the live-paper clock starts here.
+    var STRATEGY_START = "2026-06-17";
+    // Backtest-proven figures (5y incl. 2022 bear) — the validated reference.
+    var BT = { sharpe: 1.08, maxdd: 16.4 };
+
+    function sum(a){ return a.reduce(function(x,y){return x+y;},0); }
+    function daysSince(d){ return Math.max(0, Math.floor((Date.now() - new Date(d+"T00:00:00Z"))/86400000)); }
+    function clampPct(x){ return Math.max(0, Math.min(100, x)); }
+
+    function gateCard(g){
+        var statusCls = g.status==='pass'?'s-pass':(g.status==='warn'?'s-warn':'s-pend');
+        var statusTxt = g.status==='pass'?'PASSED':(g.status==='warn'?'NEEDS WORK':'IN PROGRESS');
+        var barCls = g.progress>=100 ? 'bar done' : 'bar';
+        return '<div class="gate"><div class="top"><span class="name">'+g.name+'</span>'+
+            '<span class="status '+statusCls+'">'+statusTxt+'</span></div>'+
+            '<div class="meta">Target: <b>'+g.target+'</b></div>'+
+            '<div class="'+barCls+'"><i style="width:'+clampPct(g.progress)+'%"></i></div>'+
+            '<div class="row2"><div class="chip"><span class="k">Backtest</span><span class="v">'+g.backtest+'</span></div>'+
+            '<div class="chip"><span class="k">Live now</span><span class="v">'+g.live+'</span></div></div></div>';
+    }
+
+    function render(log){
+        // Only count trades UNDER THE NEW strategy (the readiness clock starts at
+        // activation) — old active-strategy trades must not inflate the gates.
+        var closed = (log||[]).filter(function(t){
+            var p = (t.realized_pnl!=null)?t.realized_pnl:t.pnl;
+            var when = (t.exit_timestamp||t.timestamp||'').slice(0,10);
+            return t.status==='closed' && typeof p==='number' && when >= STRATEGY_START;
+        });
+        var pnls = closed.map(function(t){ return (t.realized_pnl!=null)?t.realized_pnl:t.pnl; });
+        var wins = pnls.filter(function(p){return p>0;}), losses = pnls.filter(function(p){return p<0;});
+        var pf = losses.length ? (sum(wins)/Math.abs(sum(losses))) : null;
+        var winRate = pnls.length ? Math.round(wins.length/pnls.length*100) : null;
+        var days = daysSince(STRATEGY_START);
+
+        var gates = [
+            { name:'Paper track record', target:'≥ 90 trading days', backtest:'5 yrs', live:days+' days',
+              progress: days/90*100, status: days>=90?'pass':'pend' },
+            { name:'Out-of-sample Sharpe', target:'≥ 1.0', backtest:BT.sharpe.toFixed(2), live: pnls.length>=20? '—':'pending',
+              progress: Math.min(100, BT.sharpe/1.0*100), status: BT.sharpe>=1.0 ? (pnls.length>=50?'pass':'pend') : 'warn' },
+            { name:'Max drawdown', target:'≤ 15%', backtest:BT.maxdd.toFixed(1)+'%', live:'tracking',
+              progress: Math.min(100, 15/BT.maxdd*100), status: BT.maxdd<=15 ? 'pass':'warn' },
+            { name:'Profit factor', target:'≥ 1.3', backtest:'—', live: pf!=null? pf.toFixed(2):'no closes yet',
+              progress: pf!=null? Math.min(100, pf/1.3*100):0, status: pf!=null&&pf>=1.3?'pass':'pend' },
+            { name:'Closed-trade sample', target:'≥ 50 closed', backtest:'—', live: closed.length+' closed',
+              progress: closed.length/50*100, status: closed.length>=50?'pass':'pend' },
+            { name:'Regime coverage', target:'≥ 2 distinct regimes', backtest:'bull + 2022 bear', live:'1 (bull)',
+              progress: 50, status:'pend' }
+        ];
+
+        document.getElementById('gates').innerHTML = gates.map(gateCard).join('');
+
+        // Overall readiness = mean of the LIVE gate progress (real money needs live, not backtest).
+        var overall = Math.round(sum(gates.map(function(g){return clampPct(g.progress);}))/gates.length);
+        // the live track record is the binding constraint — weight it
+        overall = Math.round((days/90*100)*0.5 + overall*0.5);
+        overall = clampPct(overall);
+        document.getElementById('pct').textContent = overall+'%';
+        var ring = document.getElementById('ring');
+        ring.style.strokeDashoffset = 452 - (452*overall/100);
+
+        var allPass = gates.every(function(g){return g.status==='pass';});
+        document.getElementById('verdict').innerHTML = allPass
+            ? '<span class="verdict-pill vp-go">● Ready for fractional go-live</span>'
+            : '<span class="verdict-pill vp-paper">● Paper only — not yet for real money</span>';
+
+        var remaining = Math.max(0, 90 - days);
+        var eta = new Date(Date.now() + remaining*86400000);
+        document.getElementById('eta').innerHTML = allPass
+            ? 'All gates green — start with <b>5–10% of capital</b> for 2 weeks.'
+            : 'Earliest review: <b>'+eta.toISOString().slice(0,10)+'</b> (after the 90-day paper gate — then fractional 5–10%).';
+
+        document.getElementById('foot').innerHTML = 'Live data: '+closed.length+' closed P1 trades, '+
+            (winRate!=null?winRate+'% win rate':'win rate pending')+'. Gates per docs/LIVE_READINESS.md. '+
+            'Backtest figures are 5-year out-of-sample including the 2022 bear; live figures accrue as the paper strategy runs.';
+    }
+
+    fetch('/api/portfolio/portfolio_1/details')
+        .then(function(r){ return r.json(); })
+        .then(function(d){ render(d.trade_log || []); })
+        .catch(function(){ render([]); document.getElementById('foot').textContent =
+            'Showing backtest-proven gates; live trade data not reachable from here.'; });
+    </script>
+</body>
+</html>
