@@ -118,6 +118,27 @@ def core_regime(signals):
     return (signals or {}).get("market_regime", "BULL")
 
 
+def filter_active_entries(approved, params):
+    """Core-only mode (committee-approved risk reduction, 2026-06-18 audit).
+
+    The active multifactor satellite has a measured negative realized edge
+    (profit factor 0.23) and its own OOS study shows the passive diversified core
+    dominates the blend on both return and drawdown. When
+    ``active_entries_enabled`` is false, drop NEW active entries (BUY/SHORT) so the
+    passive core is the sole allocator — but NEVER drop exits/sells (capital
+    preservation: an exit must always be allowed through). Reversible via
+    ``data/strategy_params.json``.
+
+    Returns ``(kept_orders, suppressed_entries)``.
+    """
+    if (params or {}).get("active_entries_enabled", True):
+        return list(approved or []), []
+    kept, suppressed = [], []
+    for o in (approved or []):
+        (suppressed if o.get("signal") in ("BUY", "SHORT") else kept).append(o)
+    return kept, suppressed
+
+
 def compute_core_orders(positions, equity, cash, params, regime, prices, limits):
     """Passive index-core allocation (regime-aware), BUYS ONLY.
 

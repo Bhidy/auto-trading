@@ -214,6 +214,23 @@ def classify_capital(positions, sleeve_symbols, cash, equity):
 # CONVICTION MODEL — politician track-record weighting + cluster-buy detection
 # ---------------------------------------------------------------------------
 
+def disclosure_feed_status(attempts, failures):
+    """Health of the Capitol Trades disclosure feed for one scan cycle.
+
+    ``'dark'``  = every fetch failed → no signal possible (the 2026-06 rate-limit
+    outage that ran ~3 weeks with no alert because 0 trades looked like quiet
+    markets). ``'degraded'`` = some fetches failed. ``'ok'`` = all succeeded (or
+    nothing was attempted). A ``'dark'`` result is surfaced as a conformance
+    violation so the existing heartbeat watchdog opens an alert."""
+    if not attempts or attempts <= 0:
+        return "ok"
+    if failures >= attempts:
+        return "dark"
+    if failures > 0:
+        return "degraded"
+    return "ok"
+
+
 def count_cluster_buys(pairs):
     """`pairs`: iterable of (ticker, politician). Returns {ticker: count of DISTINCT
     politicians buying it}. Two or more politicians into the same name in one scan
@@ -541,7 +558,15 @@ class PoliticianBot:
         all_new_trades = []
         self._freshness_evaluated = 0
         self._unparseable_dates = 0
+        # Feed-health counters: a fully rate-limited/unreachable Capitol Trades feed
+        # produces 0 trades that is INDISTINGUISHABLE from "quiet markets" — the
+        # exact failure that ran dark for ~3 weeks with no alert (2026-06 audit).
+        # Count every fetch attempt vs failure so a dark feed becomes a conformance
+        # violation the heartbeat watchdog already surfaces.
+        self._fetch_attempts = 0
+        self._fetch_failures = 0
 
+        self._fetch_attempts += 1
         try:
             buy_trades = call_mcp_tool("get_politician_trades", {
                 "politician": primary, "type": ["BUY"], "days": days,
@@ -553,9 +578,11 @@ class PoliticianBot:
                     t["_action"] = "BUY"
                     all_new_trades.append(t)
         except Exception as e:
+            self._fetch_failures += 1
             log.error(f"Error scanning {primary}: {e}")
 
         if self.watchlist_cfg.get("sell_logic", {}).get("copy_politician_sells"):
+            self._fetch_attempts += 1
             try:
                 sell_trades = call_mcp_tool("get_politician_trades", {
                     "politician": primary, "type": ["SELL"], "days": days,
@@ -571,6 +598,7 @@ class PoliticianBot:
                                 t["_action"] = "SELL"
                                 all_new_trades.append(t)
             except Exception as e:
+                self._fetch_failures += 1
                 log.error(f"Error scanning sells for {primary}: {e}")
 
         # Space out requests to Capitol Trades — rapid-fire subprocess spawns
@@ -580,6 +608,7 @@ class PoliticianBot:
 
         for backup in self.watchlist_cfg.get("backup_politicians", []):
             time.sleep(3)  # rate-limit guard between each politician scan
+            self._fetch_attempts += 1
             try:
                 backup_trades = call_mcp_tool("get_politician_trades", {
                     "politician": backup, "type": ["BUY"], "days": days,
@@ -591,7 +620,20 @@ class PoliticianBot:
                         t["_action"] = "BUY"
                         all_new_trades.append(t)
             except Exception as e:
+                self._fetch_failures += 1
                 log.error(f"Error scanning {backup}: {e}")
+
+        # A DARK feed (every fetch failed) means no copy can ever open this cycle —
+        # make it LOUD and a conformance failure (heartbeat surfaces it). This is the
+        # alarm the 3-week 2026-06 rate-limit outage never had.
+        self._feed_dark = disclosure_feed_status(self._fetch_attempts, self._fetch_failures) == "dark"
+        if self._feed_dark:
+            log.error(f"::error::P2 FEED DARK: {self._fetch_failures}/{self._fetch_attempts} "
+                      f"Capitol Trades fetches failed (unreachable/rate-limited). No new copies "
+                      f"can open — flagged as a conformance violation for the heartbeat watchdog.")
+        elif self._fetch_failures:
+            log.warning(f"P2 feed degraded: {self._fetch_failures}/{self._fetch_attempts} "
+                        f"disclosure fetches failed this cycle.")
 
         # Make a blinded feed LOUD: if every dated disclosure we evaluated had an
         # unparseable date, the copy pipeline is dark (almost certainly a feed
@@ -1140,6 +1182,17 @@ class PoliticianBot:
              "detail": (f"BLINDED: {self._unparseable_dates}/{self._freshness_evaluated} "
                         f"disclosure dates unparseable — feed format changed" if blinded
                         else f"{self._unparseable_dates}/{self._freshness_evaluated} unparseable")},
+            # A DARK feed (all fetches failed -> rate-limited/unreachable) is a
+            # conformance FAILURE so the heartbeat watchdog (assess_integrity) opens
+            # an alert — the 3-week 2026-06 outage went silent because nothing here
+            # distinguished "feed down" from "no new disclosures".
+            {"name": "disclosure_feed_reachable",
+             "ok": not getattr(self, "_feed_dark", False),
+             "detail": (f"FEED DARK: {getattr(self, '_fetch_failures', 0)}/"
+                        f"{getattr(self, '_fetch_attempts', 0)} fetches failed"
+                        if getattr(self, "_feed_dark", False)
+                        else f"{getattr(self, '_fetch_failures', 0)}/"
+                             f"{getattr(self, '_fetch_attempts', 0)} fetch failures")},
         ])
         write_conformance_report(str(BASE_DIR / "data" / "strategy_conformance.json"), conf)
 

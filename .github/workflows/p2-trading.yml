@@ -44,7 +44,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          npm install -g @anguslin/mcp-capitol-trades
+          # Pinned (supply-chain hardening, 2026-06 audit): the disclosure feed is an
+          # unpinned public npm package invisible to the Python purity test. Fail-soft so a
+          # registry blip degrades to a dark scan (which now fires the feed-dark alarm), not a hard step failure.
+          npm install -g @anguslin/mcp-capitol-trades@1.0.1 || echo "P2 MCP install failed — scan will run dark and trip the feed-dark conformance alarm"
 
       - name: Create Alpaca config
         run: |

@@ -1,7 +1,26 @@
 """Live passive-core allocation (compute_core_orders): the evidence-mandated
 +2.16-Sharpe move. Regime-aware, BUYS ONLY, and HARD-capped strictly under the
 12% ETF limit so the hardcoded risk limit is never breached."""
-from portfolio_manager import compute_core_orders, core_regime
+from portfolio_manager import compute_core_orders, core_regime, filter_active_entries
+
+
+def test_active_entries_pass_through_by_default():
+    # Absent/true flag: the active sleeve is untouched (backward compatible).
+    orders = [{"symbol": "NVDA", "signal": "BUY"}, {"symbol": "TSLA", "signal": "SHORT"}]
+    assert filter_active_entries(orders, {})[0] == orders
+    assert filter_active_entries(orders, {"active_entries_enabled": True})[1] == []
+
+
+def test_core_only_suppresses_entries_but_never_exits():
+    # active_entries_enabled=false -> drop new BUY/SHORT entries, KEEP exits/sells.
+    orders = [
+        {"symbol": "NVDA", "signal": "BUY"},
+        {"symbol": "TSLA", "signal": "SHORT"},
+        {"symbol": "AAPL", "signal": "SELL"},   # an exit must always pass
+    ]
+    kept, suppressed = filter_active_entries(orders, {"active_entries_enabled": False})
+    assert {o["symbol"] for o in suppressed} == {"NVDA", "TSLA"}
+    assert [o["symbol"] for o in kept] == ["AAPL"]   # capital-preservation: exit survives
 
 
 def test_core_regime_reads_the_correct_signals_key():

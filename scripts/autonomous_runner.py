@@ -477,6 +477,21 @@ def run_trading_session(alpaca: AlpacaClient):
     approved = validated.get("approved_orders", [])
     log.info(f"Validated: {validated['summary']['approved']} approved, {validated['summary']['rejected']} rejected")
 
+    # --- Core-only mode (committee-approved risk reduction, 2026-06-18 audit) -----
+    # The active multifactor satellite has a MEASURED negative realized edge
+    # (profit factor 0.23, -$4,782 over 53 closes) and its own out-of-sample study
+    # shows the diversified passive core DOMINATES the blend on BOTH return and
+    # drawdown (core-only OOS Sharpe 1.08 / DD 16.4% vs deployed 0.59 / 16.9%).
+    # active_entries_enabled=false -> the satellite opens NO new entries; the core
+    # block above is the sole allocator and existing active positions wind down by
+    # riding their stops via the monitor. Exits/sells are NEVER suppressed.
+    from portfolio_manager import filter_active_entries
+    approved, _suppressed = filter_active_entries(approved, _params)
+    if _suppressed:
+        log.info(f"Core-only mode: suppressing {len(_suppressed)} active entry signal(s) "
+                 f"({', '.join(o['symbol'] for o in _suppressed)}) — satellite winding down, "
+                 f"existing positions ride their stops")
+
     if not approved:
         log.info("No approved orders to execute")
         _sync_portfolio_state(alpaca, portfolio_state)

@@ -34,7 +34,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          npm install -g @anguslin/mcp-capitol-trades
+          # Pinned + fail-soft (supply-chain hardening, 2026-06 audit).
+          npm install -g @anguslin/mcp-capitol-trades@1.0.1 || echo "P2 MCP install failed — monitor continues; scan runs dark"
 
       - name: Create Alpaca config
         run: |
