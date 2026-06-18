@@ -27,7 +27,14 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of Danaher Corp",
     "timestamp": "2026-05-27T19:03:43.777181",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null,
+    "status": "closed_reconciled"
   },
   {
     "symbol": "P",
@@ -42,7 +49,14 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of Pure Storage Inc",
     "timestamp": "2026-05-27T19:03:48.109757",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 76.07,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "SPGI",
@@ -57,7 +71,14 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of S&P Global Inc",
     "timestamp": "2026-05-27T19:03:57.297538",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null,
+    "status": "closed_reconciled"
   },
   {
     "symbol": "MA",
@@ -72,7 +93,14 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of Mastercard Inc",
     "timestamp": "2026-05-27T19:04:02.430505",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null,
+    "status": "closed_reconciled"
   },
   {
     "symbol": "WDAY",
@@ -87,7 +115,14 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of Workday Inc",
     "timestamp": "2026-05-27T19:04:06.130796",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 157.79,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "INTU",
@@ -102,7 +137,14 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of Intuit Inc",
     "timestamp": "2026-05-27T19:04:10.017476",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 284.02,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "HD",
@@ -147,7 +189,14 @@
     "source": "backup",
     "reason": "Copying David Taylor BUY of The Progressive Corp",
     "timestamp": "2026-05-27T19:04:29.066471",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null,
+    "status": "closed_reconciled"
   },
   {
     "symbol": "P",
@@ -155,7 +204,14 @@
     "qty": 17,
     "reason": "Stop loss at -12.1%",
     "timestamp": "2026-05-28T18:51:34.954654",
-    "date": "2026-05-28"
+    "date": "2026-05-28",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 76.07,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "T",
@@ -170,7 +226,14 @@
     "source": "backup",
     "reason": "Copying David Taylor BUY of AT&T Inc",
     "timestamp": "2026-05-29T15:06:41.528844",
-    "date": "2026-05-29"
+    "date": "2026-05-29",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 22.69,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "MEDP",
@@ -208,7 +271,14 @@
     "qty": 3,
     "reason": "Take profit at 25.0%",
     "timestamp": "2026-06-01T20:35:13.452395",
-    "date": "2026-06-01"
+    "date": "2026-06-01",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 157.79,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "WDAY",
@@ -216,7 +286,14 @@
     "qty": 1,
     "reason": "Take profit at 25.3%",
     "timestamp": "2026-06-01T21:05:48.727935",
-    "date": "2026-06-01"
+    "date": "2026-06-01",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 157.79,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "WDAY",
@@ -224,7 +301,14 @@
     "qty": 1,
     "reason": "Take profit at 25.4%",
     "timestamp": "2026-06-01T19:25:45.468832",
-    "date": "2026-06-01"
+    "date": "2026-06-01",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 157.79,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "WDAY",
@@ -232,7 +316,14 @@
     "qty": 1,
     "reason": "Take profit at 25.4%",
     "timestamp": "2026-06-01T19:28:01.461230",
-    "date": "2026-06-01"
+    "date": "2026-06-01",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 157.79,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "SPY",
@@ -370,7 +461,14 @@
     "qty": 60,
     "reason": "Stop loss at -8.4%",
     "timestamp": "2026-06-04T17:22:51.358065",
-    "date": "2026-06-04"
+    "date": "2026-06-04",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 22.69,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   },
   {
     "symbol": "INTU",
@@ -378,6 +476,13 @@
     "qty": 4,
     "reason": "Stop loss at -9.1%",
     "timestamp": "2026-06-10T14:15:19.559381",
-    "date": "2026-06-10"
+    "date": "2026-06-10",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
+    "exit_price": 284.02,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
   }
 ]
