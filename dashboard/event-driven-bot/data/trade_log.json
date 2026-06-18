@@ -150,7 +150,14 @@
       "RSI in sweet spot (62)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-06-18T22:26:29.134074+00:00",
+    "exit_price": 240.72,
+    "pnl": -754.43,
+    "realized_pnl": -754.43,
+    "pnl_pct": -5.04
   },
   {
     "timestamp": "2026-06-01T14:23:57.761709+00:00",
@@ -911,7 +918,9 @@
       "RSI in sweet spot (64)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
   },
   {
     "timestamp": "2026-06-18T14:10:47.632942+00:00",
