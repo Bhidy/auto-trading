@@ -614,12 +614,14 @@ class PoliticianBot:
                 log.error(f"Error scanning sells for {primary}: {e}")
 
         # Space out requests to Capitol Trades — rapid-fire subprocess spawns
-        # across 13 politicians exhausts the external API's rate limit (429).
-        # Sleep before the backup loop (after primary scan already fired one request).
-        time.sleep(3)
+        # across 13 politicians exhausts the external API's rate limit (429). Widened
+        # 3s->6s (2026-06-18) after a ~3-week dark-feed outage; combined with the
+        # more patient per-call retries in mcp_client, this is strictly more
+        # rate-limit-friendly. Scheduled run, so the extra wall-clock is fine.
+        time.sleep(6)
 
         for backup in self.watchlist_cfg.get("backup_politicians", []):
-            time.sleep(3)  # rate-limit guard between each politician scan
+            time.sleep(6)  # rate-limit guard between each politician scan
             self._fetch_attempts += 1
             try:
                 backup_trades = call_mcp_tool("get_politician_trades", {

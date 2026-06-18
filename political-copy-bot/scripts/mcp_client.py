@@ -5,6 +5,7 @@ Auto-retries on Capitol Trades 429 rate-limit responses with exponential backoff
 """
 
 import json
+import random
 import subprocess
 import time
 
@@ -13,15 +14,19 @@ def call_mcp_tool(tool_name: str, arguments: dict, timeout: int = 120) -> dict:
     """
     Call an mcp-capitol-trades tool via stdio JSON-RPC.
 
-    Retry policy: up to 3 attempts on HTTP 429 from Capitol Trades
-    (the MCP server surfaces these as isError text containing "429").
-    Backoff: 4 s, 8 s between retries.  Other errors raise immediately.
+    Retry policy (hardened 2026-06-18 — the feed ran dark ~3 weeks because the
+    external API rate-limited the whole scan): up to 5 attempts on HTTP 429 from
+    Capitol Trades (surfaced as isError text containing "429"). EXPONENTIAL backoff
+    with jitter — ~5 s, 10 s, 20 s, 30 s (capped) plus 0-2.5 s jitter so the
+    per-politician calls don't retry in lockstep. Other errors raise immediately.
+    A scan still fully rate-limited after this fires the feed-dark conformance
+    alarm (politician_bot.disclosure_feed_status).
     """
-    MAX_ATTEMPTS = 3
+    MAX_ATTEMPTS = 5
 
     for attempt in range(MAX_ATTEMPTS):
         if attempt:
-            backoff = 4 * attempt   # 4 s first retry, 8 s second
+            backoff = min(5 * (2 ** (attempt - 1)), 30) + random.uniform(0, 2.5)
             time.sleep(backoff)
 
         initialize_msg = json.dumps({
