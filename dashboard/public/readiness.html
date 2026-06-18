@@ -33,7 +33,10 @@
         .rd-banner { display: flex; gap: .85rem; align-items: flex-start; background: var(--teal-soft, #FFF1E8);
             border: 1px solid var(--line); border-radius: .85rem; padding: 1rem 1.15rem; margin-bottom: 1.5rem; font-size: .9rem; color: var(--ink); line-height: 1.65; }
         .rd-banner .ic { font-size: 1.1rem; }
-        .rd-banner .ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; text-align: right; display: block; margin-top: .4rem; color: var(--muted); }
+        .rd-banner .rd-ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; text-align: right; display: none; }
+        html[lang="ar"] .rd-banner .rd-en { display: none; }
+        html[lang="ar"] .rd-banner .rd-ar { display: block; }
+        .lang-toggle { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: .3rem .85rem; font-weight: 700; font-size: .7rem; cursor: pointer; }
         .gate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1rem; }
         .gate { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: 1.1rem 1.2rem; }
         .gate .top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-bottom: .55rem; }
@@ -79,6 +82,7 @@
                 <a href="/orders.html">Orders</a>
                 <a href="/readiness.html" class="active">Readiness</a>
             </div>
+            <button id="langToggle" class="lang-toggle" type="button">AR</button>
         </div>
     </nav>
 
@@ -103,9 +107,8 @@
         <div class="rd-banner">
             <span class="ic">🛈</span>
             <div>
-                <b>Backtested through the 2022 bear, robust — but live track record is required before real money.</b>
-                The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.
-                <span class="ar">النظام متأكد عليه بالباك-تيست عبر هبوط 2022 وقوي — بس لازم ٩٠ يوم تداول ورقي حقيقي قبل أي فلوس حقيقية. تحت بتشوف إنت وصلت لكام في كل شرط.</span>
+                <span class="rd-en"><b>Backtested through the 2022 bear, robust — but a live track record is required before real money.</b> The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.</span>
+                <span class="rd-ar"><b>النظام متأكد عليه بالباك-تيست عبر هبوط 2022 وقوي — بس لازم ٩٠ يوم تداول ورقي حقيقي قبل أي فلوس حقيقية.</b> أثبت قوته بالباك-تيست (Sharpe ١٫٠٨، أقصى هبوط ١٦٫٤٪ مقابل ٢٥٫٤٪ للمؤشر في 2022). تحت بتشوف إنت وصلت لكام في كل شرط قبل أي فلوس حقيقية.</span>
             </div>
         </div>
 
@@ -116,6 +119,25 @@
     </main>
 
     <script>
+    // Language: respect the global selection (set on other pages) + a local toggle.
+    // Arabic text only renders when lang === 'ar'; English mode never shows Arabic.
+    (function(){
+        function applyLang(l){
+            document.documentElement.lang = l;
+            document.documentElement.dir = (l === 'ar') ? 'rtl' : 'ltr';
+            try { localStorage.setItem('starta-lang', l); } catch(e){}
+            var t = document.getElementById('langToggle');
+            if (t) t.textContent = (l === 'ar') ? 'EN' : 'AR';
+        }
+        var saved = 'en';
+        try { saved = localStorage.getItem('starta-lang') || 'en'; } catch(e){}
+        applyLang(saved);
+        var tg = document.getElementById('langToggle');
+        if (tg) tg.addEventListener('click', function(){
+            applyLang((document.documentElement.lang === 'ar') ? 'en' : 'ar');
+        });
+    })();
+
     // Activation of the new passive-core strategy — the live-paper clock starts here.
     var STRATEGY_START = "2026-06-17";
     // Backtest-proven figures (5y incl. 2022 bear) — the validated reference.

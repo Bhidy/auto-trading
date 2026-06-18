@@ -24,7 +24,7 @@
             confirm_order: 'Submit this crypto order?',
             nav_home: 'Home', nav_portfolios: 'Portfolios', nav_pf_list: 'Portfolio List',
             nav_pf1: 'Improving Brain', nav_pf2: 'Capitol Shadow', nav_pf3: 'Cautious Sniper',
-            nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders',
+            nav_market_pulse: 'Market Pulse', nav_trading: 'Trading', nav_orders: 'Orders', nav_readiness: 'Readiness',
             nav_crypto: 'Crypto Terminal', nav_options: 'Options Lab', nav_screener: 'Screener',
             nav_history: 'Account History', nav_alerts: 'Alerts', nav_research: 'Research & AI', nav_settings: 'Settings'
         },
@@ -47,7 +47,7 @@
             confirm_order: 'تأكيد تقديم أمر الكريبتو؟',
             nav_home: 'الرئيسية', nav_portfolios: 'المحافظ', nav_pf_list: 'قائمة المحافظ',
             nav_pf1: 'العقل الذاتي', nav_pf2: 'ظل الكابيتول', nav_pf3: 'القناص الحذر',
-            nav_market_pulse: 'نبض السوق', nav_trading: 'التداول', nav_orders: 'الأوامر',
+            nav_market_pulse: 'نبض السوق', nav_trading: 'التداول', nav_orders: 'الأوامر', nav_readiness: 'الجاهزية',
             nav_crypto: 'محطة الكريبتو', nav_options: 'مختبر الخيارات', nav_screener: 'الفرز',
             nav_history: 'سجل الحساب', nav_alerts: 'التنبيهات', nav_research: 'البحث والذكاء', nav_settings: 'الإعدادات'
         }
