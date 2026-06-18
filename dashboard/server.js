@@ -1088,12 +1088,14 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                     day_pnl_pct: pct
                 };
             } else { // portfolio_3
+                // Honesty rule: when Alpaca is unreachable, fall back ONLY to real
+                // committed state — never fabricated literals (audit 2026-06-18).
                 return {
-                    equity: parseFloat(localState.equity || 99975.89 || 100000),
-                    cash: parseFloat(localState.cash || 53673.45 || 100000),
-                    buying_power: parseFloat(localState.cash || 53673.45 || 100000) * 2,
-                    day_pnl: -33.98,
-                    day_pnl_pct: -0.034
+                    equity: parseFloat(localState.equity || 100000),
+                    cash: parseFloat(localState.cash || 100000),
+                    buying_power: parseFloat(localState.cash || 100000) * 2,
+                    day_pnl: parseFloat(localState.day_pnl || 0),
+                    day_pnl_pct: parseFloat(localState.day_pnl_pct || 0) * 100
                 };
             }
         })(),

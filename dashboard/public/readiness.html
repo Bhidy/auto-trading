@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live-Readiness | Auto Trading</title>
-    <meta name="description" content="Real-money go-live readiness — track every gate before deploying real capital.">
+    <meta name="description" content="Real-money go-live readiness for all 3 portfolios — every gate, computed from real live data, before deploying real capital.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,16 +14,25 @@
     <link rel="stylesheet" href="/assets/portfolio.css">
     <style>
         .rd-wrap { max-width: 1100px; margin: 0 auto; padding: 6rem 1.25rem 4rem; }
+        .rd-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .rd-tab { display: flex; flex-direction: column; gap: .15rem; flex: 1; min-width: 200px; cursor: pointer;
+            background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: .8rem 1rem; transition: border-color .15s, box-shadow .15s; }
+        .rd-tab:hover { border-color: var(--teal); }
+        .rd-tab.active { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal) inset, var(--rw-sh-1, 0 6px 14px rgba(26,15,8,0.05)); }
+        .rd-tab .pf-id { font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+        .rd-tab .pf-nm { font-weight: 700; color: var(--ink); font-size: .95rem; }
+        .rd-tab .pf-eq { font-family: 'IBM Plex Mono', monospace; font-size: .82rem; }
+        .rd-tab .pf-eq.pos { color: #1f8a4d; } .rd-tab .pf-eq.neg { color: var(--teal-dark, #C9461A); }
         .rd-hero { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; justify-content: space-between;
             background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1.75rem; margin-bottom: 1.5rem;
             box-shadow: var(--rw-sh-1, 0 6px 14px rgba(26,15,8,0.05)); }
-        .rd-hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.6rem, 4vw, 2.3rem); margin: 0 0 .35rem; color: var(--ink); font-weight: 400; }
-        .rd-hero p { color: var(--muted); margin: 0; max-width: 46ch; line-height: 1.6; font-size: .95rem; }
+        .rd-hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(1.5rem, 4vw, 2.1rem); margin: 0 0 .35rem; color: var(--ink); font-weight: 400; }
+        .rd-hero p { color: var(--muted); margin: 0; max-width: 48ch; line-height: 1.6; font-size: .93rem; }
         .gauge { width: 168px; height: 168px; flex-shrink: 0; position: relative; }
         .gauge svg { transform: rotate(-90deg); }
         .gauge .pct { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .gauge .pct b { font-family: 'DM Serif Display', serif; font-size: 2.1rem; color: var(--teal); line-height: 1; }
-        .gauge .pct span { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: .3rem; text-align: center; }
+        .gauge .pct span { font-size: .66rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: .3rem; text-align: center; }
         .verdict-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .4rem .9rem; border-radius: 999px;
             font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; margin-top: .6rem; }
         .vp-paper { background: rgba(229,90,31,.12); color: var(--teal-dark, #C9461A); }
@@ -53,14 +62,9 @@
         .chip .v { color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
         .sec-title { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--ink); margin: 0 0 .9rem; font-weight: 400; }
         .foot { margin-top: 1.75rem; font-size: .78rem; color: var(--muted); line-height: 1.6; }
-        /* Arabic mode: serif headings have no Arabic glyphs — switch them to the Arabic UI face. */
-        html[dir="rtl"] .rd-hero h1,
-        html[dir="rtl"] .sec-title { font-family: 'IBM Plex Sans Arabic', sans-serif; }
-        html[dir="rtl"] .gate .name,
-        html[dir="rtl"] .rd-hero p,
-        html[dir="rtl"] .rd-banner,
-        html[dir="rtl"] .eta,
-        html[dir="rtl"] .foot { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        html[dir="rtl"] .rd-hero h1, html[dir="rtl"] .sec-title { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+        html[dir="rtl"] .gate .name, html[dir="rtl"] .rd-hero p, html[dir="rtl"] .rd-banner,
+        html[dir="rtl"] .eta, html[dir="rtl"] .foot, html[dir="rtl"] .rd-tab .pf-nm { font-family: 'IBM Plex Sans Arabic', sans-serif; }
     </style>
 </head>
 <body>
@@ -122,10 +126,12 @@
     </nav>
 
     <main class="rd-wrap">
+        <div class="rd-tabs" id="tabs"></div>
+
         <section class="rd-hero">
             <div>
                 <h1 data-key="hero_title">Live-Readiness</h1>
-                <p data-key="hero_desc">How close P1 is to deploying real capital. Strategy: regime-aware diversified passive core + small de-risked satellite. Real money stays locked until every gate below is green.</p>
+                <p data-key="hero_desc">Real-money go-live readiness for each portfolio. Every gate below is computed from real, live data. Real capital stays locked until a portfolio's gates are all green.</p>
                 <div id="verdict"></div>
                 <div class="eta" id="eta"></div>
             </div>
@@ -141,7 +147,7 @@
 
         <div class="rd-banner">
             <span class="ic">🛈</span>
-            <div><b data-key="banner_lead">Backtested through the 2022 bear, robust — but a live track record is required before real money.</b> <span data-key="banner_body">The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.</span></div>
+            <div id="disclosure"></div>
         </div>
 
         <h2 class="sec-title" data-key="gates_title">Go-live gates</h2>
@@ -160,172 +166,236 @@
                 nav_crypto_link:'Crypto', nav_orders:'Orders', nav_readiness:'Readiness',
                 nav_workspace:'Workspace', nav_intelligence:'Intelligence', nav_research:'Research & AI',
                 nav_screener:'Screener', nav_history:'Account History', nav_settings:'Settings',
-                hero_title:'Live-Readiness',
-                hero_desc:'How close P1 is to deploying real capital. Strategy: regime-aware diversified passive core + small de-risked satellite. Real money stays locked until every gate below is green.',
-                ready_label:'real-money ready',
-                vp_paper:'● Paper only — not yet for real money',
-                vp_go:'● Ready for fractional go-live',
-                banner_lead:'Backtested through the 2022 bear, robust — but a live track record is required before real money.',
-                banner_body:"The strategy is proven in backtest (Sharpe 1.08, max drawdown 16.4% vs the index's 25.4% through 2022). Real capital still needs ~90 paper-trading days of live confirmation first.",
+                hero_title:'Live-Readiness', ready_label:'real-money ready',
+                hero_desc:'Real-money go-live readiness for each portfolio. Every gate below is computed from real, live data. Real capital stays locked until a portfolio’s gates are all green.',
                 gates_title:'Go-live gates',
-                g_paper:'Paper track record', g_sharpe:'Out-of-sample Sharpe', g_maxdd:'Max drawdown',
-                g_pf:'Profit factor', g_sample:'Closed-trade sample', g_regime:'Regime coverage',
+                pf1_name:'Self-Improving Brain', pf2_name:'Capitol Shadow', pf3_name:'Cautious Sniper',
+                vp_paper:'● Paper only — not yet for real money', vp_go:'● Ready for fractional go-live',
                 lbl_target:'Target', lbl_backtest:'Backtest', lbl_live:'Live now',
                 st_pass:'PASSED', st_warn:'NEEDS WORK', st_pend:'IN PROGRESS',
-                tgt_days:'≥ 90 trading days', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
-                tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 closed', tgt_regime:'≥ 2 distinct regimes',
-                bt_5yrs:'5 yrs', bt_bullbear:'bull + 2022 bear', v_dash:'—',
-                v_days:'{n} days', v_pending:'pending', v_tracking:'tracking',
-                v_no_closes:'no closes yet', v_closed:'{n} closed', v_1bull:'1 (bull)',
-                eta_ready:'All gates green — start with <b>5–10% of capital</b> for 2 weeks.',
-                eta_pending:'Earliest review: <b>{date}</b> (after the 90-day paper gate — then fractional 5–10%).',
-                win_rate:'{n}% win rate', win_pending:'win rate pending',
-                foot_tmpl:'Live data: {closed} closed P1 trades, {win}. Gates per docs/LIVE_READINESS.md. Backtest figures are 5-year out-of-sample including the 2022 bear; live figures accrue as the paper strategy runs.',
+                g_track:'Paper track record', g_sharpe:'Out-of-sample Sharpe', g_maxdd:'Max drawdown (live)',
+                g_pf:'Profit factor (live)', g_sample:'Closed trades (measured)', g_return:'Net return (live)',
+                tgt_track:'≥ 90 trading days', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
+                tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 measured', tgt_return:'positive',
+                v_days:'{n} days', v_pct:'{n}%', v_none:'no backtest yet', v_insufficient:'insufficient sample',
+                v_nclosed:'{n} measured', v_dash:'—', bt_deployed:'0.59 (deployed)', bt_na:'—',
+                eta_ready:'All gates green — begin with <b>5–10% of capital</b> for 2 weeks.',
+                eta_pending:'Not ready for real money. Binding gap: <b>{gap}</b>.',
+                foot_tmpl:'Live data for {name}: equity <b>{equity}</b> ({ret}) · {closed} closed trades ({measured} with recorded P&amp;L) · max drawdown {dd}. Gates per docs/LIVE_READINESS.md, computed from the live Alpaca account + Supabase equity history. Auto-refreshes every 60s.',
                 foot_loading:'Loading live data…',
-                foot_unreachable:'Showing backtest-proven gates; live trade data not reachable from here.'
+                foot_unreachable:'Live data not reachable from here.',
+                dis_p1:'<b>Strategy changed 2026-06-17 to a regime-aware diversified passive core.</b> The new core has not yet built a live track record. The prior active strategy’s realized record was negative (profit factor 0.23 over 52 closed trades), which is why it was de-emphasized. The deployed config’s out-of-sample backtest Sharpe is 0.59 (the pure core scores 1.08, but the active sleeve still in the book drags it down).',
+                dis_p2:'<b>Copy-trades U.S. congressional disclosures (delayed research-grade signal).</b> 0 closed copy-trades so realized edge is not yet measurable, and no out-of-sample backtest exists yet. Treat disclosures as context, not fresh alpha.',
+                dis_p3:'<b>Event-driven: technical breakout + news catalyst.</b> Only 3 of 21 closed trades carry recorded P&amp;L (all losses), and no out-of-sample backtest exists yet. Edge is not yet established.',
+                gap_track:'live track record (need 90 days)', gap_sharpe:'a validated out-of-sample backtest', gap_maxdd:'drawdown above 15%',
+                gap_pf:'profit factor below 1.3', gap_sample:'too few measured closed trades', gap_generic:'multiple gates still open'
             },
             ar: {
                 nav_home:'الرئيسية', nav_portfolios:'المحافظ', nav_market_pulse:'نبض السوق',
                 nav_crypto_link:'الكريبتو', nav_orders:'الأوامر', nav_readiness:'الجاهزية',
                 nav_workspace:'مساحة العمل', nav_intelligence:'الذكاء', nav_research:'البحث والذكاء',
                 nav_screener:'الفرز', nav_history:'سجل الحساب', nav_settings:'الإعدادات',
-                hero_title:'الجاهزية للتداول الحقيقي',
-                hero_desc:'قد إيه المحفظة الأولى قريبة من تشغيل فلوس حقيقية. الاستراتيجية: نواة سلبية متنوّعة واعية بحالة السوق + قمر صناعي صغير مخفّف المخاطر. الفلوس الحقيقية تفضل مقفولة لحد ما كل شرط تحت يبقى أخضر.',
-                ready_label:'الجاهزية للفلوس الحقيقية',
-                vp_paper:'● ورقي فقط — لسه مش جاهز للفلوس الحقيقية',
-                vp_go:'● جاهز للإطلاق الجزئي',
-                banner_lead:'النظام متأكد عليه بالباك-تيست عبر هبوط 2022 وقوي — بس لازم ٩٠ يوم تداول ورقي حقيقي قبل أي فلوس حقيقية.',
-                banner_body:'أثبت قوته بالباك-تيست (Sharpe ١٫٠٨، أقصى هبوط ١٦٫٤٪ مقابل ٢٥٫٤٪ للمؤشر في 2022). الفلوس الحقيقية لسه محتاجة حوالي ٩٠ يوم تداول ورقي للتأكيد المباشر الأول.',
+                hero_title:'الجاهزية للتداول الحقيقي', ready_label:'الجاهزية للفلوس الحقيقية',
+                hero_desc:'جاهزية كل محفظة للتداول بفلوس حقيقية. كل شرط تحت محسوب من بيانات حية حقيقية. الفلوس الحقيقية تفضل مقفولة لحد ما كل شروط المحفظة تبقى خضراء.',
                 gates_title:'شروط الإطلاق الحقيقي',
-                g_paper:'سجل التداول الورقي', g_sharpe:'Sharpe خارج العينة', g_maxdd:'أقصى هبوط',
-                g_pf:'معامل الربح', g_sample:'عيّنة الصفقات المغلقة', g_regime:'تغطية حالات السوق',
+                pf1_name:'العقل الذاتي', pf2_name:'ظل الكابيتول', pf3_name:'القناص الحذر',
+                vp_paper:'● ورقي فقط — لسه مش جاهز للفلوس الحقيقية', vp_go:'● جاهز للإطلاق الجزئي',
                 lbl_target:'الهدف', lbl_backtest:'باك-تيست', lbl_live:'الآن مباشر',
                 st_pass:'تحقّق', st_warn:'يحتاج عمل', st_pend:'قيد التقدّم',
-                tgt_days:'≥ 90 يوم تداول', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15٪',
-                tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 مغلقة', tgt_regime:'≥ حالتين مختلفتين',
-                bt_5yrs:'5 سنوات', bt_bullbear:'صاعد + هبوط 2022', v_dash:'—',
-                v_days:'{n} يوم', v_pending:'قيد الانتظار', v_tracking:'بيتتبّع',
-                v_no_closes:'لا إغلاقات بعد', v_closed:'{n} مغلقة', v_1bull:'1 (صاعد)',
+                g_track:'سجل التداول الورقي', g_sharpe:'Sharpe خارج العينة', g_maxdd:'أقصى هبوط (مباشر)',
+                g_pf:'معامل الربح (مباشر)', g_sample:'الصفقات المغلقة (المقاسة)', g_return:'صافي العائد (مباشر)',
+                tgt_track:'≥ 90 يوم تداول', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
+                tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 مقاسة', tgt_return:'موجب',
+                v_days:'{n} يوم', v_pct:'{n}%', v_none:'لا يوجد باك-تيست بعد', v_insufficient:'عينة غير كافية',
+                v_nclosed:'{n} مقاسة', v_dash:'—', bt_deployed:'0.59 (المطبّق)', bt_na:'—',
                 eta_ready:'كل الشروط خضراء — ابدأ بـ <b>٥–١٠٪ من رأس المال</b> لمدة أسبوعين.',
-                eta_pending:'أقرب مراجعة: <b>{date}</b> (بعد شرط الـ٩٠ يوم الورقي — وبعدين جزئي ٥–١٠٪).',
-                win_rate:'{n}٪ معدل فوز', win_pending:'معدل الفوز قيد الانتظار',
-                foot_tmpl:'بيانات مباشرة: {closed} صفقة P1 مغلقة، {win}. الشروط حسب docs/LIVE_READINESS.md. أرقام الباك-تيست لخمس سنوات خارج العينة شاملة هبوط 2022؛ الأرقام المباشرة بتتجمّع مع تشغيل الاستراتيجية الورقية.',
+                eta_pending:'مش جاهز للفلوس الحقيقية. أهم نقص: <b>{gap}</b>.',
+                foot_tmpl:'بيانات مباشرة لـ {name}: رأس المال <b>{equity}</b> ({ret}) · {closed} صفقة مغلقة ({measured} بربح/خسارة مسجلة) · أقصى هبوط {dd}. الشروط حسب docs/LIVE_READINESS.md، محسوبة من حساب Alpaca الحي + سجل Supabase. يتحدّث كل ٦٠ ثانية.',
                 foot_loading:'جاري تحميل البيانات المباشرة…',
-                foot_unreachable:'بعرض الشروط المثبتة بالباك-تيست؛ بيانات التداول المباشرة مش متاحة من هنا.'
+                foot_unreachable:'البيانات المباشرة مش متاحة من هنا.',
+                dis_p1:'<b>الاستراتيجية اتغيرت في 2026-06-17 لنواة سلبية متنوّعة واعية بحالة السوق.</b> النواة الجديدة لسه مبنتش سجل مباشر. الاستراتيجية النشطة السابقة كان سجلها سلبي (معامل ربح 0.23 على 52 صفقة مغلقة)، وعشان كده اتقلّل اعتمادها. Sharpe الباك-تيست للتركيب المطبّق = 0.59 (النواة الصافية بتجيب 1.08 بس الجزء النشط بيسحبها لتحت).',
+                dis_p2:'<b>بتقلّد إفصاحات الكونجرس الأمريكي (إشارة بحثية متأخرة).</b> 0 صفقات مغلقة فالإدج لسه مش قابل للقياس، ومفيش باك-تيست بعد. الإفصاحات سياق مش ألفا طازة.',
+                dis_p3:'<b>مدفوع بالأحداث: اختراق فني + محفّز أخبار.</b> 3 بس من 21 صفقة مغلقة عندها ربح/خسارة مسجلة (كلها خسائر)، ومفيش باك-تيست بعد. الإدج لسه مش مثبت.',
+                gap_track:'سجل مباشر (محتاج 90 يوم)', gap_sharpe:'باك-تيست خارج العينة مثبت', gap_maxdd:'الهبوط أعلى من 15%',
+                gap_pf:'معامل الربح أقل من 1.3', gap_sample:'صفقات مقاسة قليلة', gap_generic:'فيه أكتر من شرط لسه مفتوح'
             }
         };
 
+        var PF = [
+            { id:'portfolio_1', nameKey:'pf1_name', disKey:'dis_p1', bt:{ has:true, sharpe:0.59, dd:16.9 } },
+            { id:'portfolio_2', nameKey:'pf2_name', disKey:'dis_p2', bt:{ has:false } },
+            { id:'portfolio_3', nameKey:'pf3_name', disKey:'dis_p3', bt:{ has:false } }
+        ];
+        var MEASURE_FLOOR = 10;   // below this many measured closes, PF/Sharpe edge is "insufficient sample"
+
         var lang = localStorage.getItem('starta-lang') || localStorage.getItem('lang') || 'en';
-        var lastLog = null;
+        var current = 'portfolio_1';
+        var cache = {};   // id -> { details, history }
 
-        // Activation of the new passive-core strategy — the live-paper clock starts here.
-        var STRATEGY_START = "2026-06-17";
-        // Backtest-proven figures (5y incl. 2022 bear) — the validated reference.
-        var BT = { sharpe: 1.08, maxdd: 16.4 };
-
-        function t(key){ return (T[lang] && T[lang][key] != null) ? T[lang][key] : ((T.en && T.en[key] != null) ? T.en[key] : key); }
-        function tmpl(key, vars){ var s = t(key); for (var k in vars) s = s.replace('{'+k+'}', vars[k]); return s; }
+        function t(k){ return (T[lang] && T[lang][k] != null) ? T[lang][k] : ((T.en && T.en[k] != null) ? T.en[k] : k); }
+        function tmpl(k, v){ var s = t(k); for (var x in v) s = s.split('{'+x+'}').join(v[x]); return s; }
         function sum(a){ return a.reduce(function(x,y){return x+y;},0); }
-        function daysSince(d){ return Math.max(0, Math.floor((Date.now() - new Date(d+"T00:00:00Z"))/86400000)); }
         function clampPct(x){ return Math.max(0, Math.min(100, x)); }
+        function daysSince(d){ return d ? Math.max(0, Math.floor((Date.now() - new Date(d+'T00:00:00Z'))/86400000)) : 0; }
+        function fmtMoney(v){ return (v==null||isNaN(v)) ? '—' : '$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0}); }
+        function pf(id){ for (var i=0;i<PF.length;i++) if (PF[i].id===id) return PF[i]; }
+
+        function maxDrawdown(eqs){
+            var peak = -Infinity, mdd = 0;
+            for (var i=0;i<eqs.length;i++){ var v=eqs[i]; if (v>peak) peak=v; if (peak>0){ var dd=(peak-v)/peak; if (dd>mdd) mdd=dd; } }
+            return mdd*100;
+        }
+
+        // Honest per-portfolio gate computation from REAL data only.
+        function compute(id){
+            var meta = pf(id), c = cache[id] || {};
+            var details = c.details || {}, hist = (c.history && c.history.history) || [];
+            var acct = details.account || {};
+            var equity = (acct.equity!=null) ? Number(acct.equity) : (hist.length ? hist[hist.length-1].equity : 100000);
+            var startEq = hist.length ? hist[0].equity : 100000;
+            var ret = startEq ? (equity/startEq - 1)*100 : 0;
+
+            var tl = details.trade_log || [];
+            var closed = tl.filter(function(tr){ return String(tr.status||'').indexOf('closed')===0; });
+            var measured = closed.map(function(tr){ return (tr.realized_pnl!=null)?tr.realized_pnl:tr.pnl; })
+                                 .filter(function(v){ return typeof v==='number'; });
+            var wins = measured.filter(function(v){return v>0;}), losses = measured.filter(function(v){return v<0;});
+            var profitFactor = losses.length ? (sum(wins)/Math.abs(sum(losses))) : (wins.length ? Infinity : null);
+            var days = hist.length ? daysSince(hist[0].date) : 0;
+            var dd = hist.length ? maxDrawdown(hist.map(function(h){return h.equity;})) : null;
+            var enough = measured.length >= MEASURE_FLOOR;
+
+            var gates = [];
+            // 1) Paper track record
+            gates.push({ key:'g_track', target:'tgt_track', backtest:t('v_dash'), live:tmpl('v_days',{n:days}),
+                progress: days/90*100, status: days>=90?'pass':'pend' });
+            // 2) Out-of-sample Sharpe (backtest) — honest: deployed 0.59 for P1, none for P2/P3
+            gates.push({ key:'g_sharpe', target:'tgt_sharpe',
+                backtest: meta.bt.has ? t('bt_deployed') : t('bt_na'),
+                live: t('v_dash'),
+                progress: meta.bt.has ? Math.min(100, meta.bt.sharpe/1.0*100) : 0,
+                status: (meta.bt.has && meta.bt.sharpe>=1.0) ? 'pass' : 'warn' });
+            // 3) Max drawdown (live, from real equity curve)
+            gates.push({ key:'g_maxdd', target:'tgt_maxdd',
+                backtest: meta.bt.has ? (meta.bt.dd.toFixed(1)+'%') : t('bt_na'),
+                live: dd!=null ? tmpl('v_pct',{n:dd.toFixed(1)}) : t('v_dash'),
+                progress: dd!=null ? Math.min(100, 15/Math.max(dd,0.001)*100) : 0,
+                status: dd!=null ? (dd<=15?'pass':'warn') : 'pend' });
+            // 4) Profit factor (live, honest insufficient-sample handling)
+            gates.push({ key:'g_pf', target:'tgt_pf', backtest:t('v_dash'),
+                live: enough ? (profitFactor===Infinity?'∞':profitFactor.toFixed(2)) : t('v_insufficient'),
+                progress: enough && profitFactor!=null ? Math.min(100, profitFactor/1.3*100) : 0,
+                status: enough ? ((profitFactor!=null && profitFactor>=1.3)?'pass':'warn') : 'pend' });
+            // 5) Closed trades (measured)
+            gates.push({ key:'g_sample', target:'tgt_sample', backtest:t('v_dash'), live:tmpl('v_nclosed',{n:measured.length}),
+                progress: measured.length/50*100, status: measured.length>=50?'pass':'pend' });
+            // 6) Net return (live, informational)
+            gates.push({ key:'g_return', target:'tgt_return', backtest:t('v_dash'),
+                live:(ret>=0?'+':'')+ret.toFixed(1)+'%',
+                progress: ret>0?100:0, status: ret>0?'pass':'warn' });
+
+            return { gates:gates, equity:equity, ret:ret, closed:closed.length, measured:measured.length, dd:dd, days:days,
+                hardGates: gates.slice(0,5) };
+        }
 
         function gateCard(g){
-            var statusCls = g.status==='pass'?'s-pass':(g.status==='warn'?'s-warn':'s-pend');
-            var statusTxt = g.status==='pass'?t('st_pass'):(g.status==='warn'?t('st_warn'):t('st_pend'));
-            var barCls = g.progress>=100 ? 'bar done' : 'bar';
+            var sCls = g.status==='pass'?'s-pass':(g.status==='warn'?'s-warn':'s-pend');
+            var sTxt = g.status==='pass'?t('st_pass'):(g.status==='warn'?t('st_warn'):t('st_pend'));
             return '<div class="gate"><div class="top"><span class="name">'+t(g.key)+'</span>'+
-                '<span class="status '+statusCls+'">'+statusTxt+'</span></div>'+
+                '<span class="status '+sCls+'">'+sTxt+'</span></div>'+
                 '<div class="meta">'+t('lbl_target')+': <b>'+t(g.target)+'</b></div>'+
-                '<div class="'+barCls+'"><i style="width:'+clampPct(g.progress)+'%"></i></div>'+
+                '<div class="'+(g.progress>=100?'bar done':'bar')+'"><i style="width:'+clampPct(g.progress)+'%"></i></div>'+
                 '<div class="row2"><div class="chip"><span class="k">'+t('lbl_backtest')+'</span><span class="v">'+g.backtest+'</span></div>'+
                 '<div class="chip"><span class="k">'+t('lbl_live')+'</span><span class="v">'+g.live+'</span></div></div></div>';
         }
 
-        function render(log){
-            lastLog = log;
-            // Only count trades UNDER THE NEW strategy (the readiness clock starts at
-            // activation) — old active-strategy trades must not inflate the gates.
-            var closed = (log||[]).filter(function(tr){
-                var p = (tr.realized_pnl!=null)?tr.realized_pnl:tr.pnl;
-                var when = (tr.exit_timestamp||tr.timestamp||'').slice(0,10);
-                return tr.status==='closed' && typeof p==='number' && when >= STRATEGY_START;
+        function renderTabs(){
+            document.getElementById('tabs').innerHTML = PF.map(function(p){
+                var c = cache[p.id], acct = (c && c.details && c.details.account) || {};
+                var eq = acct.equity!=null ? Number(acct.equity) : null;
+                var ret = (c && c.history && c.history.history && c.history.history.length)
+                    ? (eq/c.history.history[0].equity - 1)*100 : null;
+                var eqCls = ret==null?'':(ret>=0?'pos':'neg');
+                var eqTxt = eq!=null ? fmtMoney(eq)+(ret!=null?'  ('+(ret>=0?'+':'')+ret.toFixed(1)+'%)':'') : '—';
+                return '<div class="rd-tab'+(p.id===current?' active':'')+'" data-pf="'+p.id+'">'+
+                    '<span class="pf-id">'+p.id.replace('portfolio_','P')+'</span>'+
+                    '<span class="pf-nm">'+t(p.nameKey)+'</span>'+
+                    '<span class="pf-eq '+eqCls+'">'+eqTxt+'</span></div>';
+            }).join('');
+            Array.prototype.forEach.call(document.querySelectorAll('.rd-tab'), function(el){
+                el.addEventListener('click', function(){ current = el.getAttribute('data-pf'); renderAll(); });
             });
-            var pnls = closed.map(function(tr){ return (tr.realized_pnl!=null)?tr.realized_pnl:tr.pnl; });
-            var wins = pnls.filter(function(p){return p>0;}), losses = pnls.filter(function(p){return p<0;});
-            var pf = losses.length ? (sum(wins)/Math.abs(sum(losses))) : null;
-            var winRate = pnls.length ? Math.round(wins.length/pnls.length*100) : null;
-            var days = daysSince(STRATEGY_START);
+        }
 
-            var gates = [
-                { key:'g_paper', target:'tgt_days', backtest:t('bt_5yrs'), live:tmpl('v_days',{n:days}),
-                  progress: days/90*100, status: days>=90?'pass':'pend' },
-                { key:'g_sharpe', target:'tgt_sharpe', backtest:BT.sharpe.toFixed(2), live: pnls.length>=20? t('v_dash'):t('v_pending'),
-                  progress: Math.min(100, BT.sharpe/1.0*100), status: BT.sharpe>=1.0 ? (pnls.length>=50?'pass':'pend') : 'warn' },
-                { key:'g_maxdd', target:'tgt_maxdd', backtest:BT.maxdd.toFixed(1)+'%', live:t('v_tracking'),
-                  progress: Math.min(100, 15/BT.maxdd*100), status: BT.maxdd<=15 ? 'pass':'warn' },
-                { key:'g_pf', target:'tgt_pf', backtest:t('v_dash'), live: pf!=null? pf.toFixed(2):t('v_no_closes'),
-                  progress: pf!=null? Math.min(100, pf/1.3*100):0, status: pf!=null&&pf>=1.3?'pass':'pend' },
-                { key:'g_sample', target:'tgt_sample', backtest:t('v_dash'), live:tmpl('v_closed',{n:closed.length}),
-                  progress: closed.length/50*100, status: closed.length>=50?'pass':'pend' },
-                { key:'g_regime', target:'tgt_regime', backtest:t('bt_bullbear'), live:t('v_1bull'),
-                  progress: 50, status:'pend' }
-            ];
+        function render(){
+            var meta = pf(current), r = compute(current);
+            document.getElementById('disclosure').innerHTML = t(meta.disKey);
 
-            document.getElementById('gates').innerHTML = gates.map(gateCard).join('');
+            document.getElementById('gates').innerHTML = r.gates.map(gateCard).join('');
 
-            // Overall readiness = the live track record is the binding constraint, weighted with the mean gate progress.
-            var meanProgress = sum(gates.map(function(g){return clampPct(g.progress);}))/gates.length;
-            var overall = clampPct(Math.round((days/90*100)*0.5 + meanProgress*0.5));
+            // Overall readiness = share of HARD gates actually PASSED (return is informational).
+            // Deliberately conservative: partial progress on a gate does not count toward
+            // "ready" — only a fully green gate does, so the gauge can never overstate.
+            var passed = r.hardGates.filter(function(g){return g.status==='pass';}).length;
+            var overall = clampPct(Math.round(passed/r.hardGates.length*100));
             document.getElementById('pct').textContent = overall+'%';
             document.getElementById('ring').style.strokeDashoffset = 452 - (452*overall/100);
 
-            var allPass = gates.every(function(g){return g.status==='pass';});
+            var allPass = r.hardGates.every(function(g){return g.status==='pass';});
             document.getElementById('verdict').innerHTML = allPass
                 ? '<span class="verdict-pill vp-go">'+t('vp_go')+'</span>'
                 : '<span class="verdict-pill vp-paper">'+t('vp_paper')+'</span>';
 
-            var remaining = Math.max(0, 90 - days);
-            var eta = new Date(Date.now() + remaining*86400000);
-            document.getElementById('eta').innerHTML = allPass
-                ? t('eta_ready')
-                : tmpl('eta_pending', { date: eta.toISOString().slice(0,10) });
+            // Binding gap = the first failing hard gate (most honest "what's missing").
+            var gapMap = { g_track:'gap_track', g_sharpe:'gap_sharpe', g_maxdd:'gap_maxdd', g_pf:'gap_pf', g_sample:'gap_sample' };
+            var failing = r.hardGates.filter(function(g){return g.status!=='pass';});
+            var gapKey = failing.length===1 ? gapMap[failing[0].key] : 'gap_generic';
+            document.getElementById('eta').innerHTML = allPass ? t('eta_ready') : tmpl('eta_pending',{gap:t(gapKey)});
 
-            var winTxt = (winRate!=null) ? tmpl('win_rate',{n:winRate}) : t('win_pending');
             var foot = document.getElementById('foot');
-            foot.removeAttribute('data-key');   // dynamic now — applyLang must not overwrite it
-            foot.innerHTML = tmpl('foot_tmpl', { closed: closed.length, win: winTxt });
+            foot.removeAttribute('data-key');
+            foot.innerHTML = tmpl('foot_tmpl', {
+                name: t(meta.nameKey), equity: fmtMoney(r.equity), ret:(r.ret>=0?'+':'')+r.ret.toFixed(1)+'%',
+                closed: r.closed, measured: r.measured, dd: r.dd!=null ? r.dd.toFixed(1)+'%' : '—'
+            });
         }
+
+        function renderAll(){ renderTabs(); render(); }
 
         function applyLang(){
             document.documentElement.lang = lang;
-            document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+            document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
             document.querySelectorAll('[data-key]').forEach(function(el){
                 var k = el.getAttribute('data-key');
                 if (T[lang] && T[lang][k] != null) el.textContent = T[lang][k];
             });
             var tg = document.getElementById('langToggle');
-            if (tg) tg.textContent = (lang === 'ar') ? 'EN' : 'AR';
-            if (lastLog != null) render(lastLog);   // re-render the dynamic gates/verdict/eta/foot
+            if (tg) tg.textContent = (lang==='ar') ? 'EN' : 'AR';
+            if (Object.keys(cache).length) renderAll();
         }
 
-        applyLang();   // paint static text + lang/dir before data arrives
+        function loadAll(){
+            return Promise.all(PF.map(function(p){
+                return Promise.all([
+                    fetch('/api/portfolio/'+p.id+'/details').then(function(r){return r.json();}).catch(function(){return {};}),
+                    fetch('/api/portfolio/'+p.id+'/equity-history').then(function(r){return r.json();}).catch(function(){return {};})
+                ]).then(function(res){ cache[p.id] = { details:res[0], history:res[1] }; });
+            }));
+        }
+
+        applyLang();   // static text + lang/dir before data arrives
 
         var tg = document.getElementById('langToggle');
         if (tg) tg.addEventListener('click', function(){
-            lang = (lang === 'ar') ? 'en' : 'ar';
+            lang = (lang==='ar') ? 'en' : 'ar';
             try { localStorage.setItem('starta-lang', lang); } catch(e){}
             applyLang();
         });
 
-        fetch('/api/portfolio/portfolio_1/details')
-            .then(function(r){ return r.json(); })
-            .then(function(d){ render(d.trade_log || []); })
-            .catch(function(){
-                render([]);
-                var foot = document.getElementById('foot');
-                foot.removeAttribute('data-key');
-                foot.textContent = t('foot_unreachable');
-            });
+        loadAll().then(renderAll).catch(function(){
+            var foot = document.getElementById('foot'); foot.removeAttribute('data-key'); foot.textContent = t('foot_unreachable');
+        });
+        setInterval(function(){ loadAll().then(renderAll); }, 60000);   // auto-refresh real data every 60s
     })();
     </script>
 </body>
