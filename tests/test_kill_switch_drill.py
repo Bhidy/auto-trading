@@ -6,7 +6,6 @@ kill-switch drill in CI"). It runs in CI on every push so the hard safety stop
 can never silently regress — exits never get blocked, entries do.
 """
 import json
-import types
 
 import autonomous_runner as ar
 

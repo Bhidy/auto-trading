@@ -1,6 +1,5 @@
 """Tests for the cross-portfolio aggregate-exposure monitor (committee rec #3)."""
 import json
-import os
 
 import heartbeat as hb
 from shared.cross_portfolio import cross_portfolio_report, load_books
