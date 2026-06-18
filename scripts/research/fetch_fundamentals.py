@@ -88,12 +88,14 @@ def fundamentals_for(cik):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Fetch point-in-time fundamentals from SEC EDGAR.")
     ap.add_argument("--out", default=OUT)
+    ap.add_argument("--watchlist", default=WATCHLIST,
+                    help="universe config (e.g. config/universe_wide.json for the breadth expansion)")
     args = ap.parse_args(argv)
 
     tk = requests.get("https://www.sec.gov/files/company_tickers.json", headers=UA, timeout=30).json()
     by_tic = {v["ticker"]: str(v["cik_str"]).zfill(10) for v in tk.values()}
 
-    w = json.load(open(WATCHLIST))
+    w = json.load(open(args.watchlist))
     buckets = w.get("buckets", w)
     symbols = []
     for spec in buckets.values():

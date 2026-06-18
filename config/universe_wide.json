@@ -1,0 +1,174 @@
+{
+  "buckets": {
+    "technology": {
+      "instrument_type": "stock",
+      "symbols": [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "AVGO",
+        "ADBE",
+        "CRM",
+        "ORCL",
+        "CSCO",
+        "ACN",
+        "AMD",
+        "INTC",
+        "QCOM",
+        "TXN",
+        "IBM",
+        "NOW",
+        "INTU",
+        "AMAT",
+        "MU",
+        "LRCX",
+        "ADI",
+        "KLAC",
+        "SNPS",
+        "CDNS",
+        "PANW"
+      ]
+    },
+    "communication": {
+      "instrument_type": "stock",
+      "symbols": [
+        "GOOGL",
+        "META",
+        "NFLX",
+        "DIS",
+        "CMCSA",
+        "TMUS",
+        "VZ",
+        "T",
+        "CHTR"
+      ]
+    },
+    "consumer_disc": {
+      "instrument_type": "stock",
+      "symbols": [
+        "AMZN",
+        "TSLA",
+        "HD",
+        "MCD",
+        "NKE",
+        "LOW",
+        "SBUX",
+        "BKNG",
+        "TJX",
+        "CMG",
+        "ORLY",
+        "MAR"
+      ]
+    },
+    "consumer_staples": {
+      "instrument_type": "stock",
+      "symbols": [
+        "PG",
+        "KO",
+        "PEP",
+        "COST",
+        "WMT",
+        "PM",
+        "MDLZ",
+        "CL",
+        "MO",
+        "TGT"
+      ]
+    },
+    "healthcare": {
+      "instrument_type": "stock",
+      "symbols": [
+        "UNH",
+        "JNJ",
+        "LLY",
+        "MRK",
+        "ABBV",
+        "PFE",
+        "TMO",
+        "ABT",
+        "DHR",
+        "AMGN",
+        "BMY",
+        "GILD",
+        "ISRG",
+        "MDT",
+        "VRTX",
+        "REGN"
+      ]
+    },
+    "financials": {
+      "instrument_type": "stock",
+      "symbols": [
+        "JPM",
+        "V",
+        "MA",
+        "BAC",
+        "WFC",
+        "GS",
+        "MS",
+        "AXP",
+        "SPGI",
+        "BLK",
+        "C",
+        "SCHW",
+        "CB",
+        "PGR",
+        "MMC"
+      ]
+    },
+    "industrials": {
+      "instrument_type": "stock",
+      "symbols": [
+        "CAT",
+        "HON",
+        "GE",
+        "BA",
+        "UPS",
+        "RTX",
+        "UNP",
+        "DE",
+        "LMT",
+        "MMM",
+        "ADP",
+        "ETN",
+        "EMR"
+      ]
+    },
+    "energy": {
+      "instrument_type": "stock",
+      "symbols": [
+        "XOM",
+        "CVX",
+        "COP",
+        "SLB",
+        "EOG",
+        "MPC",
+        "PSX"
+      ]
+    },
+    "other": {
+      "instrument_type": "stock",
+      "symbols": [
+        "NEE",
+        "DUK",
+        "SO",
+        "LIN",
+        "SHW",
+        "APD",
+        "AMT",
+        "PLD",
+        "EQIX",
+        "CTAS"
+      ]
+    },
+    "core": {
+      "instrument_type": "etf",
+      "symbols": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA"
+      ]
+    }
+  }
+}
