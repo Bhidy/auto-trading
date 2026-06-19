@@ -1,0 +1,118 @@
+[
+  {
+    "date": "2026-06-19",
+    "timestamp": "2026-06-19T21:37:21.977680+00:00",
+    "audit": {
+      "equity": 104292.03,
+      "cash": 10822.34,
+      "daily_pnl": 0.0,
+      "daily_pnl_pct": 0.0,
+      "total_open_exposure": 93469.69,
+      "exposure_pct": 89.6,
+      "position_count": 9,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 21951.17,
+        "Consumer": 20726.24,
+        "Materials": 15246.96,
+        "Energy": 20146.59,
+        "Financials": 15398.73
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AVGO",
+        "qty": "9",
+        "entry": "390.8",
+        "current": "411.35",
+        "market_value": "3702.15",
+        "unrealized_pl": "184.95",
+        "pnl_pct": 5.26,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.06",
+        "market_value": "4906.94",
+        "unrealized_pl": "76.78",
+        "pnl_pct": 1.59,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "FCX",
+        "qty": "222",
+        "entry": "70.916532",
+        "current": "68.68",
+        "market_value": "15246.96",
+        "unrealized_pl": "-496.510104",
+        "pnl_pct": -3.15,
+        "sector": "Materials"
+      },
+      {
+        "symbol": "LRCX",
+        "qty": "3",
+        "entry": "390.38",
+        "current": "389.04",
+        "market_value": "1167.12",
+        "unrealized_pl": "-4.02",
+        "pnl_pct": -0.34,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "240.21",
+        "current": "242.91",
+        "market_value": "14331.69",
+        "unrealized_pl": "159.3",
+        "pnl_pct": 1.12,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "55",
+        "entry": "287.16",
+        "current": "310.58",
+        "market_value": "17081.9",
+        "unrealized_pl": "1288.1",
+        "pnl_pct": 8.16,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MS",
+        "qty": "69",
+        "entry": "226.84",
+        "current": "223.17",
+        "market_value": "15398.73",
+        "unrealized_pl": "-253.23",
+        "pnl_pct": -1.62,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "35",
+        "entry": "171.51",
+        "current": "166.14",
+        "market_value": "5814.9",
+        "unrealized_pl": "-187.95",
+        "pnl_pct": -3.13,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "117.18",
+        "market_value": "15819.3",
+        "unrealized_pl": "284.459985",
+        "pnl_pct": 1.83,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": []
+  }
+]
