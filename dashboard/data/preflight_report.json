@@ -14,21 +14,22 @@
     "ma_fast": 50,
     "ma_slow": 200,
     "atr_risk_target_pct": 1.0,
-    "trailing_stop_atr_mult": 1.8999999999999995,
+    "trailing_stop_atr_mult": 1.5,
     "take_profit_atr_mult": 4.0,
     "regime_weight": 0.15,
     "rs_weight": 0.1,
     "volume_weight": 0.05,
     "macd_weight": 0.1,
     "bb_weight": 0.05,
-    "win_rate_7d": 0.647,
+    "win_rate_7d": 0.286,
     "win_rate_30d": 0.327,
     "avg_win_loss_ratio": 0.36,
     "last_updated": "2026-05-27T14:30:00Z",
     "risk_off_active": true,
     "breakeven_trigger_pct": 0.08,
     "breakeven_lock_pct": 0.005,
-    "core_weight": 0.9,
+    "active_entries_enabled": false,
+    "core_weight": 1.0,
     "core_basket": [
       "SPY",
       "QQQ",
@@ -56,7 +57,7 @@
     },
     "crypto_canary": {
       "ok": true,
-      "detail": "$100k/$3kATR -> 8.77% ($8,770 notional)"
+      "detail": "$100k/$3kATR -> 11.11% ($11,110 notional)"
     },
     "data_fresh": true
   }

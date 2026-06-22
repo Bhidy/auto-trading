@@ -1,39 +1,14 @@
 {
-  "timestamp": "2026-06-18T14:10:48.135394+00:00",
+  "timestamp": "2026-06-22T14:10:55.116596+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 8,
-  "approved": 8,
-  "placed": 2,
-  "filled": 2,
+  "total_signals": 4,
+  "approved": 4,
+  "placed": 3,
+  "filled": 3,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "AVGO",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
       "symbol": "MRVL",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "LRCX",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "FCX",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "PSX",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "MS",
       "reason": "already hold",
       "benign": true
     }
