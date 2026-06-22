@@ -1,14 +1,29 @@
 {
-  "timestamp": "2026-06-22T14:10:55.116596+00:00",
+  "timestamp": "2026-06-22T14:29:43.985415+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 4,
   "approved": 4,
-  "placed": 3,
-  "filled": 3,
+  "placed": 0,
+  "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
       "symbol": "MRVL",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "C",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "CARR",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "UNH",
       "reason": "already hold",
       "benign": true
     }
