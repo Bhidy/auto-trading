@@ -1,8 +1,8 @@
 {
-  "equity": 95405.34,
+  "equity": 95313.3,
   "starting_equity": 100000.0,
-  "day_start_equity": 95405.34,
-  "week_start_equity": 95405.34,
+  "day_start_equity": 95313.3,
+  "week_start_equity": 95313.3,
   "positions": {
     "DIA": {
       "qty": 21,
@@ -51,8 +51,8 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 87814.03409999999,
-  "long_market_value": 87814.03409999999,
+  "total_exposure": 87721.9885,
+  "long_market_value": 87721.9885,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
@@ -64,5 +64,5 @@
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-22T22:25:25.749721+00:00"
+  "last_updated": "2026-06-22T22:54:32.162724+00:00"
 }
