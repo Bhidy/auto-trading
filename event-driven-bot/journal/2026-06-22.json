@@ -750,5 +750,193 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-22",
+    "timestamp": "2026-06-22T23:02:50.389916+00:00",
+    "audit": {
+      "equity": 104493.35,
+      "cash": 516.69,
+      "daily_pnl": 201.32,
+      "daily_pnl_pct": 0.193,
+      "total_open_exposure": 103976.66,
+      "exposure_pct": 99.5,
+      "position_count": 12,
+      "trades_today": 3,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 21432.34,
+        "Financials": 20621.99,
+        "Industrials": 4957.65,
+        "Consumer": 20708.92,
+        "Materials": 15364.62,
+        "Energy": 20484.46,
+        "Healthcare": 406.68
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AVGO",
+        "qty": "9",
+        "entry": "390.8",
+        "current": "392.91",
+        "market_value": "3536.19",
+        "unrealized_pl": "18.99",
+        "pnl_pct": 0.54,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "C",
+        "qty": "34",
+        "entry": "145.58853",
+        "current": "145.67",
+        "market_value": "4952.78",
+        "unrealized_pl": "2.76998",
+        "pnl_pct": 0.06,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "69",
+        "entry": "71.749855",
+        "current": "71.85",
+        "market_value": "4957.65",
+        "unrealized_pl": "6.910005",
+        "pnl_pct": 0.14,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.08",
+        "market_value": "4913.92",
+        "unrealized_pl": "83.76",
+        "pnl_pct": 1.73,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "FCX",
+        "qty": "222",
+        "entry": "70.916532",
+        "current": "69.21",
+        "market_value": "15364.62",
+        "unrealized_pl": "-378.850104",
+        "pnl_pct": -2.41,
+        "sector": "Materials"
+      },
+      {
+        "symbol": "LRCX",
+        "qty": "3",
+        "entry": "390.38",
+        "current": "408",
+        "market_value": "1224",
+        "unrealized_pl": "52.86",
+        "pnl_pct": 4.51,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "240.21",
+        "current": "247.29",
+        "market_value": "14590.11",
+        "unrealized_pl": "417.72",
+        "pnl_pct": 2.95,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "55",
+        "entry": "287.16",
+        "current": "303.13",
+        "market_value": "16672.15",
+        "unrealized_pl": "878.35",
+        "pnl_pct": 5.56,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MS",
+        "qty": "69",
+        "entry": "226.84",
+        "current": "227.09",
+        "market_value": "15669.21",
+        "unrealized_pl": "17.25",
+        "pnl_pct": 0.11,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "35",
+        "entry": "171.51",
+        "current": "168.41",
+        "market_value": "5894.35",
+        "unrealized_pl": "-108.5",
+        "pnl_pct": -1.81,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "406.68",
+        "market_value": "406.68",
+        "unrealized_pl": "1.78",
+        "pnl_pct": 0.44,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "117",
+        "market_value": "15795",
+        "unrealized_pl": "260.159985",
+        "pnl_pct": 1.68,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "C",
+        "side": "buy",
+        "qty": 34,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+17.5%)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "CARR",
+        "side": "buy",
+        "qty": 69,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.5,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+11.4%)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "UNH",
+        "side": "buy",
+        "qty": 1,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+38.2%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
