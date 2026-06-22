@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-22T22:59:19.644734+00:00",
-  "total_equity": 300482.33,
-  "gross_exposure_pct": 88.847,
+  "timestamp": "2026-06-22T23:05:41.370204+00:00",
+  "total_equity": 300465.76,
+  "gross_exposure_pct": 88.852,
   "by_symbol": {
     "DIA": {
       "market_value": 17556.39,
@@ -13,7 +13,7 @@
     },
     "GLD": {
       "market_value": 2336.22,
-      "pct_of_total": 0.777,
+      "pct_of_total": 0.778,
       "books": [
         "portfolio_1"
       ]
@@ -35,7 +35,7 @@
     },
     "QQQ": {
       "market_value": 17434.63,
-      "pct_of_total": 5.802,
+      "pct_of_total": 5.803,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -58,7 +58,7 @@
     },
     "XLI": {
       "market_value": 18553.22,
-      "pct_of_total": 6.174,
+      "pct_of_total": 6.175,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -151,7 +151,7 @@
     },
     "FCX": {
       "market_value": 15743.46,
-      "pct_of_total": 5.239,
+      "pct_of_total": 5.24,
       "books": [
         "portfolio_3"
       ]
@@ -193,7 +193,7 @@
     },
     "F": {
       "market_value": 4830.16,
-      "pct_of_total": 1.607,
+      "pct_of_total": 1.608,
       "books": [
         "portfolio_3"
       ]
@@ -223,27 +223,27 @@
   "by_sector": {
     "Unknown": {
       "market_value": 164247.17,
-      "pct_of_total": 54.661
+      "pct_of_total": 54.664
     },
     "Consumer": {
       "market_value": 20365.0,
-      "pct_of_total": 6.777
+      "pct_of_total": 6.778
     },
     "Tech": {
       "market_value": 20482.14,
-      "pct_of_total": 6.816
+      "pct_of_total": 6.817
     },
     "Materials": {
       "market_value": 15743.46,
-      "pct_of_total": 5.239
+      "pct_of_total": 5.24
     },
     "Energy": {
       "market_value": 20175.24,
-      "pct_of_total": 6.714
+      "pct_of_total": 6.715
     },
     "Financials": {
       "market_value": 20601.97,
-      "pct_of_total": 6.856
+      "pct_of_total": 6.857
     },
     "Industrials": {
       "market_value": 4950.74,
@@ -259,7 +259,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 15.323
+    "mega_cap_tech_ai": 15.324
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
