@@ -1,5 +1,5 @@
 {
-  "equity": 95296.05,
+  "equity": 94352.23,
   "starting_equity": 100000.0,
   "day_start_equity": 95296.05,
   "week_start_equity": 95296.05,
@@ -10,8 +10,8 @@
       "bucket": "core_equity"
     },
     "GLD": {
-      "qty": 6,
-      "avg_price": 389.37,
+      "qty": 25,
+      "avg_price": 382.0784,
       "bucket": "defensive"
     },
     "IWM": {
@@ -51,18 +51,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 87704.7424,
-  "long_market_value": 87704.7424,
+  "total_exposure": 93976.6765,
+  "long_market_value": 93976.6765,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 7591.31,
-  "day_pnl": 0.0,
-  "day_pnl_pct": 0.0,
-  "week_pnl": 0.0,
-  "week_pnl_pct": 0.0,
+  "cash": 375.55,
+  "day_pnl": -943.82,
+  "day_pnl_pct": -0.009904,
+  "week_pnl": -943.82,
+  "week_pnl_pct": -0.009904,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-22T23:05:41.500898+00:00"
+  "last_updated": "2026-06-23T14:10:41.408160+00:00"
 }

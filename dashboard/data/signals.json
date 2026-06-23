@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-22T14:29:27.020696+00:00",
+  "timestamp": "2026-06-23T14:10:32.827600+00:00",
   "market_regime": "BULL",
   "regime_modifiers": {
     "equity_mult": 1.0,
@@ -198,7 +198,7 @@
     }
   ],
   "adaptive_params": {
-    "win_rate_30d": 0.327,
+    "win_rate_30d": 0.333,
     "position_size_multiplier": 0.5,
     "rsi_overbought": 75
   },
