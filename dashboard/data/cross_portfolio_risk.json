@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-24T21:53:19.715413+00:00",
-  "total_equity": 296121.09,
-  "gross_exposure_pct": 82.73,
+  "timestamp": "2026-06-24T22:00:46.102559+00:00",
+  "total_equity": 296131.4,
+  "gross_exposure_pct": 82.727,
   "by_symbol": {
     "DIA": {
       "market_value": 17577.45,
@@ -28,7 +28,7 @@
     },
     "NVDA": {
       "market_value": 7318.69,
-      "pct_of_total": 2.472,
+      "pct_of_total": 2.471,
       "books": [
         "portfolio_1"
       ]
@@ -50,7 +50,7 @@
     },
     "SPY": {
       "market_value": 16883.89,
-      "pct_of_total": 5.702,
+      "pct_of_total": 5.701,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -129,7 +129,7 @@
     },
     "XLV": {
       "market_value": 7218.02,
-      "pct_of_total": 2.438,
+      "pct_of_total": 2.437,
       "books": [
         "portfolio_2"
       ]
@@ -164,14 +164,14 @@
     },
     "MRVL": {
       "market_value": 15793.8,
-      "pct_of_total": 5.334,
+      "pct_of_total": 5.333,
       "books": [
         "portfolio_3"
       ]
     },
     "MS": {
       "market_value": 15651.96,
-      "pct_of_total": 5.286,
+      "pct_of_total": 5.285,
       "books": [
         "portfolio_3"
       ]
@@ -215,7 +215,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 159172.41,
-      "pct_of_total": 53.752
+      "pct_of_total": 53.751
     },
     "Consumer": {
       "market_value": 20365.0,
