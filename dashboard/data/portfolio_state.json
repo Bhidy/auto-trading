@@ -1,5 +1,5 @@
 {
-  "equity": 94206.13,
+  "equity": 93974.29,
   "starting_equity": 100000.0,
   "day_start_equity": 93774.81,
   "week_start_equity": 95296.05,
@@ -15,7 +15,7 @@
       "bucket": "defensive"
     },
     "IWM": {
-      "qty": 40,
+      "qty": 38,
       "avg_price": 287.52125,
       "bucket": "core_equity"
     },
@@ -48,26 +48,21 @@
       "qty": 63,
       "avg_price": 179.14,
       "bucket": "sector_momentum"
-    },
-    "XLK": {
-      "qty": 58,
-      "avg_price": 190.65,
-      "bucket": "sector_momentum"
     }
   },
   "trades_today": 0,
-  "total_exposure": 94188.1057,
-  "long_market_value": 94188.1057,
+  "total_exposure": 82670.6373,
+  "long_market_value": 82670.6373,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 18.02,
-  "day_pnl": 431.32,
-  "day_pnl_pct": 0.0046,
-  "week_pnl": -1089.92,
-  "week_pnl_pct": -0.011437,
+  "cash": 11303.65,
+  "day_pnl": 199.48,
+  "day_pnl_pct": 0.002127,
+  "week_pnl": -1321.76,
+  "week_pnl_pct": -0.01387,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-24T16:36:14.007814+00:00"
+  "last_updated": "2026-06-24T17:01:04.145801+00:00"
 }
