@@ -15,7 +15,13 @@
     "date": "2026-05-27",
     "entry_price": 368.88,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-06-25T17:29:29.787656+00:00",
+    "exit_price": 461.18,
+    "status": "closed",
+    "pnl": 276.86,
+    "realized_pnl": 276.86,
+    "pnl_pct": 25.02
   },
   {
     "symbol": "DHR",
@@ -491,7 +497,7 @@
   {
     "symbol": "TER",
     "side": "sell",
-    "qty": 3,
+    "qty": 2.0,
     "reason": "Take profit at 25.1%",
     "timestamp": "2026-06-25T16:41:11.682806",
     "date": "2026-06-25",
@@ -520,5 +526,33 @@
     "status": "closed",
     "pnl": null,
     "realized_pnl": null
+  },
+  {
+    "symbol": "TER",
+    "side": "sell",
+    "qty": 2,
+    "reason": "Take profit at 25.9%",
+    "timestamp": "2026-06-25T17:29:29.253857",
+    "date": "2026-06-25",
+    "entry_price": 368.88,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
+  },
+  {
+    "symbol": "TER",
+    "side": "sell",
+    "qty": 1.0,
+    "reason": "Take profit at 25.1%",
+    "timestamp": "2026-06-25T16:41:11.682806",
+    "date": "2026-06-25",
+    "entry_price": 368.88,
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_partial",
+    "exit_timestamp": "2026-06-25T17:29:29.787656+00:00",
+    "exit_price": 461.18,
+    "status": "closed",
+    "pnl": -92.31,
+    "realized_pnl": -92.31,
+    "pnl_pct": -25.02
   }
 ]
