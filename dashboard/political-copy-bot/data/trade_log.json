@@ -576,6 +576,23 @@
     "date": "2026-06-25",
     "entry_price": 368.88,
     "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-06-25T19:21:57.381065+00:00",
+    "exit_price": 466.74,
+    "status": "closed",
+    "pnl": -97.87,
+    "realized_pnl": -97.87,
+    "pnl_pct": -26.53
+  },
+  {
+    "symbol": "TER",
+    "side": "sell",
+    "qty": 1,
+    "reason": "Take profit at 25.2%",
+    "timestamp": "2026-06-25T19:21:57.102691",
+    "date": "2026-06-25",
+    "entry_price": 368.88,
+    "reconciled": true,
     "reconcile_reason": "cost_basis_synced"
   }
 ]
