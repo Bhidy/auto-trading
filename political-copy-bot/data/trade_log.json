@@ -2,7 +2,7 @@
   {
     "symbol": "TER",
     "side": "buy",
-    "qty": 7,
+    "qty": 3.0,
     "limit_price": 375.21,
     "estimated_value": 2626.47,
     "order_id": "ae8a17d2-e90e-48e2-b0cc-23e81bf1f0e1",
@@ -12,7 +12,10 @@
     "source": "primary",
     "reason": "Copying Michael McCaul BUY of Teradyne Inc",
     "timestamp": "2026-05-27T19:03:39.167557",
-    "date": "2026-05-27"
+    "date": "2026-05-27",
+    "entry_price": 368.88,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
   },
   {
     "symbol": "DHR",
@@ -481,6 +484,39 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 284.02,
+    "status": "closed",
+    "pnl": null,
+    "realized_pnl": null
+  },
+  {
+    "symbol": "TER",
+    "side": "sell",
+    "qty": 3,
+    "reason": "Take profit at 25.1%",
+    "timestamp": "2026-06-25T16:41:11.682806",
+    "date": "2026-06-25",
+    "entry_price": 368.88,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
+  },
+  {
+    "symbol": "TER",
+    "side": "buy",
+    "qty": 4.0,
+    "limit_price": 375.21,
+    "estimated_value": 2626.47,
+    "order_id": "ae8a17d2-e90e-48e2-b0cc-23e81bf1f0e1",
+    "order_status": "pending_new",
+    "politician": "Michael McCaul",
+    "politician_trade_size": "15K\u201350K",
+    "source": "primary",
+    "reason": "Copying Michael McCaul BUY of Teradyne Inc",
+    "timestamp": "2026-05-27T19:03:39.167557",
+    "date": "2026-05-27",
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_partial",
+    "exit_timestamp": "2026-06-25T16:41:13.232562+00:00",
+    "exit_price": 461.18,
     "status": "closed",
     "pnl": null,
     "realized_pnl": null
