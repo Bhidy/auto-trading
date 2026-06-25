@@ -503,7 +503,13 @@
     "date": "2026-06-25",
     "entry_price": 368.88,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-06-25T18:29:45.341343+00:00",
+    "exit_price": 466.74,
+    "status": "closed",
+    "pnl": -195.74,
+    "realized_pnl": -195.74,
+    "pnl_pct": -26.53
   },
   {
     "symbol": "TER",
@@ -536,7 +542,13 @@
     "date": "2026-06-25",
     "entry_price": 368.88,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-06-25T18:29:45.341343+00:00",
+    "exit_price": 466.74,
+    "status": "closed",
+    "pnl": -195.74,
+    "realized_pnl": -195.74,
+    "pnl_pct": -26.53
   },
   {
     "symbol": "TER",
@@ -554,5 +566,16 @@
     "pnl": -92.31,
     "realized_pnl": -92.31,
     "pnl_pct": -25.02
+  },
+  {
+    "symbol": "TER",
+    "side": "sell",
+    "qty": 1,
+    "reason": "Take profit at 26.6%",
+    "timestamp": "2026-06-25T18:29:44.127636",
+    "date": "2026-06-25",
+    "entry_price": 368.88,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
   }
 ]

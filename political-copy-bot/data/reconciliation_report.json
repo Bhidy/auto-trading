@@ -1,17 +1,7 @@
 {
-  "timestamp": "2026-06-25T17:29:29.618913+00:00",
-  "working_orders": [
-    {
-      "symbol": "TER",
-      "side": "sell",
-      "qty": "2",
-      "filled_qty": "0",
-      "limit_price": "441.73",
-      "status": "new",
-      "submitted_at": "2026-06-25T17:29:29.269859882Z"
-    }
-  ],
-  "working_count": 1,
+  "timestamp": "2026-06-25T18:29:44.940606+00:00",
+  "working_orders": [],
+  "working_count": 0,
   "positions_held": 15,
   "position_reconcile_actions": 1
 }
