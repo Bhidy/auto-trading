@@ -1,5 +1,5 @@
 {
-  "equity": 94144.05,
+  "equity": 94062.34,
   "starting_equity": 100000.0,
   "day_start_equity": 94126.65,
   "week_start_equity": 95296.05,
@@ -23,11 +23,6 @@
       "qty": 38,
       "avg_price": 287.368096,
       "bucket": "core_equity"
-    },
-    "NVDA": {
-      "qty": 35,
-      "avg_price": 209.105429,
-      "bucket": "aggressive_growth"
     },
     "QQQ": {
       "qty": 15,
@@ -56,18 +51,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 94119.28910000001,
-  "long_market_value": 94119.28910000001,
+  "total_exposure": 87233.1028,
+  "long_market_value": 87233.1028,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 18.59,
-  "day_pnl": 17.4,
-  "day_pnl_pct": 0.000185,
-  "week_pnl": -1152.0,
-  "week_pnl_pct": -0.012089,
+  "day_pnl": -64.31,
+  "day_pnl_pct": -0.000683,
+  "week_pnl": -1233.71,
+  "week_pnl_pct": -0.012946,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-25T16:39:45.718311+00:00"
+  "last_updated": "2026-06-25T17:06:32.159974+00:00"
 }
