@@ -232,5 +232,122 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-06-26",
+    "timestamp": "2026-06-26T21:55:39.053265+00:00",
+    "audit": {
+      "equity": 100541.56,
+      "cash": 30793.53,
+      "daily_pnl": -1517.52,
+      "daily_pnl_pct": -1.487,
+      "total_open_exposure": 69748.75,
+      "exposure_pct": 69.4,
+      "position_count": 9,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 17866.6,
+        "Financials": 4823.78,
+        "Industrials": 5077.71,
+        "Consumer": 20544.12,
+        "Energy": 21009.54,
+        "Healthcare": 427.0
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AVGO",
+        "qty": "9",
+        "entry": "390.8",
+        "current": "365",
+        "market_value": "3285",
+        "unrealized_pl": "-232.2",
+        "pnl_pct": -6.6,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "C",
+        "qty": "34",
+        "entry": "145.588529",
+        "current": "141.8759",
+        "market_value": "4823.7806",
+        "unrealized_pl": "-126.229386",
+        "pnl_pct": -2.55,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "69",
+        "entry": "71.749855",
+        "current": "73.59",
+        "market_value": "5077.71",
+        "unrealized_pl": "126.970005",
+        "pnl_pct": 2.56,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.13",
+        "market_value": "4931.37",
+        "unrealized_pl": "101.21",
+        "pnl_pct": 2.1,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "240.21",
+        "current": "254.06",
+        "market_value": "14989.54",
+        "unrealized_pl": "817.15",
+        "pnl_pct": 5.77,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "55",
+        "entry": "287.16",
+        "current": "265.12",
+        "market_value": "14581.6",
+        "unrealized_pl": "-1212.2",
+        "pnl_pct": -7.67,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "35",
+        "entry": "171.51",
+        "current": "172",
+        "market_value": "6020",
+        "unrealized_pl": "17.15",
+        "pnl_pct": 0.29,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "427",
+        "market_value": "427",
+        "unrealized_pl": "22.1",
+        "pnl_pct": 5.46,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "115.65",
+        "market_value": "15612.75",
+        "unrealized_pl": "77.909985",
+        "pnl_pct": 0.5,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": []
   }
 ]
