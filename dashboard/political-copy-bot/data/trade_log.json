@@ -593,6 +593,12 @@
     "date": "2026-06-25",
     "entry_price": 368.88,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-26T16:32:23.992974+00:00",
+    "exit_price": 461.59,
+    "status": "closed",
+    "pnl": -92.72,
+    "realized_pnl": -92.72,
+    "pnl_pct": -25.14
   }
 ]
