@@ -2396,5 +2396,34 @@
     "realized_pnl": null,
     "hold_days": null,
     "status": "open"
+  },
+  {
+    "id": 77,
+    "schema_version": 2,
+    "timestamp": "2026-06-26T14:10:40.386327+00:00",
+    "symbol": "BIL",
+    "side": "buy",
+    "qty": 74.0,
+    "entry_price": 91.63,
+    "intended_price": 91.72,
+    "slippage_pct": -0.0981,
+    "bucket": "core_equity",
+    "signal_score": null,
+    "reasons": [
+      "passive_core_w1_regime_BULL"
+    ],
+    "borrow_status": null,
+    "order_class": "passive_core",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": null,
+    "exit_timestamp": null,
+    "gross_pnl": null,
+    "fees": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "realized_pnl": null,
+    "hold_days": null,
+    "status": "open"
   }
 ]

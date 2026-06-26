@@ -1,12 +1,12 @@
 {
-  "equity": 94068.29,
+  "equity": 94033.05,
   "starting_equity": 100000.0,
   "day_start_equity": 94067.92,
   "week_start_equity": 95296.05,
   "positions": {
     "BIL": {
-      "qty": 6,
-      "avg_price": 91.61,
+      "qty": 80,
+      "avg_price": 91.6285,
       "bucket": "defensive"
     },
     "DIA": {
@@ -51,18 +51,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 87239.4019,
-  "long_market_value": 87239.4019,
+  "total_exposure": 93983.8008,
+  "long_market_value": 93983.8008,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 6828.89,
-  "day_pnl": 0.37,
-  "day_pnl_pct": 4e-06,
-  "week_pnl": -1227.76,
-  "week_pnl_pct": -0.012884,
+  "cash": 48.25,
+  "day_pnl": -34.87,
+  "day_pnl_pct": -0.000371,
+  "week_pnl": -1263.0,
+  "week_pnl_pct": -0.013253,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-25T23:01:39.249080+00:00"
+  "last_updated": "2026-06-26T14:10:47.565884+00:00"
 }
