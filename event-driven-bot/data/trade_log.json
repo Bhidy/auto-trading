@@ -902,7 +902,14 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-26T21:42:31.649686+00:00",
+    "exit_price": 215.22,
+    "pnl": -802.21,
+    "realized_pnl": -802.21,
+    "pnl_pct": -5.13
   },
   {
     "timestamp": "2026-06-18T14:10:43.875904+00:00",
