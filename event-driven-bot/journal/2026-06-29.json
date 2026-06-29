@@ -634,5 +634,217 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-06-29",
+    "timestamp": "2026-06-29T22:20:31.981102+00:00",
+    "audit": {
+      "equity": 100806.33,
+      "cash": 18641.7,
+      "daily_pnl": 183.05,
+      "daily_pnl_pct": 0.182,
+      "total_open_exposure": 82164.63,
+      "exposure_pct": 81.5,
+      "position_count": 12,
+      "trades_today": 5,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Financials": 19611.96,
+        "Industrials": 20354.51,
+        "Consumer": 20381.41,
+        "Energy": 21397.63,
+        "Healthcare": 419.12
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "342.72",
+        "market_value": "6854.4",
+        "unrealized_pl": "31.3",
+        "pnl_pct": 0.46,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "C",
+        "qty": "34",
+        "entry": "145.588529",
+        "current": "142.5",
+        "market_value": "4845",
+        "unrealized_pl": "-105.009986",
+        "pnl_pct": -2.12,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "69",
+        "entry": "71.749855",
+        "current": "73.43",
+        "market_value": "5066.67",
+        "unrealized_pl": "115.930005",
+        "pnl_pct": 2.34,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "8",
+        "entry": "998.51",
+        "current": "1034",
+        "market_value": "8272",
+        "unrealized_pl": "283.92",
+        "pnl_pct": 3.55,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "EMR",
+        "qty": "2",
+        "entry": "142.66",
+        "current": "142.82",
+        "market_value": "285.64",
+        "unrealized_pl": "0.32",
+        "pnl_pct": 0.11,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.0506",
+        "market_value": "4903.6594",
+        "unrealized_pl": "73.4994",
+        "pnl_pct": 1.52,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "18",
+        "entry": "372.748333",
+        "current": "373.9",
+        "market_value": "6730.2",
+        "unrealized_pl": "20.730006",
+        "pnl_pct": 0.31,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "329.69",
+        "market_value": "7912.56",
+        "unrealized_pl": "0.6",
+        "pnl_pct": 0.01,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "59",
+        "entry": "240.21",
+        "current": "259.22",
+        "market_value": "15293.98",
+        "unrealized_pl": "1121.59",
+        "pnl_pct": 7.91,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "35",
+        "entry": "171.51",
+        "current": "174.39",
+        "market_value": "6103.65",
+        "unrealized_pl": "100.8",
+        "pnl_pct": 1.68,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "419.12",
+        "market_value": "419.12",
+        "unrealized_pl": "14.22",
+        "pnl_pct": 3.51,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "WMT",
+        "qty": "135",
+        "entry": "115.072889",
+        "current": "114.65",
+        "market_value": "15477.75",
+        "unrealized_pl": "-57.090015",
+        "pnl_pct": -0.37,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "CAT",
+        "side": "buy",
+        "qty": 8,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.8,
+        "reasons": [
+          "Breaking upper BB ($959.35)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+26.5%)"
+        ]
+      },
+      {
+        "symbol": "GE",
+        "side": "buy",
+        "qty": 18,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($353.47)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+10.1%)"
+        ]
+      },
+      {
+        "symbol": "EMR",
+        "side": "buy",
+        "qty": 2,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.65,
+        "reasons": [
+          "Breaking upper BB ($149.25)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "JPM",
+        "side": "buy",
+        "qty": 24,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($329.84)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "AXP",
+        "side": "buy",
+        "qty": 20,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($337.64)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
