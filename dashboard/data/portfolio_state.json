@@ -1,8 +1,8 @@
 {
-  "equity": 94285.78,
+  "equity": 94285.61,
   "starting_equity": 100000.0,
-  "day_start_equity": 94285.93,
-  "week_start_equity": 94285.93,
+  "day_start_equity": 94285.61,
+  "week_start_equity": 94285.61,
   "positions": {
     "BIL": {
       "qty": 80,
@@ -51,18 +51,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 94237.5445,
-  "long_market_value": 94237.5445,
+  "total_exposure": 94237.37269999999,
+  "long_market_value": 94237.37269999999,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 48.24,
-  "day_pnl": -0.15,
-  "day_pnl_pct": -2e-06,
-  "week_pnl": -0.15,
-  "week_pnl_pct": -2e-06,
+  "day_pnl": 0.0,
+  "day_pnl_pct": 0.0,
+  "week_pnl": 0.0,
+  "week_pnl_pct": 0.0,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-06-29T21:44:52.684868+00:00"
+  "last_updated": "2026-06-29T21:51:21.280838+00:00"
 }
