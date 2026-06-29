@@ -1,15 +1,40 @@
 {
-  "timestamp": "2026-06-29T14:11:32.486832+00:00",
+  "timestamp": "2026-06-29T14:31:21.898097+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
-  "placed": 5,
-  "filled": 5,
+  "placed": 0,
+  "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
+      "symbol": "CAT",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
       "symbol": "MS",
       "reason": "re-entry cooldown",
+      "benign": true
+    },
+    {
+      "symbol": "GE",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "EMR",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "JPM",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "AXP",
+      "reason": "already hold",
       "benign": true
     },
     {
