@@ -720,7 +720,14 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-29T21:45:29.424531+00:00",
+    "exit_price": 374.13,
+    "pnl": -150.13,
+    "realized_pnl": -150.13,
+    "pnl_pct": -4.27
   },
   {
     "timestamp": "2026-06-15T14:12:08.277857+00:00",
@@ -842,9 +849,14 @@
       "RSI overbought (87)"
     ],
     "signal_type": "BUY",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-06-29T21:45:29.424531+00:00",
+    "exit_price": 258.56,
+    "pnl": -1573.41,
+    "realized_pnl": -1573.41,
+    "pnl_pct": -9.96
   },
   {
     "timestamp": "2026-06-17T14:10:49.337911+00:00",
