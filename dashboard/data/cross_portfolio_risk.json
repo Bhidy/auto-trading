@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-30T21:55:11.906033+00:00",
-  "total_equity": 296492.46,
-  "gross_exposure_pct": 82.359,
+  "timestamp": "2026-06-30T22:03:42.848454+00:00",
+  "total_equity": 296483.26,
+  "gross_exposure_pct": 82.362,
   "by_symbol": {
     "BIL": {
       "market_value": 7330.28,
@@ -50,7 +50,7 @@
     },
     "SPY": {
       "market_value": 17034.76,
-      "pct_of_total": 5.745,
+      "pct_of_total": 5.746,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -108,7 +108,7 @@
     },
     "XLF": {
       "market_value": 7303.88,
-      "pct_of_total": 2.463,
+      "pct_of_total": 2.464,
       "books": [
         "portfolio_2"
       ]
@@ -215,7 +215,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 168574.46,
-      "pct_of_total": 56.856
+      "pct_of_total": 56.858
     },
     "Consumer": {
       "market_value": 20365.0,
