@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-29T22:40:11.911963+00:00",
+  "timestamp": "2026-06-30T21:47:38.758510+00:00",
   "overall": {
     "total_trades": 60,
     "wins": 19,
@@ -17,20 +17,20 @@
     "sharpe_estimate": -0.58
   },
   "last_7_days": {
-    "total_trades": 6,
+    "total_trades": 4,
     "wins": 1,
-    "losses": 5,
-    "win_rate": 0.167,
-    "avg_pnl_pct": -2.03,
+    "losses": 3,
+    "win_rate": 0.25,
+    "avg_pnl_pct": -2.35,
     "avg_win_pct": 2.84,
-    "avg_loss_pct": -3.01,
-    "win_loss_ratio": 0.94,
+    "avg_loss_pct": -4.08,
+    "win_loss_ratio": 0.7,
     "max_win_pct": 2.84,
     "max_loss_pct": -6.96,
-    "total_pnl": -1151.53,
-    "profit_factor": 0.01,
-    "per_trade_sharpe": -0.63,
-    "sharpe_estimate": -0.63
+    "total_pnl": -959.95,
+    "profit_factor": 0.02,
+    "per_trade_sharpe": -0.58,
+    "sharpe_estimate": -0.58
   },
   "last_30_days": {
     "total_trades": 59,
