@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-06-30T22:47:33.714865+00:00",
-  "total_equity": 296527.04,
-  "gross_exposure_pct": 82.349,
+  "timestamp": "2026-06-30T22:55:23.520180+00:00",
+  "total_equity": 296509.9,
+  "gross_exposure_pct": 82.354,
   "by_symbol": {
     "BIL": {
       "market_value": 7330.28,
@@ -35,7 +35,7 @@
     },
     "QQQ": {
       "market_value": 17365.35,
-      "pct_of_total": 5.856,
+      "pct_of_total": 5.857,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -65,7 +65,7 @@
     },
     "XLI": {
       "market_value": 18691.02,
-      "pct_of_total": 6.303,
+      "pct_of_total": 6.304,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -143,14 +143,14 @@
     },
     "PSX": {
       "market_value": 6002.85,
-      "pct_of_total": 2.024,
+      "pct_of_total": 2.025,
       "books": [
         "portfolio_3"
       ]
     },
     "MPC": {
       "market_value": 14172.39,
-      "pct_of_total": 4.779,
+      "pct_of_total": 4.78,
       "books": [
         "portfolio_3"
       ]
@@ -215,7 +215,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 168574.46,
-      "pct_of_total": 56.85
+      "pct_of_total": 56.853
     },
     "Consumer": {
       "market_value": 20365.0,
@@ -227,7 +227,7 @@
     },
     "Industrials": {
       "market_value": 19933.61,
-      "pct_of_total": 6.722
+      "pct_of_total": 6.723
     },
     "Healthcare": {
       "market_value": 404.9,
@@ -235,7 +235,7 @@
     },
     "Financials": {
       "market_value": 14735.06,
-      "pct_of_total": 4.969
+      "pct_of_total": 4.97
     }
   },
   "single_name_cap_pct": 10.0,
@@ -243,7 +243,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 8.106
+    "mega_cap_tech_ai": 8.107
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
