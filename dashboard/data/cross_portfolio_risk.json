@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-01T22:07:36.491427+00:00",
-  "total_equity": 295853.09,
-  "gross_exposure_pct": 75.364,
+  "timestamp": "2026-07-01T22:39:31.551044+00:00",
+  "total_equity": 295836.96,
+  "gross_exposure_pct": 75.369,
   "by_symbol": {
     "BIL": {
       "market_value": 7330.28,
@@ -27,7 +27,7 @@
     },
     "IWM": {
       "market_value": 18131.03,
-      "pct_of_total": 6.128,
+      "pct_of_total": 6.129,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -35,7 +35,7 @@
     },
     "QQQ": {
       "market_value": 17279.22,
-      "pct_of_total": 5.84,
+      "pct_of_total": 5.841,
       "books": [
         "portfolio_1",
         "portfolio_2"
@@ -143,7 +143,7 @@
     },
     "MPC": {
       "market_value": 14172.39,
-      "pct_of_total": 4.79,
+      "pct_of_total": 4.791,
       "books": [
         "portfolio_3"
       ]
@@ -208,11 +208,11 @@
   "by_sector": {
     "Unknown": {
       "market_value": 162889.06,
-      "pct_of_total": 55.057
+      "pct_of_total": 55.06
     },
     "Energy": {
       "market_value": 20175.24,
-      "pct_of_total": 6.819
+      "pct_of_total": 6.82
     },
     "Consumer": {
       "market_value": 4830.16,
@@ -236,7 +236,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 8.046
+    "mega_cap_tech_ai": 8.047
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
