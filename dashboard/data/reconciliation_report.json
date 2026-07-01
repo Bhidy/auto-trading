@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-30T22:55:23.514215+00:00",
+  "timestamp": "2026-07-01T21:49:09.351939+00:00",
   "positions_held": 9,
   "open_trades_logged": 9,
   "orphan_open_trades": [],
@@ -7,5 +7,11 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "add_unlogged",
+      "symbol": "XLI",
+      "qty": 32.0
+    }
+  ]
 }
