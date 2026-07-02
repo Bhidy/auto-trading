@@ -247,7 +247,7 @@
   {
     "symbol": "MEDP",
     "side": "buy",
-    "qty": 3,
+    "qty": 2.0,
     "limit_price": 448.63,
     "estimated_value": 1345.89,
     "order_id": "dfdaaafc-eafd-4149-bf13-339bdf2b457f",
@@ -257,7 +257,10 @@
     "source": "backup",
     "reason": "Copying David Taylor BUY of Medpace Holdings Inc",
     "timestamp": "2026-05-29T15:06:47.158585",
-    "date": "2026-05-29"
+    "date": "2026-05-29",
+    "entry_price": 448.17,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
   },
   {
     "symbol": "PH",
@@ -600,5 +603,38 @@
     "pnl": -92.72,
     "realized_pnl": -92.72,
     "pnl_pct": -25.14
+  },
+  {
+    "symbol": "MEDP",
+    "side": "sell",
+    "qty": 1,
+    "reason": "Take profit at 25.4%",
+    "timestamp": "2026-07-02T16:20:47.230589",
+    "date": "2026-07-02",
+    "entry_price": 448.17,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
+  },
+  {
+    "symbol": "MEDP",
+    "side": "buy",
+    "qty": 1.0,
+    "limit_price": 448.63,
+    "estimated_value": 1345.89,
+    "order_id": "dfdaaafc-eafd-4149-bf13-339bdf2b457f",
+    "order_status": "pending_new",
+    "politician": "David Taylor",
+    "politician_trade_size": "1K\u201315K",
+    "source": "backup",
+    "reason": "Copying David Taylor BUY of Medpace Holdings Inc",
+    "timestamp": "2026-05-29T15:06:47.158585",
+    "date": "2026-05-29",
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_partial",
+    "exit_timestamp": "2026-07-02T16:20:47.547406+00:00",
+    "exit_price": null,
+    "pnl": null,
+    "realized_pnl": null,
+    "status": "closed_reconciled"
   }
 ]
