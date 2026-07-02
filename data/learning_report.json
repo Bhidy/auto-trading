@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-01T22:50:34.146581+00:00",
+  "timestamp": "2026-07-02T21:33:42.331536+00:00",
   "overall": {
     "total_trades": 61,
     "wins": 20,
@@ -17,36 +17,36 @@
     "sharpe_estimate": -0.55
   },
   "last_7_days": {
-    "total_trades": 2,
+    "total_trades": 1,
     "wins": 1,
-    "losses": 1,
-    "win_rate": 0.5,
-    "avg_pnl_pct": -1.82,
+    "losses": 0,
+    "win_rate": 1.0,
+    "avg_pnl_pct": 3.32,
     "avg_win_pct": 3.32,
-    "avg_loss_pct": -6.96,
-    "win_loss_ratio": 0.48,
+    "avg_loss_pct": 0,
+    "win_loss_ratio": 1.0,
     "max_win_pct": 3.32,
-    "max_loss_pct": -6.96,
-    "total_pnl": -134.61,
-    "profit_factor": 0.74,
-    "per_trade_sharpe": -0.25,
-    "sharpe_estimate": -0.25
+    "max_loss_pct": 3.32,
+    "total_pnl": 374.51,
+    "profit_factor": 374.51,
+    "per_trade_sharpe": 0,
+    "sharpe_estimate": 0
   },
   "last_30_days": {
-    "total_trades": 60,
-    "wins": 19,
-    "losses": 41,
-    "win_rate": 0.317,
-    "avg_pnl_pct": -1.83,
-    "avg_win_pct": 1.46,
-    "avg_loss_pct": -3.35,
-    "win_loss_ratio": 0.44,
-    "max_win_pct": 7.77,
+    "total_trades": 53,
+    "wins": 16,
+    "losses": 37,
+    "win_rate": 0.302,
+    "avg_pnl_pct": -2.17,
+    "avg_win_pct": 1.19,
+    "avg_loss_pct": -3.62,
+    "win_loss_ratio": 0.33,
+    "max_win_pct": 3.32,
     "max_loss_pct": -10.8,
-    "total_pnl": -5831.97,
-    "profit_factor": 0.23,
-    "per_trade_sharpe": -0.56,
-    "sharpe_estimate": -0.56
+    "total_pnl": -6077.01,
+    "profit_factor": 0.18,
+    "per_trade_sharpe": -0.69,
+    "sharpe_estimate": -0.69
   },
   "by_bucket": {
     "sector_momentum": {
