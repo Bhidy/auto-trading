@@ -247,7 +247,7 @@
   {
     "symbol": "MEDP",
     "side": "buy",
-    "qty": 2.0,
+    "qty": 1.0,
     "limit_price": 448.63,
     "estimated_value": 1345.89,
     "order_id": "dfdaaafc-eafd-4149-bf13-339bdf2b457f",
@@ -636,5 +636,29 @@
     "pnl": null,
     "realized_pnl": null,
     "status": "closed_reconciled"
+  },
+  {
+    "symbol": "MEDP",
+    "side": "buy",
+    "qty": 1.0,
+    "limit_price": 448.63,
+    "estimated_value": 1345.89,
+    "order_id": "dfdaaafc-eafd-4149-bf13-339bdf2b457f",
+    "order_status": "pending_new",
+    "politician": "David Taylor",
+    "politician_trade_size": "1K\u201315K",
+    "source": "backup",
+    "reason": "Copying David Taylor BUY of Medpace Holdings Inc",
+    "timestamp": "2026-05-29T15:06:47.158585",
+    "date": "2026-05-29",
+    "entry_price": 448.17,
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_excess_partial",
+    "exit_timestamp": "2026-07-02T17:10:24.386427+00:00",
+    "exit_price": 561.0,
+    "status": "closed",
+    "pnl": 112.81,
+    "realized_pnl": 112.81,
+    "pnl_pct": 25.17
   }
 ]
