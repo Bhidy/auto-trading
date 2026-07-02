@@ -1,7 +1,17 @@
 {
-  "timestamp": "2026-07-02T17:10:24.264117+00:00",
-  "working_orders": [],
-  "working_count": 0,
+  "timestamp": "2026-07-02T18:09:15.829041+00:00",
+  "working_orders": [
+    {
+      "symbol": "MEDP",
+      "side": "sell",
+      "qty": "1",
+      "filled_qty": "0",
+      "limit_price": "555.81",
+      "status": "new",
+      "submitted_at": "2026-07-02T18:09:14.989716Z"
+    }
+  ],
+  "working_count": 1,
   "positions_held": 14,
   "position_reconcile_actions": 1
 }

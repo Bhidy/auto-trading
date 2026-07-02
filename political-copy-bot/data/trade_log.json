@@ -260,7 +260,13 @@
     "date": "2026-05-29",
     "entry_price": 448.17,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-07-02T18:09:16.250479+00:00",
+    "exit_price": 561.0,
+    "status": "closed",
+    "pnl": 112.81,
+    "realized_pnl": 112.81,
+    "pnl_pct": 25.17
   },
   {
     "symbol": "PH",
@@ -613,7 +619,13 @@
     "date": "2026-07-02",
     "entry_price": 448.17,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "qty_drift_excess_lot",
+    "exit_timestamp": "2026-07-02T18:09:16.250479+00:00",
+    "exit_price": 561.0,
+    "status": "closed",
+    "pnl": -112.84,
+    "realized_pnl": -112.84,
+    "pnl_pct": -25.18
   },
   {
     "symbol": "MEDP",
@@ -660,5 +672,16 @@
     "pnl": 112.81,
     "realized_pnl": 112.81,
     "pnl_pct": 25.17
+  },
+  {
+    "symbol": "MEDP",
+    "side": "sell",
+    "qty": 1,
+    "reason": "Take profit at 25.1%",
+    "timestamp": "2026-07-02T18:09:15.015771",
+    "date": "2026-07-02",
+    "entry_price": 448.17,
+    "reconciled": true,
+    "reconcile_reason": "cost_basis_synced"
   }
 ]
