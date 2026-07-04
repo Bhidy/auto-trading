@@ -178,15 +178,16 @@
                 tgt_track:'≥ 90 trading days', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
                 tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 measured', tgt_return:'positive',
                 v_days:'{n} days', v_pct:'{n}%', v_none:'no backtest yet', v_insufficient:'insufficient sample',
-                v_nclosed:'{n} measured', v_dash:'—', bt_deployed:'0.59 (deployed)', bt_na:'—',
+                v_nclosed:'{n} measured', v_dash:'—', bt_na:'—',
+                bt_p1:'1.08 (passive core)', bt_p2:'no validated edge', bt_p3:'0.78 (improved, not cleared)',
                 eta_ready:'All gates green — begin with <b>5–10% of capital</b> for 2 weeks.',
                 eta_pending:'Not ready for real money. Binding gap: <b>{gap}</b>.',
                 foot_tmpl:'Live data for {name}: equity <b>{equity}</b> ({ret}) · {closed} closed trades ({measured} with recorded P&amp;L) · max drawdown {dd}. Gates per docs/LIVE_READINESS.md, computed from the live Alpaca account + Supabase equity history. Auto-refreshes every 60s.',
                 foot_loading:'Loading live data…',
                 foot_unreachable:'Live data not reachable from here.',
-                dis_p1:'<b>Strategy changed 2026-06-17 to a regime-aware diversified passive core.</b> The new core has not yet built a live track record. The prior active strategy’s realized record was negative (profit factor 0.23 over 52 closed trades), which is why it was de-emphasized. The deployed config’s out-of-sample backtest Sharpe is 0.59 (the pure core scores 1.08, but the active sleeve still in the book drags it down).',
-                dis_p2:'<b>Copy-trades U.S. congressional disclosures (delayed research-grade signal).</b> 0 closed copy-trades so realized edge is not yet measurable, and no out-of-sample backtest exists yet. Treat disclosures as context, not fresh alpha.',
-                dis_p3:'<b>Event-driven: technical breakout + news catalyst.</b> Only 3 of 21 closed trades carry recorded P&amp;L (all losses), and no out-of-sample backtest exists yet. Edge is not yet established.',
+                dis_p1:'<b>Active stock-picking is OFF (since 2026-06-17).</b> The book now runs a regime-tilted diversified passive core (broad-market + defensive ETFs) only. The prior active strategy had a negative realized record (profit factor 0.24 over 61 closed trades, −$5.8k), which is why it was disabled. The passive core’s out-of-sample backtest Sharpe is 1.08, but it has not built a live track record yet — so it stays paper. A fractional live ramp of the core is authorized but pending account provisioning.',
+                dis_p2:'<b>Copies U.S. congressional disclosures (a delayed, research-grade signal).</b> The Capitol Trades feed had an outage; an official House-Clerk fallback source is now wired. An out-of-sample backtest (1,492 events) exists: the signal shows edge only at a ~63-day hold and none under the old take-profit rule — so the exit was changed to a 63-day time-exit. Too few live round-trips exist yet to prove an edge.',
+                dis_p3:'<b>Event-driven: technical breakout + news catalyst.</b> The trade log was rebuilt to broker truth — 30 closed trades, realized ≈ −$190 (an earlier bug mis-reported ≈ −$6.2k). An out-of-sample backtest now shows the widened stop (2.5×ATR, shipped) lifts Sharpe from 0.19 to ~0.78 and beats buy-and-hold on drawdown — a real defect fix — but it does not yet clear the strict multiple-testing bar. Edge is improved, not yet established; needs ~30 more round-trips.',
                 gap_track:'live track record (need 90 days)', gap_sharpe:'a validated out-of-sample backtest', gap_maxdd:'drawdown above 15%',
                 gap_pf:'profit factor below 1.3', gap_sample:'too few measured closed trades', gap_generic:'multiple gates still open'
             },
@@ -207,24 +208,30 @@
                 tgt_track:'≥ 90 يوم تداول', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
                 tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 مقاسة', tgt_return:'موجب',
                 v_days:'{n} يوم', v_pct:'{n}%', v_none:'لا يوجد باك-تيست بعد', v_insufficient:'عينة غير كافية',
-                v_nclosed:'{n} مقاسة', v_dash:'—', bt_deployed:'0.59 (المطبّق)', bt_na:'—',
+                v_nclosed:'{n} مقاسة', v_dash:'—', bt_na:'—',
+                bt_p1:'1.08 (النواة السلبية)', bt_p2:'لا ميزة مثبتة', bt_p3:'0.78 (اتحسّن، لسه مش مثبت)',
                 eta_ready:'كل الشروط خضراء — ابدأ بـ <b>٥–١٠٪ من رأس المال</b> لمدة أسبوعين.',
                 eta_pending:'مش جاهز للفلوس الحقيقية. أهم نقص: <b>{gap}</b>.',
                 foot_tmpl:'بيانات مباشرة لـ {name}: رأس المال <b>{equity}</b> ({ret}) · {closed} صفقة مغلقة ({measured} بربح/خسارة مسجلة) · أقصى هبوط {dd}. الشروط حسب docs/LIVE_READINESS.md، محسوبة من حساب Alpaca الحي + سجل Supabase. يتحدّث كل ٦٠ ثانية.',
                 foot_loading:'جاري تحميل البيانات المباشرة…',
                 foot_unreachable:'البيانات المباشرة مش متاحة من هنا.',
-                dis_p1:'<b>الاستراتيجية اتغيرت في 2026-06-17 لنواة سلبية متنوّعة واعية بحالة السوق.</b> النواة الجديدة لسه مبنتش سجل مباشر. الاستراتيجية النشطة السابقة كان سجلها سلبي (معامل ربح 0.23 على 52 صفقة مغلقة)، وعشان كده اتقلّل اعتمادها. Sharpe الباك-تيست للتركيب المطبّق = 0.59 (النواة الصافية بتجيب 1.08 بس الجزء النشط بيسحبها لتحت).',
-                dis_p2:'<b>بتقلّد إفصاحات الكونجرس الأمريكي (إشارة بحثية متأخرة).</b> 0 صفقات مغلقة فالإدج لسه مش قابل للقياس، ومفيش باك-تيست بعد. الإفصاحات سياق مش ألفا طازة.',
-                dis_p3:'<b>مدفوع بالأحداث: اختراق فني + محفّز أخبار.</b> 3 بس من 21 صفقة مغلقة عندها ربح/خسارة مسجلة (كلها خسائر)، ومفيش باك-تيست بعد. الإدج لسه مش مثبت.',
+                dis_p1:'<b>اختيار الأسهم النشط متوقّف (من 2026-06-17).</b> المحفظة دلوقتي بتشغّل نواة سلبية متنوّعة واعية بحالة السوق (صناديق مؤشرات عريضة + دفاعية) بس. الاستراتيجية النشطة القديمة كان سجلها سلبي (معامل ربح 0.24 على 61 صفقة مغلقة، −5.8 ألف دولار)، وعشان كده اتقفلت. النواة السلبية اختبارها التاريخي بيدّي Sharpe = 1.08، بس لسه مبنتش سجل مباشر — فبتفضل ورقي. فيه موافقة على إطلاق جزئي حقيقي للنواة بس لسه بانتظار فتح الحساب الحقيقي.',
+                dis_p2:'<b>بتقلّد إفصاحات الكونجرس الأمريكي (إشارة متأخرة بحثية).</b> مصدر Capitol Trades حصله انقطاع، واتضاف مصدر احتياطي رسمي من سجلّ مجلس النواب. فيه باك-تيست خارج العينة (1,492 حدث): الإشارة بتورّي ميزة بس عند الاحتفاظ حوالي 63 يوم ومفيش أي ميزة بالقاعدة القديمة — عشان كده اتغيّر الخروج لخروج زمني بعد 63 يوم. لسه عدد الصفقات المباشرة قليل جداً عشان نثبت ميزة.',
+                dis_p3:'<b>مدفوع بالأحداث: اختراق فني + محفّز أخبار.</b> سجلّ الصفقات اتعاد بناؤه على حقيقة الوسيط — 30 صفقة مغلقة، محقّق ≈ −190 دولار (غلطة قديمة كانت بتقول ≈ −6.2 ألف). فيه دلوقتي باك-تيست بيوري إن توسيع الوقف (2.5× متوسط المدى، اتطبّق) بيرفع Sharpe من 0.19 لحوالي 0.78 وبيتفوّق على الشراء والاحتفاظ في الهبوط — إصلاح حقيقي لخلل — بس لسه مش عدّى الحاجز الإحصائي الصارم. الميزة اتحسّنت بس لسه مش مثبتة؛ محتاجة حوالي 30 صفقة كمان.',
                 gap_track:'سجل مباشر (محتاج 90 يوم)', gap_sharpe:'باك-تيست خارج العينة مثبت', gap_maxdd:'الهبوط أعلى من 15%',
                 gap_pf:'معامل الربح أقل من 1.3', gap_sample:'صفقات مقاسة قليلة', gap_generic:'فيه أكتر من شرط لسه مفتوح'
             }
         };
 
         var PF = [
-            { id:'portfolio_1', nameKey:'pf1_name', disKey:'dis_p1', bt:{ has:true, sharpe:0.59, dd:16.9 } },
-            { id:'portfolio_2', nameKey:'pf2_name', disKey:'dis_p2', bt:{ has:false } },
-            { id:'portfolio_3', nameKey:'pf3_name', disKey:'dis_p3', bt:{ has:false } }
+            // Honest, current backtest state (audit 2026-07-04). sharpePass drives the
+            // Sharpe gate; sharpeKey/ddLabel are what the chips display.
+            { id:'portfolio_1', nameKey:'pf1_name', disKey:'dis_p1',
+              bt:{ has:true, sharpeKey:'bt_p1', sharpeVal:1.08, sharpePass:true, ddLabel:'16.4%' } },
+            { id:'portfolio_2', nameKey:'pf2_name', disKey:'dis_p2',
+              bt:{ has:true, sharpeKey:'bt_p2', sharpeVal:0, sharpePass:false, ddLabel:'—' } },
+            { id:'portfolio_3', nameKey:'pf3_name', disKey:'dis_p3',
+              bt:{ has:true, sharpeKey:'bt_p3', sharpeVal:0.78, sharpePass:false, ddLabel:'5.8%' } }
         ];
         var MEASURE_FLOOR = 10;   // below this many measured closes, PF/Sharpe edge is "insufficient sample"
 
@@ -269,15 +276,17 @@
             // 1) Paper track record
             gates.push({ key:'g_track', target:'tgt_track', backtest:t('v_dash'), live:tmpl('v_days',{n:days}),
                 progress: days/90*100, status: days>=90?'pass':'pend' });
-            // 2) Out-of-sample Sharpe (backtest) — honest: deployed 0.59 for P1, none for P2/P3
+            // 2) Out-of-sample Sharpe (backtest) — honest per portfolio: P1 passive
+            //    core 1.08 (PASS); P3 improved to 0.78 but not yet cleared; P2 no
+            //    validated edge. sharpePass is the single source of the gate status.
             gates.push({ key:'g_sharpe', target:'tgt_sharpe',
-                backtest: meta.bt.has ? t('bt_deployed') : t('bt_na'),
+                backtest: meta.bt.has ? t(meta.bt.sharpeKey) : t('bt_na'),
                 live: t('v_dash'),
-                progress: meta.bt.has ? Math.min(100, meta.bt.sharpe/1.0*100) : 0,
-                status: (meta.bt.has && meta.bt.sharpe>=1.0) ? 'pass' : 'warn' });
-            // 3) Max drawdown (live, from real equity curve)
+                progress: meta.bt.sharpePass ? 100 : Math.min(100, (meta.bt.sharpeVal||0)/1.0*100),
+                status: meta.bt.sharpePass ? 'pass' : 'warn' });
+            // 3) Max drawdown (live, from real equity curve; backtest chip per portfolio)
             gates.push({ key:'g_maxdd', target:'tgt_maxdd',
-                backtest: meta.bt.has ? (meta.bt.dd.toFixed(1)+'%') : t('bt_na'),
+                backtest: meta.bt.ddLabel || t('bt_na'),
                 live: dd!=null ? tmpl('v_pct',{n:dd.toFixed(1)}) : t('v_dash'),
                 progress: dd!=null ? Math.min(100, 15/Math.max(dd,0.001)*100) : 0,
                 status: dd!=null ? (dd<=15?'pass':'warn') : 'pend' });
