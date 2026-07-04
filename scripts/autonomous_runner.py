@@ -40,6 +40,7 @@ from shared.alpaca_http import (  # noqa: E402  (path set above)
     make_client_order_id,
     resilient_request,
 )
+from shared.risk_config import load_risk_limits  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -332,7 +333,7 @@ def run_trading_session(alpaca: AlpacaClient):
     last_equity = float(account["last_equity"])
 
     portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
-    limits = load_json(CONFIG_DIR / "risk_limits.json")
+    limits = load_risk_limits(CONFIG_DIR)
 
     # Kill switch check
     starting_equity = portfolio_state.get("starting_equity", 100000)
@@ -821,7 +822,7 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     positions = alpaca.get_positions()
 
     portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
-    limits = load_json(CONFIG_DIR / "risk_limits.json")
+    limits = load_risk_limits(CONFIG_DIR)
 
     # C2: reconcile order state every cycle so partial/late fills, cancels and
     # rejections are never invisible between cron runs. Best-effort — never break
@@ -954,7 +955,7 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     try:
         from performance_tracker import reduce_open_position
         from portfolio_manager import compute_cap_trims
-        cfg_limits = load_json(CONFIG_DIR / "risk_limits.json", {})
+        cfg_limits = load_risk_limits(CONFIG_DIR, {})
         bucket_map = portfolio_state.get("positions", {})
         for trim in compute_cap_trims(positions, equity, cfg_limits, bucket_map):
             sym, tq = trim["symbol"], trim["trim_qty"]

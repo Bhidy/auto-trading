@@ -4,10 +4,15 @@ Smart Portfolio Manager — Auto-Rebalancing, Stop Management, Dynamic Allocatio
 """
 import json
 import os
+import sys
 from datetime import datetime, timezone
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "..", "config")
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.risk_config import load_risk_limits  # noqa: E402
+
 
 def load_json(path, default=None):
     if os.path.exists(path):
@@ -425,7 +430,7 @@ def compute_current_allocation(positions, equity):
 
 def compute_rebalance_orders(positions, equity, regime):
     from analyst_v2 import regime_allocation_modifier
-    limits = load_json(os.path.join(CONFIG_DIR, "risk_limits.json"))
+    limits = load_risk_limits(CONFIG_DIR)
     targets = limits.get("allocation_targets", {})
     regime_mod = regime_allocation_modifier(regime)
 
@@ -604,7 +609,7 @@ def hrp_advisory_tilts(*, enabled=None, hrp_path=None, limits=None):
         return {"enabled": True, "weights": None,
                 "note": "HRP enabled but artifact missing/empty — no effect on allocation."}
     if limits is None:
-        limits = load_json(os.path.join(CONFIG_DIR, "risk_limits.json"))
+        limits = load_risk_limits(CONFIG_DIR)
     caps = (limits or {}).get("max_single_position_pct", {}) or {}
     cap = float(caps.get("stock", 8)) / 100.0          # conservative single-name cap
     clamped = {s: min(float(w), cap) for s, w in art["weights"].items()
@@ -628,7 +633,7 @@ def portfolio_health_check(account_info, positions):
     equity = float(account_info.get("equity", 100000))
     starting = float(account_info.get("last_equity", equity))
     portfolio_state = load_json(os.path.join(DATA_DIR, "portfolio_state.json"))
-    limits = load_json(os.path.join(CONFIG_DIR, "risk_limits.json"))
+    limits = load_risk_limits(CONFIG_DIR)
 
     long_mv = sum(float(p.get("market_value", 0)) for p in positions if p.get("side") == "long")
     short_mv = sum(abs(float(p.get("market_value", 0))) for p in positions if p.get("side") == "short")

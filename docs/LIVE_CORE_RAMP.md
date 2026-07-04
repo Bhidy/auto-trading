@@ -72,17 +72,24 @@ must be loaded by the live workflow — never share the paper `risk_limits.json`
 - Rollback is one action: disable the `p1-live-*` workflows (the paper system is untouched and
   keeps running as the reference book).
 
-## 6. Sign-off (leave blank until authorized)
+## 6. Sign-off
 
 | Field | Value |
 |---|---|
-| Authorized by | _______ |
-| Date | _______ |
+| Authorized by | **Owner (bheedey@gmail.com), via session 2026-07-04** |
+| Date | **2026-07-04** |
 | Portfolio | P1 passive core only |
-| Commit SHA deployed | _______ |
-| Fractional capital | _______ |
-| Live limits file | `config/risk_limits.live.json` |
-| Metric snapshot (equity/DD/workflow-green-days) | _______ |
+| Commit SHA deployed | _pending final go-live commit (see GO_LIVE_CHECKLIST §C)_ |
+| Fractional capital | _to be set by owner at funding (5–10% of intended)_ |
+| Live limits file | `config/risk_limits.live.json` (now bound end-to-end via `shared/risk_config.py`) |
+| Metric snapshot (equity/DD/workflow-green-days) | _capture at funding_ |
+
+**STATUS: AUTHORIZED — DEPLOYMENT PENDING.** The decision is signed off. Real capital is **not
+yet deployed** and cannot be until the remaining gates clear: (A5) ≈2 weeks of all-green
+workflows after the 2026-07-04 change-set, and (A6/A7) the owner provisions a **separate funded
+live Alpaca account** and adds `PORTFOLIO_1_LIVE_*` secrets. The full sequence and division of
+labor is in **`docs/GO_LIVE_CHECKLIST.md`**. Assistant does not open accounts, move money, or
+place live orders.
 
 > **Nothing above authorizes deploying the active P1 satellite, P2 copies, or P3 breakouts to
 > real money. Those follow `LIVE_READINESS.md` individually, earliest ~Q4 2026.**

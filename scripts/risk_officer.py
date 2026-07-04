@@ -17,6 +17,7 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 from shared.alpaca_http import evaluate_asset_gate  # noqa: E402
 from shared.portfolio_risk import exceeds_aggregate_cap, would_breach_cluster_cap  # noqa: E402
+from shared.risk_config import load_risk_limits  # noqa: E402
 
 
 def _f(x):
@@ -27,17 +28,13 @@ def _f(x):
         return 0.0
 
 def load_config():
-    """Load risk limits, profile-aware. RISK_PROFILE=live selects the tighter
-    risk_limits.live.json for the fractional live ramp (R4); anything else (the
-    default) uses the paper limits. Falls back to paper if the live file is
-    missing, so a misconfiguration can never silently widen limits."""
-    profile = os.environ.get("RISK_PROFILE", "paper").strip().lower()
-    candidate = "risk_limits.live.json" if profile == "live" else "risk_limits.json"
-    path = os.path.join(CONFIG_DIR, candidate)
-    if not os.path.exists(path):
-        path = os.path.join(CONFIG_DIR, "risk_limits.json")
-    with open(path) as f:
-        return json.load(f)
+    """Load risk limits, profile-aware, via the shared single-source loader
+    (``shared.risk_config``). RISK_PROFILE=live selects the tighter
+    risk_limits.live.json for the fractional live ramp; anything else uses the
+    paper limits and a missing live file fails CLOSED to paper. Routed through
+    the shared loader so the WHOLE trading path (allocator, monitor, cap-trims)
+    honors the profile identically (audit 2026-07-04)."""
+    return load_risk_limits(CONFIG_DIR)
 
 def load_signals():
     signal_file = os.path.join(DATA_DIR, "signals.json")
