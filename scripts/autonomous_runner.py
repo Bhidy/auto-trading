@@ -476,9 +476,20 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
         except Exception as e:
             log.error(f"  Momentum order failed for {sym}: {e}")
 
+    # Only CLOSE the monthly gate when every order was submitted OK (or was an
+    # idempotent 422). On a partial failure, DON'T advance last_rebalance_month —
+    # compute_momentum_rebalance_orders is idempotent (diffs current vs target), so
+    # the next session re-attempts ONLY the still-off names and completes the book.
+    # Otherwise a transient broker error would strand a half-rebalanced book for a
+    # whole month. rebalance_count still counts this attempt for observability.
+    complete = (placed == len(orders))
+    if not complete:
+        log.error(f"::error::Momentum: partial rebalance ({placed}/{len(orders)} placed); "
+                  f"NOT closing the monthly gate — will retry the remaining diff next session.")
     now_iso = datetime.now(timezone.utc).isoformat()
     save_json(DATA_DIR / "momentum_state.json", {
-        "last_rebalance_month": month,
+        "last_rebalance_month": month if complete else mstate.get("last_rebalance_month"),
+        "rebalance_incomplete": not complete,
         # first activation stamp — anchors the live-readiness track record.
         "activated_at": mstate.get("activated_at") or now_iso,
         "rebalance_count": int(mstate.get("rebalance_count", 0)) + 1,
