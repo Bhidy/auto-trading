@@ -350,8 +350,14 @@ NOISE_KEYWORDS = [
 ]
 
 
-def scan_news(alpaca: AlpacaClient, watchlist_symbols: list) -> list:
-    """Scan Alpaca news for catalyst events on watchlist stocks."""
+def scan_news(alpaca: AlpacaClient, watchlist_universe: list) -> list:
+    """Scan Alpaca news for catalyst events on watchlist stocks.
+
+    *watchlist_universe* is the screener's row list (dicts with symbol/price/
+    atr14); bare symbol strings are tolerated for backward compatibility.
+    Signals carry price/atr from the screen so execution can size them without
+    re-reading the watchlist artifact.
+    """
     log.info("Scanning news for catalysts...")
     news_signals = []
 
@@ -362,7 +368,13 @@ def scan_news(alpaca: AlpacaClient, watchlist_symbols: list) -> list:
         log.error(f"News fetch failed: {e}")
         return []
 
-    watchlist_set = set(watchlist_symbols)
+    universe_info = {}
+    for row in watchlist_universe or []:
+        if isinstance(row, dict) and row.get("symbol"):
+            universe_info[row["symbol"]] = row
+        elif isinstance(row, str):
+            universe_info[row] = {}
+    watchlist_set = set(universe_info)
 
     for item in news_items:
         headline = (item.get("headline", "") or "").lower()
@@ -390,6 +402,7 @@ def scan_news(alpaca: AlpacaClient, watchlist_symbols: list) -> list:
             continue
 
         for sym in matched_symbols:
+            info = universe_info.get(sym, {})
             news_signals.append({
                 "symbol": sym,
                 "sector": SECTOR_MAP.get(sym, "Unknown"),
@@ -400,6 +413,8 @@ def scan_news(alpaca: AlpacaClient, watchlist_symbols: list) -> list:
                 "created_at": item.get("created_at", ""),
                 "reasons": reasons,
                 "tranche": "event_driven",
+                "price": float(info.get("price") or 0),
+                "atr": float(info.get("atr14") or info.get("atr") or 0),
             })
 
     log.info(f"Found {len(news_signals)} news catalyst signals")
@@ -409,6 +424,31 @@ def scan_news(alpaca: AlpacaClient, watchlist_symbols: list) -> list:
 # ---------------------------------------------------------------------------
 # ORDER EXECUTION
 # ---------------------------------------------------------------------------
+
+def watchlist_atr_lookup(watchlist_data, symbol):
+    """ATR for *symbol* from the screener watchlist artifact.
+
+    The committed artifact is a dict ({"timestamp", ..., "universe": [rows]}),
+    but a bare list of rows is tolerated for older snapshots. Rows carry the
+    screen's "atr14"; legacy "atr" is honored. Returns 0.0 when the symbol is
+    absent so callers keep their own price-based fallback.
+
+    Regression guard: iterating the dict artifact directly yields its string
+    keys and raised AttributeError on every no-ATR news signal, which is why
+    the event tranche never traded (audit 2026-07-04, defect D1).
+    """
+    if isinstance(watchlist_data, dict):
+        rows = watchlist_data.get("universe", [])
+    else:
+        rows = watchlist_data or []
+    for row in rows:
+        if isinstance(row, dict) and row.get("symbol") == symbol:
+            try:
+                return float(row.get("atr14") or row.get("atr") or 0.0)
+            except (TypeError, ValueError):
+                return 0.0
+    return 0.0
+
 
 def symbols_on_reentry_cooldown(trade_log, cooldown_days, now=None):
     """Symbols CLOSED within the last ``cooldown_days`` — block immediate re-entry.
@@ -568,10 +608,7 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
             pass
 
         if not atr_val or atr_val <= 0:
-            watchlist = load_json(DATA_DIR / "watchlist.json", [])
-            match = next((w for w in watchlist if w.get("symbol") == sym), None)
-            if match:
-                atr_val = match.get("atr", 0)
+            atr_val = watchlist_atr_lookup(load_json(DATA_DIR / "watchlist.json", {}), sym)
             if not atr_val or atr_val <= 0:
                 atr_val = price * 0.03 if price > 0 else 0
             if atr_val <= 0:
@@ -940,7 +977,8 @@ def run_eod_journal(alpaca: AlpacaClient):
     # a real exit is known), trims double-logged qty, and logs unlogged positions.
     # Places NO orders; never fabricates P&L.
     from shared.reconcile import (compute_drift, exit_prices_from_fills,
-                                  guarded_pnl_fn, reconcile_log_to_broker, is_open_trade)
+                                  exit_reasons_from_orders, guarded_pnl_fn,
+                                  reconcile_log_to_broker, is_open_trade)
     from shared.accounting import realized_pnl
     # Source REAL exit prices from the broker's sell fills so an orphaned bracket
     # close becomes a genuine realized-P&L trade (was always pnl=None before, which
@@ -950,9 +988,18 @@ def run_eod_journal(alpaca: AlpacaClient):
         exit_prices = exit_prices_from_fills(alpaca.get_account_activities("FILL"))
     except Exception as e:
         log.warning(f"  Could not fetch fills for exit pricing: {e}")
+    # Attribute WHY the exit happened from the filled sell order's type (bracket
+    # stop leg -> stop_loss, limit leg -> take_profit, market -> market_exit).
+    # exit_reason was None on 30/30 closes before (audit 2026-07-04, D2).
+    exit_reasons = {}
+    try:
+        exit_reasons = exit_reasons_from_orders(alpaca.get_orders("closed"))
+    except Exception as e:
+        log.warning(f"  Could not fetch closed orders for exit reasons: {e}")
     repaired, recon_actions = reconcile_log_to_broker(
         trade_log, positions, exit_prices=exit_prices,
         pnl_fn=guarded_pnl_fn(realized_pnl),  # never fabricates on a missing entry
+        exit_reasons=exit_reasons,
     )
     if recon_actions:
         save_json(DATA_DIR / "trade_log.json", repaired)
@@ -1234,13 +1281,13 @@ def main():
         if not alpaca.is_market_open():
             log.warning("Market closed — scanning news but skipping execution")
         watchlist = load_json(DATA_DIR / "watchlist.json")
-        watchlist_symbols = [s["symbol"] for s in watchlist.get("universe", [])]
+        watchlist_universe = watchlist.get("universe", []) if isinstance(watchlist, dict) else (watchlist or [])
 
-        if not watchlist_symbols:
+        if not watchlist_universe:
             log.warning("No watchlist — skipping news scan")
             return
 
-        news_signals = scan_news(alpaca, watchlist_symbols)
+        news_signals = scan_news(alpaca, watchlist_universe)
         if news_signals:
             save_json(DATA_DIR / "news_signals.json", {
                 "timestamp": datetime.now(timezone.utc).isoformat(),

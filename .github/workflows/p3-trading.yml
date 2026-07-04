@@ -115,7 +115,12 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
-          python3 scripts/event_driven_bot.py news-scan || true
+          # No || true here: a news-scan crash must FAIL the job so the
+          # failure-alert watchdog fires. The || true masking hid an
+          # AttributeError that kept the event tranche from ever trading
+          # (audit 2026-07-04, defect D1). Data sync + commit below run
+          # under if: always(), so state is still persisted on failure.
+          python3 scripts/event_driven_bot.py news-scan
 
       - name: Sync data to dashboard for Vercel deploy
         if: always()

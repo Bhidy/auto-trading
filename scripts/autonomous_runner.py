@@ -540,7 +540,7 @@ def run_trading_session(alpaca: AlpacaClient):
                     from performance_tracker import find_open_trade, close_trade
                     tr = find_open_trade(rsym)
                     if tr and exit_px > 0:
-                        close_trade(tr["id"], exit_px)
+                        close_trade(tr["id"], exit_px, reason="rotation")
                     cash += filled_qty * exit_px
                     rotated.append(rsym)
                 trades_executed += 1  # counts against the daily trade budget
@@ -893,7 +893,7 @@ def run_intraday_monitor(alpaca: AlpacaClient):
                     fill_price = float(order_result.get("filled_avg_price", 0) or trigger["current_price"])
                     if fill_price <= 0:
                         fill_price = trigger["current_price"]
-                    close_trade(trade["id"], fill_price)
+                    close_trade(trade["id"], fill_price, reason="stop_loss")
 
             elif action == "TAKE_PROFIT_SELL":
                 sell_qty = max(1, qty // 2)
@@ -912,7 +912,7 @@ def run_intraday_monitor(alpaca: AlpacaClient):
                     fill_price = float(order_result.get("filled_avg_price", 0) or trigger["current_price"])
                     if fill_price <= 0:
                         fill_price = trigger["current_price"]
-                    close_trade(trade["id"], fill_price)
+                    close_trade(trade["id"], fill_price, reason="take_profit")
 
         except Exception as e:
             log.error(f"  Stop/TP order failed for {sym}: {e}")
@@ -1049,7 +1049,7 @@ def run_end_of_day(alpaca: AlpacaClient):
                 sell_orders = [o for o in orders if o["symbol"] == trade["symbol"] and o["side"] == "sell" and o["filled_qty"] != "0"]
                 if sell_orders:
                     exit_price = float(sell_orders[0].get("filled_avg_price", trade["entry_price"]))
-                    close_trade(trade["id"], exit_price)
+                    close_trade(trade["id"], exit_price, reason="reconcile")
                     log.info(f"  Closed trade #{trade['id']} {trade['symbol']} @ ${exit_price:.2f}")
 
     # Read-only integrity audit: flag any drift between trade log and broker.

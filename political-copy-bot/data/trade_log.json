@@ -21,7 +21,9 @@
     "status": "closed",
     "pnl": 276.86,
     "realized_pnl": 276.86,
-    "pnl_pct": 25.02
+    "pnl_pct": 25.02,
+    "exit_reason": "take_profit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04_reason_only"
   },
   {
     "symbol": "DHR",
@@ -64,8 +66,12 @@
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 76.07,
     "status": "closed",
-    "pnl": null,
-    "realized_pnl": null
+    "pnl": -182.11,
+    "realized_pnl": -182.11,
+    "entry_price": 86.78,
+    "pnl_pct": -12.34,
+    "exit_reason": "market_exit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04"
   },
   {
     "symbol": "SPGI",
@@ -128,10 +134,14 @@
     "reconciled": true,
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
-    "exit_price": 157.79,
+    "exit_price": 157.4,
     "status": "closed",
-    "pnl": null,
-    "realized_pnl": null
+    "pnl": 346.69,
+    "realized_pnl": 346.69,
+    "entry_price": 125.88,
+    "pnl_pct": 25.04,
+    "exit_reason": "take_profit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04"
   },
   {
     "symbol": "INTU",
@@ -152,8 +162,12 @@
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 284.02,
     "status": "closed",
-    "pnl": null,
-    "realized_pnl": null
+    "pnl": -114.43,
+    "realized_pnl": -114.43,
+    "entry_price": 312.62,
+    "pnl_pct": -9.15,
+    "exit_reason": "market_exit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04"
   },
   {
     "symbol": "HD",
@@ -218,9 +232,10 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 76.07,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null
   },
   {
     "symbol": "T",
@@ -241,8 +256,12 @@
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 22.69,
     "status": "closed",
-    "pnl": null,
-    "realized_pnl": null
+    "pnl": -124.25,
+    "realized_pnl": -124.25,
+    "entry_price": 24.76,
+    "pnl_pct": -8.36,
+    "exit_reason": "market_exit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04"
   },
   {
     "symbol": "MEDP",
@@ -266,7 +285,9 @@
     "status": "closed",
     "pnl": 112.81,
     "realized_pnl": 112.81,
-    "pnl_pct": 25.17
+    "pnl_pct": 25.17,
+    "exit_reason": "take_profit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04_reason_only"
   },
   {
     "symbol": "PH",
@@ -294,9 +315,11 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 157.79,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "WDAY",
@@ -309,9 +332,11 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 157.79,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "WDAY",
@@ -324,9 +349,11 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 157.79,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "WDAY",
@@ -339,9 +366,11 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 157.79,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "SPY",
@@ -484,9 +513,10 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 22.69,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null
   },
   {
     "symbol": "INTU",
@@ -499,9 +529,10 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-18T17:43:16.108982+00:00",
     "exit_price": 284.02,
-    "status": "closed",
+    "status": "exit_marker",
     "pnl": null,
-    "realized_pnl": null
+    "realized_pnl": null,
+    "pnl_pct": null
   },
   {
     "symbol": "TER",
@@ -515,10 +546,12 @@
     "reconcile_reason": "qty_drift_excess_lot",
     "exit_timestamp": "2026-06-25T18:29:45.341343+00:00",
     "exit_price": 466.74,
-    "status": "closed",
-    "pnl": -195.74,
-    "realized_pnl": -195.74,
-    "pnl_pct": -26.53
+    "status": "exit_marker",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "voided_pnl_sign_bug": -195.74,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "TER",
@@ -537,10 +570,14 @@
     "reconciled": true,
     "reconcile_reason": "qty_drift_excess_partial",
     "exit_timestamp": "2026-06-25T16:41:13.232562+00:00",
-    "exit_price": 461.18,
+    "exit_price": 464.0825,
     "status": "closed",
-    "pnl": null,
-    "realized_pnl": null
+    "pnl": 380.76,
+    "realized_pnl": 380.76,
+    "entry_price": 368.88,
+    "pnl_pct": 25.81,
+    "exit_reason": "take_profit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04"
   },
   {
     "symbol": "TER",
@@ -554,10 +591,12 @@
     "reconcile_reason": "qty_drift_excess_lot",
     "exit_timestamp": "2026-06-25T18:29:45.341343+00:00",
     "exit_price": 466.74,
-    "status": "closed",
-    "pnl": -195.74,
-    "realized_pnl": -195.74,
-    "pnl_pct": -26.53
+    "status": "exit_marker",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "voided_pnl_sign_bug": -195.74,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "TER",
@@ -571,10 +610,12 @@
     "reconcile_reason": "qty_drift_excess_partial",
     "exit_timestamp": "2026-06-25T17:29:29.787656+00:00",
     "exit_price": 461.18,
-    "status": "closed",
-    "pnl": -92.31,
-    "realized_pnl": -92.31,
-    "pnl_pct": -25.02
+    "status": "exit_marker",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "voided_pnl_sign_bug": -92.31,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "TER",
@@ -588,10 +629,12 @@
     "reconcile_reason": "qty_drift_excess_lot",
     "exit_timestamp": "2026-06-25T19:21:57.381065+00:00",
     "exit_price": 466.74,
-    "status": "closed",
-    "pnl": -97.87,
-    "realized_pnl": -97.87,
-    "pnl_pct": -26.53
+    "status": "exit_marker",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "voided_pnl_sign_bug": -97.87,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "TER",
@@ -605,10 +648,12 @@
     "reconcile_reason": "orphan_no_live_position",
     "exit_timestamp": "2026-06-26T16:32:23.992974+00:00",
     "exit_price": 461.59,
-    "status": "closed",
-    "pnl": -92.72,
-    "realized_pnl": -92.72,
-    "pnl_pct": -25.14
+    "status": "exit_marker",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "voided_pnl_sign_bug": -92.72,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "MEDP",
@@ -622,10 +667,12 @@
     "reconcile_reason": "qty_drift_excess_lot",
     "exit_timestamp": "2026-07-02T18:09:16.250479+00:00",
     "exit_price": 561.0,
-    "status": "closed",
-    "pnl": -112.84,
-    "realized_pnl": -112.84,
-    "pnl_pct": -25.18
+    "status": "exit_marker",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "voided_pnl_sign_bug": -112.84,
+    "exit_reason": "take_profit"
   },
   {
     "symbol": "MEDP",
@@ -644,10 +691,14 @@
     "reconciled": true,
     "reconcile_reason": "qty_drift_excess_partial",
     "exit_timestamp": "2026-07-02T16:20:47.547406+00:00",
-    "exit_price": null,
-    "pnl": null,
-    "realized_pnl": null,
-    "status": "closed_reconciled"
+    "exit_price": 559.69,
+    "pnl": 111.5,
+    "realized_pnl": 111.5,
+    "status": "closed",
+    "entry_price": 448.17,
+    "pnl_pct": 24.88,
+    "exit_reason": "take_profit",
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04"
   },
   {
     "symbol": "MEDP",
@@ -666,12 +717,13 @@
     "entry_price": 448.17,
     "reconciled": true,
     "reconcile_reason": "qty_drift_excess_partial",
-    "exit_timestamp": "2026-07-02T17:10:24.386427+00:00",
-    "exit_price": 561.0,
-    "status": "closed",
-    "pnl": 112.81,
-    "realized_pnl": 112.81,
-    "pnl_pct": 25.17
+    "exit_timestamp": null,
+    "exit_price": null,
+    "status": "open",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04_reopened_broker_holds"
   },
   {
     "symbol": "MEDP",
@@ -682,6 +734,11 @@
     "date": "2026-07-02",
     "entry_price": 448.17,
     "reconciled": true,
-    "reconcile_reason": "cost_basis_synced"
+    "reconcile_reason": "cost_basis_synced",
+    "pnl": null,
+    "realized_pnl": null,
+    "pnl_pct": null,
+    "status": "exit_marker",
+    "exit_reason": "take_profit"
   }
 ]

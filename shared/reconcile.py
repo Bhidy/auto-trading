@@ -15,7 +15,15 @@ def is_open_trade(t):
     A missing ``status`` means open (P3 legacy entries carry no status field),
     while any explicit closed* status (``closed`` or ``closed_reconciled``) is
     not-open. Use this everywhere the open set is built so the three bots agree.
+
+    Exception (audit 2026-07-04, defect D4): a status-less ``side: "sell"`` row
+    is an exit/audit MARKER (P2 logs its stop/TP/copy sells this way), not a
+    short lot. Treating those markers as open shorts made the reconciler close
+    them with short math — (entry - exit) x qty — which sign-flipped every
+    logged winner. Genuine short entries always carry an explicit status.
     """
+    if "status" not in t and str(t.get("side", "")).lower() == "sell":
+        return False
     return t.get("status", "open") == "open"
 
 
@@ -277,6 +285,44 @@ def exit_prices_from_fills(fill_activities):
     return {s: v[1] for s, v in by_sym.items()}
 
 
+def exit_reasons_from_orders(closed_orders):
+    """Map ``{symbol: exit_reason}`` from the most recent FILLED sell order.
+
+    The broker's sell-order type is the ground truth for WHY an exit happened:
+    a filled bracket stop leg (``stop``/``stop_limit``/``trailing_stop``) means
+    ``stop_loss``, a filled limit leg means ``take_profit``, a market sell means
+    ``market_exit``. Feed the result to ``reconcile_log_to_broker`` so orphan
+    closes stop losing their exit attribution (audit 2026-07-04, defect D2 —
+    P3 had exit_reason=None on 30/30 closes).
+    """
+    by_sym = {}
+    for o in closed_orders or []:
+        if not isinstance(o, dict):
+            continue
+        if str(o.get("side", "")).lower() != "sell":
+            continue
+        try:
+            filled_qty = float(o.get("filled_qty") or 0)
+        except (TypeError, ValueError):
+            filled_qty = 0.0
+        if str(o.get("status", "")) != "filled" and filled_qty <= 0:
+            continue
+        sym = o.get("symbol")
+        if not sym:
+            continue
+        ttime = o.get("filled_at") or o.get("updated_at") or ""
+        otype = str(o.get("type") or o.get("order_type") or "").lower()
+        if "stop" in otype:
+            reason = "stop_loss"
+        elif otype == "limit":
+            reason = "take_profit"
+        else:
+            reason = "market_exit"
+        if sym not in by_sym or ttime >= by_sym[sym][0]:
+            by_sym[sym] = (ttime, reason)
+    return {s: v[1] for s, v in by_sym.items()}
+
+
 def guarded_pnl_fn(realized_pnl):
     """Wrap ``shared.accounting.realized_pnl`` so it NEVER computes P&L on a
     missing/zero entry price or qty — closing an entry-less legacy lot off a 0
@@ -292,13 +338,19 @@ def guarded_pnl_fn(realized_pnl):
     return _fn
 
 
-def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconciled"):
+def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconciled",
+                  exit_reason=None):
     """Turn an open lot into a reconciled close (mutates `trade`).
 
     A real broker exit price -> a genuine ``closed`` trade with realized P&L
     (recovers true history into the readiness sample). An unknown exit ->
     ``closed_reconciled`` with ``pnl=None`` — we remove it from open risk
     without inventing a realized result the system never observed.
+
+    ``exit_reason`` (stop_loss / take_profit / market_exit, sourced from the
+    broker's filled sell-order type) is recorded only alongside a real exit
+    price and never overwrites a reason the bot already logged (defect D2:
+    reconciled closes used to lose WHY the position exited).
     """
     trade["reconciled"] = True
     trade["reconcile_reason"] = reason
@@ -306,6 +358,8 @@ def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconcil
     if exit_price is not None:
         trade["exit_price"] = exit_price
         trade["status"] = "closed"
+        if exit_reason and not trade.get("exit_reason"):
+            trade["exit_reason"] = exit_reason
         if pnl_fn is not None:
             try:
                 qty = float(trade.get("qty") or 0)
@@ -344,7 +398,7 @@ def _unlogged_lot(symbol, qty, entry_price, now_iso, reason):
 
 
 def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
-                            exit_prices=None, pnl_fn=None):
+                            exit_prices=None, pnl_fn=None, exit_reasons=None):
     """Repair the OPEN trades in ``trade_log`` to match broker ``positions``
     (ground truth). Returns ``(new_log, actions)``. Places NO orders.
 
@@ -363,9 +417,12 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
     ``exit_prices``: optional {symbol: real_exit_price}.
     ``pnl_fn(side, qty, entry, exit) -> net_pnl``: optional, used only when a real
     exit price is known (pass shared.accounting.realized_pnl for net-of-fee P&L).
+    ``exit_reasons``: optional {symbol: exit_reason} (see
+    ``exit_reasons_from_orders``) — recorded on real-exit closes only.
     """
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
     exit_prices = exit_prices or {}
+    exit_reasons = exit_reasons or {}
     log = copy.deepcopy(trade_log)
     actions = []
 
@@ -397,7 +454,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
         if not held:
             for i in idxs:
                 _close_record(log[i], now_iso, exit_prices.get(sym), pnl_fn,
-                              reason="orphan_no_live_position")
+                              reason="orphan_no_live_position",
+                              exit_reason=exit_reasons.get(sym))
             actions.append({"action": "close_orphan", "symbol": sym,
                             "lots": len(idxs), "qty": round(logged_qty, 6)})
             continue
@@ -416,7 +474,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
                 lot_qty = _num(log[i].get("qty")) or 0.0
                 if lot_qty <= to_remove + 1e-9:
                     _close_record(log[i], now_iso, exit_prices.get(sym), pnl_fn,
-                                  reason="qty_drift_excess_lot")
+                                  reason="qty_drift_excess_lot",
+                                  exit_reason=exit_reasons.get(sym))
                     to_remove -= lot_qty
                 else:
                     removed = to_remove
@@ -425,7 +484,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
                     split["qty"] = round(removed, 6)
                     split.pop("id", None)
                     _close_record(split, now_iso, exit_prices.get(sym), pnl_fn,
-                                  reason="qty_drift_excess_partial")
+                                  reason="qty_drift_excess_partial",
+                                  exit_reason=exit_reasons.get(sym))
                     log.append(split)
                     to_remove = 0.0
             actions.append({"action": "trim_qty", "symbol": sym,

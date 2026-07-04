@@ -4,13 +4,15 @@ Politician Copy Trading Bot — Production Autonomous Script
 Copies trades from top-performing politicians via Capitol Trades data.
 Executes via Alpaca paper trading API.
 """
+from __future__ import annotations
 
+import copy
 import json
 import sys
 import time
 import logging
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -469,6 +471,64 @@ class RiskManager:
         self.trade_log.append(trade_record)
         self._save_trade_log()
 
+    def apply_exit(self, symbol: str, sell_qty: float, exit_price: float,
+                   reason: str) -> float:
+        """FIFO-close open BUY lots for a FILLED exit (long math, net of fees).
+
+        The exit paths used to append only a bare ``side: "sell"`` row; the EOD
+        reconciler then treated that row as an open SHORT lot and booked
+        (entry - exit) x qty — sign-flipping every logged winner (audit
+        2026-07-04, defect D4; TER's ~+$662 take-profit was logged as a loss).
+        Closing the original buy lots at the real fill is the fix. Splits a lot
+        on partial exit; never fabricates P&L (no cost basis -> pnl=None).
+        Returns the qty actually closed; 0.0 means no open lot was found (the
+        EOD reconciler settles it from broker truth).
+        """
+        from shared.accounting import realized_pnl
+        remaining = float(sell_qty)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        splits = []
+        for t in self.trade_log:
+            if remaining <= 1e-9:
+                break
+            if t.get("symbol") != symbol:
+                continue
+            if str(t.get("side", "buy")).lower() == "sell":
+                continue
+            if t.get("status", "open") != "open":
+                continue
+            lot_qty = float(t.get("qty", 0) or 0)
+            if lot_qty <= 0:
+                continue
+            take = min(lot_qty, remaining)
+            target = t
+            if take < lot_qty - 1e-9:  # partial exit -> split the lot
+                t["qty"] = round(lot_qty - take, 6)
+                target = copy.deepcopy(t)
+                target["qty"] = round(take, 6)
+                splits.append(target)
+            target["exit_price"] = float(exit_price)
+            target["exit_timestamp"] = now_iso
+            target["exit_reason"] = reason
+            target["status"] = "closed"
+            try:
+                entry = float(t.get("entry_price") or t.get("limit_price") or 0)
+            except (TypeError, ValueError):
+                entry = 0.0
+            if entry > 0:
+                pnl = realized_pnl("buy", take, entry, float(exit_price))["net_pnl"]
+                target["pnl"] = pnl
+                target["realized_pnl"] = pnl
+                target["pnl_pct"] = round(pnl / (abs(entry * take) or 1.0) * 100, 2)
+            else:
+                target["pnl"] = None
+                target["realized_pnl"] = None
+            remaining -= take
+        if splits:
+            self.trade_log.extend(splits)
+        self._save_trade_log()
+        return round(float(sell_qty) - remaining, 6)
+
     def validate_ticker(self, ticker: str) -> str | None:
         if not ticker or ticker == "N/A":
             return None
@@ -641,10 +701,43 @@ class PoliticianBot:
         # make it LOUD and a conformance failure (heartbeat surfaces it). This is the
         # alarm the 3-week 2026-06 rate-limit outage never had.
         self._feed_dark = disclosure_feed_status(self._fetch_attempts, self._fetch_failures) == "dark"
+        self._fallback_trades = 0
+        self._fallback_ok = False
         if self._feed_dark:
             log.error(f"::error::P2 FEED DARK: {self._fetch_failures}/{self._fetch_attempts} "
-                      f"Capitol Trades fetches failed (unreachable/rate-limited). No new copies "
-                      f"can open — flagged as a conformance violation for the heartbeat watchdog.")
+                      f"Capitol Trades fetches failed (unreachable/rate-limited). "
+                      f"Falling back to the official House Clerk disclosure index.")
+            # D3 fallback (audit 2026-07-04): source the SAME signal from the
+            # primary source — the House Clerk index + stdlib PTR parsing —
+            # shaped exactly like MCP trades so every downstream gate applies.
+            try:
+                from house_fd_feed import fetch_tracked_ptr_trades
+                tracked = [primary] + list(self.watchlist_cfg.get("backup_politicians", []))
+                fb = fetch_tracked_ptr_trades(tracked, max_age_days=self._max_disclosure_age())
+                self._fallback_ok = True
+                for t in fb:
+                    fp = self._trade_fingerprint(t)
+                    if fp in self.processed_trades:
+                        continue
+                    action = (t.get("transaction", {}).get("type", "") or "").upper()
+                    if action == "SELL":
+                        if not self.watchlist_cfg.get("sell_logic", {}).get("copy_politician_sells"):
+                            continue
+                        ticker = self.risk.validate_ticker(t.get("issuer", {}).get("ticker", ""))
+                        if not (ticker and self.alpaca.get_position(ticker)):
+                            continue
+                    elif not self._is_copyable_trade(t):
+                        continue
+                    t["_source"] = ("primary" if t.get("politician", {}).get("name") == primary
+                                    else "backup")
+                    t["_action"] = action or "BUY"
+                    all_new_trades.append(t)
+                    self._fallback_trades += 1
+                log.info(f"house_fd fallback: {self._fallback_trades} new copyable "
+                         f"trade(s) from the official index")
+            except Exception as e:
+                log.error(f"::error::house_fd fallback ALSO failed: {e} — "
+                          f"no disclosure source available this cycle.")
         elif self._fetch_failures:
             log.warning(f"P2 feed degraded: {self._fetch_failures}/{self._fetch_attempts} "
                         f"disclosure fetches failed this cycle.")
@@ -856,12 +949,20 @@ class PoliticianBot:
                 symbol=ticker, qty=sell_qty, side="sell",
                 order_type="limit", limit_price=limit_price,
             )
+            _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
+            closed_qty = 0.0
+            if fill_qty and fill_price:
+                closed_qty = self.risk.apply_exit(ticker, fill_qty, fill_price,
+                                                  reason="copy_sell")
 
             trade_record = {
                 "symbol": ticker,
                 "side": "sell",
                 "qty": sell_qty,
+                "status": "exit_marker",  # audit row, NOT a lot (D4)
                 "limit_price": limit_price,
+                "fill_price": fill_price,
+                "lots_closed_qty": closed_qty,
                 "order_id": order.get("id"),
                 "order_status": order.get("status"),
                 "politician": trade.get("politician", {}).get("name", ""),
@@ -934,10 +1035,17 @@ class PoliticianBot:
                 log.warning(f"TRAILING STOP for {symbol}: now {unrealized_plpc:+.1f}% "
                             f"(peak {peak_plpc:+.1f}%, {trailing_stop_pct:.0f}% trail)")
                 try:
-                    self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                            order_type="market", time_in_force="day")
+                    order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
+                                                    order_type="market", time_in_force="day")
+                    _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
+                    closed_qty = 0.0
+                    if fill_qty and fill_price:
+                        closed_qty = self.risk.apply_exit(symbol, fill_qty, fill_price,
+                                                          reason="trailing_stop")
                     self.risk.log_trade({
                         "symbol": symbol, "side": "sell", "qty": qty,
+                        "status": "exit_marker",  # audit row, NOT a lot (D4)
+                        "fill_price": fill_price, "lots_closed_qty": closed_qty,
                         "reason": (f"Trailing stop {trailing_stop_pct:.0f}% from peak "
                                    f"{peak_plpc:+.1f}% (now {unrealized_plpc:+.1f}%)"),
                     })
@@ -949,10 +1057,17 @@ class PoliticianBot:
                 log.warning(f"MAX HOLD reached for {symbol}: held {age_days}d "
                             f">= {max_hold_days}d ({unrealized_plpc:+.1f}%) — exiting")
                 try:
-                    self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                            order_type="market", time_in_force="day")
+                    order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
+                                                    order_type="market", time_in_force="day")
+                    _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
+                    closed_qty = 0.0
+                    if fill_qty and fill_price:
+                        closed_qty = self.risk.apply_exit(symbol, fill_qty, fill_price,
+                                                          reason="max_hold")
                     self.risk.log_trade({
                         "symbol": symbol, "side": "sell", "qty": qty,
+                        "status": "exit_marker",  # audit row, NOT a lot (D4)
+                        "fill_price": fill_price, "lots_closed_qty": closed_qty,
                         "reason": f"Max hold {age_days}d at {unrealized_plpc:+.1f}%",
                     })
                     peaks.pop(symbol, None)
@@ -966,13 +1081,20 @@ class PoliticianBot:
                     quote = self.alpaca.get_latest_quote(symbol)
                     bid = float(quote.get("quote", {}).get("bp", 0))
                     limit_price = round(bid * 0.999, 2) if bid > 0 else None
-                    self.alpaca.place_order(
+                    order = self.alpaca.place_order(
                         symbol=symbol, qty=sell_qty, side="sell",
                         order_type="limit" if limit_price else "market",
                         limit_price=limit_price,
                     )
+                    _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
+                    closed_qty = 0.0
+                    if fill_qty and fill_price:
+                        closed_qty = self.risk.apply_exit(symbol, fill_qty, fill_price,
+                                                          reason="take_profit")
                     self.risk.log_trade({
                         "symbol": symbol, "side": "sell", "qty": sell_qty,
+                        "status": "exit_marker",  # audit row, NOT a lot (D4)
+                        "fill_price": fill_price, "lots_closed_qty": closed_qty,
                         "reason": f"Take profit at {unrealized_plpc:.1f}%",
                     })
                 except Exception as e:
@@ -1109,7 +1231,7 @@ class PoliticianBot:
                 )
                 log.info(f"SLEEVE {side.upper()} {qty} x {sym} @ ${limit_price:.2f} "
                          f"(${qty * limit_price:,.0f}) — {o['reason']}")
-                self.risk.log_trade({
+                sleeve_record = {
                     "symbol": sym, "side": side, "qty": qty,
                     "limit_price": limit_price,
                     "estimated_value": round(qty * limit_price, 2),
@@ -1119,7 +1241,13 @@ class PoliticianBot:
                     "strategy": "benchmark_sleeve",
                     "evidence_quality": "beta",  # parked beta, NOT politician alpha
                     "reason": o["reason"],
-                })
+                }
+                if side == "sell":
+                    # Rebalance trims are exit events: mark the row so it can
+                    # never be reconciled as a short lot (D4). The buy lots it
+                    # trims are settled by the EOD reconciler at real fills.
+                    sleeve_record["status"] = "exit_marker"
+                self.risk.log_trade(sleeve_record)
                 executed.append({"symbol": sym, "side": side, "qty": qty})
                 time.sleep(1)
             except requests.HTTPError as e:
@@ -1230,9 +1358,18 @@ class PoliticianBot:
             # an alert — the 3-week 2026-06 outage went silent because nothing here
             # distinguished "feed down" from "no new disclosures".
             {"name": "disclosure_feed_reachable",
-             "ok": not getattr(self, "_feed_dark", False),
+             # Violation only when NO disclosure source worked this cycle:
+             # Capitol Trades dark AND the official House-index fallback (D3)
+             # also failed. A dark MCP with a healthy fallback is degraded, not
+             # blind — noted in detail so the heartbeat stays readable.
+             "ok": (not getattr(self, "_feed_dark", False)
+                    or getattr(self, "_fallback_ok", False)),
              "detail": (f"FEED DARK: {getattr(self, '_fetch_failures', 0)}/"
-                        f"{getattr(self, '_fetch_attempts', 0)} fetches failed"
+                        f"{getattr(self, '_fetch_attempts', 0)} Capitol Trades fetches failed"
+                        + (f"; house_fd fallback OK "
+                           f"({getattr(self, '_fallback_trades', 0)} new trades)"
+                           if getattr(self, "_fallback_ok", False)
+                           else "; house_fd fallback FAILED — no source available")
                         if getattr(self, "_feed_dark", False)
                         else f"{getattr(self, '_fetch_failures', 0)}/"
                              f"{getattr(self, '_fetch_attempts', 0)} fetch failures")},
@@ -1264,8 +1401,9 @@ class PoliticianBot:
         never fabricated. Read-only on the broker — places NO orders."""
         try:
             from shared.accounting import realized_pnl
-            from shared.reconcile import (exit_prices_from_fills, guarded_pnl_fn,
-                                          reconcile_log_to_broker, working_orders_report)
+            from shared.reconcile import (exit_prices_from_fills, exit_reasons_from_orders,
+                                          guarded_pnl_fn, reconcile_log_to_broker,
+                                          working_orders_report)
             open_orders = self.alpaca.get_orders("open")
             report = working_orders_report(open_orders)
             positions = self.alpaca.get_positions()
@@ -1284,9 +1422,15 @@ class PoliticianBot:
                     exit_prices = exit_prices_from_fills(self.alpaca.get_account_activities("FILL"))
                 except Exception as e:
                     log.warning(f"P2 exit-fill fetch skipped: {e}")
+                exit_reasons = {}
+                try:
+                    exit_reasons = exit_reasons_from_orders(self.alpaca.get_orders("closed"))
+                except Exception as e:
+                    log.warning(f"P2 exit-reason fetch skipped: {e}")
                 repaired, actions = reconcile_log_to_broker(
                     trade_log, positions, exit_prices=exit_prices,
-                    pnl_fn=guarded_pnl_fn(realized_pnl))
+                    pnl_fn=guarded_pnl_fn(realized_pnl),
+                    exit_reasons=exit_reasons)
                 if actions:
                     with open(tl_path, "w") as f:
                         json.dump(repaired, f, indent=2)

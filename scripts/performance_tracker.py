@@ -88,12 +88,22 @@ def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons,
     save_json("trade_log.json", log)
     return log[-1]["id"]
 
-def close_trade(trade_id, exit_price):
+def close_trade(trade_id, exit_price, reason=None):
+    """Full close of an open trade at *exit_price*.
+
+    *reason* records WHY the trade closed (stop_loss / take_profit / rotation /
+    reconcile / kill_switch ...). It was silently lost before — 59/61 closes had
+    exit_reason=None (audit 2026-07-04, defect D5) — which made exit-attribution
+    audits impossible. Optional so old callers stay valid, but every production
+    caller now passes it.
+    """
     log = load_json("trade_log.json", [])
     for trade in log:
         if trade["id"] == trade_id and trade["status"] == "open":
             trade["exit_price"] = exit_price
             trade["exit_timestamp"] = datetime.now(timezone.utc).isoformat()
+            if reason is not None:
+                trade["exit_reason"] = reason
             entry = datetime.fromisoformat(trade["timestamp"])
             trade["hold_days"] = (datetime.now(timezone.utc) - entry).days
 
