@@ -442,7 +442,7 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
         return True
 
     placed = 0
-    from performance_tracker import close_trade, find_open_trade, log_trade
+    from performance_tracker import log_trade, reduce_open_position
     for o in orders:
         sym, side, qty = o["symbol"], o["side"], o["qty"]
         px = prices.get(sym, 0)
@@ -453,9 +453,15 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
                                        order_type="limit" if lp else "market", limit_price=lp,
                                        client_order_id=make_client_order_id("p1mom", sym, "sell"))
                 _st, _fq, _fp = confirm_fill(alpaca, r.get("id"))
-                tr = find_open_trade(sym)
-                if tr and (_fp or lp):
-                    close_trade(tr["id"], _fp or lp, reason="momentum_rebalance")
+                # Close ALL open trade-log lots for this symbol (FIFO) at the REAL
+                # fill price — not just one. A multi-lot core-ETF full-exit would
+                # otherwise strand orphan "open" lots + under-book P&L until the EOD
+                # reconcile heals them (audit 2026-07-04, Q3). reduce_open_position
+                # books net-of-fee realized P&L per lot.
+                _sold = _fq if (_fq and _fq > 0) else qty
+                _exit = _fp or lp or px
+                if _sold and _exit:
+                    reduce_open_position(sym, _sold, _exit, reason="momentum_rebalance")
             else:
                 lp = round(px * 1.001, 2) if px else None
                 r = alpaca.place_order(symbol=sym, qty=qty, side="buy",

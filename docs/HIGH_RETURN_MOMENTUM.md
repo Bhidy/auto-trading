@@ -77,12 +77,18 @@ historically the worst environment for momentum-chasing.
   `momentum_sleeve_enabled=true`, `momentum_sleeve_weight=0.90`, `momentum_top_k=13`,
   **`momentum_use_trend=false`** (the trend filter cut CAGR 24%→9% below SPY in our bull —
   it's a drawdown reducer, not a return tool), **`momentum_max_per_sector=4`** (kills the
-  ~55%-semiconductor concentration the un-capped version produced). Validated config
-  (top-13, no-trend, max-4/sector): **18.3% CAGR / 24.4% DD / Sharpe 0.97 vs SPY 11.6%**.
+  ~55%-semiconductor concentration the un-capped version produced), **`momentum_vol_target=0.25`**
+  (crash protection). Validated config (top-13, no-trend, max-4/sector):
+  **18.3% CAGR / 24.4% DD / Sharpe 0.97 vs SPY 11.6%** (pre-vol-target).
   Audit also fixed: trend FAIL-SAFE (missing market data → cash, not deploy) and exempted
   momentum positions from the intraday −4% hard-stop / breakeven stops (they're
-  monthly-rebalanced, not stop-managed). **No market-crash protection now — a real-money
-  version needs volatility-targeting.**
+  monthly-rebalanced, not stop-managed — the 18% portfolio kill-switch still liquidates all).
+- **DEPLOYMENT MATH (2nd-pass audit 2026-07-04, measured on real data):** the live top-13
+  book's realized vol measured **~27%**, so vol-targeting sets effective deployment =
+  `0.90 × min(1, target/27%)`. At the **recalibrated `target=0.25`** that is **~82.5%** in
+  calm markets (was only ~59% at the initial `0.18`, which quietly undercut the owner's chosen
+  "aggressive 90%"), ~64% at 35% vol, floored ~45% in a 50%-vol crisis. Set `0.27` for ~90%
+  normal, `null` to disable, or lower for more protection.
 - **Behaviour:** monthly rebalance to the top-13 highest-momentum large-caps at ~6.9%/name (90%
   of equity), rest cash; goes fully to cash when SPY < its 200-day average. It REPLACES the
   passive core while enabled. **Fully reversible:** set `momentum_sleeve_enabled=false` → P1

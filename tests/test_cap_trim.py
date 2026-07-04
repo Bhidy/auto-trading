@@ -87,3 +87,19 @@ def test_trim_spans_lots_fifo(tmp_path, monkeypatch):
     open_qty = sum(t["qty"] for t in log if t["status"] == "open")
     closed_qty = sum(t["qty"] for t in log if t["status"] == "closed")
     assert open_qty == 20 and closed_qty == 40
+
+
+def test_momentum_full_exit_of_multilot_etf_leaves_no_orphans(tmp_path, monkeypatch):
+    # Audit 2026-07-04 (Q3): the momentum sleeve full-exits core ETFs that hold
+    # MULTIPLE open trade-log lots (live: IWM x3). The sell branch now uses
+    # reduce_open_position for the full qty, which must close ALL lots (no orphan
+    # "open" rows) and book realized P&L on each — not just one via find_open_trade.
+    _seed(tmp_path, monkeypatch, [(20, 240.0), (15, 250.0), (18, 258.0)])   # 53 shares, 3 lots
+    reduced = reduce_open_position("IWM", 53, 262.0, reason="momentum_rebalance")
+    assert reduced == 53
+    log = json.loads((tmp_path / "trade_log.json").read_text())
+    assert [t for t in log if t["status"] == "open"] == []                  # ZERO orphans
+    closed = [t for t in log if t["status"] == "closed"]
+    assert len(closed) == 3
+    assert all(t.get("realized_pnl") is not None for t in closed)           # P&L booked on every lot
+    assert all(t.get("exit_reason") == "momentum_rebalance" for t in closed)

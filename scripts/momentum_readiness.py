@@ -163,6 +163,10 @@ def compute_readiness(journal_dir, momentum_state, trade_log, today=None,
         "status": status,
         "as_of": today.isoformat(),
         "activated_at": activated.isoformat(),
+        # equity is the whole P1 account (the sleeve is P1's primary allocator, so
+        # ~= the momentum book, but includes cash drag / any residual). Labelled so
+        # the OOS Sharpe/DD are not read as momentum-only attribution (audit Q4b).
+        "basis": "p1_account_level",
         "days_on_paper": days,
         "track_days_measured": len(curve),
         "oos_sharpe": checks["oos_sharpe"]["value"],
