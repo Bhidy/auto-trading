@@ -92,3 +92,52 @@ def select_top_momentum(closes_by_sym, k=13, max_weight=0.08, lookback=252,
         return {}
     w = min(1.0 / len(picks), max_weight)        # never exceed the cap
     return {s: round(w, 6) for s in picks}
+
+
+def basket_realized_vol(closes_by_sym, weights, lookback=63, periods_per_year=252):
+    """Annualized realized volatility of the WEIGHTED basket, from aligned trailing
+    daily returns (captures diversification — not a naive average of per-name vols).
+
+    Returns None when there isn't enough aligned history to measure it. Pure stdlib.
+    """
+    syms = [s for s in weights if closes_by_sym.get(s)]
+    if not syms:
+        return None
+    n = lookback + 1
+    series = {s: closes_by_sym[s][-n:] for s in syms if len(closes_by_sym[s]) >= n}
+    if not series:
+        return None
+    tot = sum(weights[s] for s in series) or 1.0
+    port_rets = []
+    for t in range(n - 1):
+        r = 0.0
+        for s, c in series.items():
+            if c[t]:
+                r += (weights[s] / tot) * (c[t + 1] / c[t] - 1.0)
+        port_rets.append(r)
+    if len(port_rets) < 2:
+        return None
+    m = sum(port_rets) / len(port_rets)
+    var = sum((x - m) ** 2 for x in port_rets) / (len(port_rets) - 1)
+    return math.sqrt(var) * math.sqrt(periods_per_year)
+
+
+def vol_target_scalar(closes_by_sym, weights, target_vol=0.18, lookback=63,
+                      min_scale=0.30, max_scale=1.0):
+    """Exposure multiplier in [min_scale, max_scale] that steers the book's realized
+    vol toward ``target_vol`` (Barroso-Santa-Clara volatility targeting — the single
+    highest-value, data-free crash protection for momentum).
+
+    scalar = clamp(target_vol / trailing_realized_vol, min_scale, max_scale). Default
+    ``max_scale=1.0`` means it ONLY de-risks (never levers beyond the configured
+    exposure), so it can never breach a size cap. Fails toward ``max_scale`` when vol
+    is unmeasurable (the names already cleared the momentum/sector gates). Returns
+    ``(scalar, realized_vol)`` so callers can log the reason.
+    """
+    if not weights:
+        return max_scale, None
+    rv = basket_realized_vol(closes_by_sym, weights, lookback=lookback)
+    if not rv or rv <= 0:
+        return max_scale, rv
+    scalar = target_vol / rv
+    return max(min_scale, min(max_scale, scalar)), rv

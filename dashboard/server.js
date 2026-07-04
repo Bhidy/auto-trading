@@ -236,6 +236,14 @@ app.get('/api/health', (req, res) => {
     res.json(info);
 });
 
+// Momentum sleeve live-readiness ledger (P1 high-return PAPER sleeve). Read-only:
+// serves the committed data/momentum_readiness.json computed by P1 EOD. Honest
+// go/no-go evidence — never a trade trigger.
+app.get('/api/momentum/readiness', (req, res) => {
+    const p = path.join(ROOT_DIR, 'data', 'momentum_readiness.json');
+    res.json(readJsonFile(p, { status: 'not_started', note: 'No readiness data yet.' }));
+});
+
 // Helper to get local data paths for a portfolio (cloud-safe, uses copied data dirs)
 function getPortfolioPaths(id) {
     const item = portfoliosConfig[id];

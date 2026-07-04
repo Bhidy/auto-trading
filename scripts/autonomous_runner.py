@@ -393,11 +393,23 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
     except Exception as e:
         log.warning(f"  Momentum: SPY bars unavailable ({e}); trend filter off this run.")
 
-    from momentum_selector import select_top_momentum
-    targets = select_top_momentum(closes_by_sym, k=top_k, max_weight=0.08,
-                                  use_trend=use_trend, market_closes=spy_closes,
-                                  sector_map=sector_map, max_per_sector=max_per_sector)
-    targets = {s: w * sleeve_weight for s, w in targets.items()}   # rest stays cash
+    from momentum_selector import select_top_momentum, vol_target_scalar
+    raw = select_top_momentum(closes_by_sym, k=top_k, max_weight=0.08,
+                              use_trend=use_trend, market_closes=spy_closes,
+                              sector_map=sector_map, max_per_sector=max_per_sector)
+
+    # Volatility targeting (crash protection, 2026-07-04): scale gross exposure
+    # DOWN toward a target realized vol when the book is hot. Only de-risks
+    # (max_scale=1.0) so it can never breach a size cap. Off if vol_target unset.
+    vol_scale, book_vol = 1.0, None
+    vol_target = params.get("momentum_vol_target")
+    if raw and vol_target:
+        vol_scale, book_vol = vol_target_scalar(
+            closes_by_sym, raw, target_vol=float(vol_target),
+            lookback=int(params.get("momentum_vol_lookback", 63)),
+            min_scale=float(params.get("momentum_vol_min_scale", 0.30)))
+
+    targets = {s: w * sleeve_weight * vol_scale for s, w in raw.items()}  # rest cash
     if not targets:
         log.warning("  Momentum: RISK-OFF / no eligible names — target is cash; "
                     "liquidating the momentum book.")
@@ -405,8 +417,13 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
         _secs = {}
         for s in targets:
             _secs[sector_map.get(s, "?")] = _secs.get(sector_map.get(s, "?"), 0) + 1
+        _vol = (f"vol_scale={vol_scale:.2f} "
+                f"(book_vol={book_vol*100:.0f}%, target={float(vol_target)*100:.0f}%)"
+                if vol_target and book_vol else "vol_target off")
         log.info(f"  Momentum: {len(targets)} names, per-sector {dict(_secs)} "
-                 f"(cap {max_per_sector}/sector), trend_filter={use_trend}.")
+                 f"(cap {max_per_sector}/sector), trend_filter={use_trend}, {_vol}.")
+        log.info(f"  Momentum: deploying {sum(targets.values())*100:.1f}% of equity "
+                 f"(rest cash).")
 
     from portfolio_manager import compute_momentum_rebalance_orders
     positions = alpaca.get_positions()
@@ -459,11 +476,18 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
         except Exception as e:
             log.error(f"  Momentum order failed for {sym}: {e}")
 
+    now_iso = datetime.now(timezone.utc).isoformat()
     save_json(DATA_DIR / "momentum_state.json", {
         "last_rebalance_month": month,
-        "as_of": datetime.now(timezone.utc).isoformat(),
+        # first activation stamp — anchors the live-readiness track record.
+        "activated_at": mstate.get("activated_at") or now_iso,
+        "rebalance_count": int(mstate.get("rebalance_count", 0)) + 1,
+        "as_of": now_iso,
         "targets": {s: round(w, 4) for s, w in targets.items()},
         "orders_placed": placed, "universe_size": len(closes_by_sym),
+        "vol_scale": round(vol_scale, 4),
+        "book_vol": round(book_vol, 4) if book_vol else None,
+        "deployed_pct": round(sum(targets.values()) * 100, 1),
         "risk_off": not targets})
     log.info(f"  Momentum rebalance {month}: {placed} orders placed, "
              f"{len(targets)} target names.")
@@ -1348,6 +1372,17 @@ def run_end_of_day(alpaca: AlpacaClient):
         save_json(journal_path, existing)
     else:
         save_json(journal_path, [journal_entry])
+
+    # Momentum sleeve live-readiness ledger (advisory, read-only). Scores the
+    # sleeve's forward OOS paper track record vs the go-live gates so the go/no-go
+    # is evidence-driven and visible on the dashboard. Fail-open — never blocks EOD.
+    try:
+        from momentum_readiness import build_and_save
+        mr = build_and_save(data_dir=str(DATA_DIR), journal_dir=str(JOURNAL_DIR))
+        log.info(f"  Momentum readiness: status={mr['status']} "
+                 f"({mr.get('days_on_paper', 0)}d, gates_pass={mr.get('all_gates_pass')})")
+    except Exception as e:
+        log.warning(f"  Momentum readiness skipped: {e}")
 
     # Update portfolio state for next day
     portfolio_state["day_start_equity"] = equity

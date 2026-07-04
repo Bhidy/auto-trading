@@ -41,15 +41,20 @@ Three corrections the research forced (this is why we test before we deploy):
 return) with occasional -25%+ drawdowns and multi-year stretches of *lagging* a simple index.**
 NOT a money-doubler. Anyone quoting 24%+ is selling a survivorship/curve-fit artifact.
 
-## 3. The highest-value risk control (do not skip it)
+## 3. The highest-value risk control — NOW WIRED (2026-07-04)
 
 - **Volatility-targeting** (Barroso-Santa-Clara, peer-reviewed): scale exposure inversely to
   recent realized vol → Sharpe **0.53 → 0.97**, worst month **-79% → -28%**. Single biggest
-  data-free improvement.
+  data-free improvement. **IMPLEMENTED** in `momentum_selector.vol_target_scalar` and wired into
+  the live sleeve: gross exposure is scaled DOWN toward **18% annualized** realized vol (63-day
+  lookback, floor = 30% of the sleeve, `max_scale=1.0` so it ONLY de-risks — never levers past
+  the 90% cap). On our clean 5y window it's ~neutral (18.3%→18.4% CAGR, 24.4%→24.0% DD) because
+  the sample has **no severe vol spike to cut** — its payoff is the tail (a momentum crash) that
+  the backtest doesn't contain. Cheap insurance: costs ~nothing in-sample, protects the crash.
 - **200-day market-trend filter** (in `momentum_selector` as `use_trend`): roughly **halves**
   max drawdown by sitting out the panic-state rebounds that cause crashes. Costs some upside via
-  whipsaw. Optional, off by default.
-- Both are drawdown-reducers; use at least one before any real capital.
+  whipsaw. **OFF by default** — in our bull window it cut CAGR 24%→9% (below SPY). Vol-targeting
+  is the primary crash guard; the trend filter is a heavier hammer available if a bear sets in.
 
 ## 4. Timing: right now (mid-2026) is the WORST moment to chase it
 
@@ -87,12 +92,22 @@ historically the worst environment for momentum-chasing.
 - **Dry-run snapshot (2026-07-04):** picks were MU/INTC/AMD/LRCX/AMAT/KLAC/AVGO/ADI (semis) +
   GOOGL/CSCO/CAT/GS/C — i.e. heavily semiconductors, exactly the crowded leadership §4 warns about.
 
+**Live-readiness tracker (2026-07-04):** `scripts/momentum_readiness.py` computes the sleeve's
+REAL forward, out-of-sample paper record (from the committed daily journals + trade log — no
+network, no look-ahead) and scores it against four go-live gates — **≥90 days on paper, OOS Sharpe
+≥1.0, max drawdown ≤15%, ≥26 momentum fills**. It runs in P1 EOD, writes `data/momentum_readiness.json`,
+and is surfaced on the dashboard **/readiness** page (P1 Momentum Sleeve panel, with 30/60/90-day
+milestones). Status today: **not_started** (awaiting the first rebalance). The go/no-go is now
+evidence-driven and visible — never an opinion, and eligibility is still a **human** decision.
+
 **Plan / guardrails:**
-  1. It runs on **paper only** and builds a real track record; measured against `LIVE_READINESS.md`.
-  2. It stays **paper** until it passes those gates (OOS Sharpe, ≥50 trades, drawdown control).
-  3. Real money only ever as a **satellite ≤10%**, hedged (trend/vol filter), never the whole
-     book, never aggressively into a crowded top. The 90% paper setting is to MEASURE the strategy
-     cleanly — it is explicitly not a real-money allocation.
+  1. It runs on **paper only** and builds a real track record; measured against `LIVE_READINESS.md`
+     and the readiness tracker above.
+  2. It stays **paper** until it passes those gates (OOS Sharpe, ≥26 momentum fills / ≥50 trades,
+     drawdown control, 90 days).
+  3. Real money only ever as a **satellite ≤10%**, hedged (vol-targeting is now on; trend filter
+     available), never the whole book, never aggressively into a crowded top. The 90% paper setting
+     is to MEASURE the strategy cleanly — it is explicitly not a real-money allocation.
 
 **Bottom line:** momentum is the real answer to "highest return," and the engine is ready — but
 the truth is a *modest, risk-controlled* edge with real crash risk, deployed on **paper first**

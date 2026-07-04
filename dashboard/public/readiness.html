@@ -153,6 +153,17 @@
         <h2 class="sec-title" data-key="gates_title">Go-live gates</h2>
         <div class="gate-grid" id="gates"></div>
 
+        <section id="momPanel" style="margin-top:2rem;border:1px solid var(--line);border-radius:0.85rem;padding:1.25rem 1.4rem;background:var(--surface);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                <h2 class="sec-title" style="margin:0;" data-key="mom_title">P1 Momentum Sleeve — Live-Readiness</h2>
+                <span id="momStatus" class="verdict-pill vp-paper"></span>
+            </div>
+            <p style="color:var(--muted);font-size:.9rem;margin:.5rem 0 1rem;" data-key="mom_desc">High-return concentrated-momentum sleeve (PAPER). Real money stays locked until all four gates below are green on the live forward track record — a human decision, never automatic.</p>
+            <div class="gate-grid" id="momGates"></div>
+            <div id="momMilestones" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;"></div>
+            <p class="foot" id="momFoot" style="margin-top:1rem;" data-key="mom_foot"></p>
+        </section>
+
         <p class="foot" id="foot" data-key="foot_loading">Loading live data…</p>
     </main>
 
@@ -189,7 +200,15 @@
                 dis_p2:'<b>Copies U.S. congressional disclosures (a delayed, research-grade signal).</b> The Capitol Trades feed had an outage; an official House-Clerk fallback source is now wired. An out-of-sample backtest (1,492 events) exists: the signal shows edge only at a ~63-day hold and none under the old take-profit rule — so the exit was changed to a 63-day time-exit. Too few live round-trips exist yet to prove an edge.',
                 dis_p3:'<b>Event-driven: technical breakout + news catalyst.</b> The trade log was rebuilt to broker truth — 30 closed trades, realized ≈ −$190 (an earlier bug mis-reported ≈ −$6.2k). An out-of-sample backtest now shows the widened stop (2.5×ATR, shipped) lifts Sharpe from 0.19 to ~0.78 and beats buy-and-hold on drawdown — a real defect fix — but it does not yet clear the strict multiple-testing bar. Edge is improved, not yet established; needs ~30 more round-trips.',
                 gap_track:'live track record (need 90 days)', gap_sharpe:'a validated out-of-sample backtest', gap_maxdd:'drawdown above 15%',
-                gap_pf:'profit factor below 1.3', gap_sample:'too few measured closed trades', gap_generic:'multiple gates still open'
+                gap_pf:'profit factor below 1.3', gap_sample:'too few measured closed trades', gap_generic:'multiple gates still open',
+                mom_title:'P1 Momentum Sleeve — Live-Readiness', mom_desc:'High-return concentrated-momentum sleeve (PAPER). Real money stays locked until all four gates below are green on the live forward track record — a human decision, never automatic.',
+                mom_g_days:'Paper track record', mom_g_sharpe:'Out-of-sample Sharpe', mom_g_dd:'Max drawdown (live)', mom_g_fills:'Momentum fills',
+                mom_t_days:'≥ 90 days', mom_t_sharpe:'≥ 1.0', mom_t_dd:'≤ 15%', mom_t_fills:'≥ 26',
+                mom_st_notstarted:'● Not started — awaiting first rebalance', mom_st_accruing:'● Accruing track record — paper only',
+                mom_st_inprogress:'● In progress — paper only', mom_st_eligible:'● Eligible for fractional-live review',
+                mom_ms:'Milestone', mom_reached:'reached', mom_eta:'ETA',
+                mom_foot_notstarted:'The momentum sleeve has not run its first monthly rebalance yet. Once it does, this panel tracks its real forward paper record against the go-live gates.',
+                mom_foot_live:'{days} days on paper · {fills} momentum fills · OOS Sharpe {sharpe} · max drawdown {dd}. Deployed {dep} of equity (vol-scale {vs}). Verdict: {verdict}'
             },
             ar: {
                 nav_home:'الرئيسية', nav_portfolios:'المحافظ', nav_market_pulse:'نبض السوق',
@@ -219,7 +238,15 @@
                 dis_p2:'<b>بتقلّد إفصاحات الكونجرس الأمريكي (إشارة متأخرة بحثية).</b> مصدر Capitol Trades حصله انقطاع، واتضاف مصدر احتياطي رسمي من سجلّ مجلس النواب. فيه باك-تيست خارج العينة (1,492 حدث): الإشارة بتورّي ميزة بس عند الاحتفاظ حوالي 63 يوم ومفيش أي ميزة بالقاعدة القديمة — عشان كده اتغيّر الخروج لخروج زمني بعد 63 يوم. لسه عدد الصفقات المباشرة قليل جداً عشان نثبت ميزة.',
                 dis_p3:'<b>مدفوع بالأحداث: اختراق فني + محفّز أخبار.</b> سجلّ الصفقات اتعاد بناؤه على حقيقة الوسيط — 30 صفقة مغلقة، محقّق ≈ −190 دولار (غلطة قديمة كانت بتقول ≈ −6.2 ألف). فيه دلوقتي باك-تيست بيوري إن توسيع الوقف (2.5× متوسط المدى، اتطبّق) بيرفع Sharpe من 0.19 لحوالي 0.78 وبيتفوّق على الشراء والاحتفاظ في الهبوط — إصلاح حقيقي لخلل — بس لسه مش عدّى الحاجز الإحصائي الصارم. الميزة اتحسّنت بس لسه مش مثبتة؛ محتاجة حوالي 30 صفقة كمان.',
                 gap_track:'سجل مباشر (محتاج 90 يوم)', gap_sharpe:'باك-تيست خارج العينة مثبت', gap_maxdd:'الهبوط أعلى من 15%',
-                gap_pf:'معامل الربح أقل من 1.3', gap_sample:'صفقات مقاسة قليلة', gap_generic:'فيه أكتر من شرط لسه مفتوح'
+                gap_pf:'معامل الربح أقل من 1.3', gap_sample:'صفقات مقاسة قليلة', gap_generic:'فيه أكتر من شرط لسه مفتوح',
+                mom_title:'سليڤ الزخم (P1) — الجاهزية المباشرة', mom_desc:'سليڤ زخم مركّز عالي العائد (ورقي). الفلوس الحقيقية تفضل مقفولة لحد ما الشروط الأربعة تحت تبقى خضراء على السجل المباشر — قرار بشري، مش تلقائي أبداً.',
+                mom_g_days:'سجل التداول الورقي', mom_g_sharpe:'Sharpe خارج العينة', mom_g_dd:'أقصى هبوط (مباشر)', mom_g_fills:'صفقات الزخم المنفّذة',
+                mom_t_days:'≥ 90 يوم', mom_t_sharpe:'≥ 1.0', mom_t_dd:'≤ 15%', mom_t_fills:'≥ 26',
+                mom_st_notstarted:'● لم يبدأ — بانتظار أول إعادة توازن', mom_st_accruing:'● بيجمّع سجل — ورقي فقط',
+                mom_st_inprogress:'● قيد التقدّم — ورقي فقط', mom_st_eligible:'● مؤهّل لمراجعة الإطلاق الجزئي',
+                mom_ms:'معلم', mom_reached:'تحقّق', mom_eta:'متوقّع',
+                mom_foot_notstarted:'سليڤ الزخم لسه معملش أول إعادة توازن شهرية. أول ما يعملها، اللوحة دي بتتابع سجله الورقي المباشر مقابل شروط الإطلاق.',
+                mom_foot_live:'{days} يوم ورقي · {fills} صفقة زخم · Sharpe خارج العينة {sharpe} · أقصى هبوط {dd}. منشور {dep} من رأس المال (معامل التقلب {vs}). الحكم: {verdict}'
             }
         };
 
@@ -238,6 +265,7 @@
         var lang = localStorage.getItem('starta-lang') || localStorage.getItem('lang') || 'en';
         var current = 'portfolio_1';
         var cache = {};   // id -> { details, history }
+        var momData = null;   // momentum sleeve readiness ledger
 
         function t(k){ return (T[lang] && T[lang][k] != null) ? T[lang][k] : ((T.en && T.en[k] != null) ? T.en[k] : k); }
         function tmpl(k, v){ var s = t(k); for (var x in v) s = s.split('{'+x+'}').join(v[x]); return s; }
@@ -369,7 +397,56 @@
             });
         }
 
-        function renderAll(){ renderTabs(); render(); }
+        function momGateCard(name, target, value, pass, pending){
+            var sCls = pending?'s-pend':(pass?'s-pass':'s-warn');
+            var sTxt = pending?t('st_pend'):(pass?t('st_pass'):t('st_warn'));
+            return '<div class="gate"><div class="top"><span class="name">'+name+'</span>'+
+                '<span class="status '+sCls+'">'+sTxt+'</span></div>'+
+                '<div class="meta">'+t('lbl_target')+': <b>'+target+'</b></div>'+
+                '<div class="'+(pass?'bar done':'bar')+'"><i style="width:'+(pass?100:8)+'%"></i></div>'+
+                '<div class="row2"><div class="chip"><span class="k">'+t('lbl_live')+'</span>'+
+                '<span class="v">'+value+'</span></div></div></div>';
+        }
+
+        function renderMomentum(){
+            var d = momData || { status:'not_started' };
+            var statusMap = { not_started:'mom_st_notstarted', accruing_track_record:'mom_st_accruing',
+                              in_progress:'mom_st_inprogress', eligible_for_review:'mom_st_eligible' };
+            var sp = document.getElementById('momStatus');
+            sp.textContent = t(statusMap[d.status] || 'mom_st_inprogress');
+            sp.className = 'verdict-pill ' + (d.status==='eligible_for_review' ? 'vp-go' : 'vp-paper');
+
+            var ck = d.checks || {}, dash = t('v_dash');
+            function val(x, suf){ return (x && x.value!=null) ? (x.value+(suf||'')) : dash; }
+            document.getElementById('momGates').innerHTML =
+                momGateCard(t('mom_g_days'),   t('mom_t_days'),   val(ck.days_on_paper),        !!(ck.days_on_paper&&ck.days_on_paper.pass),     !ck.days_on_paper) +
+                momGateCard(t('mom_g_sharpe'), t('mom_t_sharpe'), val(ck.oos_sharpe),           !!(ck.oos_sharpe&&ck.oos_sharpe.pass),           !ck.oos_sharpe || ck.oos_sharpe.value==null) +
+                momGateCard(t('mom_g_dd'),     t('mom_t_dd'),     val(ck.max_drawdown_pct,'%'), !!(ck.max_drawdown_pct&&ck.max_drawdown_pct.pass), !ck.max_drawdown_pct || ck.max_drawdown_pct.value==null) +
+                momGateCard(t('mom_g_fills'),  t('mom_t_fills'),  val(ck.momentum_fills),       !!(ck.momentum_fills&&ck.momentum_fills.pass),   !ck.momentum_fills);
+
+            document.getElementById('momMilestones').innerHTML = (d.milestones||[]).map(function(m){
+                var done = m.reached;
+                var label = t('mom_ms')+' '+m.day+'d — '+(done ? t('mom_reached') : (t('mom_eta')+' '+(m.eta_date||'—')));
+                return '<span class="chip" style="padding:.4rem .7rem;border:1px solid var(--line);border-radius:999px;'+
+                    (done?'background:var(--teal-soft);color:var(--teal-dark);font-weight:600;':'color:var(--muted);')+'">'+
+                    (done?'✓ ':'○ ')+label+'</span>';
+            }).join('');
+
+            var foot = document.getElementById('momFoot');
+            if (d.status==='not_started'){ foot.innerHTML = t('mom_foot_notstarted'); }
+            else {
+                foot.innerHTML = tmpl('mom_foot_live', {
+                    days:d.days_on_paper!=null?d.days_on_paper:0,
+                    fills:d.momentum_fills!=null?d.momentum_fills:0,
+                    sharpe:d.oos_sharpe!=null?d.oos_sharpe:'—',
+                    dd:d.max_drawdown_pct!=null?d.max_drawdown_pct+'%':'—',
+                    dep:d.latest_deployed_pct!=null?d.latest_deployed_pct+'%':'—',
+                    vs:d.latest_vol_scale!=null?d.latest_vol_scale:'—',
+                    verdict:d.verdict||'—' });
+            }
+        }
+
+        function renderAll(){ renderTabs(); render(); renderMomentum(); }
 
         function applyLang(){
             document.documentElement.lang = lang;
@@ -384,12 +461,15 @@
         }
 
         function loadAll(){
-            return Promise.all(PF.map(function(p){
+            var portfolios = Promise.all(PF.map(function(p){
                 return Promise.all([
                     fetch('/api/portfolio/'+p.id+'/details').then(function(r){return r.json();}).catch(function(){return {};}),
                     fetch('/api/portfolio/'+p.id+'/equity-history').then(function(r){return r.json();}).catch(function(){return {};})
                 ]).then(function(res){ cache[p.id] = { details:res[0], history:res[1] }; });
             }));
+            var mom = fetch('/api/momentum/readiness').then(function(r){return r.json();})
+                .then(function(d){ momData = d; }).catch(function(){ momData = null; });
+            return Promise.all([portfolios, mom]);
         }
 
         applyLang();   // static text + lang/dir before data arrives

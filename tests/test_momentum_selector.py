@@ -13,7 +13,8 @@ for _p in (REPO_ROOT, os.path.join(REPO_ROOT, "scripts")):
         sys.path.insert(0, _p)
 
 from momentum_selector import (  # noqa: E402
-    market_trend_ok, momentum_score, select_top_momentum)
+    basket_realized_vol, market_trend_ok, momentum_score, select_top_momentum,
+    vol_target_scalar)
 
 
 def _ramp(start, step, n):
@@ -127,3 +128,55 @@ def test_no_sector_cap_when_unset():
     smap = {s: "tech" for s in data}
     w = select_top_momentum(data, k=13, sector_map=smap)   # max_per_sector=None
     assert len(w) == 13                            # no cap -> all 13 from tech
+
+
+# --------------------------------------------------------------------------
+# Volatility targeting (crash protection, 2026-07-04)
+# --------------------------------------------------------------------------
+
+def _wiggle(base, amp, n):
+    # deterministic oscillating series -> known, non-zero realized vol
+    return [base * (1 + (amp if i % 2 == 0 else -amp)) for i in range(n)]
+
+
+def test_basket_vol_none_when_insufficient_history():
+    closes = {"A": _ramp(100, 1, 30)}
+    assert basket_realized_vol(closes, {"A": 1.0}, lookback=63) is None
+    assert basket_realized_vol({}, {}, lookback=63) is None
+
+
+def test_basket_vol_higher_for_choppier_book():
+    calm = {"A": _wiggle(100, 0.002, 200)}
+    wild = {"B": _wiggle(100, 0.02, 200)}
+    v_calm = basket_realized_vol(calm, {"A": 1.0})
+    v_wild = basket_realized_vol(wild, {"B": 1.0})
+    assert v_calm is not None and v_wild is not None
+    assert v_wild > v_calm > 0                      # more chop -> more vol
+
+
+def test_vol_scalar_derisks_a_hot_book():
+    # A very choppy book (high realized vol) must be scaled DOWN below 1.0.
+    hot = {"A": _wiggle(100, 0.03, 200)}
+    scalar, rv = vol_target_scalar(hot, {"A": 1.0}, target_vol=0.18, lookback=63)
+    assert rv is not None and rv > 0.18
+    assert 0.30 <= scalar < 1.0                     # de-risked, but not below floor
+
+
+def test_vol_scalar_never_levers_past_the_cap():
+    # A calm book (low vol) could imply scale >1, but max_scale caps it at 1.0.
+    calm = {"A": _wiggle(100, 0.0005, 200)}
+    scalar, _ = vol_target_scalar(calm, {"A": 1.0}, target_vol=0.18)
+    assert scalar == 1.0                            # only de-risks, never levers
+
+
+def test_vol_scalar_respects_the_floor():
+    hot = {"A": _wiggle(100, 0.08, 200)}            # extreme vol
+    scalar, _ = vol_target_scalar(hot, {"A": 1.0}, target_vol=0.18, min_scale=0.30)
+    assert scalar == 0.30                            # clamped to the floor
+
+
+def test_vol_scalar_fails_to_full_exposure_when_unmeasurable():
+    # No usable history -> fail toward configured exposure (names already gated).
+    scalar, rv = vol_target_scalar({"A": _ramp(100, 1, 10)}, {"A": 1.0}, lookback=63)
+    assert rv is None and scalar == 1.0
+    assert vol_target_scalar({}, {})[0] == 1.0

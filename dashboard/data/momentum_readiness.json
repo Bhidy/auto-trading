@@ -1,0 +1,11 @@
+{
+  "status": "not_started",
+  "as_of": "2026-07-04",
+  "note": "Momentum sleeve has not run its first rebalance yet.",
+  "gates": {
+    "min_days": 90,
+    "min_oos_sharpe": 1.0,
+    "max_drawdown_pct": 15.0,
+    "min_momentum_fills": 26
+  }
+}

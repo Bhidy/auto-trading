@@ -153,6 +153,44 @@ def build_momentum(close, sector, dates, rebal_idx, *, topk, lookback=252, skip=
     return weights
 
 
+def basket_vol_bt(close, dates, i, weights, lookback=63):
+    """Annualized trailing realized vol of the weighted basket up to date i
+    (no look-ahead — uses only returns on/before i). None if insufficient data."""
+    if not weights:
+        return None
+    tot = sum(weights.values()) or 1.0
+    rets = []
+    for j in range(i - lookback + 1, i + 1):
+        if j <= 0:
+            continue
+        d0, d1 = dates[j - 1], dates[j]
+        r, ok = 0.0, False
+        for s, wv in weights.items():
+            c0, c1 = close[s].get(d0), close[s].get(d1)
+            if c0 and c1:
+                r += (wv / tot) * (c1 / c0 - 1.0)
+                ok = True
+        if ok:
+            rets.append(r)
+    if len(rets) < 2:
+        return None
+    m = sum(rets) / len(rets)
+    var = sum((x - m) ** 2 for x in rets) / (len(rets) - 1)
+    return (var ** 0.5) * (252 ** 0.5)
+
+
+def apply_vol_target(close, dates, weights_at_rebal, *, target=0.18, lookback=63,
+                     min_scale=0.30, max_scale=1.0):
+    """Scale each rebalance's gross exposure toward `target` annualized vol using
+    trailing (no-look-ahead) realized vol; the un-deployed remainder is cash."""
+    out = {}
+    for i, w in weights_at_rebal.items():
+        bv = basket_vol_bt(close, dates, i, w, lookback)
+        scale = max(min_scale, min(max_scale, target / bv)) if (bv and bv > 0) else max_scale
+        out[i] = {s: wv * scale for s, wv in w.items()}
+    return out
+
+
 def build_dual_momentum(close, dates, rebal_idx, *, risk_assets=("QQQ", "SPY"),
                         safe="TLT", lookback=252):
     """GEM-style: if the best risk asset's 12m return > 0 (absolute momentum),
@@ -246,6 +284,14 @@ def main():
         c = simulate(close, dates, w, rebal)
         curves[f"MOM top13 no-trend, max{mps}/sector [FIX]"] = c
         results[f"MOM top13 no-trend, max{mps}/sector [FIX]"] = stats(c)
+    # DEPLOYED config: top-13 no-trend max4/sector + VOLATILITY TARGETING (the
+    # crash guard). Compare against the un-targeted [FIX] above to see the DD cut.
+    for tgt in (0.15, 0.18):
+        base = build_momentum(close, sector, dates, rebal, topk=13, max_per_sector=4)
+        w = apply_vol_target(close, dates, base, target=tgt, lookback=63)
+        c = simulate(close, dates, w, rebal)
+        curves[f"MOM top13 max4/sec + VOL-TGT {int(tgt*100)}% [DEPLOYED]"] = c
+        results[f"MOM top13 max4/sec + VOL-TGT {int(tgt*100)}% [DEPLOYED]"] = stats(c)
 
     # ---- report, sorted by CAGR (the client's objective) ----
     hdr = f"{'STRATEGY':<34}{'CAGR%':>7}{'MaxDD%':>8}{'Sharpe':>8}{'Sortino':>9}{'TotRet%':>9}"
