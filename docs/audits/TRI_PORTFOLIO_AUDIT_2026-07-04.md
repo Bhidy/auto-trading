@@ -144,3 +144,30 @@ Plus the external statistics: 90 days of daily returns **cannot** distinguish a 
 **Paper program: CONDITIONAL GO** — keep running, but Week-1 fixes (D1–D5) are mandatory conditions; the program is currently flying on instruments that misreport two of three books.
 **Live capital: NO-GO** — no sleeve passes the strategy gates; earliest credible review ~end of September 2026, and only the passive core (fractional, separate account) is a defensible earlier deployment.
 **Strategy: KEEP the core-satellite architecture the system already adopted on 2026-06-18; fix the three broken engines; add nothing new until the existing ones are measured honestly.**
+
+---
+
+## 9. Remediation status (updated 2026-07-04, same day)
+
+All twelve defects are now fixed and shipped across two commits; CI green.
+
+| # | Sev | Fix | Status |
+|---|-----|-----|--------|
+| D1 | Critical | P3 news tranche un-crashed + CI unmasked | ✅ shipped |
+| D2 | Critical | P3 P&L rebuilt from broker FIFO (-$6,183 → -$288); exit_reason attributed | ✅ shipped |
+| D3 | Critical | P2 feed root-caused (WAF blocks runner IPs) + House-Clerk fallback (stdlib PTR parser, 467/467 parity) | ✅ shipped |
+| D4 | High | P2 reconciler sign-bug fixed; log rebuilt (-$285 → +$808, = broker) | ✅ shipped |
+| D5 | High | `close_trade` reason param + 4 P1 call sites | ✅ shipped |
+| D6 | High | P3 gross cap + cumulative tranches + $2k min-notional | ✅ shipped |
+| D7 | High | P2 25% take-profit → ~63-trading-day alpha-capture exit | ✅ shipped |
+| D8 | Med | P1 core regime-tilt by class (BULL ~45% → ~17% defensive) | ✅ shipped |
+| D9 | Med | P1 defensive-ETF bucket attribution | ✅ shipped |
+| D10 | Med | P2 lag 45→30d; technical gate → advisory | ✅ shipped |
+| D11 | Med | P3 cooldown → consecutive-stop only | ✅ shipped |
+| D12 | Low | P2 copy BUYs peg to ask (marketable) | ✅ shipped |
+
+**Follow-on strategy artifacts (this session):**
+- `docs/LIVE_CORE_RAMP.md` — the fractional-live ramp plan for the passive core (separate account, 5–10%, tightened limits). Sign-off block left blank pending your authorization.
+- `docs/CORE_SATELLITE_SPEC.md` — the recommended target architecture (80–90% regime-tilted passive core + MTUM factor sleeve + two capped, individually-gated satellites).
+
+**Still requires the clock, not code:** (a) the passive core's D8 fix runs in tonight's/next EOD; (b) P2's House-Clerk fallback first exercises on the next scheduled P2 scan; (c) P3's stop restructure (2.5–3×ATR) is intentionally deferred until ≥30 more round trips can measure it; (d) live capital remains NO-GO until `LIVE_READINESS.md` gates pass (~Q4 2026), with the passive-core fractional ramp the only defensible earlier move.
