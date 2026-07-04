@@ -117,11 +117,13 @@ def stats(curve):
 
 
 def build_momentum(close, sector, dates, rebal_idx, *, topk, lookback=252, skip=21,
-                   trend_filter=False, risk_off="BIL", stocks_only=True):
-    """{rebal_i: {sym: weight}} for concentrated cross-sectional momentum."""
+                   trend_filter=False, risk_off="BIL", stocks_only=True,
+                   max_per_sector=None):
+    """{rebal_i: {sym: weight}} for concentrated cross-sectional momentum.
+    ``max_per_sector`` optionally caps how many names one sector can contribute
+    (diversification guard against a single-industry concentration bomb)."""
     weights = {}
     for i in rebal_idx:
-        # market trend filter on SPY
         if trend_filter:
             spy_c = close["SPY"].get(dates[i])
             spy_sma = sma(close["SPY"], dates, i, 200)
@@ -138,7 +140,15 @@ def build_momentum(close, sector, dates, rebal_idx, *, topk, lookback=252, skip=
         if not cands:
             continue
         cands.sort(reverse=True)
-        picks = [s for _, s in cands[:topk]]
+        picks, sec_count = [], {}
+        for _, s in cands:
+            if len(picks) >= topk:
+                break
+            sec = sector.get(s, "?")
+            if max_per_sector and sec_count.get(sec, 0) >= max_per_sector:
+                continue
+            picks.append(s)
+            sec_count[sec] = sec_count.get(sec, 0) + 1
         weights[i] = {s: 1.0 / len(picks) for s in picks}
     return weights
 
@@ -225,6 +235,17 @@ def main():
     w = build_momentum(close, sector, dates, rebal, topk=15, trend_filter=True, risk_off="BIL")
     c = simulate(close, dates, w, rebal); curves["MOM top15 + trend->BIL [cap-ok]"] = c
     results["MOM top15 + trend->BIL [cap-ok]"] = stats(c)
+    # EXACT deployed config: top-13 + trend->BIL (the live sleeve's use_trend=true).
+    w = build_momentum(close, sector, dates, rebal, topk=13, trend_filter=True, risk_off="BIL")
+    c = simulate(close, dates, w, rebal); curves["MOM top13 + trend->BIL [DEPLOYED]"] = c
+    results["MOM top13 + trend->BIL [DEPLOYED]"] = stats(c)
+    # CORRECTION candidates: no-trend (the validated high-return variant) WITH a
+    # per-sector cap so it can't go ~55% into one industry (the semis-bubble risk).
+    for mps in (3, 4):
+        w = build_momentum(close, sector, dates, rebal, topk=13, max_per_sector=mps)
+        c = simulate(close, dates, w, rebal)
+        curves[f"MOM top13 no-trend, max{mps}/sector [FIX]"] = c
+        results[f"MOM top13 no-trend, max{mps}/sector [FIX]"] = stats(c)
 
     # ---- report, sorted by CAGR (the client's objective) ----
     hdr = f"{'STRATEGY':<34}{'CAGR%':>7}{'MaxDD%':>8}{'Sharpe':>8}{'Sortino':>9}{'TotRet%':>9}"

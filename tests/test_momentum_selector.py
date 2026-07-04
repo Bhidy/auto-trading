@@ -87,4 +87,43 @@ def test_trend_gate_invests_when_market_above_sma():
 def test_market_trend_ok_helper():
     assert market_trend_ok(_ramp(100, 1, 250)) is True
     assert market_trend_ok(_ramp(300, -1, 250)) is False
-    assert market_trend_ok([], n=200) is True     # no data -> fail-open
+    assert market_trend_ok([], n=200) is True     # helper primitive fail-opens
+
+
+# --------------------------------------------------------------------------
+# Audit fixes (2026-07-04): trend FAIL-SAFE + per-sector cap
+# --------------------------------------------------------------------------
+
+def test_trend_gate_fails_safe_when_market_data_missing():
+    # use_trend on + no market data -> CASH (never fail-open to risk-on).
+    data = {f"S{i}": _ramp(100, i + 1, 300) for i in range(30)}
+    assert select_top_momentum(data, use_trend=True, market_closes=None) == {}
+
+
+def test_trend_gate_fails_safe_when_market_history_too_short():
+    data = {f"S{i}": _ramp(100, i + 1, 300) for i in range(30)}
+    short = _ramp(100, 1, 150)                     # < 200 -> can't confirm trend
+    assert select_top_momentum(data, use_trend=True, market_closes=short) == {}
+
+
+def test_sector_cap_limits_names_per_sector():
+    # 20 tech (highest momentum) across 3 other sectors; cap 4/sector must cap
+    # tech at 4 rather than letting it take all 13 (the 55%-in-one-industry bomb).
+    data, smap = {}, {}
+    for i in range(20):
+        data[f"T{i:02d}"] = _ramp(100, 20 + i, 300); smap[f"T{i:02d}"] = "tech"
+    for sec in ("fin", "energy", "health"):
+        for i in range(6):
+            data[f"{sec}{i}"] = _ramp(100, 1 + i * 0.1, 300); smap[f"{sec}{i}"] = sec
+    w = select_top_momentum(data, k=13, sector_map=smap, max_per_sector=4)
+    assert len([s for s in w if smap[s] == "tech"]) == 4    # tech capped at 4
+    assert len(w) == 13                                     # filled from fin/energy/health
+    assert max(sum(1 for s in w if smap[s] == sec)
+               for sec in set(smap.values())) <= 4          # no sector over the cap
+
+
+def test_no_sector_cap_when_unset():
+    data = {f"T{i:02d}": _ramp(100, 10 + i, 300) for i in range(20)}
+    smap = {s: "tech" for s in data}
+    w = select_top_momentum(data, k=13, sector_map=smap)   # max_per_sector=None
+    assert len(w) == 13                            # no cap -> all 13 from tech

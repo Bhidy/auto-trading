@@ -42,21 +42,31 @@ def market_trend_ok(market_closes, n=200):
 
 
 def select_top_momentum(closes_by_sym, k=13, max_weight=0.08, lookback=252,
-                        skip=21, exclude=None, market_closes=None, use_trend=False):
+                        skip=21, exclude=None, market_closes=None, use_trend=False,
+                        sector_map=None, max_per_sector=None):
     """Equal-weight target for the top-K momentum names.
 
     Returns ``{symbol: weight}``. Guarantees every weight <= ``max_weight`` (so it
     can never breach the 8% single-name cap): the effective K is raised to at least
-    ceil(1/max_weight) if the caller asks for fewer names. If ``use_trend`` and the
-    market is below its SMA, returns ``{}`` (go to cash/bonds — the caller decides
-    the risk-off asset). Ties broken by symbol for determinism.
+    ceil(1/max_weight) if the caller asks for fewer names. Ties broken by symbol.
+
+    ``use_trend`` — gate on the market's 200-day trend. FAILS SAFE: if the trend
+    can't be confirmed (market data missing/short), returns ``{}`` (cash), so a
+    data glitch can never silently disable the crash filter (audit 2026-07-04).
+
+    ``max_per_sector`` (with ``sector_map`` {sym: sector}) — caps how many names
+    ONE sector can contribute, so the book can't go ~55% into a single industry
+    (the semiconductor-bubble concentration the research flagged).
     """
     exclude = set(exclude or ())
-    if use_trend and not market_trend_ok(market_closes):
-        return {}
+    if use_trend:
+        # fail SAFE: unconfirmable trend -> cash, never fail-open to risk-on.
+        if not market_closes or len(market_closes) < 200 or not market_trend_ok(market_closes):
+            return {}
 
     min_k = math.ceil(1.0 / max_weight)          # 8% cap -> >=13 names
     k = max(int(k), min_k)
+    sector_map = sector_map or {}
 
     scored = []
     for sym, closes in closes_by_sym.items():
@@ -68,6 +78,17 @@ def select_top_momentum(closes_by_sym, k=13, max_weight=0.08, lookback=252,
     if not scored:
         return {}
     scored.sort(key=lambda x: (-x[0], x[1]))     # momentum desc, symbol asc
-    picks = [s for _, s in scored[:k]]
+
+    picks, sec_count = [], {}
+    for _, sym in scored:
+        if len(picks) >= k:
+            break
+        sec = sector_map.get(sym, sym)           # unknown sector -> its own bucket
+        if max_per_sector and sec_count.get(sec, 0) >= max_per_sector:
+            continue                             # sector full -> skip to next name
+        picks.append(sym)
+        sec_count[sec] = sec_count.get(sec, 0) + 1
+    if not picks:
+        return {}
     w = min(1.0 / len(picks), max_weight)        # never exceed the cap
     return {s: round(w, 6) for s in picks}

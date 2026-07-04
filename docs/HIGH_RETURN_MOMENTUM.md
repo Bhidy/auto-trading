@@ -68,8 +68,16 @@ historically the worst environment for momentum-chasing.
   optional 200-day trend gate). `scripts/portfolio_manager.compute_momentum_rebalance_orders` —
   the rebalance engine. `autonomous_runner.run_momentum_sleeve` — wired into `trading-session`
   AFTER the kill-switch/daily-loss/halt guards, so it obeys every hard stop. 19 unit tests.
-- **Config (`data/strategy_params.json`):** `momentum_sleeve_enabled=true`,
-  `momentum_sleeve_weight=0.90`, `momentum_top_k=13`, `momentum_use_trend=true`.
+- **Config (`data/strategy_params.json`) — AUDIT-CORRECTED 2026-07-04:**
+  `momentum_sleeve_enabled=true`, `momentum_sleeve_weight=0.90`, `momentum_top_k=13`,
+  **`momentum_use_trend=false`** (the trend filter cut CAGR 24%→9% below SPY in our bull —
+  it's a drawdown reducer, not a return tool), **`momentum_max_per_sector=4`** (kills the
+  ~55%-semiconductor concentration the un-capped version produced). Validated config
+  (top-13, no-trend, max-4/sector): **18.3% CAGR / 24.4% DD / Sharpe 0.97 vs SPY 11.6%**.
+  Audit also fixed: trend FAIL-SAFE (missing market data → cash, not deploy) and exempted
+  momentum positions from the intraday −4% hard-stop / breakeven stops (they're
+  monthly-rebalanced, not stop-managed). **No market-crash protection now — a real-money
+  version needs volatility-targeting.**
 - **Behaviour:** monthly rebalance to the top-13 highest-momentum large-caps at ~6.9%/name (90%
   of equity), rest cash; goes fully to cash when SPY < its 200-day average. It REPLACES the
   passive core while enabled. **Fully reversible:** set `momentum_sleeve_enabled=false` → P1

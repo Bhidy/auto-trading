@@ -319,13 +319,16 @@ def run_morning_research(alpaca: AlpacaClient):
 # ---------------------------------------------------------------------------
 
 def _momentum_universe():
-    """Large-cap stock symbols for the momentum sleeve, from universe_wide.json."""
+    """(symbols, sector_map) for the momentum sleeve, from universe_wide.json.
+    The bucket name is the sector, used for the per-sector concentration cap."""
     u = load_json(CONFIG_DIR / "universe_wide.json", {})
-    syms = []
-    for b in (u.get("buckets", {}) or {}).values():
+    syms, sector_map = [], {}
+    for bucket, b in (u.get("buckets", {}) or {}).items():
         if b.get("instrument_type") == "stock":
-            syms.extend(b.get("symbols", []))
-    return sorted(set(syms))
+            for s in b.get("symbols", []):
+                syms.append(s)
+                sector_map[s] = bucket
+    return sorted(set(syms)), sector_map
 
 
 def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
@@ -358,14 +361,16 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
 
     top_k = int(params.get("momentum_top_k", 13))
     sleeve_weight = float(params.get("momentum_sleeve_weight", 0.90))
-    use_trend = bool(params.get("momentum_use_trend", True))
+    use_trend = bool(params.get("momentum_use_trend", False))
+    max_per_sector = params.get("momentum_max_per_sector", 4)
 
     # Daily closes for the universe (need >=274 bars for 12-1 momentum). An
     # explicit start is REQUIRED — without it the free feed returns a stub (the
     # documented empty-period trap); ~420 calendar days ≈ 290 trading days.
     _start = (datetime.now(timezone.utc) - timedelta(days=420)).strftime("%Y-%m-%d")
+    universe, sector_map = _momentum_universe()
     closes_by_sym, prices = {}, {}
-    for sym in _momentum_universe():
+    for sym in universe:
         try:
             bars = alpaca.get_stock_bars(sym, timeframe="1Day", start=_start, limit=500).get("bars") or []
             closes = [float(b["c"]) for b in bars if b.get("c")]
@@ -390,11 +395,18 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
 
     from momentum_selector import select_top_momentum
     targets = select_top_momentum(closes_by_sym, k=top_k, max_weight=0.08,
-                                  use_trend=use_trend, market_closes=spy_closes)
+                                  use_trend=use_trend, market_closes=spy_closes,
+                                  sector_map=sector_map, max_per_sector=max_per_sector)
     targets = {s: w * sleeve_weight for s, w in targets.items()}   # rest stays cash
     if not targets:
-        log.warning("  Momentum: RISK-OFF (market below its 200-day average) — "
-                    "target is cash; liquidating the momentum book.")
+        log.warning("  Momentum: RISK-OFF / no eligible names — target is cash; "
+                    "liquidating the momentum book.")
+    else:
+        _secs = {}
+        for s in targets:
+            _secs[sector_map.get(s, "?")] = _secs.get(sector_map.get(s, "?"), 0) + 1
+        log.info(f"  Momentum: {len(targets)} names, per-sector {dict(_secs)} "
+                 f"(cap {max_per_sector}/sector), trend_filter={use_trend}.")
 
     from portfolio_manager import compute_momentum_rebalance_orders
     positions = alpaca.get_positions()

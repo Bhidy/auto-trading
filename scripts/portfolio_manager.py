@@ -291,8 +291,15 @@ def compute_cap_trims(positions, equity, limits, bucket_map, buffer_pct=0.5):
 def check_stop_triggers(positions, signals_data, open_trades=None, params=None):
     stops = compute_stop_levels(positions, signals_data, open_trades, params)
     triggers = []
+    # Rebalanced-sleeve positions are held to their schedule, NOT intraday
+    # stop-managed — a breakeven/trailing stop would churn the monthly momentum
+    # book (audit 2026-07-04). Exempt them by order_class.
+    _exempt = {t.get("symbol") for t in (open_trades or [])
+               if isinstance(t, dict) and t.get("order_class") == "momentum_sleeve"}
 
     for sym, stop_info in stops.items():
+        if sym in _exempt:
+            continue
         current = stop_info["current"]
         side = stop_info["side"]
 
@@ -340,12 +347,14 @@ def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
     cut at +1.4% — 94% of the loss sat in >=4-day underwater holds. This caps a
     single active loser two ways: a hard max-loss exit and a loser time-stop.
 
-    SCOPE (safety): the passive core (order_class 'passive_core') is REBALANCED,
-    never stop-managed — it is explicitly skipped, so this can never force-sell a
-    core ETF. A position with no matching OPEN active lot is also skipped. Longs
-    only (shorts are handled elsewhere). Risk-REDUCING; produces SELLs only.
+    SCOPE (safety): rebalanced sleeves are NEVER stop-managed and are explicitly
+    skipped — the passive core (order_class 'passive_core') AND the momentum sleeve
+    (order_class 'momentum_sleeve', a MONTHLY-rebalance hold; an intraday -4% stop
+    would churn it to death, the P3 disease — audit 2026-07-04). A position with no
+    matching OPEN active lot is also skipped. Longs only. Risk-REDUCING; SELLs only.
     """
     now = now or datetime.now(timezone.utc)
+    _exempt = {"passive_core", "momentum_sleeve"}       # rebalanced, not stop-managed
     meta = {}
     for t in (open_trades or []):
         if isinstance(t, dict) and t.get("status") == "open" and t.get("symbol"):
@@ -353,8 +362,8 @@ def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
     triggers = []
     for sym, si in (stops or {}).items():
         m = meta.get(sym)
-        if m is None or m.get("order_class") == "passive_core":
-            continue                                    # not active, or is the core
+        if m is None or m.get("order_class") in _exempt:
+            continue                                    # not active, or a rebalanced sleeve
         if si.get("side", "long") != "long":
             continue
         pnl = si.get("unrealized_pnl_pct", 0)
