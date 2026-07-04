@@ -490,12 +490,20 @@ def run_trading_session(alpaca: AlpacaClient):
     # active_entries_enabled=false -> the satellite opens NO new entries; the core
     # block above is the sole allocator and existing active positions wind down by
     # riding their stops via the monitor. Exits/sells are NEVER suppressed.
-    from portfolio_manager import filter_active_entries
+    from portfolio_manager import filter_active_entries, regime_gate_active_entries
     approved, _suppressed = filter_active_entries(approved, _params)
     if _suppressed:
         log.info(f"Core-only mode: suppressing {len(_suppressed)} active entry signal(s) "
                  f"({', '.join(o['symbol'] for o in _suppressed)}) — satellite winding down, "
                  f"existing positions ride their stops")
+    # Regime brake (chief-expert rec #3): block new active LONGS when the short-
+    # horizon market is adverse. Dormant while active entries are suppressed
+    # above; active when the satellite is re-enabled.
+    approved, _regime_blocked = regime_gate_active_entries(approved, _signals, _params)
+    if _regime_blocked:
+        log.info(f"Regime brake: blocked {len(_regime_blocked)} new long entry(ies) "
+                 f"({', '.join(o['symbol'] for o in _regime_blocked)}) — adverse "
+                 f"short-horizon regime, not buying high-beta into weakness")
 
     if not approved:
         log.info("No approved orders to execute")
@@ -874,8 +882,22 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     open_trades = [t for t in trade_log if isinstance(t, dict) and t.get("status") == "open"]
     strategy_params = load_json(DATA_DIR / "strategy_params.json", {})
-    from portfolio_manager import check_stop_triggers
+    from portfolio_manager import (active_sleeve_exit_triggers, check_stop_triggers,
+                                    compute_stop_levels)
     triggers = check_stop_triggers(positions, signals_data, open_trades, strategy_params)
+    # Active-sleeve hard max-loss + loser time-stop (chief-expert rec #2). Scoped
+    # to active positions only (never the passive core). Merged with the stop
+    # triggers, de-duped by symbol so we don't double-fire on one name this run.
+    _ase = limits.get("active_sleeve_exits", {}) or {}
+    _already = {t["symbol"] for t in triggers}
+    for _t in active_sleeve_exit_triggers(
+            compute_stop_levels(positions, signals_data, open_trades, strategy_params),
+            open_trades,
+            max_loss_pct=_ase.get("max_loss_pct", 4.0),
+            time_stop_days=_ase.get("loser_time_stop_days", 4)):
+        if _t["symbol"] not in _already:
+            triggers.append(_t)
+            _already.add(_t["symbol"])
 
     for trigger in triggers:
         sym = trigger["symbol"]
@@ -888,17 +910,21 @@ def run_intraday_monitor(alpaca: AlpacaClient):
                 continue
             qty = int(float(pos["qty"]))
 
-            if action == "STOP_LOSS_SELL":
+            if action in ("STOP_LOSS_SELL", "HARD_STOP_SELL", "TIME_STOP_SELL"):
                 order_result = alpaca.place_order(symbol=sym, qty=qty, side="sell",
                                    order_type="market", time_in_force="day")
-                log.warning(f"  STOP LOSS executed: sold {qty} x {sym}")
+                _reason = {"STOP_LOSS_SELL": "stop_loss",
+                           "HARD_STOP_SELL": "active_max_loss",
+                           "TIME_STOP_SELL": "active_time_stop"}[action]
+                log.warning(f"  {action} executed: sold {qty} x {sym} — "
+                            f"{trigger.get('reason', _reason)}")
                 from performance_tracker import find_open_trade, close_trade
                 trade = find_open_trade(sym)
                 if trade:
                     fill_price = float(order_result.get("filled_avg_price", 0) or trigger["current_price"])
                     if fill_price <= 0:
                         fill_price = trigger["current_price"]
-                    close_trade(trade["id"], fill_price, reason="stop_loss")
+                    close_trade(trade["id"], fill_price, reason=_reason)
 
             elif action == "TAKE_PROFIT_SELL":
                 sell_qty = max(1, qty // 2)

@@ -170,4 +170,25 @@ All twelve defects are now fixed and shipped across two commits; CI green.
 - `docs/LIVE_CORE_RAMP.md` — the fractional-live ramp plan for the passive core (separate account, 5–10%, tightened limits). Sign-off block left blank pending your authorization.
 - `docs/CORE_SATELLITE_SPEC.md` — the recommended target architecture (80–90% regime-tilted passive core + MTUM factor sleeve + two capped, individually-gated satellites).
 
-**Still requires the clock, not code:** (a) the passive core's D8 fix runs in tonight's/next EOD; (b) P2's House-Clerk fallback first exercises on the next scheduled P2 scan; (c) P3's stop restructure (2.5–3×ATR) is intentionally deferred until ≥30 more round trips can measure it; (d) live capital remains NO-GO until `LIVE_READINESS.md` gates pass (~Q4 2026), with the passive-core fractional ramp the only defensible earlier move.
+**Still requires the clock, not code:** (a) the passive core's D8 fix runs in tonight's/next EOD; (b) P2's House-Clerk fallback first exercises on the next scheduled P2 scan; (c) live capital remains NO-GO until `LIVE_READINESS.md` gates pass (~Q4 2026), with the passive-core fractional ramp the only defensible earlier move.
+
+## 10. Chief-expert recommendations + operational completion (2026-07-04)
+
+Beyond the D1–D12 defects, every actionable chief-expert recommendation was executed on a
+**validate-then-ship** basis, and the operational live-ramp preconditions were completed:
+
+| Item | Outcome |
+|---|---|
+| **P3 stop restructure** (rec) | **SHIPPED** — OOS-validated (Sharpe 0.19→0.78, DD↓, beats SPY challenger); stop 2.5 / TP 5.0 / trail 2.5 in P3 config. `data/p3_exit_restructure_backtest.json`. |
+| **MTUM factor sleeve** (rec) | **VALIDATED MARGINAL → DEFERRED** — +0.037 Sharpe (noise) with +0.9pp DD against elevated momentum-crash risk; not added. `data/mtum_core_inclusion_study.json`. |
+| **P2 disclosure observability** (rec) | **SHIPPED** — copies carry transaction/disclosure/observed dates + lag; skipped disclosures logged with reasons (`data/p2_skipped_disclosures.json`). |
+| **P1 hard max-loss + loser time-stop** (rec #2) | **SHIPPED, gated** — active-sleeve-scoped (never the passive core); caps the 0.42 win/loss asymmetry when the satellite reactivates. |
+| **P1 regime brake on entries** (rec #3) | **SHIPPED, dormant** — blocks new longs in adverse short-horizon regimes; active when the satellite reactivates. |
+| **Operational runbook** | **DONE** — `docs/RUNBOOK.md` (kill switch, halt override, manual liquidation, rollback, key rotation, incidents). |
+| **Kill-switch drill in CI** | **DONE** — `tests/test_kill_switch_drill.py` (already CI-wired); `LIVE_READINESS.md` open item closed. |
+| **P2/P3 reconciliation parity** | **DONE** — broker-FIFO rebuild + exit-reason attribution; `LIVE_READINESS.md` open item closed. |
+
+**Deliberately NOT done (human-gated):** deploying real capital. The fractional-live core ramp
+(`docs/LIVE_CORE_RAMP.md`) is turnkey but its §6 sign-off is the owner's decision; live money
+stays NO-GO until the strategy gates pass (§6 snapshot above). Everything an engineer can safely
+complete is complete.

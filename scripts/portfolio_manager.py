@@ -311,6 +311,93 @@ def check_stop_triggers(positions, signals_data, open_trades=None, params=None):
 
     return triggers
 
+
+def _hold_days(timestamp, now):
+    """Whole days a lot has been open, from its ISO entry timestamp. None if
+    unparseable (fail-open: an unknown age never force-exits a position)."""
+    if not timestamp:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    return (now - ts).days
+
+
+def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
+                                time_stop_days=4, now=None):
+    """Hard per-trade max-loss + loser time-stop — ACTIVE-sleeve LONGS ONLY.
+
+    Chief-expert rec #2 (audit 2026-07-04): the active satellite's 0.42 win/loss
+    ratio came from losers riding to -5..-10.8% over 4-15 days while winners were
+    cut at +1.4% — 94% of the loss sat in >=4-day underwater holds. This caps a
+    single active loser two ways: a hard max-loss exit and a loser time-stop.
+
+    SCOPE (safety): the passive core (order_class 'passive_core') is REBALANCED,
+    never stop-managed — it is explicitly skipped, so this can never force-sell a
+    core ETF. A position with no matching OPEN active lot is also skipped. Longs
+    only (shorts are handled elsewhere). Risk-REDUCING; produces SELLs only.
+    """
+    now = now or datetime.now(timezone.utc)
+    meta = {}
+    for t in (open_trades or []):
+        if isinstance(t, dict) and t.get("status") == "open" and t.get("symbol"):
+            meta[t["symbol"]] = t                       # most-recent open lot wins
+    triggers = []
+    for sym, si in (stops or {}).items():
+        m = meta.get(sym)
+        if m is None or m.get("order_class") == "passive_core":
+            continue                                    # not active, or is the core
+        if si.get("side", "long") != "long":
+            continue
+        pnl = si.get("unrealized_pnl_pct", 0)
+        if max_loss_pct and pnl <= -abs(max_loss_pct):
+            triggers.append({
+                "symbol": sym, "action": "HARD_STOP_SELL",
+                "current_price": si.get("current"), "pnl_pct": pnl,
+                "reason": f"active max-loss {pnl:.1f}% <= -{abs(max_loss_pct):.1f}%"})
+            continue
+        held = _hold_days(m.get("timestamp"), now)
+        if time_stop_days and held is not None and held >= time_stop_days and pnl < 0:
+            triggers.append({
+                "symbol": sym, "action": "TIME_STOP_SELL",
+                "current_price": si.get("current"), "pnl_pct": pnl,
+                "reason": f"active loser held {held}d underwater ({pnl:.1f}%)"})
+    return triggers
+
+
+def regime_gate_active_entries(approved, signals_data, params=None):
+    """Block NEW active BUY entries when the short-horizon market is adverse.
+
+    Chief-expert rec #3 (audit 2026-07-04): the engine issued its highest-
+    conviction BUYs into the 6/4-6/10 selloff because SPY-only regime detection
+    lagged. This gates new LONGS on the regime label AND a short-horizon SPY
+    momentum read (whichever is adverse). SHORT entries and non-entries pass.
+    Dormant while active_entries_enabled=false; ready when the satellite is on.
+    Returns ``(kept, blocked)``.
+    """
+    regime = (signals_data or {}).get("market_regime", "BULL")
+    adverse_regimes = {"CORRECTION", "BEAR", "STRONG_BEAR"}
+    spy_mom = None
+    for s in (signals_data or {}).get("signals", []):
+        if s.get("symbol") == "SPY":
+            mom = s.get("momentum") or {}
+            spy_mom = (mom.get("5d") if isinstance(mom, dict) else None)
+            if spy_mom is None:
+                spy_mom = s.get("spy_5d_return")
+            break
+    floor = _pnum(params, "active_entry_spy_mom_floor_pct", -2.0)
+    adverse = (regime in adverse_regimes
+               or (spy_mom is not None and spy_mom < floor))
+    if not adverse:
+        return list(approved or []), []
+    kept, blocked = [], []
+    for o in (approved or []):
+        (blocked if o.get("signal") == "BUY" else kept).append(o)
+    return kept, blocked
+
 # ---------------------------------------------------------------------------
 # REBALANCING ENGINE
 # ---------------------------------------------------------------------------

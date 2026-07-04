@@ -46,5 +46,9 @@
   "cross_portfolio": {
     "single_name_cap_pct": 10.0,
     "sector_cap_pct": 30.0
+  },
+  "active_sleeve_exits": {
+    "max_loss_pct": 4.0,
+    "loser_time_stop_days": 4
   }
 }

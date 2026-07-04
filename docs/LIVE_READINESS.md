@@ -47,8 +47,8 @@ the institutional bar for promoting any single portfolio from paper to live.
 - [ ] 30 consecutive days with **zero unhandled exceptions** in any workflow run.
 - [ ] Heartbeat watchdog has alerted correctly at least once (tested failure path).
 - [ ] Supabase persistence verified (`SUPABASE_URL` + keys set; equity history accumulating).
-- [ ] Kill-switch + daily/weekly loss halts exercised in paper (manually triggered drill).
-- [ ] Runbook exists for: key rotation, halt override, manual liquidation, rollback.
+- [x] Kill-switch + daily/weekly loss halts exercised (scripted CI drill: `tests/test_kill_switch_drill.py` — liquidate+lockdown, daily-loss halt, healthy no-halt; runs on every push).
+- [x] Runbook exists for: key rotation, halt override, manual liquidation, rollback → `docs/RUNBOOK.md`.
 - [ ] Secrets rotation policy in place; live keys scoped to a *separate* live account.
 
 ## 4. Go-live procedure (when all gates pass)
@@ -62,8 +62,23 @@ the institutional bar for promoting any single portfolio from paper to live.
 ## 5. Currently OPEN before any live consideration
 
 - Supabase as the **sole** system of record (currently dual-written with git-JSON).
-- P2/P3 EOD reconciliation parity (P1 has exit-reconcile + drift audit; extend the
-  unlogged-fill backfill to P2/P3 if their fill latency proves material).
-- A scripted kill-switch drill in CI (simulated drawdown → assert halt + lockdown).
+- ~~P2/P3 EOD reconciliation parity~~ → **DONE (2026-07-04):** P2 and P3 now reconcile
+  to broker FIFO truth with exit-reason attribution and an idempotent repair tool
+  (`scripts/rebuild_closed_pnl_from_broker.py`); both logs verified to the cent.
+- ~~A scripted kill-switch drill in CI~~ → **DONE:** `tests/test_kill_switch_drill.py`
+  runs on every push (simulated drawdown → asserts liquidate + lockdown).
 
-_Last updated: 2026-05-29. Owner: Senior Chief Quant. Review: monthly._
+## 6. Strategy-gate status snapshot (2026-07-04, ~day 27 of 90)
+
+| Portfolio | Track record | OOS Sharpe ≥1.0 | PF ≥1.3 | ≥50 closed | Verdict |
+|---|---|---|---|---|---|
+| P1 core (passive) | — | beta (n/a) | n/a | n/a | Only defensible early live (fractional, see `LIVE_CORE_RAMP.md`) |
+| P1 satellite | ~27d | fails | fails | 61 ✓ | **Stays OFF** until it beats buy-and-hold OOS |
+| P2 copies | ~27d | unproven | n/a | ~6 ❌ | Paper; engine fixed, re-measure ≥30 post-fix round trips |
+| P3 breakout | ~27d | ~0 live | ~1 | 30 ❌ | Paper; stop restructure shipped, re-measure ≥30 round trips |
+
+**Live capital remains NO-GO.** Earliest credible review ~end of Sep 2026. The passive-core
+fractional ramp is the only defensible earlier deployment and requires the human sign-off in
+`LIVE_CORE_RAMP.md` §6.
+
+_Last updated: 2026-07-04. Owner: Senior Chief Quant. Review: monthly._
