@@ -45,19 +45,25 @@ convex upside if an edge is real.
 - **Rebalance cadence:** the existing 5% drift band + daily EOD is right for a low-turnover
   core — do not increase turnover (costs are the enemy here).
 
-## 4. The one addition worth making: a momentum-factor ETF in the core
+## 4. A momentum-factor ETF in the core — VALIDATED MARGINAL, DEFERRED
 
 External evidence (mid-2026): momentum was the **best-performing factor** of the cycle
-(MTUM beating the S&P; JPM Factor Views), while high-turnover DIY single-name momentum is
-cost-condemned at retail scale. The implementable version of "momentum" for a $100k book is
-therefore the **factor ETF, not a homegrown scorer**: MTUM delivers cross-sectional momentum
-at 0.15% ER with none of the turnover that killed P1's active sleeve.
+(MTUM beating the S&P; JPM Factor Views), and the implementable version for a $100k book is
+the **factor ETF, not a homegrown scorer** (MTUM, 0.15% ER, no DIY turnover). So we tested it.
 
-- Add MTUM (or a comparable broad momentum ETF) as a 9th core basket member in the **equity**
-  class, sized like the other equity ETFs and under the same 12% cap.
-- **Caveat (must be respected):** JPM flags the widest momentum-factor dispersion since 1990 —
-  a documented precursor of sharp momentum reversals. Momentum is a *core diversifier here, not
-  a concentrated bet*; the regime tilt already trims equity (incl. MTUM) in a downturn.
+**Validation (`data/mtum_core_inclusion_study.json`, 2021-06→2026-06, net of 10bps/side):**
+adding MTUM to the equity core (SPY/QQQ/IWM/DIA) moved Sharpe 0.637 → **0.674 (+0.037)**,
+Sortino 0.919 → 0.971, total return 63.9% → 70.0% — but **max drawdown +0.9pp**, and MTUM
+standalone carries a **32.7% max drawdown** vs SPY's 25.4% (the momentum-crash tail).
+
+**Committee decision: DEFER — do not add to the live basket yet.** The Sharpe gain is within
+noise, it *adds* drawdown, the 2021–2026 window was momentum-favorable, and JPM flags the
+**widest momentum dispersion since 1990** (a documented crash precursor). This is a weak
+improvement against a live tail — capital-preservation discipline says prefer no change.
+Re-test on a bear-inclusive window (or once dispersion normalizes) before adopting; if adopted,
+it enters the **equity** class under the same 12% cap, and the regime tilt already trims it in a
+downturn. Same honest "beats-baseline-but-not-enough" outcome as the 48 rejected P1 candidates —
+the gate, not hope, decides.
 
 ## 5. The satellites, with their kill triggers
 

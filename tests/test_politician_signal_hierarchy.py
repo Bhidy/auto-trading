@@ -122,9 +122,14 @@ class _StubBot:
         self.watchlist_cfg = {"copy_filters": {"transaction_types": ["BUY"]}}
         self._freshness_evaluated = 0
         self._unparseable_dates = 0
+        self._skips = []
 
     def _max_disclosure_age(self):
         return 45
+
+    def _record_skip(self, trade, reason):
+        # Exercise the real skip-recording contract (Rec C, audit 2026-07-04).
+        return PoliticianBot._record_skip(self, trade, reason)
 
 
 def test_unparseable_date_counted_not_treated_as_stale():

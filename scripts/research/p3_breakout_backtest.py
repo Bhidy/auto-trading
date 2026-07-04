@@ -296,6 +296,14 @@ def run_backtest(cfg, bars_by_sym, sector_of, spy, tradeable, dates,
     require_rvol = cfg.get("require_rvol", False)
     veto_rsi80 = cfg.get("veto_rsi80", False)
     cooldown_days = cfg.get("cooldown_days", 0)
+    # Exit geometry — overridable per variant (defaults to the live config
+    # globals). Widening stop_mult while holding RISK_PER_TRADE_PCT constant
+    # automatically SHRINKS qty (same $ risk) — the audit's "wider stop, halved
+    # size" restructure to cut the 63% noise stop-out rate (D-P3 exit test).
+    stop_mult = cfg.get("stop_mult", ATR_STOP_MULT)
+    tp1_mult = cfg.get("tp1_mult", ATR_TP1_MULT)
+    trail_mult = cfg.get("trail_mult", ATR_TRAIL_MULT)
+    tp1_sell_pct = cfg.get("tp1_sell_pct", TP1_SELL_PCT)
     friction_bps = cfg["friction_bps"]   # one-side total (cost+slip) in bps
     fr = friction_bps / 10000.0
 
@@ -333,7 +341,7 @@ def run_backtest(cfg, bars_by_sym, sector_of, spy, tradeable, dates,
                 reason = "stop"
             elif not pos["tp1_done"] and hi >= pos["tp1"]:
                 # sell TP1_SELL_PCT at tp1; rest keeps riding with a trailing stop
-                sell_qty = int(pos["qty"] * TP1_SELL_PCT / 100)
+                sell_qty = int(pos["qty"] * tp1_sell_pct / 100)
                 if sell_qty > 0:
                     fill = pos["tp1"] * (1 - fr)
                     cash += sell_qty * fill
@@ -348,7 +356,7 @@ def run_backtest(cfg, bars_by_sym, sector_of, spy, tradeable, dates,
             else:
                 # trailing stop update (only after TP1, mirrors live trail logic)
                 if pos["tp1_done"]:
-                    new_trail = cl - pos["atr"] * ATR_TRAIL_MULT
+                    new_trail = cl - pos["atr"] * trail_mult
                     pos["stop"] = max(pos["stop"], new_trail)
                     if lo <= pos["stop"]:
                         exit_price = pos["stop"]
@@ -450,7 +458,7 @@ def run_backtest(cfg, bars_by_sym, sector_of, spy, tradeable, dates,
                 continue
 
             # position sizing: 1.5% risk / (ATR*stop_mult)
-            stop_dist = atr_val * ATR_STOP_MULT
+            stop_dist = atr_val * stop_mult
             max_risk = equity * RISK_PER_TRADE_PCT / 100
             qty = int(max_risk / stop_dist)
             if qty <= 0:
@@ -484,7 +492,7 @@ def run_backtest(cfg, bars_by_sym, sector_of, spy, tradeable, dates,
                 "entry_date": next_date,
                 "atr": atr_val,
                 "stop": entry_fill - stop_dist,
-                "tp1": entry_fill + atr_val * ATR_TP1_MULT,
+                "tp1": entry_fill + atr_val * tp1_mult,
                 "tp1_done": False,
                 "realized": 0.0,
                 "cost_basis": cost_basis,
@@ -604,6 +612,16 @@ def main():
         "(c) cooldown 10d post-stop": {"threshold": 0.40, "cooldown_days": 10},
         "combo a+b+c": {"threshold": 0.40, "require_rvol": True,
                         "veto_rsi80": True, "cooldown_days": 10},
+        # D-P3 exit restructure (audit 2026-07-04): widen the 1.5-ATR stop (63%
+        # noise stop-out rate) to 2-3x ATR; RISK_PER_TRADE_PCT is constant so qty
+        # shrinks with the wider stop (same $ risk = "halved size"). Also test
+        # keeping R:R ~2:1 by widening TP with the stop.
+        "STOP 2.0xATR": {"threshold": 0.40, "stop_mult": 2.0},
+        "STOP 2.5xATR": {"threshold": 0.40, "stop_mult": 2.5},
+        "STOP 3.0xATR": {"threshold": 0.40, "stop_mult": 3.0},
+        "STOP 2.5 + TP 5.0 (R:R~2:1)": {"threshold": 0.40, "stop_mult": 2.5, "tp1_mult": 5.0},
+        "STOP 3.0 + TP 6.0 (R:R~2:1)": {"threshold": 0.40, "stop_mult": 3.0, "tp1_mult": 6.0},
+        "STOP 2.5 + trail 2.5": {"threshold": 0.40, "stop_mult": 2.5, "trail_mult": 2.5},
     }
 
     results = {}

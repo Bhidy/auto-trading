@@ -218,3 +218,53 @@ def test_buy_limit_is_marketable_pegged_to_ask(tmp_path, monkeypatch):
     limit = alpaca.orders[0]["limit_price"]
     assert limit >= 100.0                                # crosses the ask -> fills
     assert limit == round(100.0 * 1.0015, 2)             # ask + offset, bounded slippage
+
+
+# --------------------------------------------------------------------------
+# Rec C — disclosure lineage on copies + structured skip register
+# --------------------------------------------------------------------------
+
+BUY_WITH_DATES = dict(BUY, dates={"trade": "2026-05-15", "disclosed": "2026-06-03"})
+
+
+def test_copy_record_carries_disclosure_lineage(tmp_path, monkeypatch):
+    risk = FakeRisk(limits=P2_LIMITS)
+    alpaca = FakeAlpaca(bars=FALLING_BARS)
+    bot = _bot(alpaca, risk, WATCHLIST_ADVISORY, tmp_path, monkeypatch)
+    rec = bot.execute_trade(BUY_WITH_DATES)
+    assert rec is not None
+    # The lag study REFUSED without these — now every copy carries them.
+    assert rec["transaction_date"] == "2026-05-15"
+    assert rec["disclosure_date"] == "2026-06-03"
+    assert "observed_date" in rec and rec["observed_date"]
+    assert isinstance(rec["disclosure_lag_days"], int)   # measurable lag
+    assert rec["feed_source"] in ("capitol_trades", "house_fd")
+
+
+def test_skip_register_records_structured_reasons(tmp_path, monkeypatch):
+    import politician_bot as pb
+    from datetime import datetime, timedelta
+    monkeypatch.setattr(pb, "BASE_DIR", tmp_path)
+    (tmp_path / "data").mkdir(exist_ok=True)
+    bot = pb.PoliticianBot.__new__(pb.PoliticianBot)
+    bot.watchlist_cfg = {"copy_filters": {"transaction_types": ["BUY"],
+                                          "max_transaction_age_days": 30,
+                                          "skip_treasury_bills": True}}
+    bot._freshness_evaluated = 0
+    bot._unparseable_dates = 0
+    bot._skips = []
+    fresh = (datetime.now() - timedelta(days=5)).strftime("%m/%d/%Y")
+    old = (datetime.now() - timedelta(days=90)).strftime("%m/%d/%Y")
+    # a SELL (wrong type), a stale BUY, a treasury BUY -> all skipped with reasons
+    assert bot._is_copyable_trade({"transaction": {"type": "SELL"},
+                                   "issuer": {"ticker": "X"}, "dates": {"trade": fresh}}) is False
+    assert bot._is_copyable_trade({"transaction": {"type": "BUY"},
+                                   "issuer": {"ticker": "Y"}, "dates": {"trade": old}}) is False
+    assert bot._is_copyable_trade({"transaction": {"type": "BUY"},
+                                   "issuer": {"ticker": "Z", "name": "US TREASURY NOTE"},
+                                   "dates": {"trade": fresh}}) is False
+    reasons = [s["reason"] for s in bot._skips]
+    assert any("transaction_type" in r for r in reasons)
+    assert any("stale_disclosure" in r for r in reasons)
+    assert any("treasury" in r for r in reasons)
+    assert all("ticker" in s and "reason" in s for s in bot._skips)

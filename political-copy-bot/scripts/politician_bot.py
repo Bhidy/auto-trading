@@ -577,11 +577,30 @@ class PoliticianBot:
         date = trade.get("dates", {}).get("trade", "")
         return f"{pol}|{issuer}|{tx_type}|{size}|{date}"
 
+    def _record_skip(self, trade: dict, reason: str):
+        """Log WHY a processed disclosure was not copied (Rec C, audit 2026-07-04).
+
+        The lag study could not attribute non-trades; now every skipped
+        disclosure carries an explicit, structured reason written to
+        data/p2_skipped_disclosures.json, so 'quiet markets' can never again be
+        confused with a silently-filtered feed. Additive; never blocks a trade.
+        """
+        if not hasattr(self, "_skips"):
+            self._skips = []
+        self._skips.append({
+            "ticker": trade.get("issuer", {}).get("ticker", ""),
+            "politician": trade.get("politician", {}).get("name", ""),
+            "transaction_date": (trade.get("dates", {}) or {}).get("trade", ""),
+            "disclosure_lag_days": disclosure_age_days(trade),
+            "reason": reason,
+        })
+        return False
+
     def _is_copyable_trade(self, trade: dict) -> bool:
         cfg = self.watchlist_cfg["copy_filters"]
         tx_type = (trade.get("transaction", {}).get("type", "") or "").upper()
         if tx_type not in [t.upper() for t in cfg["transaction_types"]]:
-            return False
+            return self._record_skip(trade, f"transaction_type={tx_type or 'n/a'} not copied")
         # T9: reject decayed signals — a delayed disclosure whose transaction is
         # already stale is research context, not a tradeable edge. Fails closed.
         self._freshness_evaluated += 1
@@ -597,19 +616,19 @@ class PoliticianBot:
                             f"(dates={trade.get('dates', {})}) — freshness gate "
                             f"cannot evaluate it; Capitol Trades date format may "
                             f"have changed (see _DISCLOSURE_DATE_FORMATS)")
-            else:
-                log.info(f"Skipping stale disclosure ({age}d old) for {ticker}")
-            return False
+                return self._record_skip(trade, "unparseable_disclosure_date")
+            log.info(f"Skipping stale disclosure ({age}d old) for {ticker}")
+            return self._record_skip(trade, f"stale_disclosure_{age}d")
         issuer = trade.get("issuer", {}).get("name", "")
         ticker = trade.get("issuer", {}).get("ticker", "")
         if cfg.get("skip_private_investments") and ticker == "N/A" and not issuer.startswith("SPDR"):
             if any(kw in issuer.upper() for kw in ["LLC", "LP", "LTD", "TRUST", "FUND", "CITY OF", "COUNTY", "STATE OF", "AUTHORITY", "DISTRICT"]):
-                return False
+                return self._record_skip(trade, "private_investment")
         if cfg.get("skip_municipal_bonds"):
             if any(kw in issuer.upper() for kw in ["CITY OF", "COUNTY", "STATE OF", "AUTHORITY", "DISTRICT"]):
-                return False
+                return self._record_skip(trade, "municipal_bond")
         if cfg.get("skip_treasury_bills") and "TREASURY" in issuer.upper():
-            return False
+            return self._record_skip(trade, "treasury")
         return True
 
     def _is_sell_signal(self, trade: dict) -> bool:
@@ -637,6 +656,7 @@ class PoliticianBot:
         # violation the heartbeat watchdog already surfaces.
         self._fetch_attempts = 0
         self._fetch_failures = 0
+        self._skips = []   # Rec C: structured per-disclosure skip reasons
 
         self._fetch_attempts += 1
         try:
@@ -755,7 +775,21 @@ class PoliticianBot:
             log.warning(f"{self._unparseable_dates}/{self._freshness_evaluated} disclosure "
                         f"dates were unparseable — partial feed format drift; check _parse_date.")
 
-        log.info(f"Found {len(all_new_trades)} new copyable trades")
+        # Rec C: persist the structured skip register so every processed-but-
+        # untraded disclosure is auditable (was invisible; the lag study needs it).
+        try:
+            (BASE_DIR / "data" / "p2_skipped_disclosures.json").write_text(json.dumps({
+                "timestamp": datetime.now().isoformat(),
+                "processed_evaluated": self._freshness_evaluated,
+                "copied": len(all_new_trades),
+                "skipped": len(self._skips),
+                "skips": self._skips,
+            }, indent=2))
+        except OSError as e:
+            log.warning(f"Could not persist skip register: {e}")
+
+        log.info(f"Found {len(all_new_trades)} new copyable trades "
+                 f"({len(self._skips)} disclosures skipped with logged reasons)")
         return all_new_trades
 
     def execute_trade(self, trade: dict, cluster_counts: dict = None) -> dict | None:
@@ -920,6 +954,17 @@ class PoliticianBot:
                 "politician": trade.get("politician", {}).get("name", ""),
                 "politician_trade_size": reported_size,
                 "source": trade.get("_source", ""),
+                # Disclosure lineage (Rec C, audit 2026-07-04): the lag study
+                # REFUSED_TO_ASSERT because copies logged no dates. Record the
+                # politician's transaction date, the filing/disclosure date, and
+                # OUR observation date so disclosure-lag can finally be measured
+                # per closed round trip (needed to tune max_transaction_age_days).
+                "transaction_date": (trade.get("dates", {}) or {}).get("trade", ""),
+                "disclosure_date": ((trade.get("dates", {}) or {}).get("disclosed")
+                                    or (trade.get("dates", {}) or {}).get("published", "")),
+                "observed_date": datetime.now().isoformat(),
+                "disclosure_lag_days": disclosure_age_days(trade),
+                "feed_source": trade.get("_feed", "capitol_trades"),
                 "reason": f"Copying {trade.get('politician', {}).get('name', '')} BUY of {trade.get('issuer', {}).get('name', '')}",
             }
             self.risk.log_trade(trade_record)
