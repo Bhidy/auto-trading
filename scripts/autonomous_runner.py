@@ -318,6 +318,146 @@ def run_morning_research(alpaca: AlpacaClient):
 # MODE 2: TRADING SESSION
 # ---------------------------------------------------------------------------
 
+def _momentum_universe():
+    """Large-cap stock symbols for the momentum sleeve, from universe_wide.json."""
+    u = load_json(CONFIG_DIR / "universe_wide.json", {})
+    syms = []
+    for b in (u.get("buckets", {}) or {}).values():
+        if b.get("instrument_type") == "stock":
+            syms.extend(b.get("symbols", []))
+    return sorted(set(syms))
+
+
+def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
+    """High-return MOMENTUM sleeve for P1 (PAPER, 2026-07-04 research).
+
+    When ``strategy_params.momentum_sleeve_enabled`` is true, this is the PRIMARY
+    allocator for P1 and replaces the passive-core + active-satellite logic. It
+    rebalances MONTHLY to the top-K highest 12-1-momentum large-caps, equal
+    weight, <=8%/name (guaranteed by momentum_selector), scaled by
+    ``momentum_sleeve_weight``, with an optional 200-day market-trend filter (go to
+    cash when SPY < its 200SMA). Fully reversible via momentum_sleeve_enabled=false.
+
+    Returns True if it HANDLED this session (caller skips the old logic), False if
+    the sleeve is disabled. Runs AFTER the kill-switch/daily-loss/halt guards, so
+    it obeys the hard stops.
+
+    HONEST NOTE: the backtest CAGR was survivorship-inflated; realistic edge is
+    modest with real crash risk. PAPER-ONLY until it earns a live track record.
+    """
+    params = load_json(DATA_DIR / "strategy_params.json", {})
+    if not params.get("momentum_sleeve_enabled"):
+        return False
+    log.info("MOMENTUM SLEEVE active (paper high-return strategy)")
+
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    mstate = load_json(DATA_DIR / "momentum_state.json", {})
+    if mstate.get("last_rebalance_month") == month:
+        log.info(f"  Momentum: already rebalanced for {month}; holding to next month.")
+        return True
+
+    top_k = int(params.get("momentum_top_k", 13))
+    sleeve_weight = float(params.get("momentum_sleeve_weight", 0.90))
+    use_trend = bool(params.get("momentum_use_trend", True))
+
+    # Daily closes for the universe (need >=274 bars for 12-1 momentum). An
+    # explicit start is REQUIRED — without it the free feed returns a stub (the
+    # documented empty-period trap); ~420 calendar days ≈ 290 trading days.
+    _start = (datetime.now(timezone.utc) - timedelta(days=420)).strftime("%Y-%m-%d")
+    closes_by_sym, prices = {}, {}
+    for sym in _momentum_universe():
+        try:
+            bars = alpaca.get_stock_bars(sym, timeframe="1Day", start=_start, limit=500).get("bars") or []
+            closes = [float(b["c"]) for b in bars if b.get("c")]
+            if len(closes) >= 274:
+                closes_by_sym[sym] = closes
+                prices[sym] = closes[-1]
+        except Exception as e:
+            log.warning(f"  Momentum: bars unavailable for {sym}: {e}")
+    if len(closes_by_sym) < top_k:
+        log.error(f"::error::Momentum: only {len(closes_by_sym)} names have enough history "
+                  f"(need >= {top_k}); skipping rebalance to avoid a thin book.")
+        return True
+
+    spy_closes = None
+    try:
+        spy_bars = alpaca.get_stock_bars("SPY", timeframe="1Day", start=_start, limit=500).get("bars") or []
+        spy_closes = [float(b["c"]) for b in spy_bars if b.get("c")]
+        if spy_closes:
+            prices["SPY"] = spy_closes[-1]
+    except Exception as e:
+        log.warning(f"  Momentum: SPY bars unavailable ({e}); trend filter off this run.")
+
+    from momentum_selector import select_top_momentum
+    targets = select_top_momentum(closes_by_sym, k=top_k, max_weight=0.08,
+                                  use_trend=use_trend, market_closes=spy_closes)
+    targets = {s: w * sleeve_weight for s, w in targets.items()}   # rest stays cash
+    if not targets:
+        log.warning("  Momentum: RISK-OFF (market below its 200-day average) — "
+                    "target is cash; liquidating the momentum book.")
+
+    from portfolio_manager import compute_momentum_rebalance_orders
+    positions = alpaca.get_positions()
+    # Seed prices for CURRENTLY-held names (e.g. the core ETFs we're exiting) so
+    # they aren't stranded — the momentum universe doesn't include them.
+    for p in positions:
+        s = p.get("symbol")
+        if s and s not in prices and p.get("current_price"):
+            prices[s] = float(p["current_price"])
+    orders = compute_momentum_rebalance_orders(
+        positions, targets, equity, prices,
+        min_notional=float(limits.get("min_position_notional_usd", 500)))
+    if len(orders) > 45:
+        log.error(f"::error::Momentum: {len(orders)} rebalance orders is abnormally high; "
+                  f"aborting as a safety stop.")
+        return True
+
+    placed = 0
+    from performance_tracker import close_trade, find_open_trade, log_trade
+    for o in orders:
+        sym, side, qty = o["symbol"], o["side"], o["qty"]
+        px = prices.get(sym, 0)
+        try:
+            if side == "sell":
+                lp = round(px * 0.999, 2) if px else None
+                r = alpaca.place_order(symbol=sym, qty=qty, side="sell",
+                                       order_type="limit" if lp else "market", limit_price=lp,
+                                       client_order_id=make_client_order_id("p1mom", sym, "sell"))
+                _st, _fq, _fp = confirm_fill(alpaca, r.get("id"))
+                tr = find_open_trade(sym)
+                if tr and (_fp or lp):
+                    close_trade(tr["id"], _fp or lp, reason="momentum_rebalance")
+            else:
+                lp = round(px * 1.001, 2) if px else None
+                r = alpaca.place_order(symbol=sym, qty=qty, side="buy",
+                                       order_type="limit" if lp else "market", limit_price=lp,
+                                       client_order_id=make_client_order_id("p1mom", sym, "buy"))
+                _st, _fq, _fp = confirm_fill(alpaca, r.get("id"))
+                if _fq and _fq > 0:
+                    log_trade(sym, "buy", _fq, round(_fp or lp or px, 4), "momentum",
+                              None, [f"momentum top{top_k} rebalance {month}"],
+                              intended_price=lp, order_class="momentum_sleeve")
+            placed += 1
+            time.sleep(0.4)
+        except requests.HTTPError as e:
+            if getattr(e, "response", None) is not None and e.response.status_code == 422:
+                placed += 1                            # idempotent duplicate
+            else:
+                log.error(f"  Momentum order failed for {sym}: {e}")
+        except Exception as e:
+            log.error(f"  Momentum order failed for {sym}: {e}")
+
+    save_json(DATA_DIR / "momentum_state.json", {
+        "last_rebalance_month": month,
+        "as_of": datetime.now(timezone.utc).isoformat(),
+        "targets": {s: round(w, 4) for s, w in targets.items()},
+        "orders_placed": placed, "universe_size": len(closes_by_sym),
+        "risk_off": not targets})
+    log.info(f"  Momentum rebalance {month}: {placed} orders placed, "
+             f"{len(targets)} target names.")
+    return True
+
+
 def run_trading_session(alpaca: AlpacaClient):
     log.info("=" * 60)
     log.info("TRADING SESSION — Validating signals, executing orders")
@@ -354,6 +494,14 @@ def run_trading_session(alpaca: AlpacaClient):
 
     if portfolio_state.get("halted"):
         log.warning(f"System halted: {portfolio_state.get('halt_reason')}")
+        return
+
+    # Momentum sleeve (high-return PAPER strategy, 2026-07-04 research). When
+    # enabled it is the PRIMARY allocator for P1 and REPLACES the passive-core +
+    # active logic below. It runs here — AFTER the kill-switch / daily-loss / halt
+    # guards above — so it always obeys the hard stops. Reversible: set
+    # strategy_params.momentum_sleeve_enabled=false to fall back to the core.
+    if run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
         return
 
     # Preflight self-check — fail CLOSED before any order if the sizing math,

@@ -34,5 +34,10 @@
     "GLD",
     "SHY",
     "BIL"
-  ]
+  ],
+  "momentum_sleeve_enabled": true,
+  "momentum_sleeve_weight": 0.9,
+  "momentum_top_k": 13,
+  "momentum_use_trend": true,
+  "momentum_note": "PAPER high-return sleeve (2026-07-04). Aggressive 90% concentrated 12-1 momentum, top-13 large-caps, monthly rebalance, <=8%/name, 200-day trend filter. Primary allocator when enabled (replaces passive core). Reversible: set enabled=false. Realistic edge is MODEST with real crash risk."
 }

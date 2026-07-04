@@ -60,17 +60,31 @@ YTD (~65% above its 200-DMA — a level only seen in the 2000 dot-com bubble), e
 2023-2025 momentum returns forward; the tape is transitioning from clean-trend to whipsaw** —
 historically the worst environment for momentum-chasing.
 
-## 5. What is built, and the plan
+## 5. What is built + WIRED (paper), and the plan
 
-- **Built + tested (safe, paper-gated):** `scripts/momentum_selector.py` — the reusable engine
-  (12-1 momentum, top-K, guaranteed ≤8%/name so it never breaches the single-name cap, optional
-  trend gate). 10 unit tests. NOT wired into the live path; it is a ready building block.
-- **Plan (disciplined):**
-  1. Run it as a **paper sleeve** (a P1 satellite or a new paper book), monthly rebalance,
-     top-13, ≤8%/name, **with the trend filter and/or vol-target on**.
-  2. Let it build a real live-paper track record; measure against the `LIVE_READINESS.md` gates.
-  3. Only after it passes those gates (OOS Sharpe, ≥50 trades, drawdown control) does it become a
-     real-money **satellite ≤10%** — never the whole book, never right now, never unhedged.
+**LIVE ON P1 PAPER (2026-07-04).** The momentum sleeve is now the primary allocator for P1's
+**paper** account (owner chose the aggressive 90% setting):
+- `scripts/momentum_selector.py` — selection engine (12-1 momentum, top-K, guaranteed ≤8%/name,
+  optional 200-day trend gate). `scripts/portfolio_manager.compute_momentum_rebalance_orders` —
+  the rebalance engine. `autonomous_runner.run_momentum_sleeve` — wired into `trading-session`
+  AFTER the kill-switch/daily-loss/halt guards, so it obeys every hard stop. 19 unit tests.
+- **Config (`data/strategy_params.json`):** `momentum_sleeve_enabled=true`,
+  `momentum_sleeve_weight=0.90`, `momentum_top_k=13`, `momentum_use_trend=true`.
+- **Behaviour:** monthly rebalance to the top-13 highest-momentum large-caps at ~6.9%/name (90%
+  of equity), rest cash; goes fully to cash when SPY < its 200-day average. It REPLACES the
+  passive core while enabled. **Fully reversible:** set `momentum_sleeve_enabled=false` → P1
+  reverts to the passive core next session.
+- **First rebalance:** fires on the next market-open P1 trading-session (sells the 9 core ETFs,
+  buys the 13 momentum names — dry-run verified: 22 orders, 90% deployed, all ≤8%).
+- **Dry-run snapshot (2026-07-04):** picks were MU/INTC/AMD/LRCX/AMAT/KLAC/AVGO/ADI (semis) +
+  GOOGL/CSCO/CAT/GS/C — i.e. heavily semiconductors, exactly the crowded leadership §4 warns about.
+
+**Plan / guardrails:**
+  1. It runs on **paper only** and builds a real track record; measured against `LIVE_READINESS.md`.
+  2. It stays **paper** until it passes those gates (OOS Sharpe, ≥50 trades, drawdown control).
+  3. Real money only ever as a **satellite ≤10%**, hedged (trend/vol filter), never the whole
+     book, never aggressively into a crowded top. The 90% paper setting is to MEASURE the strategy
+     cleanly — it is explicitly not a real-money allocation.
 
 **Bottom line:** momentum is the real answer to "highest return," and the engine is ready — but
 the truth is a *modest, risk-controlled* edge with real crash risk, deployed on **paper first**

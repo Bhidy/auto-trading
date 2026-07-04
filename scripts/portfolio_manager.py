@@ -403,6 +403,52 @@ def regime_gate_active_entries(approved, signals_data, params=None):
         (blocked if o.get("signal") == "BUY" else kept).append(o)
     return kept, blocked
 
+
+def compute_momentum_rebalance_orders(positions, target_weights, equity, prices,
+                             min_notional=500, drift_band=0.005):
+    """Orders to move the book to ``target_weights`` (fractions of equity).
+
+    The rebalance engine for the high-return MOMENTUM sleeve (2026-07-04). SELLS
+    names not in the target (full exit) or above target; BUYS names below target.
+    Skips any move smaller than ``max(min_notional, drift_band*equity)`` so a tiny
+    drift doesn't churn the book. Whole shares only (limit-order safe). Sells are
+    ordered first so cash frees before buys. Pure/testable; places no orders.
+
+    Returns ``[{symbol, side, qty, target_value, current_value}]``.
+    """
+    cur_mv, cur_qty = {}, {}
+    for p in positions or []:
+        s = p.get("symbol")
+        if not s:
+            continue
+        cur_mv[s] = abs(float(p.get("market_value", 0) or 0))
+        cur_qty[s] = float(p.get("qty", 0) or 0)
+    band = max(float(min_notional), float(drift_band) * float(equity))
+    orders = []
+    for sym in sorted(set(cur_mv) | set(target_weights)):
+        tgt_val = float(target_weights.get(sym, 0.0)) * float(equity)
+        cur_val = cur_mv.get(sym, 0.0)
+        price = float(prices.get(sym, 0) or 0)
+        diff = tgt_val - cur_val
+        # FULL EXIT (dropped name, target 0) must fire even without a price — a
+        # held name we're leaving is sold by qty (market order downstream), so a
+        # priceless core ETF can never get silently stranded in the book.
+        full_exit = target_weights.get(sym, 0.0) <= 0 and cur_qty.get(sym, 0) > 0
+        if not full_exit and (abs(diff) < band or price <= 0):
+            continue
+        if full_exit:
+            qty, side = int(cur_qty.get(sym, 0)), "sell"
+        elif diff < 0:                                 # trim toward target
+            qty, side = int(abs(diff) / price), "sell"
+        else:                                          # add toward target
+            qty, side = int(diff / price), "buy"
+        if qty > 0:
+            orders.append({"symbol": sym, "side": side, "qty": qty,
+                           "target_value": round(tgt_val, 2),
+                           "current_value": round(cur_val, 2)})
+    orders.sort(key=lambda o: 0 if o["side"] == "sell" else 1)   # sells free cash first
+    return orders
+
 # ---------------------------------------------------------------------------
 # REBALANCING ENGINE
 # ---------------------------------------------------------------------------
