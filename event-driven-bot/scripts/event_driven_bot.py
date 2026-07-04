@@ -450,19 +450,33 @@ def watchlist_atr_lookup(watchlist_data, symbol):
     return 0.0
 
 
-def symbols_on_reentry_cooldown(trade_log, cooldown_days, now=None):
-    """Symbols CLOSED within the last ``cooldown_days`` — block immediate re-entry.
+def symbols_on_reentry_cooldown(trade_log, cooldown_days, now=None,
+                                min_consecutive_stops=1):
+    """Symbols to block from immediate re-entry after recent exit(s).
 
     Backtest (2026-06-18) showed the breakout strategy churned a single name
-    (INTC bought -> stopped out -> rebought ~14x), turning one deteriorating stock
-    into the bulk of trades. A post-exit cooldown stops that churn. Reads the real
-    ``exit_timestamp`` on closed trades; additive guardrail — never relaxes a limit.
+    (INTC bought -> stopped out -> rebought ~14x), turning one deteriorating
+    stock into the bulk of trades. A post-exit cooldown stops that churn.
+
+    D11 refinement (audit 2026-07-04): the BLANKET cooldown (any closed exit ->
+    cooldown) also blocked the profitable re-entries that carried P3's P&L — MU
+    stopped 6/5 (-1,232) then re-bought 6/8 -> TP +2,719; MPC stopped 6/18
+    (-766) then re-bought -> TP +1,573. Those are ONE stop then a winner, not
+    churn. With exit_reason now logged (D2), cool a name only when its most
+    recent ``min_consecutive_stops`` exits (within the window) are ALL
+    stop_loss — the exact churn signature — so a single stop no longer bars a
+    recovery. ``min_consecutive_stops <= 1`` preserves the old blanket behavior.
+
+    Reads real ``exit_timestamp`` / ``exit_reason``; additive guardrail — the
+    hardcoded daily-loss / kill-switch / position caps are untouched.
     """
     if not cooldown_days or cooldown_days <= 0:
         return set()
     now = now or datetime.now(timezone.utc)
     cutoff = now - timedelta(days=cooldown_days)
-    on_cd = set()
+
+    # Collect recent closed exits per symbol (within the window), newest first.
+    by_sym = {}
     for t in trade_log or []:
         if "closed" not in str(t.get("status", "")):
             continue
@@ -476,7 +490,22 @@ def symbols_on_reentry_cooldown(trade_log, cooldown_days, now=None):
         if xt.tzinfo is None:
             xt = xt.replace(tzinfo=timezone.utc)
         if xt >= cutoff:
-            on_cd.add(t.get("symbol"))
+            by_sym.setdefault(t.get("symbol"), []).append((xt, t.get("exit_reason")))
+
+    if min_consecutive_stops <= 1:
+        return set(by_sym)                          # blanket: any recent exit
+
+    on_cd = set()
+    for sym, exits in by_sym.items():
+        exits.sort(key=lambda e: e[0], reverse=True)   # newest first
+        run = 0
+        for _xt, reason in exits:
+            if reason == "stop_loss":
+                run += 1
+            else:
+                break                               # a non-stop breaks the churn run
+        if run >= min_consecutive_stops:
+            on_cd.add(sym)
     return on_cd
 
 
@@ -511,10 +540,25 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     trades_today = len([t for t in trade_log if t.get("date", "").startswith(today)])
-    # Per-symbol re-entry cooldown — block names exited within the cooldown window
-    # so a single deteriorating stock can't be churned (backtest 2026-06-18).
+    # Per-symbol re-entry cooldown — block CHURN (repeated stop-outs of one
+    # name) without barring a single-stop recovery (D11, backtest 2026-06-18).
     cooldown_days = limits.get("symbol_reentry_cooldown_days", 0)
-    on_cooldown = symbols_on_reentry_cooldown(trade_log, cooldown_days)
+    on_cooldown = symbols_on_reentry_cooldown(
+        trade_log, cooldown_days,
+        min_consecutive_stops=limits.get("cooldown_consecutive_stops", 1))
+
+    # Cumulative TRANCHE + GROSS deployment (D6): the tranche cap was only a
+    # per-trade ceiling, and max_gross_exposure_pct was dead config never read —
+    # P3 reached 99.5% deployed on 6/22. Track how much of THIS tranche is
+    # already live (from open trade-log entries tagged with the tranche) and the
+    # book's gross exposure, then bound every new entry to both.
+    tranche_deployed = sum(
+        abs(float(t.get("trade_value", 0) or 0))
+        for t in trade_log
+        if t.get("status", "open") == "open" and t.get("tranche") == tranche)
+    gross_deployed = sum(abs(float(p.get("market_value", 0) or 0)) for p in positions)
+    max_gross = equity * float(limits.get("max_gross_exposure_pct", 80.0)) / 100.0
+    min_notional = float(limits.get("min_position_notional_usd", 0) or 0)
 
     executed = []
     placed_count = 0       # bracket orders submitted to the broker (or idempotent dup)
@@ -637,6 +681,22 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                 continue
             trade_value = shares * price
 
+        # Cumulative tranche ceiling (D6): the block above bounds a SINGLE trade;
+        # this bounds the tranche's TOTAL live deployment so N entries can't sum
+        # past the mandate (60/20/20 becomes real, not a per-trade cap).
+        tranche_room = tranche_capital - tranche_deployed
+        if tranche_room <= 0:
+            skips.append({"symbol": sym,
+                          "reason": f"{tranche} tranche fully deployed", "benign": True})
+            continue
+        if trade_value > tranche_room:
+            shares = int(tranche_room / price)
+            if shares <= 0:
+                skips.append({"symbol": sym,
+                              "reason": f"{tranche} tranche room < 1 share", "benign": True})
+                continue
+            trade_value = shares * price
+
         # Per-symbol hard cap (additive guardrail, 2026-06-18): never put more than
         # max_position_pct_per_symbol% of equity into a single name (caps single-name
         # tail risk; never relaxes a limit).
@@ -678,6 +738,29 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
                      f"(cap {limits['max_sector_exposure_pct']}%), skipping {sym}")
             skips.append({"symbol": sym,
                           "reason": f"sector {sector} would breach cap", "benign": True})
+            continue
+
+        # Gross-exposure ceiling (D6): enforce the book-level cap that was dead
+        # config (P3 hit 99.5% deployed). Trim to the remaining gross room; if
+        # even one share won't fit, stop placing this run.
+        gross_room = max_gross - gross_deployed
+        if trade_value > gross_room:
+            shares = int(gross_room / price) if gross_room > 0 else 0
+            if shares <= 0:
+                log.info(f"  Gross exposure at cap ({gross_deployed/equity*100:.1f}%/"
+                         f"{limits.get('max_gross_exposure_pct', 80.0)}%), skipping {sym}")
+                skips.append({"symbol": sym, "reason": "gross exposure cap", "benign": True})
+                continue
+            trade_value = shares * price
+
+        # Minimum-notional floor (D6): a name squeezed by cash/sector/tranche room
+        # to sub-floor size ships a dust position with a full GTC bracket (UNH 1sh
+        # $405, EMR 2sh $278 on 6/22-6/29). Skip instead of emitting dust.
+        if min_notional and trade_value < min_notional:
+            log.info(f"  {sym} sized to ${trade_value:,.0f} < ${min_notional:,.0f} "
+                     f"min notional — skipping (no dust brackets)")
+            skips.append({"symbol": sym,
+                          "reason": f"below ${min_notional:,.0f} min notional", "benign": True})
             continue
 
         try:
@@ -733,6 +816,8 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
 
             position_symbols.add(sym)
             sector_exposure[sector] = sector_exposure.get(sector, 0) + trade_value
+            tranche_deployed += trade_value      # D6: keep cumulative caps honest
+            gross_deployed += trade_value
             cash -= trade_value
             trades_today += 1
             time.sleep(0.5)

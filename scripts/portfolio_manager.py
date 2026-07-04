@@ -139,34 +139,93 @@ def filter_active_entries(approved, params):
     return kept, suppressed
 
 
+# Defensive members of the passive-core basket (bonds/gold/cash proxies). Anything
+# in the basket NOT in this set is treated as an equity sleeve member.
+CORE_DEFENSIVE_SYMBOLS = {"TLT", "GLD", "SHY", "BIL", "IEF", "AGG", "TIP", "GOVT"}
+
+
+def core_class_targets(basket, equity, core_weight, regime, params):
+    """Per-symbol dollar targets for the passive core, REGIME-TILTED by class (D8).
+
+    The old allocator applied ONE ``equity_mult`` to every basket member, so a
+    BULL regime still funded the 4 defensive ETFs to the same target as the 4
+    equity ETFs — the book carried ~45% defensive against a ~20% target
+    (audit 2026-07-04). Instead, split the basket into equity vs defensive
+    sleeves and size each sleeve from a base split tilted by the regime's
+    ``equity_mult`` / ``defensive_mult`` and shrunk overall by ``cash_target``:
+
+        invested   = core_weight * equity * (1 - cash_target)
+        eq_share   = base_equity * equity_mult      (renormalized so shares sum 1)
+        def_share  = base_defensive * defensive_mult
+
+    So BULL tilts toward equity and trims defensive toward the target, while
+    bear regimes raise both the defensive share AND the cash reserve — using the
+    SAME regime table the rest of the engine reads. Returns
+    ``{symbol: (target_value, class_name)}``.
+    """
+    from analyst_v2 import regime_allocation_modifier
+    mod = regime_allocation_modifier(regime)
+    eq_mult = float(mod.get("equity_mult", 1.0))
+    def_mult = float(mod.get("defensive_mult", 1.0))
+    cash_target = float(mod.get("cash_target", 0.15))
+    base_eq = float(params.get("core_equity_base", 0.80))
+    base_def = float(params.get("core_defensive_base", 0.20))
+    defensive = set(params.get("core_defensive_symbols") or CORE_DEFENSIVE_SYMBOLS)
+
+    eq_names = [s for s in basket if s not in defensive]
+    def_names = [s for s in basket if s in defensive]
+
+    eq_raw = base_eq * eq_mult if eq_names else 0.0
+    def_raw = base_def * def_mult if def_names else 0.0
+    tot = eq_raw + def_raw
+    if tot <= 0:
+        return {}
+    eq_share, def_share = eq_raw / tot, def_raw / tot
+    invested = core_weight * equity * max(0.0, 1.0 - cash_target)
+
+    targets = {}
+    if eq_names:
+        each = invested * eq_share / len(eq_names)
+        for s in eq_names:
+            targets[s] = (each, "equity")
+    if def_names:
+        each = invested * def_share / len(def_names)
+        for s in def_names:
+            targets[s] = (each, "defensive")
+    return targets
+
+
 def compute_core_orders(positions, equity, cash, params, regime, prices, limits):
-    """Passive index-core allocation (regime-aware), BUYS ONLY.
+    """Passive index-core allocation (regime-aware, class-tilted), BUYS ONLY.
 
     Evidence (core_satellite study): a passive broad-ETF core dominates the active
     multifactor strategy out-of-sample by ~+2.16 Sharpe. Allocate ``core_weight`` x
-    equity across a diversified broad-market ETF basket (SPY/QQQ/IWM/DIA), scaled
-    DOWN in bear regimes by the existing regime equity multiplier.
+    equity across a diversified broad-market ETF basket, split into equity vs
+    defensive sleeves and REGIME-TILTED per class (see ``core_class_targets``) so a
+    BULL regime doesn't hold ~45% defensive against a ~20% target (D8).
 
     HARD SAFETY: each ETF is capped strictly UNDER ``max_single_position_pct.etf``
     (the 12% hardcoded limit is never breached) — so a high core_weight simply
     spreads across the basket rather than over-concentrating. Gradual: spends only
     available cash each session (active positions free cash as they close).
-    ``core_weight=0`` -> no-op. Returns [{symbol, qty, target_value, reason}].
+    ``core_weight=0`` -> no-op. Returns [{symbol, qty, target_value, reason, asset_class}].
     """
     core_weight = float(params.get("core_weight", 0.0) or 0.0)
     if core_weight <= 0 or equity <= 0 or cash <= 0:
         return []
-    from analyst_v2 import regime_allocation_modifier
     basket = params.get("core_basket") or ["SPY", "QQQ", "IWM", "DIA"]
     etf_cap = float((limits.get("max_single_position_pct") or {}).get("etf", 12.0)) / 100.0
     per_cap = etf_cap * 0.95 * equity                      # strict buffer under the hard cap
-    eq_mult = float(regime_allocation_modifier(regime).get("equity_mult", 1.0))
-    target_each = min(core_weight * eq_mult * equity / len(basket), per_cap)
     min_notional = float(limits.get("min_position_notional_usd", 500))
+    targets = core_class_targets(basket, equity, core_weight, regime, params)
 
     held = {p.get("symbol"): float(p.get("market_value", 0) or 0) for p in positions}
     orders, avail = [], float(cash)
     for s in basket:
+        target_each, asset_class = targets.get(s, (0.0, "equity"))
+        target_each = min(target_each, per_cap)            # never breach the hard ETF cap
+        if target_each <= 0:
+            continue
         price = float((prices or {}).get(s, 0) or 0)
         if price <= 0:
             continue
@@ -179,7 +238,8 @@ def compute_core_orders(positions, equity, cash, params, regime, prices, limits)
             continue
         avail -= qty * price
         orders.append({"symbol": s, "qty": qty, "target_value": round(target_each, 2),
-                       "reason": f"passive_core_w{core_weight:g}_regime_{regime}"})
+                       "asset_class": asset_class,
+                       "reason": f"passive_core_{asset_class}_w{core_weight:g}_regime_{regime}"})
     return orders
 
 

@@ -803,9 +803,16 @@ class PoliticianBot:
                 log.info(f"Already hold {existing_pct:.1f}% of {ticker}, skipping add")
                 return None
 
-        # T9 confirmation overlay: never copy on the (delayed) political signal
-        # alone. Require price action to still agree. Fails closed when required.
-        if self.watchlist_cfg.get("copy_filters", {}).get("require_technical_confirmation", True):
+        # Technical-confirmation overlay. D10 (audit 2026-07-04): the ENFORCED
+        # gate halved the sample (626/1,376 events) and LOWERED per-event alpha
+        # significance (hold_63d t 3.27 -> 1.92) — it removed signal, not noise.
+        # So it now runs ADVISORY by default: the read is computed and logged but
+        # does not block the copy. Set technical_confirmation_mode to "enforce"
+        # to restore the hard gate, or "off" to skip the check entirely.
+        _cf = self.watchlist_cfg.get("copy_filters", {})
+        _tc_mode = _cf.get("technical_confirmation_mode",
+                           "enforce" if _cf.get("require_technical_confirmation", True) else "off")
+        if _tc_mode != "off":
             try:
                 bars = self.alpaca.get_stock_bars(ticker, limit=40)
                 closes = [float(b.get("c", 0)) for b in bars if b.get("c")]
@@ -813,9 +820,11 @@ class PoliticianBot:
                 log.warning(f"Confirmation bars unavailable for {ticker}: {e}")
                 closes = []
             if not confirm_with_technicals(closes):
-                log.info(f"Skipping {ticker}: no technical confirmation of the "
-                         f"delayed congressional signal")
-                return None
+                if _tc_mode == "enforce":
+                    log.info(f"Skipping {ticker}: no technical confirmation of the "
+                             f"delayed congressional signal (enforced)")
+                    return None
+                log.info(f"{ticker}: no technical confirmation (advisory — copying anyway)")
 
         reported_size = trade.get("transaction", {}).get("size", "1K–15K")
         trade_value = self.risk.get_trade_size(reported_size, equity)
@@ -863,8 +872,15 @@ class PoliticianBot:
                 log.error(f"Cannot get price for {ticker}")
                 return None
 
+            # D12 (audit 2026-07-04): 29% of copy BUYs never filled — the limit
+            # was pegged to the MID + 0.15%, which sits BELOW the ask whenever the
+            # spread exceeds ~0.30%, so wider-spread names never crossed. Peg to
+            # the ASK + offset so the copy is MARKETABLE and actually fills; the
+            # offset caps how far above the ask we'll pay (bounded slippage). A
+            # delayed political signal is worth filling, not saving a spread on.
             mid_price = (ask_price + bid_price) / 2 if bid_price > 0 else ask_price
-            limit_price = round(mid_price * (1 + self.risk.limits["limit_offset_pct"] / 100), 2)
+            peg = ask_price if ask_price > 0 else mid_price
+            limit_price = round(peg * (1 + self.risk.limits["limit_offset_pct"] / 100), 2)
             qty = max(1, int(trade_value / limit_price))
 
             if qty * limit_price < self.risk.limits["min_trade_value_usd"]:
@@ -999,6 +1015,17 @@ class PoliticianBot:
         sell_cfg = self.watchlist_cfg.get("sell_logic", {})
         trailing_stop_pct = sell_cfg.get("trailing_stop_pct", 8.0)
         take_profit_pct = sell_cfg.get("take_profit_pct", 25.0)
+        # D7 (audit 2026-07-04): the 25% take-profit DESTROYED the signal's edge —
+        # the 5y backtest (data/p2_congress_copy_backtest.json) shows the live
+        # 25%-TP+trailing rule at alpha t=0.41, median trade -2.43%, vs a straight
+        # ~63-TRADING-day hold (≈91 calendar days) at alpha +1.64%, t=3.76, median
+        # +2.57%. The tight take-profit truncates exactly the winners that carry
+        # the alpha (which then decays by 126d). So the PRIMARY exit is now the
+        # alpha-capture time exit; the take-profit is off by default (reversible
+        # via take_profit_enabled); the trailing stop stays ONLY as a disaster
+        # brake. max_hold_days remains an outer backstop.
+        take_profit_enabled = bool(sell_cfg.get("take_profit_enabled", False))
+        alpha_capture_days = int(sell_cfg.get("alpha_capture_days", 91))
         max_hold_days = sell_cfg.get("max_hold_days", 180)
 
         sleeve_cfg = self.risk.limits.get("benchmark_sleeve", {}) or {}
@@ -1053,6 +1080,30 @@ class PoliticianBot:
                 except Exception as e:
                     log.error(f"Trailing stop order failed for {symbol}: {e}")
 
+            elif age_days is not None and age_days >= alpha_capture_days:
+                # D7 PRIMARY exit: hold to the ~63-trading-day alpha-capture
+                # horizon, then exit the FULL position (the backtest's winning
+                # rule). Fires before max_hold_days, so it is the normal exit.
+                log.info(f"ALPHA-CAPTURE EXIT for {symbol}: held {age_days}d "
+                         f">= {alpha_capture_days}d ({unrealized_plpc:+.1f}%) — exiting full")
+                try:
+                    order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
+                                                    order_type="market", time_in_force="day")
+                    _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
+                    closed_qty = 0.0
+                    if fill_qty and fill_price:
+                        closed_qty = self.risk.apply_exit(symbol, fill_qty, fill_price,
+                                                          reason="time_exit")
+                    self.risk.log_trade({
+                        "symbol": symbol, "side": "sell", "qty": qty,
+                        "status": "exit_marker",  # audit row, NOT a lot (D4)
+                        "fill_price": fill_price, "lots_closed_qty": closed_qty,
+                        "reason": f"Alpha-capture time exit {age_days}d at {unrealized_plpc:+.1f}%",
+                    })
+                    peaks.pop(symbol, None)
+                except Exception as e:
+                    log.error(f"Alpha-capture exit failed for {symbol}: {e}")
+
             elif age_days is not None and age_days >= max_hold_days:
                 log.warning(f"MAX HOLD reached for {symbol}: held {age_days}d "
                             f">= {max_hold_days}d ({unrealized_plpc:+.1f}%) — exiting")
@@ -1074,7 +1125,9 @@ class PoliticianBot:
                 except Exception as e:
                     log.error(f"Max-hold exit failed for {symbol}: {e}")
 
-            elif unrealized_plpc >= take_profit_pct:
+            elif take_profit_enabled and unrealized_plpc >= take_profit_pct:
+                # OFF by default (D7): the backtest proved this rule amputates the
+                # edge. Retained, gated, and reversible for research comparison.
                 sell_qty = max(1, qty // 2)
                 log.info(f"TAKE PROFIT for {symbol}: {unrealized_plpc:.1f}% gain, selling {sell_qty}")
                 try:

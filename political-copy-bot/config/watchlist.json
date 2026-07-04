@@ -26,13 +26,16 @@
     "skip_private_investments": true,
     "skip_municipal_bonds": true,
     "skip_treasury_bills": true,
-    "max_transaction_age_days": 45,
-    "require_technical_confirmation": true
+    "max_transaction_age_days": 30,
+    "require_technical_confirmation": true,
+    "technical_confirmation_mode": "advisory"
   },
   "sell_logic": {
     "copy_politician_sells": true,
     "trailing_stop_pct": 15.0,
+    "take_profit_enabled": false,
     "take_profit_pct": 25.0,
+    "alpha_capture_days": 91,
     "max_hold_days": 252
   }
 }

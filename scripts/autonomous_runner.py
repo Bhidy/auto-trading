@@ -453,7 +453,12 @@ def run_trading_session(alpaca: AlpacaClient):
                     _px = _fp or _lp or _ask
                     cash -= _fq * _px
                     from performance_tracker import log_trade
-                    log_trade(_sym, "buy", _fq, round(_px, 4), "core_equity",
+                    # D9: attribute to the sleeve's real bucket — defensive core
+                    # ETFs (TLT/GLD/SHY/BIL) were all logged as "core_equity",
+                    # which would poison future by-bucket learning stats.
+                    _bucket = ("defensive" if _co.get("asset_class") == "defensive"
+                               else "core_equity")
+                    log_trade(_sym, "buy", _fq, round(_px, 4), _bucket,
                               None, [_co["reason"]], intended_price=_lp, order_class="passive_core")
             except requests.HTTPError as _e:
                 # Duplicate client_order_id (422) on a retried/double-fired run means
