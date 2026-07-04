@@ -19,13 +19,28 @@ def _mean(xs):
     return sum(xs) / len(xs) if xs else 0.0
 
 
+def _negligible(sd, values):
+    """True if ``sd`` is FP residue, not real dispersion.
+
+    A (near-)constant series should have std exactly 0.0, but floating-point
+    accumulation can leave it as a tiny non-zero (~1e-11) that varies by
+    Python/platform. If callers then divide by it (Sharpe/Sortino), the ratio
+    blows up to ~1e16 — a garbage number that could falsely clear a DSR gate.
+    Treat any std negligible relative to the data scale (or below an absolute
+    floor) as zero. Real daily-return std (~1e-3) is never anywhere near this.
+    """
+    scale = max((abs(v) for v in values), default=0.0)
+    return sd <= 1e-12 or sd <= scale * 1e-9
+
+
 def _std(xs, sample=True):
     n = len(xs)
     if n < 2:
         return 0.0
     m = _mean(xs)
     denom = (n - 1) if sample else n
-    return math.sqrt(sum((x - m) ** 2 for x in xs) / denom)
+    sd = math.sqrt(sum((x - m) ** 2 for x in xs) / denom)
+    return 0.0 if _negligible(sd, xs) else sd
 
 
 def returns_from_equity(equity_curve):
@@ -78,7 +93,7 @@ def sortino_ratio(returns, risk_free_rate=0.0, periods_per_year=TRADING_DAYS):
     excess = [r - rf_per_period for r in returns]
     downside = [min(e, 0.0) for e in excess]
     dd = math.sqrt(sum(d * d for d in downside) / len(downside))
-    if dd == 0:
+    if _negligible(dd, downside):
         return 0.0
     return (_mean(excess) / dd) * math.sqrt(periods_per_year)
 

@@ -65,8 +65,14 @@ def test_compute_metrics_labels_per_trade_sharpe(tmp_path, monkeypatch):
 
 
 def test_equity_curve_metrics_is_annualized_and_canonical():
-    # A steadily rising equity curve => positive annualized Sharpe.
-    curve = [100_000 * (1.001 ** i) for i in range(260)]
+    # A steadily rising curve WITH genuine day-to-day dispersion => positive
+    # annualized Sharpe. (A perfectly-constant-return curve has zero variance
+    # and is intentionally scored 0.0, not a rounding-noise-driven +1e16 — see
+    # test_sharpe_zero_when_no_variance.)
+    rets = [0.002 if i % 2 == 0 else -0.0005 for i in range(259)]  # mean +0.00075
+    curve = [100_000]
+    for r in rets:
+        curve.append(curve[-1] * (1 + r))
     m = pt.equity_curve_metrics(curve)
     assert m is not None
     assert "sharpe" in m and "sortino" in m and "calmar" in m
