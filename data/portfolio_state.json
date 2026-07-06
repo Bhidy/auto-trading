@@ -1,68 +1,88 @@
 {
-  "equity": 94335.65,
+  "equity": 94447.07,
   "starting_equity": 100000.0,
   "day_start_equity": 94335.65,
   "week_start_equity": 94212.53,
   "positions": {
-    "BIL": {
-      "qty": 118,
-      "avg_price": 91.564576,
-      "bucket": "defensive"
+    "AMD": {
+      "qty": 9,
+      "avg_price": 562.4,
+      "bucket": "unknown"
     },
-    "DIA": {
-      "qty": 21,
-      "avg_price": 516.138095,
-      "bucket": "core_equity"
-    },
-    "GLD": {
-      "qty": 28,
-      "avg_price": 380.774643,
-      "bucket": "defensive"
-    },
-    "IWM": {
+    "C": {
       "qty": 38,
-      "avg_price": 287.368096,
-      "bucket": "core_equity"
+      "avg_price": 142.77,
+      "bucket": "unknown"
     },
-    "QQQ": {
+    "CAT": {
+      "qty": 5,
+      "avg_price": 984.7,
+      "bucket": "unknown"
+    },
+    "GOOGL": {
       "qty": 15,
-      "avg_price": 715.244,
-      "bucket": "core_equity"
+      "avg_price": 358.15,
+      "bucket": "aggressive_growth"
     },
-    "SHY": {
-      "qty": 131,
-      "avg_price": 82.134504,
-      "bucket": "defensive"
+    "GS": {
+      "qty": 5,
+      "avg_price": 1044.65,
+      "bucket": "unknown"
     },
-    "SPY": {
-      "qty": 14,
-      "avg_price": 736.072143,
-      "bucket": "core_equity"
+    "INTC": {
+      "qty": 43,
+      "avg_price": 125.46093,
+      "bucket": "unknown"
     },
-    "TLT": {
-      "qty": 123,
-      "avg_price": 87.0,
-      "bucket": "defensive"
+    "LRCX": {
+      "qty": 15,
+      "avg_price": 361.22,
+      "bucket": "unknown"
     },
-    "XLI": {
-      "qty": 32,
-      "avg_price": 179.14,
-      "bucket": "sector_momentum"
+    "MPC": {
+      "qty": 20,
+      "avg_price": 271.597,
+      "bucket": "unknown"
+    },
+    "MRK": {
+      "qty": 42,
+      "avg_price": 126.93,
+      "bucket": "unknown"
+    },
+    "MS": {
+      "qty": 24,
+      "avg_price": 219.56,
+      "bucket": "unknown"
+    },
+    "MU": {
+      "qty": 5,
+      "avg_price": 996.61,
+      "bucket": "unknown"
+    },
+    "PSX": {
+      "qty": 30,
+      "avg_price": 178.82,
+      "bucket": "unknown"
+    },
+    "SLB": {
+      "qty": 118,
+      "avg_price": 45.725762,
+      "bucket": "unknown"
     }
   },
   "trades_today": 0,
-  "total_exposure": 92023.99,
-  "long_market_value": 92023.99,
+  "total_exposure": 68386.56,
+  "long_market_value": 68386.56,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 2311.66,
-  "day_pnl": 0.0,
-  "day_pnl_pct": 0.0,
-  "week_pnl": 123.12,
-  "week_pnl_pct": 0.001307,
+  "cash": 26060.51,
+  "day_pnl": 111.42,
+  "day_pnl_pct": 0.001181,
+  "week_pnl": 234.54,
+  "week_pnl_pct": 0.002489,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-07-03T22:40:37.043617+00:00"
+  "last_updated": "2026-07-06T17:18:28.148950+00:00"
 }
