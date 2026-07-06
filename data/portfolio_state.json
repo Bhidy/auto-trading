@@ -1,8 +1,8 @@
 {
-  "equity": 94389.33,
+  "equity": 94276.64,
   "starting_equity": 100000.0,
-  "day_start_equity": 94394.1,
-  "week_start_equity": 94394.1,
+  "day_start_equity": 94273.63,
+  "week_start_equity": 94273.63,
   "positions": {
     "AMD": {
       "qty": 9,
@@ -71,18 +71,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 68325.3739,
-  "long_market_value": 68325.3739,
+  "total_exposure": 68216.1275,
+  "long_market_value": 68216.1275,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 26060.51,
-  "day_pnl": -4.77,
-  "day_pnl_pct": -5.1e-05,
-  "week_pnl": -4.77,
-  "week_pnl_pct": -5.1e-05,
+  "day_pnl": 3.01,
+  "day_pnl_pct": 3.2e-05,
+  "week_pnl": 3.01,
+  "week_pnl_pct": 3.2e-05,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-07-06T22:43:05.582120+00:00"
+  "last_updated": "2026-07-06T22:47:00.732933+00:00"
 }
