@@ -34,5 +34,14 @@
     "GLD",
     "SHY",
     "BIL"
-  ]
+  ],
+  "momentum_sleeve_enabled": true,
+  "momentum_sleeve_weight": 0.9,
+  "momentum_top_k": 13,
+  "momentum_use_trend": false,
+  "momentum_max_per_sector": 4,
+  "momentum_vol_target": 0.25,
+  "momentum_vol_lookback": 63,
+  "momentum_vol_min_scale": 0.3,
+  "momentum_note": "PAPER high-return sleeve (2026-07-04, AUDIT-CORRECTED + VOL-TARGETED, RECALIBRATED). Aggressive concentrated 12-1 momentum, top-13 large-caps, monthly rebalance, <=8%/name, MAX 4 names/sector (kills the ~55%-semis concentration bomb). Trend filter OFF: in our 5y backtest it cut CAGR 24%->9% (below SPY) in the bull — it is a drawdown reducer, not a return tool. CRASH PROTECTION = volatility targeting: gross exposure scaled DOWN toward momentum_vol_target annualized realized vol (63-day lookback, floor 30% of sleeve, only de-risks — never levers past 90%), the single highest-value data-free momentum crash guard (Barroso-Santa-Clara). Base sleeve_weight 0.9 is the CAP; effective deployment = 0.9 * min(1, target/realized_vol). AUDIT 2026-07-04: the live top-13 book's realized vol measured ~27%, so the prior target 0.18 quietly cut the owner's chosen 'aggressive 90%' to only ~59% deployed even in calm markets. RECALIBRATED to 0.25 -> ~83% deployed at 27% vol, ~64% at 35% vol, floor ~45% in a 50%-vol crisis: honors the aggressive mandate while still cutting genuine spikes. Set 0.27 for ~90% normal / null to disable vol-targeting / lower for more protection. Validated (pre-vol): top-13 no-trend max4/sector = 18.3% CAGR / 24.4% DD / Sharpe 0.97 vs SPY 11.6%. Primary allocator when enabled; fully reversible via momentum_sleeve_enabled=false."
 }

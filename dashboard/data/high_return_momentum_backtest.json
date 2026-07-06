@@ -1,0 +1,185 @@
+{
+  "as_of": null,
+  "window": [
+    "2021-06-14",
+    "2026-06-17"
+  ],
+  "friction_bps_each_side": 10.0,
+  "universe": 124,
+  "results": {
+    "BUY&HOLD SPY": {
+      "CAGR%": 11.6,
+      "Sharpe": 0.73,
+      "Sortino": 1.06,
+      "MaxDD%": 25.4,
+      "TotRet%": 73.0
+    },
+    "BUY&HOLD QQQ": {
+      "CAGR%": 15.3,
+      "Sharpe": 0.75,
+      "Sortino": 1.07,
+      "MaxDD%": 35.6,
+      "TotRet%": 104.0
+    },
+    "MOMENTUM top5 (12-1)": {
+      "CAGR%": 36.9,
+      "Sharpe": 1.23,
+      "Sortino": 1.86,
+      "MaxDD%": 25.8,
+      "TotRet%": 379.0
+    },
+    "MOMENTUM top10 (12-1)": {
+      "CAGR%": 27.7,
+      "Sharpe": 1.12,
+      "Sortino": 1.69,
+      "MaxDD%": 26.2,
+      "TotRet%": 239.0
+    },
+    "MOMENTUM top20 (12-1)": {
+      "CAGR%": 17.9,
+      "Sharpe": 0.97,
+      "Sortino": 1.43,
+      "MaxDD%": 22.9,
+      "TotRet%": 127.0
+    },
+    "MOM top5 + trend->BIL": {
+      "CAGR%": 19.9,
+      "Sharpe": 0.82,
+      "Sortino": 1.22,
+      "MaxDD%": 24.2,
+      "TotRet%": 148.0
+    },
+    "MOM top5 + trend->TLT": {
+      "CAGR%": 14.2,
+      "Sharpe": 0.61,
+      "Sortino": 0.89,
+      "MaxDD%": 40.1,
+      "TotRet%": 94.0
+    },
+    "MOM top10 + trend->BIL": {
+      "CAGR%": 10.8,
+      "Sharpe": 0.58,
+      "Sortino": 0.84,
+      "MaxDD%": 24.1,
+      "TotRet%": 67.0
+    },
+    "MOM top10 + trend->TLT": {
+      "CAGR%": 5.5,
+      "Sharpe": 0.34,
+      "Sortino": 0.49,
+      "MaxDD%": 40.1,
+      "TotRet%": 30.0
+    },
+    "MOMENTUM top5 (6-1)": {
+      "CAGR%": 39.6,
+      "Sharpe": 1.23,
+      "Sortino": 1.85,
+      "MaxDD%": 31.4,
+      "TotRet%": 428.0
+    },
+    "MOMENTUM top10 (6-1)": {
+      "CAGR%": 24.8,
+      "Sharpe": 1.02,
+      "Sortino": 1.47,
+      "MaxDD%": 25.3,
+      "TotRet%": 202.0
+    },
+    "MOM top10 (6-1) + trend->TLT": {
+      "CAGR%": 6.9,
+      "Sharpe": 0.4,
+      "Sortino": 0.57,
+      "MaxDD%": 36.3,
+      "TotRet%": 40.0
+    },
+    "DUAL-MOM QQQ/SPY vs TLT": {
+      "CAGR%": 9.6,
+      "Sharpe": 0.58,
+      "Sortino": 0.84,
+      "MaxDD%": 40.1,
+      "TotRet%": 58.0
+    },
+    "TREND QQQ>200SMA else BIL": {
+      "CAGR%": 13.7,
+      "Sharpe": 0.97,
+      "Sortino": 1.4,
+      "MaxDD%": 13.6,
+      "TotRet%": 90.0
+    },
+    "TREND QQQ>200SMA else TLT": {
+      "CAGR%": 5.7,
+      "Sharpe": 0.4,
+      "Sortino": 0.56,
+      "MaxDD%": 40.1,
+      "TotRet%": 32.0
+    },
+    "MOM top13 (12-1) [cap-ok]": {
+      "CAGR%": 24.3,
+      "Sharpe": 1.09,
+      "Sortino": 1.63,
+      "MaxDD%": 24.7,
+      "TotRet%": 196.0
+    },
+    "MOM top15 (12-1) [cap-ok]": {
+      "CAGR%": 21.3,
+      "Sharpe": 1.02,
+      "Sortino": 1.52,
+      "MaxDD%": 24.1,
+      "TotRet%": 162.0
+    },
+    "MOM top15 + trend->BIL [cap-ok]": {
+      "CAGR%": 8.0,
+      "Sharpe": 0.51,
+      "Sortino": 0.73,
+      "MaxDD%": 23.5,
+      "TotRet%": 47.0
+    }
+  },
+  "study": "high_return_momentum_search",
+  "objective": "maximize absolute return, accept higher drawdown, long-only within hardcoded caps",
+  "recommended": "MOM top13 (12-1) [cap-ok] \u2014 13 equal-weight highest-12-1-momentum large-caps, monthly rebalance, 7.7%/name < 8% cap",
+  "deflated_sharpe_best_of_variants": 0.966,
+  "caveats": [
+    "survivorship bias inflates returns (124 current large-caps, delisted excluded)",
+    "momentum crashes historically up to -80% in extreme reversals",
+    "lagged SPY in 2021/2023/2025 (whipsaw years) \u2014 behaviorally hard",
+    "single 5y window; passes DSR but not a live track record"
+  ],
+  "disclosure": "Hypothetical/paper research, net of 10bps/side. NOT investment advice. Paper-gated; never live until LIVE_READINESS gates pass.",
+  "SURVIVORSHIP_CORRECTION": {
+    "backtest_cagr_pct": 24.3,
+    "backtest_is_inflated": true,
+    "evidence": "Momentum on CURRENT large-cap universes collapses when delistings are added: S&P100 26%->12.2% CAGR; Nasdaq100 46%/41%DD -> 16.4%/83%DD (QuantifiedStrategies/PriceActionLab).",
+    "realistic_live_cagr_pct_range": [
+      12,
+      16
+    ],
+    "realistic_tail_drawdown_pct": "-40 to -80 in a momentum crash (Daniel-Moskowitz: -45% 2009, -88% 1932)",
+    "honest_verdict": "Best candidate found, but the 24% CAGR is a survivorship artifact. Realistic live edge over SPY is MODEST (a few points at best) with MUCH larger tail risk. Deflated Sharpe 0.966 was computed on biased data -> discount it. PAPER-only; needs a real live track record before any capital."
+  },
+  "dual_momentum_note": "Independent research: GEM degraded 17%->6% CAGR post-publication; our backtest showed 9.6%. Not recommended.",
+  "academic_consensus": {
+    "realistic_long_only_cagr_pct": "12-15",
+    "realistic_maxdd_pct": "20-27",
+    "realistic_sharpe": "0.6-0.9",
+    "sources": "Jegadeesh-Titman 1993; Daniel-Moskowitz Momentum Crashes (NBER w20439); Barroso-Santa-Clara JFE 2015",
+    "live_etf_reality": "MTUM since-incep 13.3% vs SPY 12.3% (edge is smoother DD -34% vs -55%, not much higher CAGR); QMOM concentrated ~52 names 11.6% CAGR / 0.85 Sharpe / -39% DD, lagged +2.36% in 2025",
+    "crash_tail": "long-SHORT momentum crashed -73% (2009) to -91% (1932); LONG-ONLY avoids the worst (crash is a short-leg effect) but still -20..-30% in bear rebounds",
+    "best_risk_control": "volatility-targeting (Barroso-Santa-Clara: Sharpe 0.53->0.97, worst month -79%->-28%) and/or a 200-day market trend filter (~halves drawdown)"
+  },
+  "REGIME_WARNING_mid_2026": "WORST time to deploy momentum: extremely crowded (SPMO AUM 300M->16B), Mag-7 ~33% of S&P, semis ~18% of index and ~70% of 2026 gains, SOX +65% YTD ~65% above 200DMA (dot-com-like), equity risk premium ~0. Jun-2026 Mag-7 -2T, Jul-2 SOX -6%. Research: do NOT extrapolate momentum returns forward; regime is transitioning trend->whipsaw.",
+  "final_verdict": "Momentum IS the highest-return systematic strategy AND is validated. But honest expectation is ~12-15% CAGR (modest edge over SPY ~12%) with -20..-30% drawdowns (worse in a crash), NOT the survivorship-inflated 24%. Deploy ONLY on paper, WITH a trend filter / vol-target, and NOT aggressively right now given peak crowding. Engine built: scripts/momentum_selector.py.",
+  "AUDIT_2026_07_04": {
+    "deployed_config_was_WRONG": "top-13 + trend filter scored 9.4% CAGR (BELOW SPY 11.6%) in our 5y backtest \u2014 the trend filter cut returns 24%->9% in the bull. Not the validated variant.",
+    "concentration_bomb": "un-capped top-13 put 8/13 names (~55% equity) in semiconductors \u2014 the exact bubble the research flagged.",
+    "monitor_conflict": "intraday active_sleeve_exit_triggers + check_stop_triggers would hard-stop momentum positions on -4% dips (churns a monthly-rebalance strategy).",
+    "trend_fail_open": "market_trend_ok(None)=True -> a SPY fetch failure silently disabled the crash filter (fail-open).",
+    "CORRECTED_config": "top-13, trend OFF, max 4/sector, 90% weight. Validated: 18.3% CAGR / 24.4% DD / Sharpe 0.97 vs SPY 11.6%. Sector cap is the primary risk control; NO market-crash protection (needs vol-targeting for real money).",
+    "fixes_shipped": [
+      "config trend->off + max_per_sector=4",
+      "select_top_momentum sector cap + trend FAIL-SAFE (missing market data -> cash)",
+      "exempt momentum_sleeve from active_sleeve_exit_triggers AND check_stop_triggers",
+      "verified live selector momentum == backtest momentum (NVDA 0.6481=0.6481)",
+      "verified live universe 116/116 in backtest universe"
+    ]
+  }
+}

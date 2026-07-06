@@ -1,0 +1,28 @@
+{
+  "last_rebalance_month": "2026-07",
+  "rebalance_incomplete": false,
+  "activated_at": "2026-07-06T14:08:59.555139+00:00",
+  "rebalance_count": 1,
+  "as_of": "2026-07-06T14:08:59.555139+00:00",
+  "targets": {
+    "MU": 0.0576,
+    "INTC": 0.0576,
+    "AMD": 0.0576,
+    "LRCX": 0.0576,
+    "CAT": 0.0576,
+    "GOOGL": 0.0576,
+    "GS": 0.0576,
+    "C": 0.0576,
+    "SLB": 0.0576,
+    "MPC": 0.0576,
+    "MS": 0.0576,
+    "PSX": 0.0576,
+    "MRK": 0.0576
+  },
+  "orders_placed": 22,
+  "universe_size": 115,
+  "vol_scale": 0.8319,
+  "book_vol": 0.3005,
+  "deployed_pct": 74.9,
+  "risk_off": false
+}

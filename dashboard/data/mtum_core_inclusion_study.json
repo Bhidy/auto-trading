@@ -1,0 +1,43 @@
+{
+  "as_of": null,
+  "window": [
+    "2021-06-14",
+    "2026-06-17"
+  ],
+  "n_days": 1259,
+  "friction_bps_each_side": 10.0,
+  "core_4etf_SPY_QQQ_IWM_DIA": {
+    "sharpe": 0.637,
+    "sortino": 0.919,
+    "max_dd_pct": 27.43,
+    "total_return_pct": 63.87,
+    "cagr_pct": 10.4
+  },
+  "core_5etf_plus_MTUM": {
+    "sharpe": 0.674,
+    "sortino": 0.971,
+    "max_dd_pct": 28.34,
+    "total_return_pct": 70.02,
+    "cagr_pct": 11.22
+  },
+  "MTUM_standalone": {
+    "sharpe": 0.729,
+    "sortino": 1.047,
+    "max_dd_pct": 32.66,
+    "total_return_pct": 93.04,
+    "cagr_pct": 14.08
+  },
+  "SPY_standalone": {
+    "sharpe": 0.741,
+    "sortino": 1.067,
+    "max_dd_pct": 25.38,
+    "total_return_pct": 74.24,
+    "cagr_pct": 11.76
+  },
+  "verdict": "MARGINAL",
+  "delta_sharpe": 0.037,
+  "delta_maxdd_pp": 0.91,
+  "study": "mtum_core_inclusion",
+  "disclosure": "Hypothetical/paper research. Equal-weight monthly-rebalanced core, net of 10bps/side. Single 2021-2026 window (momentum-favorable). NOT investment advice.",
+  "decision": "DEFER \u2014 marginal Sharpe gain (+0.037) with +0.9pp drawdown over a momentum-favorable window; elevated 2026 momentum-crash risk (JPM widest dispersion since 1990). Revisit on a bear-inclusive window before adding to the live basket."
+}

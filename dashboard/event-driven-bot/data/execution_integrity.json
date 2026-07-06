@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-07-02T14:29:16.223059+00:00",
+  "timestamp": "2026-07-06T14:09:55.060366+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
-  "placed": 0,
-  "filled": 0,
+  "placed": 2,
+  "filled": 2,
   "unexplained": 0,
   "skipped": [
     {
@@ -13,8 +13,8 @@
       "benign": true
     },
     {
-      "symbol": "MS",
-      "reason": "re-entry cooldown",
+      "symbol": "CARR",
+      "reason": "already hold",
       "benign": true
     },
     {
@@ -23,28 +23,18 @@
       "benign": true
     },
     {
-      "symbol": "EMR",
-      "reason": "already hold",
+      "symbol": "TGT",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
-      "symbol": "JPM",
-      "reason": "already hold",
+      "symbol": "D",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
-      "symbol": "AXP",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "FCX",
-      "reason": "re-entry cooldown",
-      "benign": true
-    },
-    {
-      "symbol": "LRCX",
-      "reason": "re-entry cooldown",
+      "symbol": "ABBV",
+      "reason": "below $2,000 min notional",
       "benign": true
     }
   ],
