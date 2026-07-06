@@ -1,52 +1,52 @@
 {
-  "timestamp": "2026-07-03T22:40:36.573582+00:00",
+  "timestamp": "2026-07-06T21:48:15.029547+00:00",
   "overall": {
-    "total_trades": 61,
-    "wins": 20,
-    "losses": 41,
-    "win_rate": 0.328,
-    "avg_pnl_pct": -1.79,
-    "avg_win_pct": 1.41,
-    "avg_loss_pct": -3.35,
-    "win_loss_ratio": 0.42,
+    "total_trades": 78,
+    "wins": 30,
+    "losses": 48,
+    "win_rate": 0.385,
+    "avg_pnl_pct": -1.17,
+    "avg_win_pct": 1.72,
+    "avg_loss_pct": -2.97,
+    "win_loss_ratio": 0.58,
     "max_win_pct": 7.77,
     "max_loss_pct": -10.8,
-    "total_pnl": -5802.93,
-    "profit_factor": 0.24,
-    "per_trade_sharpe": -0.55,
-    "sharpe_estimate": -0.55
+    "total_pnl": -4913.98,
+    "profit_factor": 0.38,
+    "per_trade_sharpe": -0.36,
+    "sharpe_estimate": -0.36
   },
   "last_7_days": {
-    "total_trades": 1,
-    "wins": 1,
-    "losses": 0,
-    "win_rate": 1.0,
-    "avg_pnl_pct": 3.32,
-    "avg_win_pct": 3.32,
-    "avg_loss_pct": 0,
-    "win_loss_ratio": 1.0,
-    "max_win_pct": 3.32,
-    "max_loss_pct": 3.32,
-    "total_pnl": 374.51,
-    "profit_factor": 374.51,
-    "per_trade_sharpe": 0,
-    "sharpe_estimate": 0
+    "total_trades": 18,
+    "wins": 11,
+    "losses": 7,
+    "win_rate": 0.611,
+    "avg_pnl_pct": 1.2,
+    "avg_win_pct": 2.44,
+    "avg_loss_pct": -0.73,
+    "win_loss_ratio": 3.33,
+    "max_win_pct": 4.92,
+    "max_loss_pct": -2.44,
+    "total_pnl": 1263.46,
+    "profit_factor": 5.22,
+    "per_trade_sharpe": 0.6,
+    "sharpe_estimate": 0.6
   },
   "last_30_days": {
-    "total_trades": 49,
-    "wins": 15,
-    "losses": 34,
-    "win_rate": 0.306,
-    "avg_pnl_pct": -2.09,
-    "avg_win_pct": 1.23,
-    "avg_loss_pct": -3.56,
-    "win_loss_ratio": 0.35,
-    "max_win_pct": 3.32,
+    "total_trades": 62,
+    "wins": 24,
+    "losses": 38,
+    "win_rate": 0.387,
+    "avg_pnl_pct": -1.17,
+    "avg_win_pct": 1.67,
+    "avg_loss_pct": -2.96,
+    "win_loss_ratio": 0.56,
+    "max_win_pct": 4.92,
     "max_loss_pct": -10.8,
-    "total_pnl": -5396.04,
-    "profit_factor": 0.19,
-    "per_trade_sharpe": -0.68,
-    "sharpe_estimate": -0.68
+    "total_pnl": -3849.27,
+    "profit_factor": 0.37,
+    "per_trade_sharpe": -0.38,
+    "sharpe_estimate": -0.38
   },
   "by_bucket": {
     "sector_momentum": {
@@ -68,10 +68,10 @@
       "avg_pnl_pct": -0.23
     },
     "core_equity": {
-      "trades": 14,
-      "win_rate": 0.357,
-      "total_pnl": -1172.34,
-      "avg_pnl_pct": -1.39
+      "trades": 30,
+      "win_rate": 0.467,
+      "total_pnl": -492.47,
+      "avg_pnl_pct": -0.16
     }
   },
   "by_symbol": {
@@ -111,29 +111,41 @@
       "total_pnl": 48.94,
       "avg_pnl_pct": 0.79
     },
+    "SHY": {
+      "trades": 2,
+      "win_rate": 0.0,
+      "total_pnl": -24.49,
+      "avg_pnl_pct": -0.18
+    },
+    "GLD": {
+      "trades": 3,
+      "win_rate": 0.667,
+      "total_pnl": -25.34,
+      "avg_pnl_pct": 0.09
+    },
     "DIA": {
-      "trades": 1,
+      "trades": 2,
       "win_rate": 1.0,
-      "total_pnl": 37.31,
-      "avg_pnl_pct": 0.82
+      "total_pnl": 254.47,
+      "avg_pnl_pct": 1.41
     },
     "IWM": {
-      "trades": 1,
+      "trades": 4,
       "win_rate": 1.0,
-      "total_pnl": 16.48,
-      "avg_pnl_pct": 2.84
+      "total_pnl": 458.41,
+      "avg_pnl_pct": 3.5
     },
     "SPY": {
-      "trades": 6,
-      "win_rate": 0.167,
-      "total_pnl": -630.62,
-      "avg_pnl_pct": -1.97
+      "trades": 7,
+      "win_rate": 0.286,
+      "total_pnl": -456.78,
+      "avg_pnl_pct": -1.44
     },
     "QQQ": {
-      "trades": 6,
-      "win_rate": 0.333,
-      "total_pnl": -595.51,
-      "avg_pnl_pct": -1.89
+      "trades": 8,
+      "win_rate": 0.5,
+      "total_pnl": -480.5,
+      "avg_pnl_pct": -1.13
     },
     "AAPL": {
       "trades": 3,
@@ -142,10 +154,10 @@
       "avg_pnl_pct": -1.48
     },
     "BIL": {
-      "trades": 1,
+      "trades": 4,
       "win_rate": 0.0,
-      "total_pnl": -46.39,
-      "avg_pnl_pct": -0.23
+      "total_pnl": -62.59,
+      "avg_pnl_pct": -0.16
     },
     "NVDA": {
       "trades": 3,
@@ -154,10 +166,16 @@
       "avg_pnl_pct": -3.34
     },
     "XLI": {
-      "trades": 3,
-      "win_rate": 0.667,
-      "total_pnl": 365.91,
-      "avg_pnl_pct": 1.48
+      "trades": 4,
+      "win_rate": 0.75,
+      "total_pnl": 574.99,
+      "avg_pnl_pct": 2.02
+    },
+    "TLT": {
+      "trades": 1,
+      "win_rate": 0.0,
+      "total_pnl": -202.04,
+      "avg_pnl_pct": -1.89
     },
     "AMZN": {
       "trades": 7,

@@ -1,177 +1,223 @@
 {
-  "timestamp": "2026-07-03T22:40:36.532059+00:00",
-  "total_equity": 295678.59,
-  "gross_exposure_pct": 71.339,
+  "timestamp": "2026-07-06T21:48:14.974077+00:00",
+  "total_equity": 296769.88,
+  "gross_exposure_pct": 68.379,
   "by_symbol": {
-    "BIL": {
-      "market_value": 10804.62,
-      "pct_of_total": 3.654,
+    "AMD": {
+      "market_value": 5061.6,
+      "pct_of_total": 1.706,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "C": {
+      "market_value": 5425.26,
+      "pct_of_total": 1.828,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "CAT": {
+      "market_value": 12911.58,
+      "pct_of_total": 4.351,
+      "books": [
+        "portfolio_1",
+        "portfolio_3"
+      ]
+    },
+    "GOOGL": {
+      "market_value": 5372.25,
+      "pct_of_total": 1.81,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "GS": {
+      "market_value": 5223.25,
+      "pct_of_total": 1.76,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "INTC": {
+      "market_value": 5394.82,
+      "pct_of_total": 1.818,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "LRCX": {
+      "market_value": 5418.3,
+      "pct_of_total": 1.826,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "MPC": {
+      "market_value": 5431.94,
+      "pct_of_total": 1.83,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "MRK": {
+      "market_value": 5331.06,
+      "pct_of_total": 1.796,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "MS": {
+      "market_value": 5269.44,
+      "pct_of_total": 1.776,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "MU": {
+      "market_value": 4983.05,
+      "pct_of_total": 1.679,
+      "books": [
+        "portfolio_1"
+      ]
+    },
+    "PSX": {
+      "market_value": 11367.45,
+      "pct_of_total": 3.83,
+      "books": [
+        "portfolio_1",
+        "portfolio_3"
+      ]
+    },
+    "SLB": {
+      "market_value": 5395.64,
+      "pct_of_total": 1.818,
       "books": [
         "portfolio_1"
       ]
     },
     "DIA": {
-      "market_value": 17675.47,
-      "pct_of_total": 5.978,
+      "market_value": 6877.13,
+      "pct_of_total": 2.317,
       "books": [
-        "portfolio_1",
-        "portfolio_2"
-      ]
-    },
-    "GLD": {
-      "market_value": 10661.69,
-      "pct_of_total": 3.606,
-      "books": [
-        "portfolio_1"
-      ]
-    },
-    "IWM": {
-      "market_value": 18028.79,
-      "pct_of_total": 6.097,
-      "books": [
-        "portfolio_1",
-        "portfolio_2"
-      ]
-    },
-    "QQQ": {
-      "market_value": 17133.24,
-      "pct_of_total": 5.795,
-      "books": [
-        "portfolio_1",
-        "portfolio_2"
-      ]
-    },
-    "SHY": {
-      "market_value": 10759.62,
-      "pct_of_total": 3.639,
-      "books": [
-        "portfolio_1"
-      ]
-    },
-    "SPY": {
-      "market_value": 16992.01,
-      "pct_of_total": 5.747,
-      "books": [
-        "portfolio_1",
-        "portfolio_2"
-      ]
-    },
-    "TLT": {
-      "market_value": 10701.0,
-      "pct_of_total": 3.619,
-      "books": [
-        "portfolio_1"
-      ]
-    },
-    "XLI": {
-      "market_value": 13055.08,
-      "pct_of_total": 4.415,
-      "books": [
-        "portfolio_1",
         "portfolio_2"
       ]
     },
     "HD": {
-      "market_value": 1418.98,
-      "pct_of_total": 0.48,
+      "market_value": 1404.37,
+      "pct_of_total": 0.473,
+      "books": [
+        "portfolio_2"
+      ]
+    },
+    "IWM": {
+      "market_value": 7176.96,
+      "pct_of_total": 2.418,
       "books": [
         "portfolio_2"
       ]
     },
     "MEDP": {
-      "market_value": 559.61,
+      "market_value": 561.17,
       "pct_of_total": 0.189,
       "books": [
         "portfolio_2"
       ]
     },
     "PG": {
-      "market_value": 1511.61,
-      "pct_of_total": 0.511,
+      "market_value": 1497.45,
+      "pct_of_total": 0.505,
       "books": [
         "portfolio_2"
       ]
     },
     "PH": {
-      "market_value": 954.92,
-      "pct_of_total": 0.323,
+      "market_value": 969.84,
+      "pct_of_total": 0.327,
+      "books": [
+        "portfolio_2"
+      ]
+    },
+    "QQQ": {
+      "market_value": 6518.97,
+      "pct_of_total": 2.197,
+      "books": [
+        "portfolio_2"
+      ]
+    },
+    "SPY": {
+      "market_value": 6766.11,
+      "pct_of_total": 2.28,
       "books": [
         "portfolio_2"
       ]
     },
     "XLE": {
-      "market_value": 6366.61,
-      "pct_of_total": 2.153,
+      "market_value": 6367.2,
+      "pct_of_total": 2.146,
       "books": [
         "portfolio_2"
       ]
     },
     "XLF": {
-      "market_value": 7542.56,
-      "pct_of_total": 2.551,
+      "market_value": 7626.88,
+      "pct_of_total": 2.57,
+      "books": [
+        "portfolio_2"
+      ]
+    },
+    "XLI": {
+      "market_value": 7413.2,
+      "pct_of_total": 2.498,
       "books": [
         "portfolio_2"
       ]
     },
     "XLK": {
-      "market_value": 6304.9,
-      "pct_of_total": 2.132,
+      "market_value": 6439.3,
+      "pct_of_total": 2.17,
       "books": [
         "portfolio_2"
       ]
     },
     "XLV": {
-      "market_value": 7663.35,
-      "pct_of_total": 2.592,
+      "market_value": 7617.99,
+      "pct_of_total": 2.567,
       "books": [
         "portfolio_2"
       ]
     },
     "XLY": {
-      "market_value": 6894.74,
-      "pct_of_total": 2.332,
+      "market_value": 6966.13,
+      "pct_of_total": 2.347,
       "books": [
         "portfolio_2"
       ]
     },
-    "PSX": {
-      "market_value": 6002.85,
-      "pct_of_total": 2.03,
-      "books": [
-        "portfolio_3"
-      ]
-    },
     "F": {
       "market_value": 4830.16,
-      "pct_of_total": 1.634,
+      "pct_of_total": 1.628,
       "books": [
         "portfolio_3"
       ]
     },
     "CARR": {
       "market_value": 4950.74,
-      "pct_of_total": 1.674,
+      "pct_of_total": 1.668,
       "books": [
         "portfolio_3"
       ]
     },
     "UNH": {
       "market_value": 404.9,
-      "pct_of_total": 0.137,
-      "books": [
-        "portfolio_3"
-      ]
-    },
-    "CAT": {
-      "market_value": 7988.08,
-      "pct_of_total": 2.702,
+      "pct_of_total": 0.136,
       "books": [
         "portfolio_3"
       ]
     },
     "GE": {
       "market_value": 6709.47,
-      "pct_of_total": 2.269,
+      "pct_of_total": 2.261,
       "books": [
         "portfolio_3"
       ]
@@ -185,14 +231,28 @@
     },
     "JPM": {
       "market_value": 7911.96,
-      "pct_of_total": 2.676,
+      "pct_of_total": 2.666,
       "books": [
         "portfolio_3"
       ]
     },
     "AXP": {
       "market_value": 6823.1,
-      "pct_of_total": 2.308,
+      "pct_of_total": 2.299,
+      "books": [
+        "portfolio_3"
+      ]
+    },
+    "TGT": {
+      "market_value": 7918.47,
+      "pct_of_total": 2.668,
+      "books": [
+        "portfolio_3"
+      ]
+    },
+    "D": {
+      "market_value": 6305.79,
+      "pct_of_total": 2.125,
       "books": [
         "portfolio_3"
       ]
@@ -200,28 +260,32 @@
   },
   "by_sector": {
     "Unknown": {
-      "market_value": 165028.8,
-      "pct_of_total": 55.814
+      "market_value": 142797.41,
+      "pct_of_total": 48.117
     },
     "Energy": {
       "market_value": 6002.85,
-      "pct_of_total": 2.03
+      "pct_of_total": 2.023
     },
     "Consumer": {
-      "market_value": 4830.16,
-      "pct_of_total": 1.634
+      "market_value": 12748.63,
+      "pct_of_total": 4.296
     },
     "Industrials": {
       "market_value": 19933.61,
-      "pct_of_total": 6.742
+      "pct_of_total": 6.717
     },
     "Healthcare": {
       "market_value": 404.9,
-      "pct_of_total": 0.137
+      "pct_of_total": 0.136
     },
     "Financials": {
       "market_value": 14735.06,
-      "pct_of_total": 4.983
+      "pct_of_total": 4.965
+    },
+    "Utilities": {
+      "market_value": 6305.79,
+      "pct_of_total": 2.125
     }
   },
   "single_name_cap_pct": 10.0,
@@ -229,7 +293,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 7.927
+    "mega_cap_tech_ai": 7.882
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],

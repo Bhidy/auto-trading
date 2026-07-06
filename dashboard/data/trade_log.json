@@ -2641,5 +2641,141 @@
     "realized_pnl": null,
     "hold_days": null,
     "status": "open"
+  },
+  {
+    "symbol": "AMD",
+    "side": "buy",
+    "qty": 9.0,
+    "entry_price": 562.4,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 85
+  },
+  {
+    "symbol": "GS",
+    "side": "buy",
+    "qty": 5.0,
+    "entry_price": 1044.65,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 86
+  },
+  {
+    "symbol": "INTC",
+    "side": "buy",
+    "qty": 43.0,
+    "entry_price": 125.46093,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 87
+  },
+  {
+    "symbol": "LRCX",
+    "side": "buy",
+    "qty": 15.0,
+    "entry_price": 361.22,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 88
+  },
+  {
+    "symbol": "MPC",
+    "side": "buy",
+    "qty": 20.0,
+    "entry_price": 271.597,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 89
+  },
+  {
+    "symbol": "MRK",
+    "side": "buy",
+    "qty": 42.0,
+    "entry_price": 126.93,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 90
+  },
+  {
+    "symbol": "MS",
+    "side": "buy",
+    "qty": 24.0,
+    "entry_price": 219.56,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 91
+  },
+  {
+    "symbol": "MU",
+    "side": "buy",
+    "qty": 5.0,
+    "entry_price": 996.61,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null,
+    "id": 92
   }
 ]

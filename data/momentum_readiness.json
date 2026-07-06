@@ -1,11 +1,65 @@
 {
-  "status": "not_started",
-  "as_of": "2026-07-04",
-  "note": "Momentum sleeve has not run its first rebalance yet.",
+  "status": "accruing_track_record",
+  "as_of": "2026-07-06",
+  "activated_at": "2026-07-06",
+  "basis": "p1_account_level",
+  "days_on_paper": 0,
+  "track_days_measured": 1,
+  "oos_sharpe": null,
+  "max_drawdown_pct": null,
+  "momentum_fills": 5,
+  "rebalance_count": 1,
+  "latest_vol_scale": 0.8291,
+  "latest_deployed_pct": 74.6,
   "gates": {
     "min_days": 90,
     "min_oos_sharpe": 1.0,
     "max_drawdown_pct": 15.0,
     "min_momentum_fills": 26
-  }
+  },
+  "checks": {
+    "days_on_paper": {
+      "value": 0,
+      "threshold": 90,
+      "op": ">=",
+      "pass": false
+    },
+    "oos_sharpe": {
+      "value": null,
+      "threshold": 1.0,
+      "op": ">=",
+      "pass": false
+    },
+    "max_drawdown_pct": {
+      "value": null,
+      "threshold": 15.0,
+      "op": "<=",
+      "pass": false
+    },
+    "momentum_fills": {
+      "value": 5,
+      "threshold": 26,
+      "op": ">=",
+      "pass": false
+    }
+  },
+  "all_gates_pass": false,
+  "milestones": [
+    {
+      "day": 30,
+      "reached": false,
+      "eta_date": "2026-08-05"
+    },
+    {
+      "day": 60,
+      "reached": false,
+      "eta_date": "2026-09-04"
+    },
+    {
+      "day": 90,
+      "reached": false,
+      "eta_date": "2026-10-04"
+    }
+  ],
+  "verdict": "NOT yet eligible \u2014 PAPER ONLY. Keep accruing the track record."
 }
