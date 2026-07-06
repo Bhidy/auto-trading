@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-06T22:37:23.512149+00:00",
-  "total_equity": 296777.68,
-  "gross_exposure_pct": 73.05,
+  "timestamp": "2026-07-06T22:43:05.260623+00:00",
+  "total_equity": 296756.86,
+  "gross_exposure_pct": 73.055,
   "by_symbol": {
     "AMD": {
       "market_value": 5061.6,
@@ -84,7 +84,7 @@
     },
     "PSX": {
       "market_value": 11367.45,
-      "pct_of_total": 3.83,
+      "pct_of_total": 3.831,
       "books": [
         "portfolio_1",
         "portfolio_3"
@@ -155,7 +155,7 @@
     },
     "XLE": {
       "market_value": 6367.2,
-      "pct_of_total": 2.145,
+      "pct_of_total": 2.146,
       "books": [
         "portfolio_2"
       ]
@@ -269,7 +269,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 156666.33,
-      "pct_of_total": 52.789
+      "pct_of_total": 52.793
     },
     "Energy": {
       "market_value": 6002.85,
@@ -301,7 +301,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 7.882
+    "mega_cap_tech_ai": 7.883
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
