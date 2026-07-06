@@ -1368,5 +1368,37 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "symbol": "MU",
+    "side": "buy",
+    "qty": 6.0,
+    "entry_price": 1003.42,
+    "timestamp": "2026-07-06T21:49:36.456550+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
+  },
+  {
+    "symbol": "SPG",
+    "side": "buy",
+    "qty": 35.0,
+    "entry_price": 224.24,
+    "timestamp": "2026-07-06T21:49:36.456550+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]
