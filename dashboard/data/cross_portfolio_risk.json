@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-06T21:48:14.974077+00:00",
-  "total_equity": 296769.88,
-  "gross_exposure_pct": 68.379,
+  "timestamp": "2026-07-06T21:54:50.196222+00:00",
+  "total_equity": 296780.74,
+  "gross_exposure_pct": 73.05,
   "by_symbol": {
     "AMD": {
       "market_value": 5061.6,
@@ -75,10 +75,11 @@
       ]
     },
     "MU": {
-      "market_value": 4983.05,
-      "pct_of_total": 1.679,
+      "market_value": 11003.57,
+      "pct_of_total": 3.708,
       "books": [
-        "portfolio_1"
+        "portfolio_1",
+        "portfolio_3"
       ]
     },
     "PSX": {
@@ -154,7 +155,7 @@
     },
     "XLE": {
       "market_value": 6367.2,
-      "pct_of_total": 2.146,
+      "pct_of_total": 2.145,
       "books": [
         "portfolio_2"
       ]
@@ -256,12 +257,19 @@
       "books": [
         "portfolio_3"
       ]
+    },
+    "SPG": {
+      "market_value": 7848.4,
+      "pct_of_total": 2.645,
+      "books": [
+        "portfolio_3"
+      ]
     }
   },
   "by_sector": {
     "Unknown": {
-      "market_value": 142797.41,
-      "pct_of_total": 48.117
+      "market_value": 156666.33,
+      "pct_of_total": 52.789
     },
     "Energy": {
       "market_value": 6002.85,
