@@ -1,29 +1,7 @@
 {
-  "timestamp": "2026-07-06T14:47:29.965182",
-  "processed_evaluated": 3,
+  "timestamp": "2026-07-07T14:24:23.930987",
+  "processed_evaluated": 0,
   "copied": 0,
-  "skipped": 3,
-  "skips": [
-    {
-      "ticker": "AMGN",
-      "politician": "David Taylor",
-      "transaction_date": "06/05/2026",
-      "disclosure_lag_days": 31,
-      "reason": "stale_disclosure_31d"
-    },
-    {
-      "ticker": "T",
-      "politician": "David Taylor",
-      "transaction_date": "06/05/2026",
-      "disclosure_lag_days": 31,
-      "reason": "stale_disclosure_31d"
-    },
-    {
-      "ticker": "KR",
-      "politician": "David Taylor",
-      "transaction_date": "06/05/2026",
-      "disclosure_lag_days": 31,
-      "reason": "stale_disclosure_31d"
-    }
-  ]
+  "skipped": 0,
+  "skips": []
 }

@@ -740,5 +740,50 @@
     "pnl_pct": null,
     "status": "exit_marker",
     "exit_reason": "take_profit"
+  },
+  {
+    "symbol": "SPY",
+    "side": "buy",
+    "qty": 2,
+    "limit_price": 747.99,
+    "estimated_value": 1495.98,
+    "order_id": "196ed477-2af8-41f0-aaac-ac99478aff0c",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "strategy": "benchmark_sleeve",
+    "evidence_quality": "beta",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-07-07T14:24:24.321537",
+    "date": "2026-07-07"
+  },
+  {
+    "symbol": "QQQ",
+    "side": "buy",
+    "qty": 2,
+    "limit_price": 708.42,
+    "estimated_value": 1416.84,
+    "order_id": "264fee3b-e841-4d19-8ba8-c07301cc6f8c",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "strategy": "benchmark_sleeve",
+    "evidence_quality": "beta",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-07-07T14:24:25.402964",
+    "date": "2026-07-07"
+  },
+  {
+    "symbol": "DIA",
+    "side": "buy",
+    "qty": 3,
+    "limit_price": 530.31,
+    "estimated_value": 1590.93,
+    "order_id": "d41276d4-27ec-4b35-a4e9-1606528f4d8c",
+    "politician": "BENCHMARK_SLEEVE",
+    "source": "benchmark_sleeve",
+    "strategy": "benchmark_sleeve",
+    "evidence_quality": "beta",
+    "reason": "benchmark_sleeve: deploy idle cash",
+    "timestamp": "2026-07-07T14:24:26.492192",
+    "date": "2026-07-07"
   }
 ]
