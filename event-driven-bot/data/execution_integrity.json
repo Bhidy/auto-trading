@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-07T14:06:11.796555+00:00",
+  "timestamp": "2026-07-07T14:24:55.405558+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -9,37 +9,37 @@
   "skipped": [
     {
       "symbol": "MU",
-      "reason": "already hold",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "CAT",
-      "reason": "core_swing tranche fully deployed",
+      "reason": "already hold",
       "benign": true
     },
     {
       "symbol": "CARR",
-      "reason": "core_swing tranche fully deployed",
+      "reason": "already hold",
       "benign": true
     },
     {
       "symbol": "GE",
-      "reason": "already hold",
+      "reason": "sector Industrials at cap",
       "benign": true
     },
     {
       "symbol": "SPG",
-      "reason": "already hold",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "TGT",
-      "reason": "already hold",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "D",
-      "reason": "already hold",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {

@@ -81,8 +81,8 @@
   "day_pnl_pct": 3.2e-05,
   "week_pnl": 3.01,
   "week_pnl_pct": 3.2e-05,
-  "halted": false,
-  "halt_reason": null,
+  "halted": true,
+  "halt_reason": "Kill switch: 73.94% drawdown",
   "halt_until": null,
   "last_updated": "2026-07-06T22:47:00.732933+00:00"
 }
