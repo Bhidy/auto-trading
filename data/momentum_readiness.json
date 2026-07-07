@@ -1,12 +1,12 @@
 {
   "status": "accruing_track_record",
-  "as_of": "2026-07-06",
+  "as_of": "2026-07-07",
   "activated_at": "2026-07-06",
   "basis": "p1_account_level",
-  "days_on_paper": 0,
-  "track_days_measured": 1,
+  "days_on_paper": 1,
+  "track_days_measured": 2,
   "oos_sharpe": null,
-  "max_drawdown_pct": null,
+  "max_drawdown_pct": 1.73,
   "momentum_fills": 5,
   "rebalance_count": 1,
   "latest_vol_scale": 0.8291,
@@ -19,7 +19,7 @@
   },
   "checks": {
     "days_on_paper": {
-      "value": 0,
+      "value": 1,
       "threshold": 90,
       "op": ">=",
       "pass": false
@@ -31,10 +31,10 @@
       "pass": false
     },
     "max_drawdown_pct": {
-      "value": null,
+      "value": 1.73,
       "threshold": 15.0,
       "op": "<=",
-      "pass": false
+      "pass": true
     },
     "momentum_fills": {
       "value": 5,
