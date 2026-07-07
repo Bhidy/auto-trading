@@ -1,11 +1,24 @@
 {
-  "timestamp": "2026-07-06T22:49:39.267327+00:00",
-  "positions_held": 13,
-  "open_trades_logged": 13,
+  "timestamp": "2026-07-07T21:44:09.738017+00:00",
+  "positions_held": 11,
+  "open_trades_logged": 11,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "close_orphan",
+      "symbol": "CARR",
+      "lots": 1,
+      "qty": 69.0
+    },
+    {
+      "action": "close_orphan",
+      "symbol": "CAT",
+      "lots": 1,
+      "qty": 8.0
+    }
+  ]
 }
