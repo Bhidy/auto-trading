@@ -2648,16 +2648,22 @@
     "qty": 9.0,
     "entry_price": 562.4,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 85
+    "exit_price": 521.19,
+    "pnl": -371.02,
+    "pnl_pct": -7.33,
+    "id": 85,
+    "exit_timestamp": "2026-07-07T16:43:36.732203+00:00",
+    "exit_reason": "active_max_loss",
+    "hold_days": 0,
+    "gross_pnl": -370.89,
+    "fees": 0.13,
+    "realized_pnl": -371.02
   },
   {
     "symbol": "GS",
@@ -2682,16 +2688,22 @@
     "qty": 43.0,
     "entry_price": 125.46093,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 87
+    "exit_price": 110.61,
+    "pnl": -638.73,
+    "pnl_pct": -11.84,
+    "id": 87,
+    "exit_timestamp": "2026-07-07T16:43:37.190122+00:00",
+    "exit_reason": "active_max_loss",
+    "hold_days": 0,
+    "gross_pnl": -638.59,
+    "fees": 0.14,
+    "realized_pnl": -638.73
   },
   {
     "symbol": "LRCX",
@@ -2699,16 +2711,22 @@
     "qty": 15.0,
     "entry_price": 361.22,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 88
+    "exit_price": 323.48,
+    "pnl": -566.24,
+    "pnl_pct": -10.45,
+    "id": 88,
+    "exit_timestamp": "2026-07-07T16:43:37.649147+00:00",
+    "exit_reason": "active_max_loss",
+    "hold_days": 0,
+    "gross_pnl": -566.1,
+    "fees": 0.14,
+    "realized_pnl": -566.24
   },
   {
     "symbol": "MPC",
@@ -2767,15 +2785,21 @@
     "qty": 5.0,
     "entry_price": 996.61,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 92
+    "exit_price": 922.49,
+    "pnl": -370.73,
+    "pnl_pct": -7.44,
+    "id": 92,
+    "exit_timestamp": "2026-07-07T16:43:38.116732+00:00",
+    "exit_reason": "active_max_loss",
+    "hold_days": 0,
+    "gross_pnl": -370.6,
+    "fees": 0.13,
+    "realized_pnl": -370.73
   }
 ]
