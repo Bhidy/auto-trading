@@ -878,5 +878,181 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-08",
+    "timestamp": "2026-07-08T22:45:51.637414+00:00",
+    "audit": {
+      "equity": 98989.9,
+      "cash": 33915.46,
+      "daily_pnl": -402.51,
+      "daily_pnl_pct": -0.405,
+      "total_open_exposure": 65074.44,
+      "exposure_pct": 65.7,
+      "position_count": 11,
+      "trades_today": 3,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Financials": 14669.88,
+        "Industrials": 12376.48,
+        "Utilities": 6357.26,
+        "Consumer": 13046.81,
+        "Healthcare": 5288.92,
+        "Tech": 5666.94,
+        "RealEstate": 7668.15
+      }
+    },
+    "positions": [
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "336.39",
+        "market_value": "6727.8",
+        "unrealized_pl": "-95.3",
+        "pnl_pct": -1.4,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "66.74",
+        "market_value": "4805.28",
+        "unrealized_pl": "-32.4",
+        "pnl_pct": -0.67,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "8",
+        "entry": "949.86",
+        "current": "946.4",
+        "market_value": "7571.2",
+        "unrealized_pl": "-27.68",
+        "pnl_pct": -0.36,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "69.86",
+        "market_value": "6357.26",
+        "unrealized_pl": "51.469964",
+        "pnl_pct": 0.82,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "13.4795",
+        "market_value": "4704.3455",
+        "unrealized_pl": "-125.8145",
+        "pnl_pct": -2.6,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "330.92",
+        "market_value": "7942.08",
+        "unrealized_pl": "30.12",
+        "pnl_pct": 0.38,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "LLY",
+        "qty": "4",
+        "entry": "1228.85",
+        "current": "1215.83",
+        "market_value": "4863.32",
+        "unrealized_pl": "-52.08",
+        "pnl_pct": -1.06,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "944.49",
+        "market_value": "5666.94",
+        "unrealized_pl": "-353.58",
+        "pnl_pct": -5.87,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "SPG",
+        "qty": "35",
+        "entry": "224.24",
+        "current": "219.09",
+        "market_value": "7668.15",
+        "unrealized_pl": "-180.25",
+        "pnl_pct": -2.3,
+        "sector": "RealEstate"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "132.42",
+        "market_value": "8342.46",
+        "unrealized_pl": "423.99",
+        "pnl_pct": 5.35,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "425.6",
+        "market_value": "425.6",
+        "unrealized_pl": "20.7",
+        "pnl_pct": 5.11,
+        "sector": "Healthcare"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "CAT",
+        "side": "buy",
+        "qty": 8,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($1036.98)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+36.5%)"
+        ]
+      },
+      {
+        "symbol": "CARR",
+        "side": "buy",
+        "qty": 72,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($75.45)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+25.2%)"
+        ]
+      },
+      {
+        "symbol": "LLY",
+        "side": "buy",
+        "qty": 4,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      }
+    ]
   }
 ]
