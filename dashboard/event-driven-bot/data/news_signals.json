@@ -1,18 +1,20 @@
 {
-  "timestamp": "2026-07-01T14:29:32.326118+00:00",
+  "timestamp": "2026-07-08T14:06:18.333095+00:00",
   "signals": [
     {
-      "symbol": "DDOG",
-      "sector": "Tech",
+      "symbol": "LLY",
+      "sector": "Healthcare",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Datadog Shares Climb After Company Acquires Reinforcement Learning Startup Adaptive ML",
+      "headline": "RBC Capital Maintains Outperform on Eli Lilly, Raises Price Target to $1500",
       "source": "benzinga",
-      "created_at": "2026-07-01T14:03:19Z",
+      "created_at": "2026-07-08T13:47:04Z",
       "reasons": [
-        "Positive: 'acquires'"
+        "Positive: 'outperform'"
       ],
-      "tranche": "event_driven"
+      "tranche": "event_driven",
+      "price": 1127.69,
+      "atr": 34.36
     }
   ]
 }
