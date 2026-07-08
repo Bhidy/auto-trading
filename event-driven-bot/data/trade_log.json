@@ -859,7 +859,15 @@
       "RSI in sweet spot (62)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-08T21:33:04.484624+00:00",
+    "exit_price": 188.47,
+    "exit_reason": "take_profit",
+    "pnl": 593.41,
+    "realized_pnl": 593.41,
+    "pnl_pct": 9.89
   },
   {
     "timestamp": "2026-06-16T14:11:00.378332+00:00",
@@ -1240,7 +1248,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-08T21:33:04.484624+00:00",
+    "exit_price": 356.29,
+    "exit_reason": "stop_loss",
+    "pnl": -296.43,
+    "realized_pnl": -296.43,
+    "pnl_pct": -4.42
   },
   {
     "timestamp": "2026-06-29T14:11:24.245670+00:00",
@@ -1269,7 +1285,15 @@
       "RSI in sweet spot (62)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-08T21:33:04.484624+00:00",
+    "exit_price": 135.91,
+    "exit_reason": "stop_loss",
+    "pnl": -13.51,
+    "realized_pnl": -13.51,
+    "pnl_pct": -4.74
   },
   {
     "timestamp": "2026-06-29T14:11:27.565092+00:00",
