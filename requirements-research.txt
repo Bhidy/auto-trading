@@ -9,7 +9,7 @@
 # and .claude/skills/portfolio-optimizer/SKILL.md (the dependency-tiering law).
 -r requirements.txt
 numpy>=1.26
-pandas>=2.0
+pandas>=3.0.3
 scipy>=1.11
 scikit-learn>=1.3
 statsmodels>=0.14
