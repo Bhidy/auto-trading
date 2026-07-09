@@ -1,11 +1,11 @@
 {
   "status": "in_progress",
-  "as_of": "2026-07-08",
+  "as_of": "2026-07-09",
   "activated_at": "2026-07-06",
   "basis": "p1_account_level",
-  "days_on_paper": 2,
-  "track_days_measured": 3,
-  "oos_sharpe": -8.6,
+  "days_on_paper": 3,
+  "track_days_measured": 4,
+  "oos_sharpe": -5.59,
   "max_drawdown_pct": 1.71,
   "momentum_fills": 5,
   "rebalance_count": 1,
@@ -19,13 +19,13 @@
   },
   "checks": {
     "days_on_paper": {
-      "value": 2,
+      "value": 3,
       "threshold": 90,
       "op": ">=",
       "pass": false
     },
     "oos_sharpe": {
-      "value": -8.6,
+      "value": -5.59,
       "threshold": 1.0,
       "op": ">=",
       "pass": false

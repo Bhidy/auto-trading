@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-08T22:41:20.052172+00:00",
+  "timestamp": "2026-07-09T21:46:57.519570+00:00",
   "overall": {
     "total_trades": 82,
     "wins": 30,
@@ -33,20 +33,20 @@
     "sharpe_estimate": -0.19
   },
   "last_30_days": {
-    "total_trades": 62,
+    "total_trades": 58,
     "wins": 24,
-    "losses": 38,
-    "win_rate": 0.387,
-    "avg_pnl_pct": -1.7,
+    "losses": 34,
+    "win_rate": 0.414,
+    "avg_pnl_pct": -1.49,
     "avg_win_pct": 1.67,
-    "avg_loss_pct": -3.83,
-    "win_loss_ratio": 0.44,
+    "avg_loss_pct": -3.72,
+    "win_loss_ratio": 0.45,
     "max_win_pct": 4.92,
     "max_loss_pct": -11.84,
-    "total_pnl": -5632.93,
-    "profit_factor": 0.29,
-    "per_trade_sharpe": -0.46,
-    "sharpe_estimate": -0.46
+    "total_pnl": -4285.42,
+    "profit_factor": 0.35,
+    "per_trade_sharpe": -0.4,
+    "sharpe_estimate": -0.4
   },
   "by_bucket": {
     "sector_momentum": {
@@ -209,7 +209,6 @@
     }
   },
   "insights": [
-    "Win rate declining \u2014 tighten entry criteria",
     "Losing money \u2014 reduce exposure and review strategy",
     "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
   ]
