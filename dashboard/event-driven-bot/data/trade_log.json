@@ -1524,5 +1524,62 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-09T14:06:26.901527+00:00",
+    "date": "2026-07-09",
+    "symbol": "GE",
+    "side": "buy",
+    "qty": 19,
+    "entry_price": 358.64,
+    "intended_price": 358.27,
+    "slippage_pct": 0.1033,
+    "client_order_id": "p3-20260709-GE-buy",
+    "stop_loss": 331.25,
+    "take_profit_1": 412.32,
+    "atr": 10.81,
+    "trade_value": 6807.13,
+    "order_id": "d46817ad-0152-4642-b59e-7f08f3eb5156",
+    "order_status": "filled",
+    "filled_qty": 19.0,
+    "sector": "Industrials",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($372.45)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+16.4%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-07-09T14:06:28.935699+00:00",
+    "date": "2026-07-09",
+    "symbol": "ABBV",
+    "side": "buy",
+    "qty": 25,
+    "entry_price": 253.79,
+    "intended_price": 253.48,
+    "slippage_pct": 0.1223,
+    "client_order_id": "p3-20260709-ABBV-buy",
+    "stop_loss": 237.68,
+    "take_profit_1": 285.08,
+    "atr": 6.32,
+    "trade_value": 6337.0,
+    "order_id": "de0110bc-f23a-4a2e-84b8-41c702e670cf",
+    "order_status": "filled",
+    "filled_qty": 25.0,
+    "sector": "Healthcare",
+    "tranche": "core_swing",
+    "signal_score": 0.6,
+    "reasons": [
+      "Breaking upper BB ($238.71)",
+      "MACD bullish crossover",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]

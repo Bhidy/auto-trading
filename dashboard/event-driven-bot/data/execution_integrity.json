@@ -1,14 +1,39 @@
 {
-  "timestamp": "2026-07-08T14:24:54.169672+00:00",
+  "timestamp": "2026-07-09T14:06:29.438713+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 1,
-  "approved": 1,
-  "placed": 0,
-  "filled": 0,
+  "total_signals": 8,
+  "approved": 8,
+  "placed": 2,
+  "filled": 2,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "LLY",
+      "symbol": "MU",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "CAT",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "CARR",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "SPG",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "TGT",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "D",
       "reason": "already hold",
       "benign": true
     }
