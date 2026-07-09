@@ -923,5 +923,190 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-09",
+    "timestamp": "2026-07-09T22:57:32.846941+00:00",
+    "audit": {
+      "equity": 99578.88,
+      "cash": 20756.53,
+      "daily_pnl": 549.75,
+      "daily_pnl_pct": 0.555,
+      "total_open_exposure": 78822.35,
+      "exposure_pct": 79.2,
+      "position_count": 13,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 11546.7,
+        "Financials": 14973.56,
+        "Industrials": 19208.13,
+        "Utilities": 6319.95,
+        "Consumer": 13082.9,
+        "Tech": 6001.26,
+        "RealEstate": 7689.85
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "249.91",
+        "market_value": "6247.75",
+        "unrealized_pl": "-97",
+        "pnl_pct": -1.53,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "346.21",
+        "market_value": "6924.2",
+        "unrealized_pl": "101.1",
+        "pnl_pct": 1.48,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "67.81",
+        "market_value": "4882.32",
+        "unrealized_pl": "44.64",
+        "pnl_pct": 0.92,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "8",
+        "entry": "949.86",
+        "current": "938.41",
+        "market_value": "7507.28",
+        "unrealized_pl": "-91.6",
+        "pnl_pct": -1.21,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "69.45",
+        "market_value": "6319.95",
+        "unrealized_pl": "14.159964",
+        "pnl_pct": 0.22,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "13.61",
+        "market_value": "4749.89",
+        "unrealized_pl": "-80.27",
+        "pnl_pct": -1.66,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "358.87",
+        "market_value": "6818.53",
+        "unrealized_pl": "4.37",
+        "pnl_pct": 0.06,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "335.39",
+        "market_value": "8049.36",
+        "unrealized_pl": "137.4",
+        "pnl_pct": 1.74,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "LLY",
+        "qty": "4",
+        "entry": "1228.85",
+        "current": "1216.95",
+        "market_value": "4867.8",
+        "unrealized_pl": "-47.6",
+        "pnl_pct": -0.97,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "1000.21",
+        "market_value": "6001.26",
+        "unrealized_pl": "-19.26",
+        "pnl_pct": -0.32,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "SPG",
+        "qty": "35",
+        "entry": "224.24",
+        "current": "219.71",
+        "market_value": "7689.85",
+        "unrealized_pl": "-158.55",
+        "pnl_pct": -2.02,
+        "sector": "RealEstate"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "132.27",
+        "market_value": "8333.01",
+        "unrealized_pl": "414.54",
+        "pnl_pct": 5.24,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "431.152",
+        "market_value": "431.152",
+        "unrealized_pl": "26.252",
+        "pnl_pct": 6.48,
+        "sector": "Healthcare"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "GE",
+        "side": "buy",
+        "qty": 19,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($372.45)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+16.4%)"
+        ]
+      },
+      {
+        "symbol": "ABBV",
+        "side": "buy",
+        "qty": 25,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.6,
+        "reasons": [
+          "Breaking upper BB ($238.71)",
+          "MACD bullish crossover",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
