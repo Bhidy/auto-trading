@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-10T21:29:39.509796+00:00",
+  "timestamp": "2026-07-10T21:37:53.162912+00:00",
   "positions_held": 11,
   "open_trades_logged": 11,
   "orphan_open_trades": [],
@@ -7,18 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "SPG",
-      "lots": 1,
-      "qty": 35.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "LLY",
-      "lots": 1,
-      "qty": 4.0
-    }
-  ]
+  "reconcile_actions": []
 }
