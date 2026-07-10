@@ -1431,15 +1431,18 @@
     "qty": 35.0,
     "entry_price": 224.24,
     "timestamp": "2026-07-06T21:49:36.456550+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 213.01,
+    "pnl": -393.26,
+    "pnl_pct": -5.01,
+    "exit_timestamp": "2026-07-10T21:29:39.506972+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -393.26
   },
   {
     "timestamp": "2026-07-08T14:06:15.258322+00:00",
@@ -1523,8 +1526,16 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-10T21:29:39.506972+00:00",
+    "exit_price": 1185.11,
+    "exit_reason": "market_exit",
+    "pnl": -175.09,
+    "realized_pnl": -175.09,
+    "pnl_pct": -3.56
   },
   {
     "timestamp": "2026-07-09T14:06:26.901527+00:00",
