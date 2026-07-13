@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-10T14:24:52.409520+00:00",
+  "timestamp": "2026-07-13T14:06:28.334545+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -8,43 +8,43 @@
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "MU",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "CAT",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "CARR",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "GE",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "SPG",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "TGT",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "D",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
       "symbol": "ABBV",
       "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "PANW",
+      "reason": "core_swing tranche fully deployed",
+      "benign": true
+    },
+    {
+      "symbol": "AAPL",
+      "reason": "core_swing tranche fully deployed",
+      "benign": true
+    },
+    {
+      "symbol": "V",
+      "reason": "core_swing tranche fully deployed",
+      "benign": true
+    },
+    {
+      "symbol": "PGR",
+      "reason": "core_swing tranche fully deployed",
+      "benign": true
+    },
+    {
+      "symbol": "EW",
+      "reason": "core_swing tranche fully deployed",
+      "benign": true
+    },
+    {
+      "symbol": "UNP",
+      "reason": "core_swing tranche fully deployed",
+      "benign": true
+    },
+    {
+      "symbol": "GOOGL",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     }
   ],
