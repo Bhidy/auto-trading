@@ -1593,5 +1593,31 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-13T14:25:33.555391+00:00",
+    "date": "2026-07-13",
+    "symbol": "EW",
+    "side": "buy",
+    "qty": 54,
+    "entry_price": 92.0,
+    "intended_price": 91.97,
+    "slippage_pct": 0.0326,
+    "client_order_id": "p3-20260713-EW-buy",
+    "stop_loss": 85.84,
+    "take_profit_1": 104.22,
+    "atr": 2.45,
+    "trade_value": 4966.38,
+    "order_id": "72f83401-c345-4de6-92e2-fa69f3caa140",
+    "order_status": "filled",
+    "filled_qty": 54.0,
+    "sector": "Healthcare",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]

@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-07-08T14:24:53.942804+00:00",
+  "timestamp": "2026-07-13T14:25:31.882097+00:00",
   "signals": [
     {
-      "symbol": "LLY",
+      "symbol": "EW",
       "sector": "Healthcare",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Eli Lilly, Raises Price Target to $1500",
+      "headline": "RBC Capital Maintains Outperform on Edwards Lifesciences, Raises Price Target to $110",
       "source": "benzinga",
-      "created_at": "2026-07-08T13:47:04Z",
+      "created_at": "2026-07-13T14:15:34Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 1127.69,
-      "atr": 34.36
+      "price": 94.37,
+      "atr": 2.45
     }
   ]
 }
