@@ -5,7 +5,7 @@
   "basis": "p1_account_level",
   "days_on_paper": 7,
   "track_days_measured": 6,
-  "oos_sharpe": -2.95,
+  "oos_sharpe": -3.1,
   "max_drawdown_pct": 1.71,
   "momentum_fills": 5,
   "rebalance_count": 1,
@@ -25,7 +25,7 @@
       "pass": false
     },
     "oos_sharpe": {
-      "value": -2.95,
+      "value": -3.1,
       "threshold": 1.0,
       "op": ">=",
       "pass": false
