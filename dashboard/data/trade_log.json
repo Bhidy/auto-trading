@@ -2671,16 +2671,22 @@
     "qty": 5.0,
     "entry_price": 1044.65,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 86
+    "exit_price": 1041.345,
+    "pnl": -16.67,
+    "pnl_pct": -0.32,
+    "id": 86,
+    "exit_timestamp": "2026-07-13T16:44:40.654957+00:00",
+    "exit_reason": "active_time_stop",
+    "hold_days": 6,
+    "gross_pnl": -16.52,
+    "fees": 0.15,
+    "realized_pnl": -16.67
   },
   {
     "symbol": "INTC",
@@ -2751,16 +2757,22 @@
     "qty": 42.0,
     "entry_price": 126.93,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 90
+    "exit_price": 123.43,
+    "pnl": -147.15,
+    "pnl_pct": -2.76,
+    "id": 90,
+    "exit_timestamp": "2026-07-13T16:44:41.070614+00:00",
+    "exit_reason": "active_time_stop",
+    "hold_days": 6,
+    "gross_pnl": -147.0,
+    "fees": 0.15,
+    "realized_pnl": -147.15
   },
   {
     "symbol": "MS",
@@ -2768,16 +2780,22 @@
     "qty": 24.0,
     "entry_price": 219.56,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
     "reconcile_reason": "unlogged_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null,
-    "id": 91
+    "exit_price": 219.51,
+    "pnl": -1.35,
+    "pnl_pct": -0.03,
+    "id": 91,
+    "exit_timestamp": "2026-07-13T16:44:41.185753+00:00",
+    "exit_reason": "active_time_stop",
+    "hold_days": 6,
+    "gross_pnl": -1.2,
+    "fees": 0.15,
+    "realized_pnl": -1.35
   },
   {
     "symbol": "MU",
