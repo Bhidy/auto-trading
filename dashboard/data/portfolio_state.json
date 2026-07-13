@@ -1,5 +1,5 @@
 {
-  "equity": 93259.68,
+  "equity": 93306.48,
   "starting_equity": 100000.0,
   "day_start_equity": 93205.47,
   "week_start_equity": 94273.63,
@@ -19,24 +19,9 @@
       "avg_price": 358.15,
       "bucket": "aggressive_growth"
     },
-    "GS": {
-      "qty": 5,
-      "avg_price": 1044.65,
-      "bucket": "unknown"
-    },
     "MPC": {
       "qty": 20,
       "avg_price": 271.597,
-      "bucket": "unknown"
-    },
-    "MRK": {
-      "qty": 42,
-      "avg_price": 126.93,
-      "bucket": "unknown"
-    },
-    "MS": {
-      "qty": 24,
-      "avg_price": 219.56,
       "bucket": "unknown"
     },
     "PSX": {
@@ -51,18 +36,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 48289.5,
-  "long_market_value": 48289.5,
+  "total_exposure": 32680.77,
+  "long_market_value": 32680.77,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 44969.4,
-  "day_pnl": 54.21,
-  "day_pnl_pct": 0.000582,
-  "week_pnl": -1013.95,
-  "week_pnl_pct": -0.010755,
+  "cash": 60625.86,
+  "day_pnl": 101.01,
+  "day_pnl_pct": 0.001084,
+  "week_pnl": -967.15,
+  "week_pnl_pct": -0.010259,
   "halted": true,
   "halt_reason": "Kill switch: 73.94% drawdown",
   "halt_until": null,
-  "last_updated": "2026-07-13T16:44:41.415091+00:00"
+  "last_updated": "2026-07-13T17:09:10.723584+00:00"
 }
