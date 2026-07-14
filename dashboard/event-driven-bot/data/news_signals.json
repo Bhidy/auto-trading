@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-07-13T14:25:31.882097+00:00",
+  "timestamp": "2026-07-14T14:06:12.724935+00:00",
   "signals": [
     {
-      "symbol": "EW",
-      "sector": "Healthcare",
+      "symbol": "GS",
+      "sector": "Financials",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Edwards Lifesciences, Raises Price Target to $110",
+      "headline": "Goldman CEO Says We Raised $31B In Private Credit In Q2; Says We Are Further Accelerating Growth Across Asset And Wealth Management Through Targeted Acquisitions; Says AI Buildout Is Still In Early Stages; Says Sponsor-Backed Deal Volumes Are Still Subdued Versus Historical Averages",
       "source": "benzinga",
-      "created_at": "2026-07-13T14:15:34Z",
+      "created_at": "2026-07-14T13:46:25Z",
       "reasons": [
-        "Positive: 'outperform'"
+        "Positive: 'acquisition'"
       ],
       "tranche": "event_driven",
-      "price": 94.37,
-      "atr": 2.45
+      "price": 1021.0,
+      "atr": 31.85
     }
   ]
 }

@@ -1619,5 +1619,31 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-14T14:06:14.118894+00:00",
+    "date": "2026-07-14",
+    "symbol": "GS",
+    "side": "buy",
+    "qty": 4,
+    "entry_price": 1120.24,
+    "intended_price": 1120.135,
+    "slippage_pct": 0.0094,
+    "client_order_id": "p3-20260714-GS-buy",
+    "stop_loss": 1040.51,
+    "take_profit_1": 1279.38,
+    "atr": 31.85,
+    "trade_value": 4480.54,
+    "order_id": "7bfb2549-b54e-4b99-854d-b6c8c3458dad",
+    "order_status": "filled",
+    "filled_qty": 4.0,
+    "sector": "Financials",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'acquisition'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-13T14:25:07.608986+00:00",
+  "timestamp": "2026-07-14T14:06:10.555667+00:00",
   "market_regime": "BULL",
   "regime_modifiers": {
     "equity_mult": 1.0,
@@ -198,7 +198,7 @@
     }
   ],
   "adaptive_params": {
-    "win_rate_30d": 0.511,
+    "win_rate_30d": 0.375,
     "position_size_multiplier": 0.5,
     "rsi_overbought": 75
   },
@@ -207,7 +207,7 @@
       "symbol": "IWM",
       "instrument_type": "etf",
       "signal": "BUY",
-      "score": 0.8,
+      "score": 0.72,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:3.4% 3M:18.4%)",
@@ -246,7 +246,7 @@
       "symbol": "XLI",
       "instrument_type": "etf",
       "signal": "BUY",
-      "score": 0.8,
+      "score": 0.72,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:5.7% 3M:12.3%)",
@@ -284,8 +284,8 @@
     {
       "symbol": "DIA",
       "instrument_type": "etf",
-      "signal": "BUY",
-      "score": 0.7,
+      "signal": "HOLD",
+      "score": 0.63,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:3.9% 3M:13.5%)",
@@ -314,16 +314,16 @@
       },
       "risk_management": {
         "suggested_position_pct": 12.0,
-        "stop_loss": 518.77,
-        "take_profit": 552.19,
-        "trailing_stop_pct": 1.73
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop_pct": null
       }
     },
     {
       "symbol": "XLF",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": 0.65,
+      "score": 0.585,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:9.3% 3M:12.3%)",
@@ -362,7 +362,7 @@
       "symbol": "XLV",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": 0.65,
+      "score": 0.585,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:11.0% 3M:11.5%)",
@@ -401,7 +401,7 @@
       "symbol": "AAPL",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": 0.59,
+      "score": 0.531,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:-0.5% 3M:20.6%)",
@@ -440,7 +440,7 @@
       "symbol": "XLK",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": 0.59,
+      "score": 0.531,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:-8.0% 3M:32.8%)",
@@ -478,7 +478,7 @@
       "symbol": "QQQ",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": 0.54,
+      "score": 0.486,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:-4.2% 3M:21.8%)",
@@ -516,7 +516,7 @@
       "symbol": "GLD",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": -0.5,
+      "score": -0.45,
       "reasons": [
         "Downtrend: price below both MAs",
         "Negative momentum (1M:-7.3% 3M:-11.9%)",
@@ -554,7 +554,7 @@
       "symbol": "GOOGL",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": 0.5,
+      "score": 0.45,
       "reasons": [
         "Mixed trend",
         "Positive momentum (1M:0.3% 3M:21.7%)",
@@ -593,7 +593,7 @@
       "symbol": "SPY",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": 0.49,
+      "score": 0.441,
       "reasons": [
         "Uptrend: price above MA50 & MA200",
         "Positive momentum (1M:-1.3% 3M:13.6%)",
@@ -631,7 +631,7 @@
       "symbol": "SHY",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": -0.45,
+      "score": -0.405,
       "reasons": [
         "Downtrend: price below both MAs",
         "Negative momentum (1M:-0.0% 3M:-0.5%)",
@@ -668,7 +668,7 @@
       "symbol": "META",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": -0.3,
+      "score": -0.27,
       "reasons": [
         "Downtrend: price below both MAs",
         "Negative momentum (1M:-6.4% 3M:1.5%)",
@@ -706,7 +706,7 @@
       "symbol": "MSFT",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": -0.3,
+      "score": -0.27,
       "reasons": [
         "Downtrend: price below both MAs",
         "Negative momentum (1M:-8.6% 3M:4.6%)",
@@ -744,7 +744,7 @@
       "symbol": "TSLA",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": -0.3,
+      "score": -0.27,
       "reasons": [
         "Downtrend: price below both MAs",
         "Negative momentum (1M:-7.1% 3M:9.1%)",
@@ -782,7 +782,7 @@
       "symbol": "TLT",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": -0.29,
+      "score": -0.261,
       "reasons": [
         "Downtrend: price below both MAs",
         "Negative momentum (1M:0.2% 3M:-1.5%)",
@@ -819,7 +819,7 @@
       "symbol": "AMZN",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": 0.24,
+      "score": 0.216,
       "reasons": [
         "Mixed trend",
         "Positive momentum (1M:-2.9% 3M:15.7%)",
@@ -857,7 +857,7 @@
       "symbol": "XLE",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": -0.16,
+      "score": -0.144,
       "reasons": [
         "Mixed trend",
         "Negative momentum (1M:-9.4% 3M:-10.2%)",
@@ -896,7 +896,7 @@
       "symbol": "XLY",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": -0.14,
+      "score": -0.126,
       "reasons": [
         "Downtrend: price below both MAs",
         "Positive momentum (1M:0.3% 3M:8.3%)",
@@ -933,7 +933,7 @@
       "symbol": "NVDA",
       "instrument_type": "stock",
       "signal": "HOLD",
-      "score": 0.09,
+      "score": 0.081,
       "reasons": [
         "Mixed trend",
         "Positive momentum (1M:-9.3% 3M:9.8%)",
@@ -971,7 +971,7 @@
       "symbol": "BIL",
       "instrument_type": "etf",
       "signal": "HOLD",
-      "score": 0.05,
+      "score": 0.045,
       "reasons": [
         "Downtrend: price below both MAs",
         "Positive momentum (1M:0.0% 3M:0.0%)",
