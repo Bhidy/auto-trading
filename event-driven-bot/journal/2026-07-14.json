@@ -843,5 +843,174 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-14",
+    "timestamp": "2026-07-14T22:41:03.022846+00:00",
+    "audit": {
+      "equity": 99662.17,
+      "cash": 23502.86,
+      "daily_pnl": 479.66,
+      "daily_pnl_pct": 0.484,
+      "total_open_exposure": 76159.31,
+      "exposure_pct": 76.4,
+      "position_count": 13,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 11409.55,
+        "Financials": 19870.0,
+        "Industrials": 19210.31,
+        "Utilities": 6488.3,
+        "Consumer": 13296.59,
+        "Tech": 5884.56
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "244.78",
+        "market_value": "6119.5",
+        "unrealized_pl": "-225.25",
+        "pnl_pct": -3.55,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "355.06",
+        "market_value": "7101.2",
+        "unrealized_pl": "278.1",
+        "pnl_pct": 4.08,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "69.76",
+        "market_value": "5022.72",
+        "unrealized_pl": "185.04",
+        "pnl_pct": 3.82,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "8",
+        "entry": "949.86",
+        "current": "933.34",
+        "market_value": "7466.72",
+        "unrealized_pl": "-132.16",
+        "pnl_pct": -1.74,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "71.3",
+        "market_value": "6488.3",
+        "unrealized_pl": "182.509964",
+        "pnl_pct": 2.89,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "EW",
+        "qty": "54",
+        "entry": "92",
+        "current": "90.09",
+        "market_value": "4864.86",
+        "unrealized_pl": "-103.14",
+        "pnl_pct": -2.08,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "13.91",
+        "market_value": "4854.59",
+        "unrealized_pl": "24.43",
+        "pnl_pct": 0.51,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "353.73",
+        "market_value": "6720.87",
+        "unrealized_pl": "-93.29",
+        "pnl_pct": -1.37,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "4",
+        "entry": "1120.24",
+        "current": "1139",
+        "market_value": "4556",
+        "unrealized_pl": "75.04",
+        "pnl_pct": 1.68,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "342.2",
+        "market_value": "8212.8",
+        "unrealized_pl": "300.84",
+        "pnl_pct": 3.8,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "980.76",
+        "market_value": "5884.56",
+        "unrealized_pl": "-135.96",
+        "pnl_pct": -2.26,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "134",
+        "market_value": "8442",
+        "unrealized_pl": "523.53",
+        "pnl_pct": 6.61,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "425.19",
+        "market_value": "425.19",
+        "unrealized_pl": "20.29",
+        "pnl_pct": 5.01,
+        "sector": "Healthcare"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "GS",
+        "side": "buy",
+        "qty": 4,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'acquisition'"
+        ]
+      }
+    ]
   }
 ]
