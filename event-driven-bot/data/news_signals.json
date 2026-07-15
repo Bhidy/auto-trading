@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-07-14T14:24:40.957377+00:00",
+  "timestamp": "2026-07-15T14:06:14.085076+00:00",
   "signals": [
     {
-      "symbol": "GS",
-      "sector": "Financials",
+      "symbol": "AMZN",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Goldman CEO Says We Raised $31B In Private Credit In Q2; Says We Are Further Accelerating Growth Across Asset And Wealth Management Through Targeted Acquisitions; Says AI Buildout Is Still In Early Stages; Says Sponsor-Backed Deal Volumes Are Still Subdued Versus Historical Averages",
+      "headline": "Citizens Reiterates Market Outperform on Amazon.com, Maintains $315 Price Target",
       "source": "benzinga",
-      "created_at": "2026-07-14T13:46:25Z",
+      "created_at": "2026-07-15T13:23:56Z",
       "reasons": [
-        "Positive: 'acquisition'"
+        "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 1021.0,
-      "atr": 31.85
+      "price": 242.67,
+      "atr": 8.21
     }
   ]
 }

@@ -1645,5 +1645,31 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-15T14:06:15.720518+00:00",
+    "date": "2026-07-15",
+    "symbol": "AMZN",
+    "side": "buy",
+    "qty": 13,
+    "entry_price": 253.5,
+    "intended_price": 253.315,
+    "slippage_pct": 0.073,
+    "client_order_id": "p3-20260715-AMZN-buy",
+    "stop_loss": 232.79,
+    "take_profit_1": 294.37,
+    "atr": 8.21,
+    "trade_value": 3293.09,
+    "order_id": "1e83c86d-7525-4683-befc-75f7d048f029",
+    "order_status": "filled",
+    "filled_qty": 13.0,
+    "sector": "Tech",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]
