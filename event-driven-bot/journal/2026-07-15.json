@@ -505,5 +505,174 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-15",
+    "timestamp": "2026-07-15T22:12:38.771758+00:00",
+    "audit": {
+      "equity": 99602.02,
+      "cash": 24987.64,
+      "daily_pnl": -105.33,
+      "daily_pnl_pct": -0.106,
+      "total_open_exposure": 74614.44,
+      "exposure_pct": 74.9,
+      "position_count": 13,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6534.75,
+        "Tech": 8736.32,
+        "Financials": 20109.44,
+        "Industrials": 19073.55,
+        "Utilities": 6459.18,
+        "Consumer": 13701.2
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "244.75",
+        "market_value": "6118.75",
+        "unrealized_pl": "-226",
+        "pnl_pct": -3.56,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "AMZN",
+        "qty": "13",
+        "entry": "253.5",
+        "current": "254.7894",
+        "market_value": "3312.2622",
+        "unrealized_pl": "16.7622",
+        "pnl_pct": 0.51,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "358.44",
+        "market_value": "7168.8",
+        "unrealized_pl": "345.7",
+        "pnl_pct": 5.07,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "68.0593",
+        "market_value": "4900.2696",
+        "unrealized_pl": "62.5896",
+        "pnl_pct": 1.29,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "8",
+        "entry": "949.86",
+        "current": "915.71",
+        "market_value": "7325.68",
+        "unrealized_pl": "-273.2",
+        "pnl_pct": -3.6,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "70.98",
+        "market_value": "6459.18",
+        "unrealized_pl": "153.389964",
+        "pnl_pct": 2.43,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.1899",
+        "market_value": "4952.2751",
+        "unrealized_pl": "122.1151",
+        "pnl_pct": 2.53,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "360.3999",
+        "market_value": "6847.5981",
+        "unrealized_pl": "33.4381",
+        "pnl_pct": 0.49,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "4",
+        "entry": "1120.24",
+        "current": "1151.96",
+        "market_value": "4607.84",
+        "unrealized_pl": "126.88",
+        "pnl_pct": 2.83,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "347.2",
+        "market_value": "8332.8",
+        "unrealized_pl": "420.84",
+        "pnl_pct": 5.32,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "904.01",
+        "market_value": "5424.06",
+        "unrealized_pl": "-596.46",
+        "pnl_pct": -9.91,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "138.8719",
+        "market_value": "8748.9297",
+        "unrealized_pl": "830.4597",
+        "pnl_pct": 10.49,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "1",
+        "entry": "404.9",
+        "current": "416",
+        "market_value": "416",
+        "unrealized_pl": "11.1",
+        "pnl_pct": 2.74,
+        "sector": "Healthcare"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "AMZN",
+        "side": "buy",
+        "qty": 13,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      }
+    ]
   }
 ]
