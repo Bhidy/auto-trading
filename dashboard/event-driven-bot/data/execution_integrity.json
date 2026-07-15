@@ -1,12 +1,53 @@
 {
-  "timestamp": "2026-07-15T14:06:16.223251+00:00",
+  "timestamp": "2026-07-15T14:24:44.427634+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 1,
-  "approved": 1,
-  "placed": 1,
-  "filled": 1,
+  "total_signals": 8,
+  "approved": 8,
+  "placed": 0,
+  "filled": 0,
   "unexplained": 0,
-  "skipped": [],
+  "skipped": [
+    {
+      "symbol": "ABBV",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "PANW",
+      "reason": "core_swing tranche room < 1 share",
+      "benign": true
+    },
+    {
+      "symbol": "AAPL",
+      "reason": "core_swing tranche room < 1 share",
+      "benign": true
+    },
+    {
+      "symbol": "V",
+      "reason": "sector Financials at cap",
+      "benign": true
+    },
+    {
+      "symbol": "PGR",
+      "reason": "sector Financials at cap",
+      "benign": true
+    },
+    {
+      "symbol": "EW",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "UNP",
+      "reason": "core_swing tranche room < 1 share",
+      "benign": true
+    },
+    {
+      "symbol": "GOOGL",
+      "reason": "core_swing tranche room < 1 share",
+      "benign": true
+    }
+  ],
   "halted": false,
   "cash_available": true,
   "anomalous": false,
