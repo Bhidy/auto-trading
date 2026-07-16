@@ -1653,7 +1653,8 @@
       "Positive: 'acquisition'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open"
+    "status": "open",
+    "catalyst_decay_exit": true
   },
   {
     "timestamp": "2026-07-15T14:06:15.720518+00:00",
