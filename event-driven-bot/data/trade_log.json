@@ -1181,7 +1181,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-16T21:19:08.290544+00:00",
+    "exit_price": 453.02,
+    "exit_reason": "take_profit",
+    "pnl": 48.11,
+    "realized_pnl": 48.11,
+    "pnl_pct": 11.88
   },
   {
     "timestamp": "2026-06-29T14:11:17.619927+00:00",
@@ -1653,8 +1661,16 @@
       "Positive: 'acquisition'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-16T21:19:08.290544+00:00",
+    "exit_price": 1107.52,
+    "exit_reason": "market_exit",
+    "pnl": -51.0,
+    "realized_pnl": -51.0,
+    "pnl_pct": -1.14
   },
   {
     "timestamp": "2026-07-15T14:06:15.720518+00:00",
