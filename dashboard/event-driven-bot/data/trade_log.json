@@ -1479,7 +1479,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-17T21:09:40.699781+00:00",
+    "exit_price": 843.2,
+    "exit_reason": "stop_loss",
+    "pnl": -853.47,
+    "realized_pnl": -853.47,
+    "pnl_pct": -11.23
   },
   {
     "timestamp": "2026-07-08T14:06:17.292444+00:00",
@@ -1696,8 +1704,16 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-17T21:09:40.699781+00:00",
+    "exit_price": 247.71,
+    "exit_reason": "market_exit",
+    "pnl": -75.36,
+    "realized_pnl": -75.36,
+    "pnl_pct": -2.29
   },
   {
     "timestamp": "2026-07-17T14:06:24.471531+00:00",
