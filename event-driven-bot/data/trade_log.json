@@ -1696,7 +1696,8 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open"
+    "status": "open",
+    "catalyst_decay_exit": true
   },
   {
     "timestamp": "2026-07-17T14:06:24.471531+00:00",
