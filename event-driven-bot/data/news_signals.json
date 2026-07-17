@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-17T14:06:21.917884+00:00",
+  "timestamp": "2026-07-17T14:25:14.499326+00:00",
   "signals": [
     {
       "symbol": "MS",
@@ -45,21 +45,6 @@
       "tranche": "event_driven",
       "price": 58.73,
       "atr": 1.17
-    },
-    {
-      "symbol": "UNH",
-      "sector": "Healthcare",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on UnitedHealth Group, Raises Price Target to $478",
-      "source": "benzinga",
-      "created_at": "2026-07-17T13:32:43Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 425.36,
-      "atr": 10.29
     }
   ]
 }

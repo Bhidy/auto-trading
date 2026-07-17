@@ -1,12 +1,17 @@
 {
-  "timestamp": "2026-07-17T14:06:27.985604+00:00",
+  "timestamp": "2026-07-17T14:25:15.138586+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 4,
-  "approved": 4,
-  "placed": 2,
-  "filled": 2,
+  "total_signals": 3,
+  "approved": 3,
+  "placed": 0,
+  "filled": 0,
   "unexplained": 0,
   "skipped": [
+    {
+      "symbol": "MS",
+      "reason": "already hold",
+      "benign": true
+    },
     {
       "symbol": "GS",
       "reason": "sector Financials would breach cap",
