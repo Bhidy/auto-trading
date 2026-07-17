@@ -1697,5 +1697,57 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-17T14:06:24.471531+00:00",
+    "date": "2026-07-17",
+    "symbol": "MS",
+    "side": "buy",
+    "qty": 19,
+    "entry_price": 214.67,
+    "intended_price": 214.42,
+    "slippage_pct": 0.1166,
+    "client_order_id": "p3-20260717-MS-buy",
+    "stop_loss": 199.82,
+    "take_profit_1": 243.62,
+    "atr": 5.84,
+    "trade_value": 4073.98,
+    "order_id": "35f26c5a-7159-475c-bbc0-9e1a4d12fc9c",
+    "order_status": "filled",
+    "filled_qty": 19.0,
+    "sector": "Financials",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-07-17T14:06:27.467325+00:00",
+    "date": "2026-07-17",
+    "symbol": "UNH",
+    "side": "buy",
+    "qty": 11,
+    "entry_price": 429.92,
+    "intended_price": 430.05,
+    "slippage_pct": -0.0302,
+    "client_order_id": "p3-20260717-UNH-buy",
+    "stop_loss": 404.32,
+    "take_profit_1": 481.5,
+    "atr": 10.29,
+    "trade_value": 4730.55,
+    "order_id": "d6e253a1-6b62-4426-a30d-ea37cf24ef9a",
+    "order_status": "filled",
+    "filled_qty": 11.0,
+    "sector": "Healthcare",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]
