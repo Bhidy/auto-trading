@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-17T21:09:40.702871+00:00",
+  "timestamp": "2026-07-17T21:26:31.860969+00:00",
   "positions_held": 11,
   "open_trades_logged": 11,
   "orphan_open_trades": [],
@@ -7,18 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "CAT",
-      "lots": 1,
-      "qty": 8.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "AMZN",
-      "lots": 1,
-      "qty": 13.0
-    }
-  ]
+  "reconcile_actions": []
 }
