@@ -318,5 +318,165 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-17",
+    "timestamp": "2026-07-17T21:36:23.487026+00:00",
+    "audit": {
+      "equity": 98381.81,
+      "cash": 31034.36,
+      "daily_pnl": -571.45,
+      "daily_pnl_pct": -0.577,
+      "total_open_exposure": 67347.45,
+      "exposure_pct": 68.5,
+      "position_count": 11,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 11056.89,
+        "Financials": 19428.48,
+        "Industrials": 11586.18,
+        "Utilities": 6464.64,
+        "Consumer": 13739.97,
+        "Tech": 5071.28
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "255.1437",
+        "market_value": "6378.5925",
+        "unrealized_pl": "33.8425",
+        "pnl_pct": 0.53,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "355.34",
+        "market_value": "7106.8",
+        "unrealized_pl": "283.7",
+        "pnl_pct": 4.16,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "68.69",
+        "market_value": "4945.68",
+        "unrealized_pl": "108",
+        "pnl_pct": 2.23,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "71.04",
+        "market_value": "6464.64",
+        "unrealized_pl": "158.849964",
+        "pnl_pct": 2.52,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.2201",
+        "market_value": "4962.8149",
+        "unrealized_pl": "132.6549",
+        "pnl_pct": 2.75,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "349.5",
+        "market_value": "6640.5",
+        "unrealized_pl": "-173.66",
+        "pnl_pct": -2.55,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "343.0289",
+        "market_value": "8232.6936",
+        "unrealized_pl": "320.7336",
+        "pnl_pct": 4.05,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MS",
+        "qty": "19",
+        "entry": "214.67",
+        "current": "215.21",
+        "market_value": "4088.99",
+        "unrealized_pl": "10.26",
+        "pnl_pct": 0.25,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "845.2128",
+        "market_value": "5071.2768",
+        "unrealized_pl": "-949.2432",
+        "pnl_pct": -15.77,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "139.32",
+        "market_value": "8777.16",
+        "unrealized_pl": "858.69",
+        "pnl_pct": 10.84,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UNH",
+        "qty": "11",
+        "entry": "429.92",
+        "current": "425.3",
+        "market_value": "4678.3",
+        "unrealized_pl": "-50.82",
+        "pnl_pct": -1.07,
+        "sector": "Healthcare"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MS",
+        "side": "buy",
+        "qty": 19,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      },
+      {
+        "symbol": "UNH",
+        "side": "buy",
+        "qty": 11,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      }
+    ]
   }
 ]
