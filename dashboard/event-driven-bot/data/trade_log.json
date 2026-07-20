@@ -1739,8 +1739,16 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-20T21:34:44.108882+00:00",
+    "exit_price": 211.96,
+    "exit_reason": "market_exit",
+    "pnl": -51.61,
+    "realized_pnl": -51.61,
+    "pnl_pct": -1.27
   },
   {
     "timestamp": "2026-07-17T14:06:27.467325+00:00",
@@ -1766,8 +1774,16 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-20T21:34:44.108882+00:00",
+    "exit_price": 421.69,
+    "exit_reason": "market_exit",
+    "pnl": -90.66,
+    "realized_pnl": -90.66,
+    "pnl_pct": -1.92
   },
   {
     "timestamp": "2026-07-20T14:06:47.897605+00:00",
