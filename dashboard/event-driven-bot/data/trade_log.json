@@ -1766,5 +1766,61 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-20T14:06:47.897605+00:00",
+    "date": "2026-07-20",
+    "symbol": "ANET",
+    "side": "buy",
+    "qty": 43,
+    "entry_price": 171.34,
+    "intended_price": 171.225,
+    "slippage_pct": 0.0672,
+    "client_order_id": "p3-20260720-ANET-buy",
+    "stop_loss": 146.78,
+    "take_profit_1": 220.12,
+    "atr": 9.78,
+    "trade_value": 7362.68,
+    "order_id": "9f2b3163-d67d-4974-8ea2-bc20cedf53d1",
+    "order_status": "filled",
+    "filled_qty": 43.0,
+    "sector": "Tech",
+    "tranche": "core_swing",
+    "signal_score": 0.8,
+    "reasons": [
+      "Breaking upper BB ($184.56)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+15.8%)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (63)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-07-20T14:06:52.011234+00:00",
+    "date": "2026-07-20",
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": 14,
+    "entry_price": 267.21,
+    "intended_price": 267.015,
+    "slippage_pct": 0.073,
+    "client_order_id": "p3-20260720-DDOG-buy",
+    "stop_loss": 234.54,
+    "take_profit_1": 331.96,
+    "atr": 12.99,
+    "trade_value": 3738.21,
+    "order_id": "19b6984b-e53b-4811-8bb1-cf98b5a6e306",
+    "order_status": "filled",
+    "filled_qty": 14.0,
+    "sector": "Tech",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]

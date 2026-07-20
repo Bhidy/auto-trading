@@ -1,50 +1,20 @@
 {
-  "timestamp": "2026-07-17T14:25:14.499326+00:00",
+  "timestamp": "2026-07-20T14:06:49.980607+00:00",
   "signals": [
     {
-      "symbol": "MS",
-      "sector": "Financials",
+      "symbol": "DDOG",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Evercore ISI Group Maintains Outperform on Morgan Stanley, Raises Price Target to $240",
+      "headline": "Citizens Maintains Market Outperform on Datadog, Raises Price Target to $311",
       "source": "benzinga",
-      "created_at": "2026-07-17T13:42:56Z",
+      "created_at": "2026-07-20T13:28:03Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 213.93,
-      "atr": 5.84
-    },
-    {
-      "symbol": "GS",
-      "sector": "Financials",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "Evercore ISI Group Maintains Outperform on Goldman Sachs Group, Raises Price Target to $1210",
-      "source": "benzinga",
-      "created_at": "2026-07-17T13:39:50Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 1021.0,
-      "atr": 31.85
-    },
-    {
-      "symbol": "BAC",
-      "sector": "Financials",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "Evercore ISI Group Maintains Outperform on Bank of America, Raises Price Target to $67",
-      "source": "benzinga",
-      "created_at": "2026-07-17T13:36:03Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 58.73,
-      "atr": 1.17
+      "price": 257.54,
+      "atr": 12.99
     }
   ]
 }
