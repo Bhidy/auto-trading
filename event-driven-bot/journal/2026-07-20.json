@@ -808,5 +808,167 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-20",
+    "timestamp": "2026-07-20T22:40:36.841488+00:00",
+    "audit": {
+      "equity": 97637.88,
+      "cash": 28591.49,
+      "daily_pnl": -726.46,
+      "daily_pnl_pct": -0.739,
+      "total_open_exposure": 69046.39,
+      "exposure_pct": 70.7,
+      "position_count": 11,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6325.0,
+        "Tech": 16179.75,
+        "Financials": 15171.48,
+        "Industrials": 11290.75,
+        "Utilities": 6402.76,
+        "Consumer": 13676.65
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "253",
+        "market_value": "6325",
+        "unrealized_pl": "-19.75",
+        "pnl_pct": -0.31,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "169.35",
+        "market_value": "7282.05",
+        "unrealized_pl": "-85.57",
+        "pnl_pct": -1.16,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "351.93",
+        "market_value": "7038.6",
+        "unrealized_pl": "215.5",
+        "pnl_pct": 3.16,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "66.5185",
+        "market_value": "4789.332",
+        "unrealized_pl": "-48.348",
+        "pnl_pct": -1.0,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "70.36",
+        "market_value": "6402.76",
+        "unrealized_pl": "96.969964",
+        "pnl_pct": 1.54,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "DDOG",
+        "qty": "14",
+        "entry": "267.21",
+        "current": "262.886",
+        "market_value": "3680.404",
+        "unrealized_pl": "-60.536",
+        "pnl_pct": -1.62,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "13.9899",
+        "market_value": "4882.4751",
+        "unrealized_pl": "52.3151",
+        "pnl_pct": 1.08,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "342.18",
+        "market_value": "6501.42",
+        "unrealized_pl": "-312.74",
+        "pnl_pct": -4.59,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "338.87",
+        "market_value": "8132.88",
+        "unrealized_pl": "220.92",
+        "pnl_pct": 2.79,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "869.55",
+        "market_value": "5217.3",
+        "unrealized_pl": "-803.22",
+        "pnl_pct": -13.34,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "139.59",
+        "market_value": "8794.17",
+        "unrealized_pl": "875.7",
+        "pnl_pct": 11.06,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "ANET",
+        "side": "buy",
+        "qty": 43,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.8,
+        "reasons": [
+          "Breaking upper BB ($184.56)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+15.8%)"
+        ]
+      },
+      {
+        "symbol": "DDOG",
+        "side": "buy",
+        "qty": 14,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      }
+    ]
   }
 ]
