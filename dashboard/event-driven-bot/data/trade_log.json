@@ -1839,7 +1839,15 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-22T21:31:12.990004+00:00",
+    "exit_price": 248.12,
+    "exit_reason": "market_exit",
+    "pnl": -267.36,
+    "realized_pnl": -267.36,
+    "pnl_pct": -7.15
   }
 ]
