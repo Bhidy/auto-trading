@@ -506,5 +506,132 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-07-22",
+    "timestamp": "2026-07-22T22:33:57.263847+00:00",
+    "audit": {
+      "equity": 98684.34,
+      "cash": 32065.15,
+      "daily_pnl": 154.33,
+      "daily_pnl_pct": 0.157,
+      "total_open_exposure": 66619.19,
+      "exposure_pct": 67.5,
+      "position_count": 10,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6332.5,
+        "Tech": 13373.25,
+        "Financials": 15350.86,
+        "Industrials": 11385.81,
+        "Utilities": 6469.19,
+        "Consumer": 13707.58
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "253.3",
+        "market_value": "6332.5",
+        "unrealized_pl": "-12.25",
+        "pnl_pct": -0.19,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "174.87",
+        "market_value": "7519.41",
+        "unrealized_pl": "151.79",
+        "pnl_pct": 2.06,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "AXP",
+        "qty": "20",
+        "entry": "341.155",
+        "current": "349",
+        "market_value": "6980",
+        "unrealized_pl": "156.9",
+        "pnl_pct": 2.3,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "68.1",
+        "market_value": "4903.2",
+        "unrealized_pl": "65.52",
+        "pnl_pct": 1.35,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "71.09",
+        "market_value": "6469.19",
+        "unrealized_pl": "163.399964",
+        "pnl_pct": 2.59,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.38",
+        "market_value": "5018.62",
+        "unrealized_pl": "188.46",
+        "pnl_pct": 3.9,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "341.19",
+        "market_value": "6482.61",
+        "unrealized_pl": "-331.55",
+        "pnl_pct": -4.87,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "JPM",
+        "qty": "24",
+        "entry": "329.665",
+        "current": "348.786",
+        "market_value": "8370.864",
+        "unrealized_pl": "458.904",
+        "pnl_pct": 5.8,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "975.64",
+        "market_value": "5853.84",
+        "unrealized_pl": "-166.68",
+        "pnl_pct": -2.77,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "137.92",
+        "market_value": "8688.96",
+        "unrealized_pl": "770.49",
+        "pnl_pct": 9.73,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": []
   }
 ]
