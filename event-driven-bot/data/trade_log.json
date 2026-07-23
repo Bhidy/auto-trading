@@ -1849,5 +1849,31 @@
     "pnl": -267.36,
     "realized_pnl": -267.36,
     "pnl_pct": -7.15
+  },
+  {
+    "timestamp": "2026-07-23T14:25:02.218453+00:00",
+    "date": "2026-07-23",
+    "symbol": "GOOGL",
+    "side": "buy",
+    "qty": 15,
+    "entry_price": 317.7287,
+    "intended_price": 317.69,
+    "slippage_pct": 0.0122,
+    "client_order_id": "p3-20260723-GOOGL-buy",
+    "stop_loss": 290.92,
+    "take_profit_1": 371.24,
+    "atr": 10.71,
+    "trade_value": 4765.35,
+    "order_id": "a5b5045f-e996-4cda-9afe-88e80ec548de",
+    "order_status": "filled",
+    "filled_qty": 15.0,
+    "sector": "Tech",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]
