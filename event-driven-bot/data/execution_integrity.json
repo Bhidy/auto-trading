@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-22T14:24:45.686175+00:00",
+  "timestamp": "2026-07-23T14:06:19.296953+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 6,
   "approved": 6,
@@ -14,27 +14,27 @@
     },
     {
       "symbol": "MPC",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "PSX",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "DDOG",
-      "reason": "already hold",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "TXN",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     },
     {
       "symbol": "EW",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "core_swing tranche fully deployed",
       "benign": true
     }
   ],
