@@ -114,5 +114,121 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-07-24",
+    "timestamp": "2026-07-24T21:41:17.489039+00:00",
+    "audit": {
+      "equity": 97965.11,
+      "cash": 42154.26,
+      "daily_pnl": -795.57,
+      "daily_pnl_pct": -0.806,
+      "total_open_exposure": 55810.85,
+      "exposure_pct": 57.0,
+      "position_count": 9,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6462.5,
+        "Tech": 17723.28,
+        "Industrials": 11596.38,
+        "Utilities": 6484.66,
+        "Consumer": 13544.03
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "258.5",
+        "market_value": "6462.5",
+        "unrealized_pl": "117.75",
+        "pnl_pct": 1.86,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "173.01",
+        "market_value": "7439.43",
+        "unrealized_pl": "71.81",
+        "pnl_pct": 0.97,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "67.85",
+        "market_value": "4885.2",
+        "unrealized_pl": "47.52",
+        "pnl_pct": 0.98,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "71.26",
+        "market_value": "6484.66",
+        "unrealized_pl": "178.869964",
+        "pnl_pct": 2.84,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "14.35",
+        "market_value": "5008.15",
+        "unrealized_pl": "177.99",
+        "pnl_pct": 3.69,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "353.22",
+        "market_value": "6711.18",
+        "unrealized_pl": "-102.98",
+        "pnl_pct": -1.51,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "15",
+        "entry": "317.728667",
+        "current": "320.17",
+        "market_value": "4802.55",
+        "unrealized_pl": "36.619995",
+        "pnl_pct": 0.77,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "913.55",
+        "market_value": "5481.3",
+        "unrealized_pl": "-539.22",
+        "pnl_pct": -8.96,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "135.4902",
+        "market_value": "8535.8826",
+        "unrealized_pl": "617.4126",
+        "pnl_pct": 7.8,
+        "sector": "Consumer"
+      }
+    ],
+    "trades": []
   }
 ]
