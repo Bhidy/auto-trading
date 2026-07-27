@@ -1890,8 +1890,16 @@
       "Positive: 'outperform'"
     ],
     "signal_type": "NEWS_BUY",
-    "status": "open",
-    "catalyst_decay_exit": true
+    "status": "closed",
+    "catalyst_decay_exit": true,
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-27T21:31:21.021658+00:00",
+    "exit_price": 327.01,
+    "exit_reason": "market_exit",
+    "pnl": 139.08,
+    "realized_pnl": 139.08,
+    "pnl_pct": 2.92
   },
   {
     "timestamp": "2026-07-27T14:25:35.996412+00:00",
@@ -1921,5 +1929,37 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "symbol": "PSX",
+    "side": "buy",
+    "qty": 38.0,
+    "entry_price": 206.87,
+    "timestamp": "2026-07-27T21:31:21.021658+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
+  },
+  {
+    "symbol": "UPS",
+    "side": "buy",
+    "qty": 59.0,
+    "entry_price": 114.22,
+    "timestamp": "2026-07-27T21:31:21.021658+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]
