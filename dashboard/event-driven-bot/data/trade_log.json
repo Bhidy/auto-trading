@@ -1891,5 +1891,62 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-27T14:06:33.348873+00:00",
+    "date": "2026-07-27",
+    "symbol": "PSX",
+    "side": "buy",
+    "qty": 38,
+    "entry_price": 206.87,
+    "intended_price": 206.76,
+    "slippage_pct": 0.0532,
+    "client_order_id": "p3-20260727-PSX-buy",
+    "stop_loss": 192.01,
+    "take_profit_1": 236.26,
+    "atr": 5.9,
+    "trade_value": 7856.88,
+    "order_id": "4ba31c46-dfa4-4a2a-a318-b48fa9f2fb7a",
+    "order_status": "filled",
+    "filled_qty": 38.0,
+    "sector": "Energy",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($207.48)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+27.6%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-07-27T14:06:35.335842+00:00",
+    "date": "2026-07-27",
+    "symbol": "UPS",
+    "side": "buy",
+    "qty": 59,
+    "entry_price": 114.22,
+    "intended_price": 114.12,
+    "slippage_pct": 0.0876,
+    "client_order_id": "p3-20260727-UPS-buy",
+    "stop_loss": 107.07,
+    "take_profit_1": 128.22,
+    "atr": 2.82,
+    "trade_value": 6733.08,
+    "order_id": "6b66fe08-e5f9-463e-9146-8ca787c85ba1",
+    "order_status": "filled",
+    "filled_qty": 59.0,
+    "sector": "Industrials",
+    "tranche": "core_swing",
+    "signal_score": 0.68,
+    "reasons": [
+      "Breaking upper BB ($117.13)",
+      "MACD bullish crossover",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]

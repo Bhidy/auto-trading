@@ -1,40 +1,40 @@
 {
-  "timestamp": "2026-07-24T14:24:50.012010+00:00",
+  "timestamp": "2026-07-27T14:06:36.132744+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 6,
-  "approved": 6,
-  "placed": 0,
-  "filled": 0,
+  "total_signals": 8,
+  "approved": 8,
+  "placed": 2,
+  "filled": 2,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "ANET",
+      "symbol": "F",
       "reason": "already hold",
       "benign": true
     },
     {
+      "symbol": "GS",
+      "reason": "core_swing tranche room < 1 share",
+      "benign": true
+    },
+    {
       "symbol": "MPC",
-      "reason": "core_swing tranche fully deployed",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
-      "symbol": "PSX",
-      "reason": "core_swing tranche fully deployed",
+      "symbol": "VLO",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
-      "symbol": "DDOG",
-      "reason": "core_swing tranche fully deployed",
+      "symbol": "AAPL",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
-      "symbol": "TXN",
-      "reason": "core_swing tranche fully deployed",
-      "benign": true
-    },
-    {
-      "symbol": "EW",
-      "reason": "core_swing tranche fully deployed",
+      "symbol": "UNP",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     }
   ],
