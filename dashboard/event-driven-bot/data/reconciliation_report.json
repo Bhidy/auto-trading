@@ -1,11 +1,18 @@
 {
-  "timestamp": "2026-07-27T22:44:10.673852+00:00",
-  "positions_held": 11,
-  "open_trades_logged": 11,
+  "timestamp": "2026-07-28T21:33:40.480523+00:00",
+  "positions_held": 12,
+  "open_trades_logged": 12,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "add_qty",
+      "symbol": "UPS",
+      "added_qty": 2.0,
+      "broker_qty": 61.0
+    }
+  ]
 }

@@ -1950,7 +1950,7 @@
     "symbol": "UPS",
     "side": "buy",
     "qty": 59.0,
-    "entry_price": 114.22,
+    "entry_price": 105.61,
     "timestamp": "2026-07-27T21:31:21.021658+00:00",
     "status": "open",
     "reconciled": true,
@@ -1989,5 +1989,21 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "symbol": "UPS",
+    "side": "buy",
+    "qty": 2.0,
+    "entry_price": 105.61,
+    "timestamp": "2026-07-28T21:33:40.476522+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "qty_drift_short",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]
