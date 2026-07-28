@@ -484,5 +484,167 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-28",
+    "timestamp": "2026-07-28T22:16:46.845560+00:00",
+    "audit": {
+      "equity": 97428.41,
+      "cash": 19707.7,
+      "daily_pnl": -877.03,
+      "daily_pnl_pct": -0.892,
+      "total_open_exposure": 77720.71,
+      "exposure_pct": 79.8,
+      "position_count": 12,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6595.0,
+        "Tech": 12285.47,
+        "Industrials": 17961.44,
+        "Utilities": 6426.42,
+        "Consumer": 14512.36,
+        "Financials": 7247.52,
+        "Energy": 12692.5
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "263.8",
+        "market_value": "6595",
+        "unrealized_pl": "250.25",
+        "pnl_pct": 3.94,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "169.97",
+        "market_value": "7308.71",
+        "unrealized_pl": "-58.91",
+        "pnl_pct": -0.8,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "63.35",
+        "market_value": "4561.2",
+        "unrealized_pl": "-276.48",
+        "pnl_pct": -5.71,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "70.62",
+        "market_value": "6426.42",
+        "unrealized_pl": "120.629964",
+        "pnl_pct": 1.91,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "15.7",
+        "market_value": "5479.3",
+        "unrealized_pl": "649.14",
+        "pnl_pct": 13.44,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "365.0563",
+        "market_value": "6936.0697",
+        "unrealized_pl": "121.9097",
+        "pnl_pct": 1.79,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "1035.36",
+        "market_value": "7247.52",
+        "unrealized_pl": "-193.48",
+        "pnl_pct": -2.6,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "16",
+        "entry": "311.57",
+        "current": "304.4349",
+        "market_value": "4870.9584",
+        "unrealized_pl": "-114.1616",
+        "pnl_pct": -2.29,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "829.46",
+        "market_value": "4976.76",
+        "unrealized_pl": "-1043.76",
+        "pnl_pct": -17.34,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "38",
+        "entry": "206.87",
+        "current": "205.83",
+        "market_value": "7821.54",
+        "unrealized_pl": "-39.52",
+        "pnl_pct": -0.5,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "143.3819",
+        "market_value": "9033.0597",
+        "unrealized_pl": "1114.5897",
+        "pnl_pct": 14.08,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "105.97",
+        "market_value": "6464.17",
+        "unrealized_pl": "21.96",
+        "pnl_pct": 0.34,
+        "sector": "Industrials"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MPC",
+        "side": "buy",
+        "qty": 16,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+41.6%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
