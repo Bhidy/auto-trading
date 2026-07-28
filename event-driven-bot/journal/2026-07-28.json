@@ -322,5 +322,167 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-28",
+    "timestamp": "2026-07-28T21:49:39.658708+00:00",
+    "audit": {
+      "equity": 97472.95,
+      "cash": 19707.7,
+      "daily_pnl": -832.49,
+      "daily_pnl_pct": -0.847,
+      "total_open_exposure": 77765.25,
+      "exposure_pct": 79.8,
+      "position_count": 12,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6620.87,
+        "Tech": 12272.64,
+        "Industrials": 17968.31,
+        "Utilities": 6426.42,
+        "Consumer": 14540.28,
+        "Financials": 7244.23,
+        "Energy": 12692.5
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "264.8349",
+        "market_value": "6620.8725",
+        "unrealized_pl": "276.1225",
+        "pnl_pct": 4.35,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "169.5",
+        "market_value": "7288.5",
+        "unrealized_pl": "-79.12",
+        "pnl_pct": -1.07,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "CARR",
+        "qty": "72",
+        "entry": "67.19",
+        "current": "63.35",
+        "market_value": "4561.2",
+        "unrealized_pl": "-276.48",
+        "pnl_pct": -5.71,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "70.62",
+        "market_value": "6426.42",
+        "unrealized_pl": "120.629964",
+        "pnl_pct": 1.91,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "349",
+        "entry": "13.84",
+        "current": "15.78",
+        "market_value": "5507.22",
+        "unrealized_pl": "677.06",
+        "pnl_pct": 14.02,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "365.0563",
+        "market_value": "6936.0697",
+        "unrealized_pl": "121.9097",
+        "pnl_pct": 1.79,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "1034.89",
+        "market_value": "7244.23",
+        "unrealized_pl": "-196.77",
+        "pnl_pct": -2.64,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "16",
+        "entry": "311.57",
+        "current": "304.4349",
+        "market_value": "4870.9584",
+        "unrealized_pl": "-114.1616",
+        "pnl_pct": -2.29,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MU",
+        "qty": "6",
+        "entry": "1003.42",
+        "current": "830.69",
+        "market_value": "4984.14",
+        "unrealized_pl": "-1036.38",
+        "pnl_pct": -17.21,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "38",
+        "entry": "206.87",
+        "current": "205.83",
+        "market_value": "7821.54",
+        "unrealized_pl": "-39.52",
+        "pnl_pct": -0.5,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "TGT",
+        "qty": "63",
+        "entry": "125.69",
+        "current": "143.3819",
+        "market_value": "9033.0597",
+        "unrealized_pl": "1114.5897",
+        "pnl_pct": 14.08,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "106.0826",
+        "market_value": "6471.0386",
+        "unrealized_pl": "28.8286",
+        "pnl_pct": 0.45,
+        "sector": "Industrials"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MPC",
+        "side": "buy",
+        "qty": 16,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+41.6%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
