@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-27T14:25:01.292210+00:00",
+  "timestamp": "2026-07-28T14:06:29.955055+00:00",
   "market_regime": "CORRECTION",
   "regime_modifiers": {
     "equity_mult": 0.7,
@@ -198,7 +198,7 @@
     }
   ],
   "adaptive_params": {
-    "win_rate_30d": 0.423,
+    "win_rate_30d": 0.44,
     "position_size_multiplier": 0.5,
     "rsi_overbought": 75
   },

@@ -1961,5 +1961,33 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "timestamp": "2026-07-28T14:06:37.121094+00:00",
+    "date": "2026-07-28",
+    "symbol": "UPS",
+    "side": "buy",
+    "qty": 61,
+    "entry_price": 105.61,
+    "intended_price": 105.675,
+    "slippage_pct": -0.0615,
+    "client_order_id": "p3-20260728-UPS-buy",
+    "stop_loss": 98.62,
+    "take_profit_1": 119.77,
+    "atr": 2.82,
+    "trade_value": 6446.18,
+    "order_id": "5fe7986d-7f8a-49f3-828a-d4f1571237c0",
+    "order_status": "filled",
+    "filled_qty": 61.0,
+    "sector": "Industrials",
+    "tranche": "core_swing",
+    "signal_score": 0.68,
+    "reasons": [
+      "Breaking upper BB ($117.13)",
+      "MACD bullish crossover",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
