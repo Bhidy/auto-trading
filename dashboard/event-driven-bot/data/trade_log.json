@@ -1078,7 +1078,14 @@
       "RSI in sweet spot (62)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-29T21:14:20.469576+00:00",
+    "exit_price": 15.99,
+    "pnl": 750.11,
+    "realized_pnl": 750.11,
+    "pnl_pct": 15.53
   },
   {
     "timestamp": "2026-06-22T14:10:50.245691+00:00",
@@ -1402,7 +1409,14 @@
       "RSI in sweet spot (64)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-29T21:14:20.469576+00:00",
+    "exit_price": 147.08,
+    "pnl": 1347.3,
+    "realized_pnl": 1347.3,
+    "pnl_pct": 17.01
   },
   {
     "timestamp": "2026-07-06T14:29:24.619490+00:00",
@@ -1439,15 +1453,18 @@
     "qty": 6.0,
     "entry_price": 1003.42,
     "timestamp": "2026-07-06T21:49:36.456550+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 764.61,
+    "pnl": -1432.99,
+    "pnl_pct": -23.8,
+    "exit_timestamp": "2026-07-29T21:14:20.469576+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -1432.99
   },
   {
     "symbol": "SPG",
@@ -1532,7 +1549,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-07-29T21:14:20.469576+00:00",
+    "exit_price": 60.9,
+    "exit_reason": "stop_loss",
+    "pnl": -453.02,
+    "realized_pnl": -453.02,
+    "pnl_pct": -9.36
   },
   {
     "timestamp": "2026-07-08T14:06:19.755514+00:00",
