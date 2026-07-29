@@ -1,12 +1,23 @@
 {
-  "timestamp": "2026-07-29T14:06:28.244594+00:00",
+  "timestamp": "2026-07-29T14:25:02.098174+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 2,
   "approved": 2,
-  "placed": 2,
-  "filled": 2,
+  "placed": 0,
+  "filled": 0,
   "unexplained": 0,
-  "skipped": [],
+  "skipped": [
+    {
+      "symbol": "V",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "KO",
+      "reason": "already hold",
+      "benign": true
+    }
+  ],
   "halted": false,
   "cash_available": true,
   "anomalous": false,
