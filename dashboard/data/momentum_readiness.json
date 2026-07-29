@@ -6,7 +6,7 @@
   "days_on_paper": 23,
   "track_days_measured": 18,
   "oos_sharpe": -3.37,
-  "max_drawdown_pct": 1.9,
+  "max_drawdown_pct": 1.91,
   "momentum_fills": 5,
   "rebalance_count": 1,
   "latest_vol_scale": 0.8291,
@@ -31,7 +31,7 @@
       "pass": false
     },
     "max_drawdown_pct": {
-      "value": 1.9,
+      "value": 1.91,
       "threshold": 15.0,
       "op": "<=",
       "pass": true
