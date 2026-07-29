@@ -478,5 +478,101 @@
       "Losing money \u2014 reduce exposure and review strategy",
       "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
     ]
+  },
+  {
+    "date": "2026-07-29",
+    "timestamp": "2026-07-29T22:36:42.461169+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 92587.01,
+      "cash": 60625.83,
+      "portfolio_value": 92587.01,
+      "daily_pnl": 37.279999999998836,
+      "daily_pnl_pct": 0.04
+    },
+    "positions": [
+      {
+        "symbol": "C",
+        "qty": "38",
+        "market_value": "4845",
+        "unrealized_pl": "-580.26",
+        "unrealized_plpc": "-0.10696"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "5",
+        "market_value": "3910",
+        "unrealized_pl": "-1013.5",
+        "unrealized_plpc": "-0.20585"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "15",
+        "market_value": "5050.2",
+        "unrealized_pl": "-322.05",
+        "unrealized_plpc": "-0.05995"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "20",
+        "market_value": "6174.4",
+        "unrealized_pl": "742.46",
+        "unrealized_plpc": "0.13668"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "30",
+        "market_value": "6204.3",
+        "unrealized_pl": "839.7",
+        "unrealized_plpc": "0.15653"
+      },
+      {
+        "symbol": "SLB",
+        "qty": "118",
+        "market_value": "5777.28",
+        "unrealized_pl": "381.639966",
+        "unrealized_plpc": "0.07073"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 0,
+        "win_rate": null,
+        "avg_pnl_pct": null,
+        "avg_win": null,
+        "avg_loss": null,
+        "win_loss_ratio": null,
+        "max_win_pct": null,
+        "max_loss_pct": null,
+        "total_pnl": 0,
+        "profit_factor": null,
+        "sharpe_estimate": null
+      },
+      "metrics_30d": {
+        "total_trades": 25,
+        "wins": 11,
+        "losses": 14,
+        "win_rate": 0.44,
+        "avg_pnl_pct": -0.74,
+        "avg_win_pct": 2.44,
+        "avg_loss_pct": -3.23,
+        "win_loss_ratio": 0.75,
+        "max_win_pct": 4.92,
+        "max_loss_pct": -11.84,
+        "total_pnl": -848.43,
+        "profit_factor": 0.65,
+        "per_trade_sharpe": -0.17,
+        "sharpe_estimate": -0.17
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 0.5,
+        "confidence_buy_threshold": 0.7,
+        "trailing_stop_atr_mult": 1.5
+      }
+    },
+    "insights": [
+      "Losing money \u2014 reduce exposure and review strategy",
+      "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
+    ]
   }
 ]
