@@ -1,20 +1,35 @@
 {
-  "timestamp": "2026-07-23T14:24:56.810740+00:00",
+  "timestamp": "2026-07-29T14:06:20.202089+00:00",
   "signals": [
     {
-      "symbol": "GOOGL",
-      "sector": "Tech",
+      "symbol": "V",
+      "sector": "Financials",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Wedbush Reiterates Outperform on Alphabet, Maintains $445 Price Target",
+      "headline": "RBC Capital Maintains Outperform on Visa, Raises Price Target to $412",
       "source": "benzinga",
-      "created_at": "2026-07-23T14:18:54Z",
+      "created_at": "2026-07-29T13:53:17Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 357.18,
-      "atr": 10.71
+      "price": 358.56,
+      "atr": 8.33
+    },
+    {
+      "symbol": "KO",
+      "sector": "Consumer",
+      "signal": "NEWS_BUY",
+      "score": 0.3,
+      "headline": "RBC Capital Maintains Outperform on Coca-Cola, Raises Price Target to $96",
+      "source": "benzinga",
+      "created_at": "2026-07-29T13:51:49Z",
+      "reasons": [
+        "Positive: 'outperform'"
+      ],
+      "tranche": "event_driven",
+      "price": 81.56,
+      "atr": 1.89
     }
   ]
 }

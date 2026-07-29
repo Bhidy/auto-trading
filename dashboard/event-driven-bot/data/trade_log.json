@@ -2005,5 +2005,57 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "timestamp": "2026-07-29T14:06:22.882969+00:00",
+    "date": "2026-07-29",
+    "symbol": "V",
+    "side": "buy",
+    "qty": 13,
+    "entry_price": 367.87,
+    "intended_price": 368.045,
+    "slippage_pct": -0.0475,
+    "client_order_id": "p3-20260729-V-buy",
+    "stop_loss": 347.22,
+    "take_profit_1": 409.69,
+    "atr": 8.33,
+    "trade_value": 4784.59,
+    "order_id": "d5e44fd7-83b8-4b47-819b-c01a37cacd80",
+    "order_status": "filled",
+    "filled_qty": 13.0,
+    "sector": "Financials",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-07-29T14:06:27.726680+00:00",
+    "date": "2026-07-29",
+    "symbol": "KO",
+    "side": "buy",
+    "qty": 53,
+    "entry_price": 90.15,
+    "intended_price": 90.165,
+    "slippage_pct": -0.0166,
+    "client_order_id": "p3-20260729-KO-buy",
+    "stop_loss": 85.44,
+    "take_profit_1": 99.62,
+    "atr": 1.89,
+    "trade_value": 4778.74,
+    "order_id": "9a07a78c-eb77-4f83-a5f5-2bfff419af10",
+    "order_status": "filled",
+    "filled_qty": 53.0,
+    "sector": "Consumer",
+    "tranche": "event_driven",
+    "signal_score": 0.3,
+    "reasons": [
+      "Positive: 'outperform'"
+    ],
+    "signal_type": "NEWS_BUY",
+    "status": "open"
   }
 ]
