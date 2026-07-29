@@ -149,5 +149,156 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-29",
+    "timestamp": "2026-07-29T21:30:42.021667+00:00",
+    "audit": {
+      "equity": 96064.47,
+      "cash": 33968.12,
+      "daily_pnl": -1021.52,
+      "daily_pnl_pct": -1.052,
+      "total_open_exposure": 62096.35,
+      "exposure_pct": 64.6,
+      "position_count": 10,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6612.25,
+        "Tech": 6843.45,
+        "Utilities": 6379.1,
+        "Industrials": 13053.3,
+        "Financials": 11663.8,
+        "Consumer": 4746.15,
+        "Energy": 12798.3
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "264.49",
+        "market_value": "6612.25",
+        "unrealized_pl": "267.5",
+        "pnl_pct": 4.22,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "159.15",
+        "market_value": "6843.45",
+        "unrealized_pl": "-524.17",
+        "pnl_pct": -7.12,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "70.1",
+        "market_value": "6379.1",
+        "unrealized_pl": "73.309964",
+        "pnl_pct": 1.16,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "351",
+        "market_value": "6669",
+        "unrealized_pl": "-145.16",
+        "pnl_pct": -2.13,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "980.6",
+        "market_value": "6864.2",
+        "unrealized_pl": "-576.8",
+        "pnl_pct": -7.75,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "KO",
+        "qty": "53",
+        "entry": "90.15",
+        "current": "89.55",
+        "market_value": "4746.15",
+        "unrealized_pl": "-31.8",
+        "pnl_pct": -0.67,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "16",
+        "entry": "311.57",
+        "current": "308.72",
+        "market_value": "4939.52",
+        "unrealized_pl": "-45.6",
+        "pnl_pct": -0.92,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "38",
+        "entry": "206.87",
+        "current": "206.81",
+        "market_value": "7858.78",
+        "unrealized_pl": "-2.28",
+        "pnl_pct": -0.03,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "104.6606",
+        "market_value": "6384.2966",
+        "unrealized_pl": "-57.9134",
+        "pnl_pct": -0.9,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "V",
+        "qty": "13",
+        "entry": "367.87",
+        "current": "369.2",
+        "market_value": "4799.6",
+        "unrealized_pl": "17.29",
+        "pnl_pct": 0.36,
+        "sector": "Financials"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "V",
+        "side": "buy",
+        "qty": 13,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      },
+      {
+        "symbol": "KO",
+        "side": "buy",
+        "qty": 53,
+        "signal_type": "NEWS_BUY",
+        "tranche": "event_driven",
+        "score": 0.3,
+        "reasons": [
+          "Positive: 'outperform'"
+        ]
+      }
+    ]
   }
 ]

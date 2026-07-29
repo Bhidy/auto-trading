@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-29T21:14:20.473070+00:00",
+  "timestamp": "2026-07-29T21:30:42.021280+00:00",
   "positions_held": 10,
   "open_trades_logged": 10,
   "orphan_open_trades": [],
@@ -7,30 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "F",
-      "lots": 1,
-      "qty": 349.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "TGT",
-      "lots": 1,
-      "qty": 63.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "MU",
-      "lots": 1,
-      "qty": 6.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "CARR",
-      "lots": 1,
-      "qty": 72.0
-    }
-  ]
+  "reconcile_actions": []
 }
