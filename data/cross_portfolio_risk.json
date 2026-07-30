@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-30T21:48:09.449009+00:00",
-  "total_equity": 291231.2,
-  "gross_exposure_pct": 63.953,
+  "timestamp": "2026-07-30T22:18:36.297477+00:00",
+  "total_equity": 291245.44,
+  "gross_exposure_pct": 63.95,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -12,7 +12,7 @@
     },
     "CAT": {
       "market_value": 4923.5,
-      "pct_of_total": 1.691,
+      "pct_of_total": 1.69,
       "books": [
         "portfolio_1"
       ]
@@ -63,7 +63,7 @@
     },
     "IWM": {
       "market_value": 7000.08,
-      "pct_of_total": 2.404,
+      "pct_of_total": 2.403,
       "books": [
         "portfolio_2"
       ]
@@ -133,7 +133,7 @@
     },
     "XLV": {
       "market_value": 7690.14,
-      "pct_of_total": 2.641,
+      "pct_of_total": 2.64,
       "books": [
         "portfolio_2"
       ]
@@ -161,7 +161,7 @@
     },
     "ABBV": {
       "market_value": 6344.75,
-      "pct_of_total": 2.179,
+      "pct_of_total": 2.178,
       "books": [
         "portfolio_3"
       ]
@@ -219,7 +219,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 123853.73,
-      "pct_of_total": 42.528
+      "pct_of_total": 42.526
     },
     "Utilities": {
       "market_value": 6305.79,
@@ -231,7 +231,7 @@
     },
     "Healthcare": {
       "market_value": 6344.75,
-      "pct_of_total": 2.179
+      "pct_of_total": 2.178
     },
     "Tech": {
       "market_value": 7367.62,
