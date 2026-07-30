@@ -2082,5 +2082,62 @@
     ],
     "signal_type": "NEWS_BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-07-30T14:06:31.657904+00:00",
+    "date": "2026-07-30",
+    "symbol": "F",
+    "side": "buy",
+    "qty": 520,
+    "entry_price": 14.84,
+    "intended_price": 14.83,
+    "slippage_pct": 0.0674,
+    "client_order_id": "p3-20260730-F-buy",
+    "stop_loss": 13.63,
+    "take_profit_1": 17.23,
+    "atr": 0.48,
+    "trade_value": 7711.6,
+    "order_id": "390c07b0-d79d-42e4-b3ee-6a0dc7221c2d",
+    "order_status": "filled",
+    "filled_qty": 520.0,
+    "sector": "Consumer",
+    "tranche": "core_swing",
+    "signal_score": 0.53,
+    "reasons": [
+      "MACD bullish crossover",
+      "MACD crossover below zero (structural reversal)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (53)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-07-30T14:06:34.155336+00:00",
+    "date": "2026-07-30",
+    "symbol": "VLO",
+    "side": "buy",
+    "qty": 19,
+    "entry_price": 308.58,
+    "intended_price": 307.955,
+    "slippage_pct": 0.203,
+    "client_order_id": "p3-20260730-VLO-buy",
+    "stop_loss": 281.68,
+    "take_profit_1": 360.5,
+    "atr": 10.51,
+    "trade_value": 5851.14,
+    "order_id": "dd56c177-a5b1-4029-966c-b067d4ff6099",
+    "order_status": "filled",
+    "filled_qty": 19.0,
+    "sector": "Energy",
+    "tranche": "core_swing",
+    "signal_score": 0.45,
+    "reasons": [
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+33.8%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
