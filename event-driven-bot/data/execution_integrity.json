@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-07-30T14:06:35.105631+00:00",
+  "timestamp": "2026-07-30T14:25:24.629194+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
-  "placed": 2,
-  "filled": 2,
+  "placed": 0,
+  "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
@@ -18,12 +18,22 @@
       "benign": true
     },
     {
+      "symbol": "F",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
       "symbol": "GS",
       "reason": "already hold",
       "benign": true
     },
     {
       "symbol": "MPC",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "VLO",
       "reason": "already hold",
       "benign": true
     },
