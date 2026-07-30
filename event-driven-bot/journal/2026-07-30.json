@@ -173,5 +173,180 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-07-30",
+    "timestamp": "2026-07-30T21:45:38.747633+00:00",
+    "audit": {
+      "equity": 97058.65,
+      "cash": 20388.19,
+      "daily_pnl": 44.69,
+      "daily_pnl_pct": 0.046,
+      "total_open_exposure": 76670.46,
+      "exposure_pct": 79.0,
+      "position_count": 12,
+      "trades_today": 2,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 6440.0,
+        "Tech": 7393.97,
+        "Utilities": 6362.17,
+        "Consumer": 12426.94,
+        "Industrials": 13176.23,
+        "Financials": 11927.07,
+        "Energy": 18944.07
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "257.6",
+        "market_value": "6440",
+        "unrealized_pl": "95.25",
+        "pnl_pct": 1.5,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "171.9529",
+        "market_value": "7393.9747",
+        "unrealized_pl": "26.3547",
+        "pnl_pct": 0.36,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "69.914",
+        "market_value": "6362.174",
+        "unrealized_pl": "56.383964",
+        "pnl_pct": 0.89,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "520",
+        "entry": "14.84",
+        "current": "14.89",
+        "market_value": "7742.8",
+        "unrealized_pl": "26",
+        "pnl_pct": 0.34,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "355",
+        "market_value": "6745",
+        "unrealized_pl": "-69.16",
+        "pnl_pct": -1.01,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "1024.06",
+        "market_value": "7168.42",
+        "unrealized_pl": "-272.58",
+        "pnl_pct": -3.66,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "KO",
+        "qty": "53",
+        "entry": "90.15",
+        "current": "88.38",
+        "market_value": "4684.14",
+        "unrealized_pl": "-93.81",
+        "pnl_pct": -1.96,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "16",
+        "entry": "311.57",
+        "current": "314.41",
+        "market_value": "5030.56",
+        "unrealized_pl": "45.44",
+        "pnl_pct": 0.91,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "38",
+        "entry": "206.87",
+        "current": "210.9",
+        "market_value": "8014.2",
+        "unrealized_pl": "153.14",
+        "pnl_pct": 1.95,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "105.43",
+        "market_value": "6431.23",
+        "unrealized_pl": "-10.98",
+        "pnl_pct": -0.17,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "V",
+        "qty": "13",
+        "entry": "367.87",
+        "current": "366.05",
+        "market_value": "4758.65",
+        "unrealized_pl": "-23.66",
+        "pnl_pct": -0.5,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "308.58",
+        "current": "310.4901",
+        "market_value": "5899.3119",
+        "unrealized_pl": "36.2919",
+        "pnl_pct": 0.62,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "F",
+        "side": "buy",
+        "qty": 520,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.53,
+        "reasons": [
+          "MACD bullish crossover",
+          "MACD crossover below zero (structural reversal)",
+          "Above EMA50 & EMA200"
+        ]
+      },
+      {
+        "symbol": "VLO",
+        "side": "buy",
+        "qty": 19,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+33.8%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
