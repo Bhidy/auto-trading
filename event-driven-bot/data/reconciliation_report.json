@@ -1,11 +1,24 @@
 {
-  "timestamp": "2026-07-30T22:47:35.200785+00:00",
-  "positions_held": 12,
-  "open_trades_logged": 12,
+  "timestamp": "2026-07-31T21:30:42.510318+00:00",
+  "positions_held": 10,
+  "open_trades_logged": 10,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "close_orphan",
+      "symbol": "V",
+      "lots": 1,
+      "qty": 13.0
+    },
+    {
+      "action": "close_orphan",
+      "symbol": "KO",
+      "lots": 1,
+      "qty": 53.0
+    }
+  ]
 }
