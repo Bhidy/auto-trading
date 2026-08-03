@@ -808,5 +808,167 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-08-03",
+    "timestamp": "2026-08-03T22:42:41.776295+00:00",
+    "audit": {
+      "equity": 96933.95,
+      "cash": 19528.48,
+      "daily_pnl": -172.89,
+      "daily_pnl_pct": -0.178,
+      "total_open_exposure": 77405.47,
+      "exposure_pct": 79.9,
+      "position_count": 12,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 11293.77,
+        "Tech": 7968.33,
+        "Utilities": 6256.25,
+        "Consumer": 7518.78,
+        "Industrials": 18511.69,
+        "Financials": 7189.42,
+        "Energy": 18667.23
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "245.1",
+        "market_value": "6127.5",
+        "unrealized_pl": "-217.25",
+        "pnl_pct": -3.42,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "185.31",
+        "market_value": "7968.33",
+        "unrealized_pl": "600.71",
+        "pnl_pct": 8.15,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "D",
+        "qty": "91",
+        "entry": "69.294396",
+        "current": "68.75",
+        "market_value": "6256.25",
+        "unrealized_pl": "-49.540036",
+        "pnl_pct": -0.79,
+        "sector": "Utilities"
+      },
+      {
+        "symbol": "F",
+        "qty": "520",
+        "entry": "14.84",
+        "current": "14.4592",
+        "market_value": "7518.784",
+        "unrealized_pl": "-198.016",
+        "pnl_pct": -2.57,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "368.93",
+        "market_value": "7009.67",
+        "unrealized_pl": "195.51",
+        "pnl_pct": 2.87,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "1027.06",
+        "market_value": "7189.42",
+        "unrealized_pl": "-251.58",
+        "pnl_pct": -3.38,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "16",
+        "entry": "311.57",
+        "current": "308.03",
+        "market_value": "4928.48",
+        "unrealized_pl": "-56.64",
+        "pnl_pct": -1.14,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "38",
+        "entry": "206.87",
+        "current": "207.776",
+        "market_value": "7895.488",
+        "unrealized_pl": "34.428",
+        "pnl_pct": 0.44,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "RTX",
+        "qty": "23",
+        "entry": "217.9",
+        "current": "216.65",
+        "market_value": "4982.95",
+        "unrealized_pl": "-28.75",
+        "pnl_pct": -0.57,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "TMO",
+        "qty": "9",
+        "entry": "581.13",
+        "current": "574.03",
+        "market_value": "5166.27",
+        "unrealized_pl": "-63.9",
+        "pnl_pct": -1.22,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "106.87",
+        "market_value": "6519.07",
+        "unrealized_pl": "76.86",
+        "pnl_pct": 1.19,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "308.58",
+        "current": "307.54",
+        "market_value": "5843.26",
+        "unrealized_pl": "-19.76",
+        "pnl_pct": -0.34,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "RTX",
+        "side": "buy",
+        "qty": 23,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($205.03)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+12.5%)"
+        ]
+      }
+    ]
   }
 ]
