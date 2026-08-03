@@ -2186,5 +2186,21 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "symbol": "TMO",
+    "side": "buy",
+    "qty": 9.0,
+    "entry_price": 581.13,
+    "timestamp": "2026-08-03T21:32:09.720037+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]

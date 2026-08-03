@@ -1,11 +1,17 @@
 {
-  "timestamp": "2026-07-31T22:43:51.263148+00:00",
-  "positions_held": 10,
-  "open_trades_logged": 10,
+  "timestamp": "2026-08-03T21:32:09.723603+00:00",
+  "positions_held": 12,
+  "open_trades_logged": 12,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "add_unlogged",
+      "symbol": "TMO",
+      "qty": 9.0
+    }
+  ]
 }
