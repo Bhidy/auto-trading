@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-04T14:06:19.038516+00:00",
+  "timestamp": "2026-08-04T14:24:57.959202+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -19,27 +19,27 @@
     },
     {
       "symbol": "HON",
-      "reason": "gross exposure cap",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
       "symbol": "JPM",
-      "reason": "gross exposure cap",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
       "symbol": "EOG",
-      "reason": "gross exposure cap",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
       "symbol": "XOM",
-      "reason": "gross exposure cap",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
       "symbol": "AAPL",
-      "reason": "gross exposure cap",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
