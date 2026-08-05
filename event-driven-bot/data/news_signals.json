@@ -1,35 +1,20 @@
 {
-  "timestamp": "2026-07-29T14:25:01.447520+00:00",
+  "timestamp": "2026-08-05T14:06:18.706647+00:00",
   "signals": [
     {
-      "symbol": "V",
-      "sector": "Financials",
+      "symbol": "AMD",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Visa, Raises Price Target to $412",
+      "headline": "Wedbush Reiterates Outperform on Advanced Micro Devices, Maintains $600 Price Target",
       "source": "benzinga",
-      "created_at": "2026-07-29T13:53:17Z",
+      "created_at": "2026-08-05T13:36:44Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 358.56,
-      "atr": 8.33
-    },
-    {
-      "symbol": "KO",
-      "sector": "Consumer",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Coca-Cola, Raises Price Target to $96",
-      "source": "benzinga",
-      "created_at": "2026-07-29T13:51:49Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 81.56,
-      "atr": 1.89
+      "price": 539.69,
+      "atr": 36.87
     }
   ]
 }
