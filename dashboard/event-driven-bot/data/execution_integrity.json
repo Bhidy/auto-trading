@@ -1,15 +1,50 @@
 {
-  "timestamp": "2026-08-05T14:06:18.914142+00:00",
+  "timestamp": "2026-08-05T14:24:48.764810+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 1,
-  "approved": 1,
+  "total_signals": 8,
+  "approved": 8,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "AMD",
+      "symbol": "TMO",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "RTX",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "HON",
       "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "JPM",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "EOG",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "XOM",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "AAPL",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "MPC",
+      "reason": "already hold",
       "benign": true
     }
   ],
