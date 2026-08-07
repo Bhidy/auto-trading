@@ -1445,7 +1445,15 @@
       "RSI in sweet spot (65)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-08-07T21:02:25.877960+00:00",
+    "exit_price": 66.24,
+    "exit_reason": "stop_loss",
+    "pnl": -278.14,
+    "realized_pnl": -278.14,
+    "pnl_pct": -4.41
   },
   {
     "symbol": "MU",
