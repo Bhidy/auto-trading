@@ -2202,5 +2202,21 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "symbol": "DDOG",
+    "side": "buy",
+    "qty": 14.0,
+    "entry_price": 231.529286,
+    "timestamp": "2026-08-07T00:55:28.550511+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]
