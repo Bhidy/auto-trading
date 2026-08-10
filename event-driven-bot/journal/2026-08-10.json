@@ -1,0 +1,173 @@
+[
+  {
+    "date": "2026-08-10",
+    "timestamp": "2026-08-10T21:04:13.838216+00:00",
+    "audit": {
+      "equity": 97327.97,
+      "cash": 26533.81,
+      "daily_pnl": 936.71,
+      "daily_pnl_pct": 0.972,
+      "total_open_exposure": 78088.16,
+      "exposure_pct": 80.2,
+      "position_count": 13,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 11587.21,
+        "Tech": 11872.9,
+        "Consumer": 7295.6,
+        "Industrials": 18533.07,
+        "Financials": 9475.67,
+        "Energy": 19323.71
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "247.6",
+        "market_value": "6190",
+        "unrealized_pl": "-154.75",
+        "pnl_pct": -2.44,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "191.3",
+        "market_value": "8225.9",
+        "unrealized_pl": "858.28",
+        "pnl_pct": 11.65,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "DDOG",
+        "qty": "-14",
+        "entry": "231.529286",
+        "current": "260.5",
+        "market_value": "-3647",
+        "unrealized_pl": "-405.589996",
+        "pnl_pct": -12.51,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "F",
+        "qty": "520",
+        "entry": "14.84",
+        "current": "14.03",
+        "market_value": "7295.6",
+        "unrealized_pl": "-421.2",
+        "pnl_pct": -5.46,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "GE",
+        "qty": "19",
+        "entry": "358.64",
+        "current": "366.6204",
+        "market_value": "6965.7876",
+        "unrealized_pl": "151.6276",
+        "pnl_pct": 2.23,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "1032.01",
+        "market_value": "7224.07",
+        "unrealized_pl": "-216.93",
+        "pnl_pct": -2.92,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "562.9",
+        "market_value": "2251.6",
+        "unrealized_pl": "-0.81",
+        "pnl_pct": -0.04,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "16",
+        "entry": "311.57",
+        "current": "320.99",
+        "market_value": "5135.84",
+        "unrealized_pl": "150.72",
+        "pnl_pct": 3.02,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "38",
+        "entry": "206.87",
+        "current": "215.52",
+        "market_value": "8189.76",
+        "unrealized_pl": "328.7",
+        "pnl_pct": 4.18,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "RTX",
+        "qty": "23",
+        "entry": "217.9",
+        "current": "225.0305",
+        "market_value": "5175.7015",
+        "unrealized_pl": "164.0015",
+        "pnl_pct": 3.27,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "TMO",
+        "qty": "9",
+        "entry": "581.13",
+        "current": "599.69",
+        "market_value": "5397.21",
+        "unrealized_pl": "167.04",
+        "pnl_pct": 3.19,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "104.78",
+        "market_value": "6391.58",
+        "unrealized_pl": "-50.63",
+        "pnl_pct": -0.79,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "19",
+        "entry": "308.58",
+        "current": "315.69",
+        "market_value": "5998.11",
+        "unrealized_pl": "135.09",
+        "pnl_pct": 2.3,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "MA",
+        "side": "buy",
+        "qty": 4,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.75,
+        "reasons": [
+          "Breaking upper BB ($569.23)",
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+11.6%)"
+        ]
+      }
+    ]
+  }
+]
