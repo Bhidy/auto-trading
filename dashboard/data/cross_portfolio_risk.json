@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-08-10T21:11:45.624324+00:00",
-  "total_equity": 295916.32,
-  "gross_exposure_pct": 64.977,
+  "timestamp": "2026-08-10T21:25:15.853059+00:00",
+  "total_equity": 295957.11,
+  "gross_exposure_pct": 64.968,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -49,7 +49,7 @@
     },
     "DIA": {
       "market_value": 8610.56,
-      "pct_of_total": 2.91,
+      "pct_of_total": 2.909,
       "books": [
         "portfolio_2"
       ]
@@ -70,7 +70,7 @@
     },
     "KR": {
       "market_value": 3094.03,
-      "pct_of_total": 1.046,
+      "pct_of_total": 1.045,
       "books": [
         "portfolio_2"
       ]
@@ -112,21 +112,21 @@
     },
     "XLE": {
       "market_value": 7207.19,
-      "pct_of_total": 2.436,
+      "pct_of_total": 2.435,
       "books": [
         "portfolio_2"
       ]
     },
     "XLF": {
       "market_value": 7840.4,
-      "pct_of_total": 2.65,
+      "pct_of_total": 2.649,
       "books": [
         "portfolio_2"
       ]
     },
     "XLI": {
       "market_value": 7388.0,
-      "pct_of_total": 2.497,
+      "pct_of_total": 2.496,
       "books": [
         "portfolio_2"
       ]
@@ -154,7 +154,7 @@
     },
     "GE": {
       "market_value": 6814.16,
-      "pct_of_total": 2.303,
+      "pct_of_total": 2.302,
       "books": [
         "portfolio_3"
       ]
@@ -168,14 +168,14 @@
     },
     "ANET": {
       "market_value": 7367.62,
-      "pct_of_total": 2.49,
+      "pct_of_total": 2.489,
       "books": [
         "portfolio_3"
       ]
     },
     "GS": {
       "market_value": 7441.0,
-      "pct_of_total": 2.515,
+      "pct_of_total": 2.514,
       "books": [
         "portfolio_3"
       ]
@@ -189,7 +189,7 @@
     },
     "F": {
       "market_value": 7716.8,
-      "pct_of_total": 2.608,
+      "pct_of_total": 2.607,
       "books": [
         "portfolio_3"
       ]
@@ -203,7 +203,7 @@
     },
     "RTX": {
       "market_value": 5011.7,
-      "pct_of_total": 1.694,
+      "pct_of_total": 1.693,
       "books": [
         "portfolio_3"
       ]
@@ -233,7 +233,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 138481.21,
-      "pct_of_total": 46.797
+      "pct_of_total": 46.791
     },
     "Industrials": {
       "market_value": 11825.86,
@@ -245,19 +245,19 @@
     },
     "Tech": {
       "market_value": 7367.62,
-      "pct_of_total": 2.49
+      "pct_of_total": 2.489
     },
     "Financials": {
       "market_value": 9693.41,
-      "pct_of_total": 3.276
+      "pct_of_total": 3.275
     },
     "Energy": {
       "market_value": 10848.14,
-      "pct_of_total": 3.666
+      "pct_of_total": 3.665
     },
     "Consumer": {
       "market_value": 7716.8,
-      "pct_of_total": 2.608
+      "pct_of_total": 2.607
     }
   },
   "single_name_cap_pct": 10.0,
@@ -265,7 +265,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.716
+    "mega_cap_tech_ai": 6.715
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
