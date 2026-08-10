@@ -1,0 +1,39 @@
+[
+  {
+    "date": "2026-08-10",
+    "timestamp": "2026-08-10T14:25:17.833470",
+    "account_snapshot": {
+      "equity": "104071.83",
+      "cash": "20310.65",
+      "portfolio_value": "104071.83"
+    },
+    "trades_executed": [
+      {
+        "symbol": "KR",
+        "side": "buy",
+        "qty": 55,
+        "limit_price": 56.58,
+        "entry_price": 56.5,
+        "intended_price": 56.58,
+        "slippage_pct": -0.1414,
+        "client_order_id": "p2-20260810-KR-buy",
+        "filled_qty": 55.0,
+        "estimated_value": 3111.9,
+        "order_id": "7f4c0aae-17e9-476b-a66c-784424561431",
+        "order_status": "filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "07/24/2026",
+        "disclosure_date": "8/6/2026",
+        "observed_date": "2026-08-10T14:25:14.673967",
+        "disclosure_lag_days": 17,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of Kroger Company",
+        "timestamp": "2026-08-10T14:25:14.674185",
+        "date": "2026-08-10"
+      }
+    ],
+    "trades_count": 1
+  }
+]

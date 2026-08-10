@@ -2226,5 +2226,34 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "timestamp": "2026-08-10T14:07:02.848316+00:00",
+    "date": "2026-08-10",
+    "symbol": "MA",
+    "side": "buy",
+    "qty": 4,
+    "entry_price": 563.1025,
+    "intended_price": 562.88,
+    "slippage_pct": 0.0395,
+    "client_order_id": "p3-20260810-MA-buy",
+    "stop_loss": 531.3,
+    "take_profit_1": 626.03,
+    "atr": 12.63,
+    "trade_value": 2251.52,
+    "order_id": "739c7c16-283e-4b92-af2c-27fba80a8910",
+    "order_status": "filled",
+    "filled_qty": 4.0,
+    "sector": "Financials",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($569.23)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+11.6%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
