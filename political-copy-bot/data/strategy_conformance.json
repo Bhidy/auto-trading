@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-10T14:44:48.784771+00:00",
+  "timestamp": "2026-08-11T14:24:27.815080+00:00",
   "portfolio_id": "portfolio_2",
   "conformant": true,
   "checks": [
@@ -16,12 +16,12 @@
     {
       "name": "disclosure_dates_parseable",
       "ok": true,
-      "detail": "0/2 unparseable"
+      "detail": "0/0 unparseable"
     },
     {
       "name": "disclosure_feed_reachable",
       "ok": true,
-      "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (2 new trades)"
+      "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
     }
   ],
   "violations": []
