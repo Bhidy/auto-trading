@@ -1,156 +1,165 @@
 {
-  "timestamp": "2026-08-11T19:33:32.895361",
+  "timestamp": "2026-08-12T14:24:31.268293",
   "account": {
-    "equity": "104209.99",
-    "cash": "20310.64",
-    "buying_power": "316160.73",
-    "portfolio_value": "104209.99",
-    "daily_pnl_pct": 0.04
+    "equity": "104280.29",
+    "cash": "17619.83",
+    "buying_power": "313128.62",
+    "portfolio_value": "104280.29",
+    "daily_pnl_pct": 0.09
   },
   "positions": [
     {
       "symbol": "DIA",
       "qty": "16",
       "avg_entry": "515.694375",
-      "market_value": "8601.52",
-      "unrealized_pl": "350.41",
-      "unrealized_plpc": "0.04247",
+      "market_value": "8610.56",
+      "unrealized_pl": "359.45",
+      "unrealized_plpc": "0.04356",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "HD",
       "qty": "4",
       "avg_entry": "317.0925",
-      "market_value": "1419.8",
-      "unrealized_pl": "151.43",
-      "unrealized_plpc": "0.11939",
+      "market_value": "1384.44",
+      "unrealized_pl": "116.07",
+      "unrealized_plpc": "0.09151",
       "classification": "politician_alpha"
     },
     {
       "symbol": "IWM",
       "qty": "24",
       "avg_entry": "291.19",
-      "market_value": "7227.84",
-      "unrealized_pl": "239.28",
-      "unrealized_plpc": "0.03424",
+      "market_value": "7244.1576",
+      "unrealized_pl": "255.5976",
+      "unrealized_plpc": "0.03657",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "KR",
       "qty": "55",
       "avg_entry": "56.5",
-      "market_value": "3083.575",
-      "unrealized_pl": "-23.925",
-      "unrealized_plpc": "-0.0077",
+      "market_value": "3080",
+      "unrealized_pl": "-27.5",
+      "unrealized_plpc": "-0.00885",
       "classification": "politician_alpha"
     },
     {
       "symbol": "MEDP",
       "qty": "1",
       "avg_entry": "448.17",
-      "market_value": "605.83",
-      "unrealized_pl": "157.66",
-      "unrealized_plpc": "0.35179",
+      "market_value": "600.17",
+      "unrealized_pl": "152",
+      "unrealized_plpc": "0.33916",
+      "classification": "politician_alpha"
+    },
+    {
+      "symbol": "PANW",
+      "qty": "7",
+      "avg_entry": "384.401429",
+      "market_value": "2687.335",
+      "unrealized_pl": "-3.475003",
+      "unrealized_plpc": "-0.00129",
       "classification": "politician_alpha"
     },
     {
       "symbol": "PG",
       "qty": "10",
       "avg_entry": "147.36",
-      "market_value": "1450.7",
-      "unrealized_pl": "-22.9",
-      "unrealized_plpc": "-0.01554",
+      "market_value": "1443.55",
+      "unrealized_pl": "-30.05",
+      "unrealized_plpc": "-0.02039",
       "classification": "politician_alpha"
     },
     {
       "symbol": "PH",
       "qty": "1",
       "avg_entry": "852.09",
-      "market_value": "1064.535",
-      "unrealized_pl": "212.445",
-      "unrealized_plpc": "0.24932",
+      "market_value": "1067.1",
+      "unrealized_pl": "215.01",
+      "unrealized_plpc": "0.25233",
       "classification": "politician_alpha"
     },
     {
       "symbol": "QQQ",
       "qty": "11",
       "avg_entry": "738.419091",
-      "market_value": "7901.08",
-      "unrealized_pl": "-221.530001",
-      "unrealized_plpc": "-0.02727",
+      "market_value": "7976.1",
+      "unrealized_pl": "-146.510001",
+      "unrealized_plpc": "-0.01804",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "SPY",
       "qty": "11",
       "avg_entry": "757.252727",
-      "market_value": "8477.5889",
-      "unrealized_pl": "147.808903",
-      "unrealized_plpc": "0.01774",
+      "market_value": "8503.11",
+      "unrealized_pl": "173.330003",
+      "unrealized_plpc": "0.02081",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "XLE",
       "qty": "120",
       "avg_entry": "58.03",
-      "market_value": "7305",
-      "unrealized_pl": "341.4",
-      "unrealized_plpc": "0.04903",
+      "market_value": "7300.2",
+      "unrealized_pl": "336.6",
+      "unrealized_plpc": "0.04834",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "XLF",
       "qty": "136",
       "avg_entry": "51.57",
-      "market_value": "7871",
-      "unrealized_pl": "857.48",
-      "unrealized_plpc": "0.12226",
+      "market_value": "7873.72",
+      "unrealized_pl": "860.2",
+      "unrealized_plpc": "0.12265",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "XLI",
       "qty": "40",
       "avg_entry": "174.03",
-      "market_value": "7429.8",
-      "unrealized_pl": "468.6",
-      "unrealized_plpc": "0.06732",
+      "market_value": "7437.2",
+      "unrealized_pl": "476",
+      "unrealized_plpc": "0.06838",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "XLK",
       "qty": "35",
       "avg_entry": "197.174",
-      "market_value": "6510.35",
-      "unrealized_pl": "-390.74",
-      "unrealized_plpc": "-0.05662",
+      "market_value": "6615",
+      "unrealized_pl": "-286.09",
+      "unrealized_plpc": "-0.04146",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "XLV",
       "qty": "47",
       "avg_entry": "146.31",
-      "market_value": "7903.285",
-      "unrealized_pl": "1026.715",
-      "unrealized_plpc": "0.14931",
+      "market_value": "7868.74",
+      "unrealized_pl": "992.17",
+      "unrealized_plpc": "0.14428",
       "classification": "beta_sleeve"
     },
     {
       "symbol": "XLY",
       "qty": "59",
       "avg_entry": "117.62",
-      "market_value": "7047.55",
-      "unrealized_pl": "107.97",
-      "unrealized_plpc": "0.01556",
+      "market_value": "6969.08",
+      "unrealized_pl": "29.5",
+      "unrealized_plpc": "0.00425",
       "classification": "beta_sleeve"
     }
   ],
   "capital_classification": {
-    "sleeve_beta_pct": 73.19,
-    "politician_alpha_pct": 7.32,
-    "cash_pct": 19.49,
-    "sleeve_beta_value": 76275.01,
-    "politician_alpha_value": 7624.44
+    "sleeve_beta_pct": 73.26,
+    "politician_alpha_pct": 9.84,
+    "cash_pct": 16.9,
+    "sleeve_beta_value": 76397.87,
+    "politician_alpha_value": 10262.6
   },
   "open_orders": 0,
-  "total_positions": 15
+  "total_positions": 16
 }

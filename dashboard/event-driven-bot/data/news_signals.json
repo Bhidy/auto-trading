@@ -1,20 +1,35 @@
 {
-  "timestamp": "2026-08-05T14:06:18.706647+00:00",
+  "timestamp": "2026-08-12T14:06:20.100644+00:00",
   "signals": [
     {
-      "symbol": "AMD",
-      "sector": "Tech",
+      "symbol": "TGT",
+      "sector": "Consumer",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Wedbush Reiterates Outperform on Advanced Micro Devices, Maintains $600 Price Target",
+      "headline": "RBC Capital Maintains Outperform on Target, Raises Price Target to $166",
       "source": "benzinga",
-      "created_at": "2026-08-05T13:36:44Z",
+      "created_at": "2026-08-12T13:59:50Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 539.69,
-      "atr": 36.87
+      "price": 144.51,
+      "atr": 4.16
+    },
+    {
+      "symbol": "PANW",
+      "sector": "Tech",
+      "signal": "NEWS_BUY",
+      "score": 0.3,
+      "headline": "Citizens Maintains Market Outperform on Palo Alto Networks, Raises Price Target to $415",
+      "source": "benzinga",
+      "created_at": "2026-08-12T13:40:47Z",
+      "reasons": [
+        "Positive: 'outperform'"
+      ],
+      "tranche": "event_driven",
+      "price": 325.68,
+      "atr": 15.33
     }
   ]
 }

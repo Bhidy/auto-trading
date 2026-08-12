@@ -810,5 +810,30 @@
     "reason": "Copying David Taylor BUY of Kroger Company",
     "timestamp": "2026-08-10T14:25:14.674185",
     "date": "2026-08-10"
+  },
+  {
+    "symbol": "PANW",
+    "side": "buy",
+    "qty": 7,
+    "limit_price": 400.6,
+    "entry_price": 384.4014,
+    "intended_price": 400.6,
+    "slippage_pct": -4.0436,
+    "client_order_id": "p2-20260812-PANW-buy",
+    "filled_qty": 7.0,
+    "estimated_value": 2804.2,
+    "order_id": "2d09870c-ead7-4904-a007-ce19a20a0d75",
+    "order_status": "filled",
+    "politician": "Josh Gottheimer",
+    "politician_trade_size": "1K\u201315K",
+    "source": "backup",
+    "transaction_date": "07/16/2026",
+    "disclosure_date": "8/10/2026",
+    "observed_date": "2026-08-12T14:24:29.089328",
+    "disclosure_lag_days": 27,
+    "feed_source": "house_fd",
+    "reason": "Copying Josh Gottheimer BUY of Palo Alto Networks, Inc",
+    "timestamp": "2026-08-12T14:24:29.089524",
+    "date": "2026-08-12"
   }
 ]
