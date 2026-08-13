@@ -1,19 +1,49 @@
 {
-  "timestamp": "2026-08-12T14:25:12.670411+00:00",
+  "timestamp": "2026-08-13T14:06:17.030626+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 2,
-  "approved": 2,
+  "total_signals": 8,
+  "approved": 8,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "TGT",
+      "symbol": "MA",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "KO",
       "reason": "gross exposure cap",
       "benign": true
     },
     {
-      "symbol": "PANW",
+      "symbol": "MSFT",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "CSCO",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "BMY",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "FCX",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "F",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "AAPL",
       "reason": "gross exposure cap",
       "benign": true
     }
