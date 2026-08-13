@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-13T21:05:45.346802+00:00",
+  "timestamp": "2026-08-13T21:25:28.346341+00:00",
   "positions_held": 12,
   "open_trades_logged": 12,
   "orphan_open_trades": [],
@@ -7,12 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "MPC",
-      "lots": 1,
-      "qty": 16.0
-    }
-  ]
+  "reconcile_actions": []
 }
