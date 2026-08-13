@@ -2021,7 +2021,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-08-13T21:05:45.343061+00:00",
+    "exit_price": 355.19,
+    "exit_reason": "take_profit",
+    "pnl": 697.76,
+    "realized_pnl": 697.76,
+    "pnl_pct": 14.0
   },
   {
     "symbol": "UPS",
