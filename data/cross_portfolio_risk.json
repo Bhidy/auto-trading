@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-08-14T21:01:45.447386+00:00",
-  "total_equity": 300068.05,
-  "gross_exposure_pct": 65.217,
+  "timestamp": "2026-08-14T21:40:23.650774+00:00",
+  "total_equity": 300085.46,
+  "gross_exposure_pct": 65.213,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -33,7 +33,7 @@
     },
     "PSX": {
       "market_value": 13225.66,
-      "pct_of_total": 4.408,
+      "pct_of_total": 4.407,
       "books": [
         "portfolio_1",
         "portfolio_3"
@@ -132,7 +132,7 @@
     },
     "XLI": {
       "market_value": 7458.4,
-      "pct_of_total": 2.486,
+      "pct_of_total": 2.485,
       "books": [
         "portfolio_2"
       ]
@@ -246,7 +246,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 141708.78,
-      "pct_of_total": 47.226
+      "pct_of_total": 47.223
     },
     "Industrials": {
       "market_value": 11825.86,
