@@ -1,0 +1,365 @@
+{
+  "week": "2026-W32",
+  "timestamp": "2026-08-14T20:54:37.649383+00:00",
+  "account": {
+    "equity": 95862.12,
+    "cash": 60625.83,
+    "portfolio_value": 95862.12
+  },
+  "performance": {
+    "overall": {
+      "total_trades": 85,
+      "wins": 30,
+      "losses": 55,
+      "win_rate": 0.353,
+      "avg_pnl_pct": -1.54,
+      "avg_win_pct": 1.72,
+      "avg_loss_pct": -3.32,
+      "win_loss_ratio": 0.52,
+      "max_win_pct": 7.77,
+      "max_loss_pct": -11.84,
+      "total_pnl": -7025.87,
+      "profit_factor": 0.3,
+      "per_trade_sharpe": -0.43,
+      "sharpe_estimate": -0.43
+    },
+    "last_7d": {
+      "total_trades": 0,
+      "win_rate": null,
+      "avg_pnl_pct": null,
+      "avg_win": null,
+      "avg_loss": null,
+      "win_loss_ratio": null,
+      "max_win_pct": null,
+      "max_loss_pct": null,
+      "total_pnl": 0,
+      "profit_factor": null,
+      "sharpe_estimate": null
+    },
+    "last_30d": {
+      "total_trades": 0,
+      "win_rate": null,
+      "avg_pnl_pct": null,
+      "avg_win": null,
+      "avg_loss": null,
+      "win_loss_ratio": null,
+      "max_win_pct": null,
+      "max_loss_pct": null,
+      "total_pnl": 0,
+      "profit_factor": null,
+      "sharpe_estimate": null
+    },
+    "by_bucket": {
+      "core_equity": {
+        "trades": 30,
+        "win_rate": 0.467,
+        "total_pnl": -492.47,
+        "avg_pnl_pct": -0.16
+      },
+      "sector_momentum": {
+        "trades": 21,
+        "win_rate": 0.429,
+        "total_pnl": -541.44,
+        "avg_pnl_pct": -0.77
+      },
+      "defensive": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -46.39,
+        "avg_pnl_pct": -0.23
+      },
+      "aggressive_growth": {
+        "trades": 23,
+        "win_rate": 0.261,
+        "total_pnl": -3993.87,
+        "avg_pnl_pct": -2.84
+      }
+    },
+    "by_symbol": {
+      "XLK": {
+        "trades": 11,
+        "win_rate": 0.455,
+        "total_pnl": 15.66,
+        "avg_pnl_pct": -0.54
+      },
+      "AMD": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -371.02,
+        "avg_pnl_pct": -7.33
+      },
+      "GS": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -16.67,
+        "avg_pnl_pct": -0.32
+      },
+      "SHY": {
+        "trades": 2,
+        "win_rate": 0.0,
+        "total_pnl": -24.49,
+        "avg_pnl_pct": -0.18
+      },
+      "AAPL": {
+        "trades": 3,
+        "win_rate": 0.667,
+        "total_pnl": -361.96,
+        "avg_pnl_pct": -1.48
+      },
+      "AMZN": {
+        "trades": 7,
+        "win_rate": 0.143,
+        "total_pnl": -1074.2,
+        "avg_pnl_pct": -2.6
+      },
+      "TSLA": {
+        "trades": 4,
+        "win_rate": 0.25,
+        "total_pnl": -689.66,
+        "avg_pnl_pct": -3.59
+      },
+      "MRK": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -147.15,
+        "avg_pnl_pct": -2.76
+      },
+      "XLE": {
+        "trades": 4,
+        "win_rate": 0.25,
+        "total_pnl": -674.24,
+        "avg_pnl_pct": -4.03
+      },
+      "XLY": {
+        "trades": 5,
+        "win_rate": 0.2,
+        "total_pnl": -297.66,
+        "avg_pnl_pct": -1.31
+      },
+      "MSFT": {
+        "trades": 1,
+        "win_rate": 1.0,
+        "total_pnl": 48.94,
+        "avg_pnl_pct": 0.79
+      },
+      "BIL": {
+        "trades": 4,
+        "win_rate": 0.0,
+        "total_pnl": -62.59,
+        "avg_pnl_pct": -0.16
+      },
+      "DIA": {
+        "trades": 2,
+        "win_rate": 1.0,
+        "total_pnl": 254.47,
+        "avg_pnl_pct": 1.41
+      },
+      "GOOGL": {
+        "trades": 5,
+        "win_rate": 0.0,
+        "total_pnl": -1163.26,
+        "avg_pnl_pct": -3.83
+      },
+      "XLI": {
+        "trades": 4,
+        "win_rate": 0.75,
+        "total_pnl": 574.99,
+        "avg_pnl_pct": 2.02
+      },
+      "SPY": {
+        "trades": 7,
+        "win_rate": 0.286,
+        "total_pnl": -456.78,
+        "avg_pnl_pct": -1.44
+      },
+      "MU": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -370.73,
+        "avg_pnl_pct": -7.44
+      },
+      "INTC": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -638.73,
+        "avg_pnl_pct": -11.84
+      },
+      "IWM": {
+        "trades": 4,
+        "win_rate": 1.0,
+        "total_pnl": 458.41,
+        "avg_pnl_pct": 3.5
+      },
+      "LRCX": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -566.24,
+        "avg_pnl_pct": -10.45
+      },
+      "NVDA": {
+        "trades": 3,
+        "win_rate": 0.333,
+        "total_pnl": -753.73,
+        "avg_pnl_pct": -3.34
+      },
+      "TLT": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -202.04,
+        "avg_pnl_pct": -1.89
+      },
+      "GLD": {
+        "trades": 3,
+        "win_rate": 0.667,
+        "total_pnl": -25.34,
+        "avg_pnl_pct": 0.09
+      },
+      "MS": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -1.35,
+        "avg_pnl_pct": -0.03
+      },
+      "QQQ": {
+        "trades": 8,
+        "win_rate": 0.5,
+        "total_pnl": -480.5,
+        "avg_pnl_pct": -1.13
+      }
+    }
+  },
+  "market_regime": "STRONG_BULL",
+  "rebalancing": {
+    "current_allocation": {
+      "core_equity": 0.0,
+      "aggressive_growth": 5.43,
+      "sector_momentum": 0.0,
+      "crypto": 0.0,
+      "defensive": 0.0,
+      "cash": 94.57
+    },
+    "adjusted_targets": {
+      "core_equity": 23.1,
+      "aggressive_growth": 28.8,
+      "sector_momentum": 17.3,
+      "crypto": 9.6,
+      "penny_lab": 4.8,
+      "defensive_cash": 11.5,
+      "options_testing": 4.8
+    },
+    "regime": "STRONG_BULL",
+    "rebalance_actions": [
+      {
+        "bucket": "core_equity",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 23.1,
+        "drift_pct": 23.1,
+        "dollar_amount": 22122.03
+      },
+      {
+        "bucket": "aggressive_growth",
+        "action": "INCREASE",
+        "current_pct": 5.4,
+        "target_pct": 28.8,
+        "drift_pct": 23.4,
+        "dollar_amount": 22447.22
+      },
+      {
+        "bucket": "sector_momentum",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 17.3,
+        "drift_pct": 17.3,
+        "dollar_amount": 16591.52
+      },
+      {
+        "bucket": "crypto",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 9.6,
+        "drift_pct": 9.6,
+        "dollar_amount": 9217.51
+      },
+      {
+        "bucket": "penny_lab",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 4.8,
+        "drift_pct": 4.8,
+        "dollar_amount": 4608.76
+      },
+      {
+        "bucket": "defensive_cash",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 11.5,
+        "drift_pct": 11.5,
+        "dollar_amount": 11061.01
+      },
+      {
+        "bucket": "options_testing",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 4.8,
+        "drift_pct": 4.8,
+        "dollar_amount": 4608.76
+      }
+    ],
+    "hrp_advisory": {
+      "enabled": false,
+      "weights": null,
+      "note": "HRP tilts OFF (set HRP_TILTS_ENABLED=1) \u2014 no effect on allocation."
+    }
+  },
+  "positions": [
+    {
+      "symbol": "C",
+      "qty": "38",
+      "market_value": "5285.42",
+      "unrealized_pl": "-139.84",
+      "unrealized_plpc": "-0.02578",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "CAT",
+      "qty": "5",
+      "market_value": "4285.0975",
+      "unrealized_pl": "-638.4025",
+      "unrealized_plpc": "-0.12966",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "GOOGL",
+      "qty": "15",
+      "market_value": "5203.8",
+      "unrealized_pl": "-168.45",
+      "unrealized_plpc": "-0.03136",
+      "bucket": "aggressive_growth"
+    },
+    {
+      "symbol": "MPC",
+      "qty": "20",
+      "market_value": "7117.4",
+      "unrealized_pl": "1685.46",
+      "unrealized_plpc": "0.31029",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "PSX",
+      "qty": "30",
+      "market_value": "6995.1",
+      "unrealized_pl": "1630.5",
+      "unrealized_plpc": "0.30394",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "SLB",
+      "qty": "118",
+      "market_value": "6349.4738",
+      "unrealized_pl": "953.833766",
+      "unrealized_plpc": "0.17678",
+      "bucket": "unknown"
+    }
+  ]
+}
