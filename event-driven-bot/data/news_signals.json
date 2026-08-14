@@ -1,29 +1,14 @@
 {
-  "timestamp": "2026-08-12T14:25:11.483334+00:00",
+  "timestamp": "2026-08-14T14:24:48.919776+00:00",
   "signals": [
-    {
-      "symbol": "TGT",
-      "sector": "Consumer",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Target, Raises Price Target to $166",
-      "source": "benzinga",
-      "created_at": "2026-08-12T13:59:50Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 144.51,
-      "atr": 4.16
-    },
     {
       "symbol": "PANW",
       "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Citizens Maintains Market Outperform on Palo Alto Networks, Raises Price Target to $415",
+      "headline": "RBC Capital Maintains Outperform on Palo Alto Networks, Raises Price Target to $434",
       "source": "benzinga",
-      "created_at": "2026-08-12T13:40:47Z",
+      "created_at": "2026-08-14T14:08:09Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
