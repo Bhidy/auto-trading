@@ -2291,5 +2291,34 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-08-17T14:14:00.331789+00:00",
+    "date": "2026-08-17",
+    "symbol": "SCHW",
+    "side": "buy",
+    "qty": 29,
+    "entry_price": 111.4297,
+    "intended_price": 111.41,
+    "slippage_pct": 0.0176,
+    "client_order_id": "p3-20260817-SCHW-buy",
+    "stop_loss": 105.83,
+    "take_profit_1": 122.56,
+    "atr": 2.23,
+    "trade_value": 3230.89,
+    "order_id": "dbff940f-35bc-41b9-8d86-bc8572253ffd",
+    "order_status": "filled",
+    "filled_qty": 29.0,
+    "sector": "Financials",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($108.13)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+15.2%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]

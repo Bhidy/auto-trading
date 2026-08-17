@@ -1,182 +1,130 @@
 {
-  "timestamp": "2026-08-14T14:24:47.766813+00:00",
+  "timestamp": "2026-08-17T14:13:55.866867+00:00",
   "total_signals": 16,
   "signals": [
     {
-      "symbol": "MA",
+      "symbol": "AMGN",
+      "sector": "Healthcare",
+      "signal": "BUY",
+      "score": 0.75,
+      "price": 404.85,
+      "atr": 11.97,
+      "rs_vs_spy": 17.97,
+      "rsi": 69.8,
+      "rvol": 1.28,
+      "reasons": [
+        "Breaking upper BB ($405.87)",
+        "MACD bullish crossover",
+        "Strong RS vs SPY (+18.0%)",
+        "Above EMA50 & EMA200"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "SCHW",
       "sector": "Financials",
       "signal": "BUY",
       "score": 0.75,
-      "price": 577.35,
-      "atr": 12.63,
-      "rs_vs_spy": 11.59,
-      "rsi": 72.3,
-      "rvol": 1.12,
+      "price": 107.66,
+      "atr": 2.23,
+      "rs_vs_spy": 15.24,
+      "rsi": 69.5,
+      "rvol": 0.96,
       "reasons": [
-        "Breaking upper BB ($569.23)",
+        "Breaking upper BB ($108.13)",
         "MACD bullish crossover",
-        "Strong RS vs SPY (+11.6%)",
+        "Strong RS vs SPY (+15.2%)",
         "Above EMA50 & EMA200"
       ],
       "tranche": "core_swing"
     },
     {
-      "symbol": "KO",
-      "sector": "Consumer",
-      "signal": "BUY",
-      "score": 0.68,
-      "price": 88.49,
-      "atr": 2.04,
-      "rs_vs_spy": 9.15,
-      "rsi": 65.9,
-      "rvol": 1.21,
-      "reasons": [
-        "Breaking upper BB ($88.28)",
-        "MACD bullish crossover",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "MSFT",
-      "sector": "Tech",
-      "signal": "BUY",
-      "score": 0.68,
-      "price": 451.1,
-      "atr": 15.9,
-      "rs_vs_spy": 7.42,
-      "rsi": 71.8,
-      "rvol": 1.39,
-      "reasons": [
-        "Breaking upper BB ($422.16)",
-        "MACD bullish crossover",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "CSCO",
-      "sector": "Tech",
-      "signal": "BUY",
-      "score": 0.6,
-      "price": 113.56,
-      "atr": 3.67,
-      "rs_vs_spy": 20.9,
-      "rsi": 48.1,
-      "rvol": 1.06,
-      "reasons": [
-        "MACD bullish crossover",
-        "MACD crossover below zero (structural reversal)",
-        "Strong RS vs SPY (+20.9%)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (48)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "BMY",
-      "sector": "Healthcare",
-      "signal": "BUY",
-      "score": 0.6,
-      "price": 64.86,
-      "atr": 1.64,
-      "rs_vs_spy": 3.84,
-      "rsi": 69.9,
-      "rvol": 1.23,
-      "reasons": [
-        "Breaking upper BB ($64.72)",
-        "MACD bullish crossover",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "FCX",
-      "sector": "Materials",
-      "signal": "BUY",
-      "score": 0.53,
-      "price": 63.44,
-      "atr": 2.9,
-      "rs_vs_spy": 6.59,
-      "rsi": 53.1,
-      "rvol": 0.94,
-      "reasons": [
-        "MACD bullish crossover",
-        "MACD crossover below zero (structural reversal)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (53)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "F",
-      "sector": "Consumer",
-      "signal": "BUY",
-      "score": 0.5,
-      "price": 14.86,
-      "atr": 0.53,
-      "rs_vs_spy": 19.81,
-      "rsi": 58.3,
-      "rvol": 1.35,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+19.8%)",
-        "Above EMA50 & EMA200",
-        "RSI in sweet spot (58)"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "AAPL",
+      "symbol": "PANW",
       "sector": "Tech",
       "signal": "BUY",
       "score": 0.5,
-      "price": 333.43,
-      "atr": 8.06,
-      "rs_vs_spy": 19.67,
-      "rsi": 61.7,
-      "rvol": 1.1,
+      "price": 359.49,
+      "atr": 15.57,
+      "rs_vs_spy": 77.86,
+      "rsi": 62.8,
+      "rvol": 1.04,
       "reasons": [
         "MACD bullish crossover",
-        "Strong RS vs SPY (+19.7%)",
+        "Strong RS vs SPY (+77.9%)",
         "Above EMA50 & EMA200",
-        "RSI in sweet spot (62)"
+        "RSI in sweet spot (63)"
       ],
       "tranche": "core_swing"
     },
     {
-      "symbol": "MMM",
+      "symbol": "FTNT",
+      "sector": "Tech",
+      "signal": "BUY",
+      "score": 0.5,
+      "price": 160.11,
+      "atr": 7.11,
+      "rs_vs_spy": 43.24,
+      "rsi": 54.4,
+      "rvol": 1.01,
+      "reasons": [
+        "MACD bullish crossover",
+        "Strong RS vs SPY (+43.2%)",
+        "Above EMA50 & EMA200",
+        "RSI in sweet spot (54)"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "ANET",
+      "sector": "Tech",
+      "signal": "BUY",
+      "score": 0.5,
+      "price": 192.32,
+      "atr": 11.14,
+      "rs_vs_spy": 30.62,
+      "rsi": 61.4,
+      "rvol": 1.47,
+      "reasons": [
+        "MACD bullish crossover",
+        "Strong RS vs SPY (+30.6%)",
+        "Above EMA50 & EMA200",
+        "RSI in sweet spot (61)"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "GE",
       "sector": "Industrials",
       "signal": "BUY",
       "score": 0.5,
-      "price": 176.07,
-      "atr": 4.96,
-      "rs_vs_spy": 16.96,
-      "rsi": 64.6,
-      "rvol": 1.17,
+      "price": 374.55,
+      "atr": 10.53,
+      "rs_vs_spy": 18.71,
+      "rsi": 60.8,
+      "rvol": 0.89,
       "reasons": [
         "MACD bullish crossover",
-        "Strong RS vs SPY (+17.0%)",
+        "Strong RS vs SPY (+18.7%)",
         "Above EMA50 & EMA200",
-        "RSI in sweet spot (65)"
+        "RSI in sweet spot (61)"
       ],
       "tranche": "core_swing"
     },
     {
-      "symbol": "MRK",
-      "sector": "Healthcare",
+      "symbol": "TGT",
+      "sector": "Consumer",
       "signal": "BUY",
       "score": 0.5,
-      "price": 129.79,
-      "atr": 3.31,
-      "rs_vs_spy": 15.67,
-      "rsi": 57.8,
-      "rvol": 0.9,
+      "price": 147.08,
+      "atr": 4.0,
+      "rs_vs_spy": 11.79,
+      "rsi": 64.1,
+      "rvol": 1.03,
       "reasons": [
         "MACD bullish crossover",
-        "Strong RS vs SPY (+15.7%)",
+        "Strong RS vs SPY (+11.8%)",
         "Above EMA50 & EMA200",
-        "RSI in sweet spot (58)"
+        "RSI in sweet spot (64)"
       ],
       "tranche": "core_swing"
     },
@@ -185,14 +133,31 @@
       "sector": "Industrials",
       "signal": "BUY",
       "score": 0.45,
-      "price": 214.38,
-      "atr": 5.68,
-      "rs_vs_spy": 18.55,
-      "rsi": 69.7,
-      "rvol": 1.35,
+      "price": 223.25,
+      "atr": 5.28,
+      "rs_vs_spy": 21.23,
+      "rsi": 76.4,
+      "rvol": 0.91,
       "reasons": [
         "MACD bullish crossover",
-        "Strong RS vs SPY (+18.6%)",
+        "Strong RS vs SPY (+21.2%)",
+        "Above EMA50 & EMA200"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "MMM",
+      "sector": "Industrials",
+      "signal": "BUY",
+      "score": 0.45,
+      "price": 180.71,
+      "atr": 4.49,
+      "rs_vs_spy": 20.66,
+      "rsi": 67.5,
+      "rvol": 0.71,
+      "reasons": [
+        "MACD bullish crossover",
+        "Strong RS vs SPY (+20.7%)",
         "Above EMA50 & EMA200"
       ],
       "tranche": "core_swing"
@@ -202,11 +167,11 @@
       "sector": "Healthcare",
       "signal": "BUY",
       "score": 0.45,
-      "price": 576.77,
-      "atr": 17.76,
-      "rs_vs_spy": 17.22,
-      "rsi": 70.3,
-      "rvol": 1.13,
+      "price": 580.02,
+      "atr": 16.55,
+      "rs_vs_spy": 17.19,
+      "rsi": 67.6,
+      "rvol": 0.79,
       "reasons": [
         "MACD bullish crossover",
         "Strong RS vs SPY (+17.2%)",
@@ -215,49 +180,15 @@
       "tranche": "core_swing"
     },
     {
-      "symbol": "PSX",
-      "sector": "Energy",
-      "signal": "BUY",
-      "score": 0.45,
-      "price": 210.6,
-      "atr": 6.11,
-      "rs_vs_spy": 14.35,
-      "rsi": 68.9,
-      "rvol": 0.8,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+14.3%)",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "GM",
-      "sector": "Consumer",
-      "signal": "BUY",
-      "score": 0.45,
-      "price": 88.4,
-      "atr": 2.84,
-      "rs_vs_spy": 11.76,
-      "rsi": 67.5,
-      "rvol": 1.15,
-      "reasons": [
-        "MACD bullish crossover",
-        "Strong RS vs SPY (+11.8%)",
-        "Above EMA50 & EMA200"
-      ],
-      "tranche": "core_swing"
-    },
-    {
-      "symbol": "HON",
-      "sector": "Industrials",
+      "symbol": "BMY",
+      "sector": "Healthcare",
       "signal": "BUY",
       "score": 0.43,
-      "price": 241.91,
-      "atr": 7.49,
-      "rs_vs_spy": 9.66,
-      "rsi": 60.6,
-      "rvol": 0.89,
+      "price": 64.15,
+      "atr": 1.92,
+      "rs_vs_spy": 8.99,
+      "rsi": 61.4,
+      "rvol": 1.42,
       "reasons": [
         "MACD bullish crossover",
         "Above EMA50 & EMA200",
@@ -266,19 +197,87 @@
       "tranche": "core_swing"
     },
     {
-      "symbol": "V",
-      "sector": "Financials",
+      "symbol": "SHW",
+      "sector": "Materials",
       "signal": "BUY",
       "score": 0.43,
-      "price": 366.27,
-      "atr": 8.3,
-      "rs_vs_spy": 7.84,
-      "rsi": 63.5,
-      "rvol": 1.07,
+      "price": 363.42,
+      "atr": 10.61,
+      "rs_vs_spy": 8.44,
+      "rsi": 63.1,
+      "rvol": 0.95,
       "reasons": [
         "MACD bullish crossover",
         "Above EMA50 & EMA200",
-        "RSI in sweet spot (64)"
+        "RSI in sweet spot (63)"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "FCX",
+      "sector": "Materials",
+      "signal": "BUY",
+      "score": 0.43,
+      "price": 68.18,
+      "atr": 2.88,
+      "rs_vs_spy": 7.43,
+      "rsi": 60.8,
+      "rvol": 0.92,
+      "reasons": [
+        "MACD bullish crossover",
+        "Above EMA50 & EMA200",
+        "RSI in sweet spot (61)"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "GM",
+      "sector": "Consumer",
+      "signal": "BUY",
+      "score": 0.43,
+      "price": 86.94,
+      "atr": 2.71,
+      "rs_vs_spy": 5.82,
+      "rsi": 59.5,
+      "rvol": 0.8,
+      "reasons": [
+        "MACD bullish crossover",
+        "Above EMA50 & EMA200",
+        "RSI in sweet spot (60)"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "KO",
+      "sector": "Consumer",
+      "signal": "BUY",
+      "score": 0.43,
+      "price": 86.85,
+      "atr": 1.88,
+      "rs_vs_spy": 5.68,
+      "rsi": 59.2,
+      "rvol": 0.97,
+      "reasons": [
+        "MACD bullish crossover",
+        "Above EMA50 & EMA200",
+        "RSI in sweet spot (59)"
+      ],
+      "tranche": "core_swing"
+    },
+    {
+      "symbol": "WFC",
+      "sector": "Financials",
+      "signal": "BUY",
+      "score": 0.43,
+      "price": 87.59,
+      "atr": 2.02,
+      "rs_vs_spy": 5.59,
+      "rsi": 54.6,
+      "rvol": 0.77,
+      "reasons": [
+        "MACD bullish crossover",
+        "Above EMA50 & EMA200",
+        "RSI in sweet spot (55)"
       ],
       "tranche": "core_swing"
     }
