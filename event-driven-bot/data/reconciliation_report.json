@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-17T20:46:11.200744+00:00",
+  "timestamp": "2026-08-17T20:57:33.483860+00:00",
   "positions_held": 14,
   "open_trades_logged": 14,
   "orphan_open_trades": [],
@@ -7,17 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "PSX",
-      "lots": 1,
-      "qty": 38.0
-    },
-    {
-      "action": "add_unlogged",
-      "symbol": "SCHW",
-      "qty": 29.0
-    }
-  ]
+  "reconcile_actions": []
 }
