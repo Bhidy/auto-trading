@@ -1969,15 +1969,18 @@
     "qty": 38.0,
     "entry_price": 206.87,
     "timestamp": "2026-07-27T21:31:21.021658+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 236.34,
+    "pnl": 1119.6,
+    "pnl_pct": 14.24,
+    "exit_timestamp": "2026-08-17T20:46:11.197796+00:00",
+    "exit_reason": "take_profit",
+    "realized_pnl": 1119.6
   },
   {
     "symbol": "UPS",
@@ -2320,5 +2323,21 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "symbol": "SCHW",
+    "side": "buy",
+    "qty": 29.0,
+    "entry_price": 111.429655,
+    "timestamp": "2026-08-17T20:46:11.197796+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]
