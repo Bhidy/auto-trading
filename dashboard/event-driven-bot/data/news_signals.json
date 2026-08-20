@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-14T14:24:48.919776+00:00",
+  "timestamp": "2026-08-20T14:22:04.833397+00:00",
   "signals": [
     {
-      "symbol": "PANW",
-      "sector": "Tech",
+      "symbol": "TGT",
+      "sector": "Consumer",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Palo Alto Networks, Raises Price Target to $434",
+      "headline": "RBC Capital Maintains Outperform on Target, Raises Price Target to $178",
       "source": "benzinga",
-      "created_at": "2026-08-14T14:08:09Z",
+      "created_at": "2026-08-20T13:41:02Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 325.68,
-      "atr": 15.33
+      "price": 147.08,
+      "atr": 4.0
     }
   ]
 }
