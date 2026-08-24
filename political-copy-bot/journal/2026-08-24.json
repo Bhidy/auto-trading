@@ -1,39 +1,13 @@
 [
   {
     "date": "2026-08-24",
-    "timestamp": "2026-08-24T14:24:49.200362",
+    "timestamp": "2026-08-24T14:44:27.660767",
     "account_snapshot": {
-      "equity": "103697.41",
+      "equity": "103746.82",
       "cash": "14538.91",
-      "portfolio_value": "103697.41"
+      "portfolio_value": "103746.82"
     },
-    "trades_executed": [
-      {
-        "symbol": "PG",
-        "side": "buy",
-        "qty": 21,
-        "limit_price": 147.1,
-        "entry_price": 146.71,
-        "intended_price": 147.1,
-        "slippage_pct": -0.2651,
-        "client_order_id": "p2-20260824-PG-buy",
-        "filled_qty": 21.0,
-        "estimated_value": 3089.1,
-        "order_id": "e6609f2d-4db2-47a5-b580-7c4f78586a10",
-        "order_status": "filled",
-        "politician": "David Taylor",
-        "politician_trade_size": "1K\u201315K",
-        "source": "backup",
-        "transaction_date": "08/11/2026",
-        "disclosure_date": "8/20/2026",
-        "observed_date": "2026-08-24T14:24:47.487702",
-        "disclosure_lag_days": 13,
-        "feed_source": "house_fd",
-        "reason": "Copying David Taylor BUY of Procter & Gamble Company",
-        "timestamp": "2026-08-24T14:24:47.488068",
-        "date": "2026-08-24"
-      }
-    ],
-    "trades_count": 1
+    "trades_executed": [],
+    "trades_count": 0
   }
 ]
