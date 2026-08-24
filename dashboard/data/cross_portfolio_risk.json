@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-08-24T21:43:16.363086+00:00",
-  "total_equity": 299612.55,
-  "gross_exposure_pct": 66.451,
+  "timestamp": "2026-08-24T21:50:49.804045+00:00",
+  "total_equity": 299599.59,
+  "gross_exposure_pct": 66.454,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -259,7 +259,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 139272.59,
-      "pct_of_total": 46.484
+      "pct_of_total": 46.486
     },
     "Industrials": {
       "market_value": 11825.86,
@@ -291,7 +291,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.49
+    "mega_cap_tech_ai": 6.491
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
