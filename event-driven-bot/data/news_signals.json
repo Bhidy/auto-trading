@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-08-20T14:24:39.384512+00:00",
+  "timestamp": "2026-08-25T14:06:26.339379+00:00",
   "signals": [
     {
-      "symbol": "TGT",
-      "sector": "Consumer",
+      "symbol": "SHW",
+      "sector": "Materials",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Target, Raises Price Target to $178",
+      "headline": "DA Davidson Initiates Coverage On Sherwin-Williams with Buy Rating, Announces Price Target of $400",
       "source": "benzinga",
-      "created_at": "2026-08-20T13:41:02Z",
+      "created_at": "2026-08-25T13:58:14Z",
       "reasons": [
-        "Positive: 'outperform'"
+        "Positive: 'buy rating'"
       ],
       "tranche": "event_driven",
-      "price": 147.08,
-      "atr": 4.0
+      "price": 361.55,
+      "atr": 9.64
     }
   ]
 }

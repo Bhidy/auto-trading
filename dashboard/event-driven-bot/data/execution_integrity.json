@@ -1,49 +1,14 @@
 {
-  "timestamp": "2026-08-24T14:26:21.417575+00:00",
+  "timestamp": "2026-08-25T14:06:27.272399+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 8,
-  "approved": 8,
+  "total_signals": 1,
+  "approved": 1,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "TEAM",
-      "reason": "below $2,000 min notional",
-      "benign": true
-    },
-    {
-      "symbol": "WDAY",
-      "reason": "below $2,000 min notional",
-      "benign": true
-    },
-    {
-      "symbol": "MPC",
-      "reason": "core_swing tranche room < 1 share",
-      "benign": true
-    },
-    {
-      "symbol": "VLO",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "PSX",
-      "reason": "below $2,000 min notional",
-      "benign": true
-    },
-    {
-      "symbol": "MRK",
-      "reason": "below $2,000 min notional",
-      "benign": true
-    },
-    {
-      "symbol": "C",
-      "reason": "below $2,000 min notional",
-      "benign": true
-    },
-    {
-      "symbol": "GILD",
+      "symbol": "SHW",
       "reason": "below $2,000 min notional",
       "benign": true
     }
