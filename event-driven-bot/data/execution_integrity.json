@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-26T14:06:31.509390+00:00",
+  "timestamp": "2026-08-26T14:25:22.235320+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -19,7 +19,7 @@
     },
     {
       "symbol": "MPC",
-      "reason": "gross exposure cap",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
