@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-26T14:25:22.235320+00:00",
+  "timestamp": "2026-08-27T14:06:16.667529+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -9,17 +9,17 @@
   "skipped": [
     {
       "symbol": "TEAM",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
       "symbol": "WDAY",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
       "symbol": "MPC",
-      "reason": "below $2,000 min notional",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
@@ -29,22 +29,22 @@
     },
     {
       "symbol": "PSX",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
       "symbol": "MRK",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
       "symbol": "C",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
       "symbol": "GILD",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     }
   ],
