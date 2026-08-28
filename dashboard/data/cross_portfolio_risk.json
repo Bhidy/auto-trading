@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-08-28T05:23:51.115088+00:00",
-  "total_equity": 299845.61,
-  "gross_exposure_pct": 64.489,
+  "timestamp": "2026-08-28T05:30:27.318138+00:00",
+  "total_equity": 299833.34,
+  "gross_exposure_pct": 64.491,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -40,7 +40,7 @@
     },
     "SLB": {
       "market_value": 5395.64,
-      "pct_of_total": 1.799,
+      "pct_of_total": 1.8,
       "books": [
         "portfolio_1"
       ]
@@ -96,7 +96,7 @@
     },
     "SPY": {
       "market_value": 8465.93,
-      "pct_of_total": 2.823,
+      "pct_of_total": 2.824,
       "books": [
         "portfolio_2"
       ]
@@ -110,7 +110,7 @@
     },
     "XLF": {
       "market_value": 7881.2,
-      "pct_of_total": 2.628,
+      "pct_of_total": 2.629,
       "books": [
         "portfolio_2"
       ]
@@ -245,7 +245,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 133543.47,
-      "pct_of_total": 44.537
+      "pct_of_total": 44.539
     },
     "Industrials": {
       "market_value": 11825.86,
@@ -277,7 +277,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.609
+    "mega_cap_tech_ai": 6.61
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
