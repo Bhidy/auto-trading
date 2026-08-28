@@ -1,50 +1,20 @@
 {
-  "timestamp": "2026-08-25T14:25:05.807780+00:00",
+  "timestamp": "2026-08-28T14:06:12.548127+00:00",
   "signals": [
     {
-      "symbol": "AMD",
+      "symbol": "WDAY",
       "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "'OpenAI Claims Its New Chips Can Outperform Nvidia Processors in Tests' - Bloomberg",
+      "headline": "Bernstein Maintains Outperform on Workday, Raises Price Target to $238",
       "source": "benzinga",
-      "created_at": "2026-08-25T14:13:47Z",
+      "created_at": "2026-08-28T13:57:31Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 483.01,
-      "atr": 32.41
-    },
-    {
-      "symbol": "MU",
-      "sector": "Tech",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "'OpenAI Claims Its New Chips Can Outperform Nvidia Processors in Tests' - Bloomberg",
-      "source": "benzinga",
-      "created_at": "2026-08-25T14:13:47Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 949.83,
-      "atr": 75.72
-    },
-    {
-      "symbol": "SHW",
-      "sector": "Materials",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "DA Davidson Initiates Coverage On Sherwin-Williams with Buy Rating, Announces Price Target of $400",
-      "source": "benzinga",
-      "created_at": "2026-08-25T13:58:14Z",
-      "reasons": [
-        "Positive: 'buy rating'"
-      ],
-      "tranche": "event_driven",
-      "price": 361.55,
-      "atr": 9.64
+      "price": 206.45,
+      "atr": 12.25
     }
   ]
 }
