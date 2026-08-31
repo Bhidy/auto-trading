@@ -316,7 +316,14 @@
     "source": "backup",
     "reason": "Copying David Taylor BUY of Parker-Hannifin Corp",
     "timestamp": "2026-05-29T15:06:50.373640",
-    "date": "2026-05-29"
+    "date": "2026-05-29",
+    "exit_price": 980.82,
+    "exit_timestamp": "2026-08-31T14:25:26.498975+00:00",
+    "exit_reason": "time_exit",
+    "status": "closed",
+    "pnl": 126.24,
+    "realized_pnl": 126.24,
+    "pnl_pct": 14.77
   },
   {
     "symbol": "WDAY",
@@ -731,13 +738,14 @@
     "entry_price": 448.17,
     "reconciled": true,
     "reconcile_reason": "qty_drift_excess_partial",
-    "exit_timestamp": null,
-    "exit_price": null,
-    "status": "open",
-    "pnl": null,
-    "realized_pnl": null,
-    "pnl_pct": null,
-    "pnl_backfill": "broker_fifo_backfill_2026-07-04_reopened_broker_holds"
+    "exit_timestamp": "2026-08-31T14:25:25.770142+00:00",
+    "exit_price": 592.26,
+    "status": "closed",
+    "pnl": 144.07,
+    "realized_pnl": 144.07,
+    "pnl_pct": 32.15,
+    "pnl_backfill": "broker_fifo_backfill_2026-07-04_reopened_broker_holds",
+    "exit_reason": "time_exit"
   },
   {
     "symbol": "MEDP",
@@ -903,5 +911,27 @@
     "reason": "Alpha-capture time exit 91d at -1.3%",
     "timestamp": "2026-08-26T19:21:39.762755",
     "date": "2026-08-26"
+  },
+  {
+    "symbol": "MEDP",
+    "side": "sell",
+    "qty": 1,
+    "status": "exit_marker",
+    "fill_price": 592.26,
+    "lots_closed_qty": 1.0,
+    "reason": "Alpha-capture time exit 93d at +32.6%",
+    "timestamp": "2026-08-31T14:25:25.771108",
+    "date": "2026-08-31"
+  },
+  {
+    "symbol": "PH",
+    "side": "sell",
+    "qty": 1,
+    "status": "exit_marker",
+    "fill_price": 980.82,
+    "lots_closed_qty": 1.0,
+    "reason": "Alpha-capture time exit 93d at +15.2%",
+    "timestamp": "2026-08-31T14:25:26.500017",
+    "date": "2026-08-31"
   }
 ]
