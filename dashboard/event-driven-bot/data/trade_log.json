@@ -2347,5 +2347,35 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "timestamp": "2026-09-01T14:06:12.547694+00:00",
+    "date": "2026-09-01",
+    "symbol": "MRVL",
+    "side": "buy",
+    "qty": 28,
+    "entry_price": 203.9746,
+    "intended_price": 203.525,
+    "slippage_pct": 0.2209,
+    "client_order_id": "p3-20260901-MRVL-buy",
+    "stop_loss": 157.82,
+    "take_profit_1": 294.93,
+    "atr": 18.28,
+    "trade_value": 5698.7,
+    "order_id": "cfb1c50f-84a3-4eff-889a-ea33179007be",
+    "order_status": "filled",
+    "filled_qty": 28.0,
+    "sector": "Tech",
+    "tranche": "core_swing",
+    "signal_score": 0.8,
+    "reasons": [
+      "Breaking upper BB ($250.92)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+29.0%)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (61)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
