@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-02T22:45:24.325487+00:00",
-  "total_equity": 299515.66,
-  "gross_exposure_pct": 63.404,
+  "timestamp": "2026-09-02T22:50:44.612134+00:00",
+  "total_equity": 299530.44,
+  "gross_exposure_pct": 63.401,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -26,7 +26,7 @@
     },
     "MPC": {
       "market_value": 5431.94,
-      "pct_of_total": 1.814,
+      "pct_of_total": 1.813,
       "books": [
         "portfolio_1"
       ]
@@ -61,14 +61,14 @@
     },
     "KR": {
       "market_value": 3200.45,
-      "pct_of_total": 1.069,
+      "pct_of_total": 1.068,
       "books": [
         "portfolio_2"
       ]
     },
     "QQQ": {
       "market_value": 7798.12,
-      "pct_of_total": 2.604,
+      "pct_of_total": 2.603,
       "books": [
         "portfolio_2"
       ]
@@ -180,7 +180,7 @@
     },
     "KO": {
       "market_value": 5174.3,
-      "pct_of_total": 1.728,
+      "pct_of_total": 1.727,
       "books": [
         "portfolio_3"
       ]
@@ -224,7 +224,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 135549.43,
-      "pct_of_total": 45.256
+      "pct_of_total": 45.254
     },
     "Healthcare": {
       "market_value": 12182.19,
@@ -232,7 +232,7 @@
     },
     "Tech": {
       "market_value": 13078.91,
-      "pct_of_total": 4.367
+      "pct_of_total": 4.366
     },
     "Financials": {
       "market_value": 9693.41,
