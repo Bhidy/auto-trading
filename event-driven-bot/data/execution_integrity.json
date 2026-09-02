@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-02T14:06:10.344108+00:00",
+  "timestamp": "2026-09-02T14:25:01.421267+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -13,23 +13,23 @@
       "benign": true
     },
     {
+      "symbol": "UNP",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
       "symbol": "MRK",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
       "symbol": "DHR",
-      "reason": "core_swing tranche room < 1 share",
-      "benign": true
-    },
-    {
-      "symbol": "EOG",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
       "symbol": "COP",
-      "reason": "below $2,000 min notional",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
@@ -39,7 +39,7 @@
     },
     {
       "symbol": "XOM",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "gross exposure cap",
       "benign": true
     }
   ],
