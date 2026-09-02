@@ -856,7 +856,14 @@
     "feed_source": "house_fd",
     "reason": "Copying Josh Gottheimer BUY of Palo Alto Networks, Inc",
     "timestamp": "2026-08-12T14:24:29.089524",
-    "date": "2026-08-12"
+    "date": "2026-08-12",
+    "exit_price": 333.17,
+    "exit_timestamp": "2026-09-02T14:24:15.060054+00:00",
+    "exit_reason": "trailing_stop",
+    "status": "closed",
+    "pnl": -358.69,
+    "realized_pnl": -358.69,
+    "pnl_pct": -13.33
   },
   {
     "symbol": "PG",
@@ -933,5 +940,16 @@
     "reason": "Alpha-capture time exit 93d at +15.2%",
     "timestamp": "2026-08-31T14:25:26.500017",
     "date": "2026-08-31"
+  },
+  {
+    "symbol": "PANW",
+    "side": "sell",
+    "qty": 7,
+    "status": "exit_marker",
+    "fill_price": 333.17,
+    "lots_closed_qty": 7.0,
+    "reason": "Trailing stop 15% from peak +2.9% (now -13.3%)",
+    "timestamp": "2026-09-02T14:24:15.061093",
+    "date": "2026-09-02"
   }
 ]

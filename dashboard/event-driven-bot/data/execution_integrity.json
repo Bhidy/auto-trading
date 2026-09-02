@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-09-01T14:24:48.613389+00:00",
+  "timestamp": "2026-09-02T14:06:10.344108+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
-  "placed": 0,
-  "filled": 0,
+  "placed": 1,
+  "filled": 1,
   "unexplained": 0,
   "skipped": [
     {
@@ -13,23 +13,18 @@
       "benign": true
     },
     {
-      "symbol": "UNP",
-      "reason": "below $2,000 min notional",
-      "benign": true
-    },
-    {
       "symbol": "MRK",
-      "reason": "below $2,000 min notional",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
       "symbol": "DHR",
-      "reason": "below $2,000 min notional",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
       "symbol": "EOG",
-      "reason": "below $2,000 min notional",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     },
     {
@@ -44,7 +39,7 @@
     },
     {
       "symbol": "XOM",
-      "reason": "below $2,000 min notional",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     }
   ],

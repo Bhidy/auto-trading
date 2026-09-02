@@ -2385,5 +2385,35 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-09-02T14:06:09.627801+00:00",
+    "date": "2026-09-02",
+    "symbol": "UNP",
+    "side": "buy",
+    "qty": 23,
+    "entry_price": 289.2,
+    "intended_price": 288.88,
+    "slippage_pct": 0.1108,
+    "client_order_id": "p3-20260902-UNP-buy",
+    "stop_loss": 272.65,
+    "take_profit_1": 321.33,
+    "atr": 6.49,
+    "trade_value": 6644.24,
+    "order_id": "751d34bb-8c7b-4cd8-bace-c151692163b3",
+    "order_status": "filled",
+    "filled_qty": 23.0,
+    "sector": "Industrials",
+    "tranche": "core_swing",
+    "signal_score": 0.8,
+    "reasons": [
+      "Breaking upper BB ($305.04)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+11.8%)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (63)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
