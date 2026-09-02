@@ -2220,7 +2220,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-02T22:41:10.132492+00:00",
+    "exit_price": 204.06,
+    "exit_reason": "stop_loss",
+    "pnl": -318.46,
+    "realized_pnl": -318.46,
+    "pnl_pct": -6.35
   },
   {
     "symbol": "TMO",
@@ -2414,5 +2422,21 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "symbol": "UNP",
+    "side": "buy",
+    "qty": 23.0,
+    "entry_price": 289.2,
+    "timestamp": "2026-09-02T22:41:10.132492+00:00",
+    "status": "open",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": null,
+    "pnl": null,
+    "pnl_pct": null
   }
 ]
