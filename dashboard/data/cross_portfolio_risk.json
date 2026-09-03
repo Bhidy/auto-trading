@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-03T23:22:31.223040+00:00",
-  "total_equity": 301198.48,
-  "gross_exposure_pct": 63.268,
+  "timestamp": "2026-09-03T23:31:04.432186+00:00",
+  "total_equity": 301210.14,
+  "gross_exposure_pct": 63.266,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -47,7 +47,7 @@
     },
     "DIA": {
       "market_value": 8588.88,
-      "pct_of_total": 2.852,
+      "pct_of_total": 2.851,
       "books": [
         "portfolio_2"
       ]
@@ -75,7 +75,7 @@
     },
     "SPY": {
       "market_value": 8501.46,
-      "pct_of_total": 2.823,
+      "pct_of_total": 2.822,
       "books": [
         "portfolio_2"
       ]
@@ -124,7 +124,7 @@
     },
     "ABBV": {
       "market_value": 6344.75,
-      "pct_of_total": 2.107,
+      "pct_of_total": 2.106,
       "books": [
         "portfolio_3"
       ]
@@ -224,11 +224,11 @@
   "by_sector": {
     "Unknown": {
       "market_value": 136207.66,
-      "pct_of_total": 45.222
+      "pct_of_total": 45.22
     },
     "Healthcare": {
       "market_value": 12182.19,
-      "pct_of_total": 4.045
+      "pct_of_total": 4.044
     },
     "Tech": {
       "market_value": 13078.91,
