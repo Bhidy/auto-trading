@@ -274,5 +274,97 @@
     "insights": [
       "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
     ]
+  },
+  {
+    "date": "2026-09-04",
+    "timestamp": "2026-09-04T23:02:33.007155+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 97229.93,
+      "cash": 60625.83,
+      "portfolio_value": 97229.93,
+      "daily_pnl": 0.8099999999976717,
+      "daily_pnl_pct": 0.001
+    },
+    "positions": [
+      {
+        "symbol": "C",
+        "qty": "38",
+        "market_value": "5233.36",
+        "unrealized_pl": "-191.9",
+        "unrealized_plpc": "-0.03537"
+      },
+      {
+        "symbol": "CAT",
+        "qty": "5",
+        "market_value": "4069.7",
+        "unrealized_pl": "-853.8",
+        "unrealized_plpc": "-0.17341"
+      },
+      {
+        "symbol": "GOOGL",
+        "qty": "15",
+        "market_value": "5084.1645",
+        "unrealized_pl": "-288.0855",
+        "unrealized_plpc": "-0.05362"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "20",
+        "market_value": "7778",
+        "unrealized_pl": "2346.06",
+        "unrealized_plpc": "0.4319"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "30",
+        "market_value": "7652.7",
+        "unrealized_pl": "2288.1",
+        "unrealized_plpc": "0.42652"
+      },
+      {
+        "symbol": "SLB",
+        "qty": "118",
+        "market_value": "6786.18",
+        "unrealized_pl": "1390.539966",
+        "unrealized_plpc": "0.25772"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 0,
+        "win_rate": null,
+        "avg_pnl_pct": null,
+        "avg_win": null,
+        "avg_loss": null,
+        "win_loss_ratio": null,
+        "max_win_pct": null,
+        "max_loss_pct": null,
+        "total_pnl": 0,
+        "profit_factor": null,
+        "sharpe_estimate": null
+      },
+      "metrics_30d": {
+        "total_trades": 0,
+        "win_rate": null,
+        "avg_pnl_pct": null,
+        "avg_win": null,
+        "avg_loss": null,
+        "win_loss_ratio": null,
+        "max_win_pct": null,
+        "max_loss_pct": null,
+        "total_pnl": 0,
+        "profit_factor": null,
+        "sharpe_estimate": null
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 0.5,
+        "confidence_buy_threshold": 0.7,
+        "trailing_stop_atr_mult": 1.5
+      }
+    },
+    "insights": [
+      "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
+    ]
   }
 ]
