@@ -1,49 +1,14 @@
 {
-  "timestamp": "2026-09-09T14:06:15.975237+00:00",
+  "timestamp": "2026-09-09T14:25:11.220116+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 8,
-  "approved": 8,
+  "total_signals": 1,
+  "approved": 1,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "MRVL",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "UNP",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "MRK",
-      "reason": "gross exposure cap",
-      "benign": true
-    },
-    {
-      "symbol": "DHR",
-      "reason": "gross exposure cap",
-      "benign": true
-    },
-    {
-      "symbol": "EOG",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "COP",
-      "reason": "gross exposure cap",
-      "benign": true
-    },
-    {
-      "symbol": "KO",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "XOM",
+      "symbol": "NEM",
       "reason": "gross exposure cap",
       "benign": true
     }

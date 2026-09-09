@@ -1,35 +1,20 @@
 {
-  "timestamp": "2026-08-31T14:26:18.254865+00:00",
+  "timestamp": "2026-09-09T14:25:10.455028+00:00",
   "signals": [
     {
-      "symbol": "V",
-      "sector": "Financials",
+      "symbol": "NEM",
+      "sector": "Materials",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Visa, Raises Price Target to $466",
+      "headline": "Bernstein Maintains Outperform on Newmont, Lowers Price Target to $144",
       "source": "benzinga",
-      "created_at": "2026-08-31T13:59:18Z",
+      "created_at": "2026-09-09T14:14:45Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 365.73,
-      "atr": 7.02
-    },
-    {
-      "symbol": "MA",
-      "sector": "Financials",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Mastercard, Raises Price Target to $696",
-      "source": "benzinga",
-      "created_at": "2026-08-31T13:50:33Z",
-      "reasons": [
-        "Positive: 'outperform'"
-      ],
-      "tranche": "event_driven",
-      "price": 573.85,
-      "atr": 10.97
+      "price": 127.64,
+      "atr": 4.56
     }
   ]
 }
