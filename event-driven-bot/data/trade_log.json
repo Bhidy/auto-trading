@@ -2155,7 +2155,15 @@
       "RSI in sweet spot (53)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-09T22:35:54.679684+00:00",
+    "exit_price": 13.63,
+    "exit_reason": "stop_loss",
+    "pnl": -629.52,
+    "realized_pnl": -629.52,
+    "pnl_pct": -8.16
   },
   {
     "timestamp": "2026-07-30T14:06:34.155336+00:00",
