@@ -155,5 +155,162 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-09-09",
+    "timestamp": "2026-09-09T22:43:10.435945+00:00",
+    "audit": {
+      "equity": 98738.16,
+      "cash": 33010.76,
+      "daily_pnl": -378.81,
+      "daily_pnl_pct": -0.382,
+      "total_open_exposure": 72034.96,
+      "exposure_pct": 73.0,
+      "position_count": 13,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 17216.25,
+        "Tech": 18015.77,
+        "Energy": 6468.44,
+        "Financials": 12561.12,
+        "Consumer": 5171.94,
+        "Industrials": 12601.44
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "250.91",
+        "market_value": "6272.75",
+        "unrealized_pl": "-72",
+        "pnl_pct": -1.14,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "AMGN",
+        "qty": "14",
+        "entry": "416.96",
+        "current": "392.3063",
+        "market_value": "5492.2882",
+        "unrealized_pl": "-345.1518",
+        "pnl_pct": -5.91,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "192.93",
+        "market_value": "8295.99",
+        "unrealized_pl": "928.37",
+        "pnl_pct": 12.6,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "DDOG",
+        "qty": "-14",
+        "entry": "231.529286",
+        "current": "225.27",
+        "market_value": "-3153.78",
+        "unrealized_pl": "87.630004",
+        "pnl_pct": 2.7,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "44",
+        "entry": "147.94",
+        "current": "147.01",
+        "market_value": "6468.44",
+        "unrealized_pl": "-40.92",
+        "pnl_pct": -0.63,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "GS",
+        "qty": "7",
+        "entry": "1063",
+        "current": "1028.78",
+        "market_value": "7201.46",
+        "unrealized_pl": "-239.54",
+        "pnl_pct": -3.22,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "87.66",
+        "market_value": "5171.94",
+        "unrealized_pl": "-2.36",
+        "pnl_pct": -0.05,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "567.5",
+        "market_value": "2270",
+        "unrealized_pl": "17.59",
+        "pnl_pct": 0.78,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "28",
+        "entry": "203.974643",
+        "current": "234.5",
+        "market_value": "6566",
+        "unrealized_pl": "854.709996",
+        "pnl_pct": 14.96,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "SCHW",
+        "qty": "29",
+        "entry": "111.429655",
+        "current": "106.54",
+        "market_value": "3089.66",
+        "unrealized_pl": "-141.799995",
+        "pnl_pct": -4.39,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "TMO",
+        "qty": "9",
+        "entry": "581.13",
+        "current": "605.69",
+        "market_value": "5451.21",
+        "unrealized_pl": "221.04",
+        "pnl_pct": 4.23,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "UNP",
+        "qty": "23",
+        "entry": "289.2",
+        "current": "284.74",
+        "market_value": "6549.02",
+        "unrealized_pl": "-102.58",
+        "pnl_pct": -1.54,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "UPS",
+        "qty": "61",
+        "entry": "105.61",
+        "current": "99.22",
+        "market_value": "6052.42",
+        "unrealized_pl": "-389.79",
+        "pnl_pct": -6.05,
+        "sector": "Industrials"
+      }
+    ],
+    "trades": []
   }
 ]
