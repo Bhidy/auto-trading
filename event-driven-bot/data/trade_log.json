@@ -2446,5 +2446,62 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "timestamp": "2026-09-10T14:07:02.495023+00:00",
+    "date": "2026-09-10",
+    "symbol": "MRK",
+    "side": "buy",
+    "qty": 54,
+    "entry_price": 145.7083,
+    "intended_price": 145.74,
+    "slippage_pct": -0.0217,
+    "client_order_id": "p3-20260910-MRK-buy",
+    "stop_loss": 135.02,
+    "take_profit_1": 167.19,
+    "atr": 4.29,
+    "trade_value": 7869.96,
+    "order_id": "357ddd54-733e-46ba-b7e8-da3f4c184ccd",
+    "order_status": "filled",
+    "filled_qty": 54.0,
+    "sector": "Healthcare",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($145.91)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+25.9%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-09-10T14:07:10.200656+00:00",
+    "date": "2026-09-10",
+    "symbol": "COP",
+    "side": "buy",
+    "qty": 33,
+    "entry_price": 136.27,
+    "intended_price": 136.39,
+    "slippage_pct": -0.088,
+    "client_order_id": "p3-20260910-COP-buy",
+    "stop_loss": 127.89,
+    "take_profit_1": 153.39,
+    "atr": 3.4,
+    "trade_value": 4500.87,
+    "order_id": "b1354939-1633-4c93-b843-413b87766856",
+    "order_status": "filled",
+    "filled_qty": 33.0,
+    "sector": "Energy",
+    "tranche": "core_swing",
+    "signal_score": 0.68,
+    "reasons": [
+      "Breaking upper BB ($133.67)",
+      "MACD bullish crossover",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]

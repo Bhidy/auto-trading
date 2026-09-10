@@ -1,15 +1,40 @@
 {
-  "timestamp": "2026-09-09T14:25:11.220116+00:00",
+  "timestamp": "2026-09-10T14:07:10.934346+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 1,
-  "approved": 1,
-  "placed": 0,
-  "filled": 0,
+  "total_signals": 8,
+  "approved": 8,
+  "placed": 2,
+  "filled": 2,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "NEM",
-      "reason": "gross exposure cap",
+      "symbol": "MRVL",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "UNP",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "DHR",
+      "reason": "sector Healthcare would breach cap",
+      "benign": true
+    },
+    {
+      "symbol": "EOG",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "KO",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "XOM",
+      "reason": "core_swing tranche room < 1 share",
       "benign": true
     }
   ],
