@@ -2354,7 +2354,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-10T22:38:31.065749+00:00",
+    "exit_price": 388.96,
+    "exit_reason": "stop_loss",
+    "pnl": -392.15,
+    "realized_pnl": -392.15,
+    "pnl_pct": -6.72
   },
   {
     "symbol": "SCHW",
