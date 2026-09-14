@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-11T14:25:01.656935+00:00",
+  "timestamp": "2026-09-14T14:06:46.967400+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 8,
   "approved": 8,
@@ -8,43 +8,43 @@
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "MRVL",
-      "reason": "already hold",
+      "symbol": "DG",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
-      "symbol": "UNP",
-      "reason": "already hold",
+      "symbol": "JNJ",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "AAPL",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "TEAM",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "MPC",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "VLO",
+      "reason": "gross exposure cap",
+      "benign": true
+    },
+    {
+      "symbol": "PSX",
+      "reason": "gross exposure cap",
       "benign": true
     },
     {
       "symbol": "MRK",
       "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "DHR",
-      "reason": "sector Healthcare would breach cap",
-      "benign": true
-    },
-    {
-      "symbol": "EOG",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "COP",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "KO",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "XOM",
-      "reason": "gross exposure cap",
       "benign": true
     }
   ],
