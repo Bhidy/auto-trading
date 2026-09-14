@@ -2511,5 +2511,35 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-09-14T14:26:04.479542+00:00",
+    "date": "2026-09-14",
+    "symbol": "DG",
+    "side": "buy",
+    "qty": 43,
+    "entry_price": 127.36,
+    "intended_price": 127.365,
+    "slippage_pct": -0.0039,
+    "client_order_id": "p3-20260914-DG-buy",
+    "stop_loss": 117.09,
+    "take_profit_1": 147.91,
+    "atr": 4.11,
+    "trade_value": 5476.69,
+    "order_id": "909bb049-5e74-4764-8343-8925794e5aff",
+    "order_status": "filled",
+    "filled_qty": 43.0,
+    "sector": "Consumer",
+    "tranche": "core_swing",
+    "signal_score": 0.8,
+    "reasons": [
+      "Breaking upper BB ($131.20)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+21.8%)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (63)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
