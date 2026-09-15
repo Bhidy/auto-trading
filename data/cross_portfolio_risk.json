@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-15T23:31:13.551432+00:00",
-  "total_equity": 298287.31,
-  "gross_exposure_pct": 60.529,
+  "timestamp": "2026-09-15T23:33:48.469715+00:00",
+  "total_equity": 298295.33,
+  "gross_exposure_pct": 60.528,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -217,7 +217,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 129350.19,
-      "pct_of_total": 43.364
+      "pct_of_total": 43.363
     },
     "Healthcare": {
       "market_value": 14213.0,
@@ -245,7 +245,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.553
+    "mega_cap_tech_ai": 6.552
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
