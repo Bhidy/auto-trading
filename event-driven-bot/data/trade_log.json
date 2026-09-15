@@ -1969,7 +1969,15 @@
       "RSI in sweet spot (51)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-15T22:56:01.110189+00:00",
+    "exit_price": 970.5,
+    "exit_reason": "stop_loss",
+    "pnl": -647.69,
+    "realized_pnl": -647.69,
+    "pnl_pct": -8.7
   },
   {
     "symbol": "PSX",
