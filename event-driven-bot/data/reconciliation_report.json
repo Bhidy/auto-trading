@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-16T22:59:37.504545+00:00",
+  "timestamp": "2026-09-16T23:14:19.109484+00:00",
   "positions_held": 12,
   "open_trades_logged": 12,
   "orphan_open_trades": [],
@@ -7,18 +7,5 @@
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "UPS",
-      "lots": 2,
-      "qty": 61.0
-    },
-    {
-      "action": "close_orphan",
-      "symbol": "SCHW",
-      "lots": 1,
-      "qty": 29.0
-    }
-  ]
+  "reconcile_actions": []
 }
