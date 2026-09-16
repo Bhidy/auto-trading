@@ -2552,5 +2552,34 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-09-16T14:06:13.749652+00:00",
+    "date": "2026-09-16",
+    "symbol": "JNJ",
+    "side": "buy",
+    "qty": 19,
+    "entry_price": 267.06,
+    "intended_price": 266.8,
+    "slippage_pct": 0.0975,
+    "client_order_id": "p3-20260916-JNJ-buy",
+    "stop_loss": 252.62,
+    "take_profit_1": 295.15,
+    "atr": 5.67,
+    "trade_value": 5069.2,
+    "order_id": "ca3d4f48-790f-4674-909d-a70b1063140d",
+    "order_status": "filled",
+    "filled_qty": 19.0,
+    "sector": "Healthcare",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($278.72)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+14.8%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
