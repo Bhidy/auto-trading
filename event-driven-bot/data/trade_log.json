@@ -2004,15 +2004,18 @@
     "qty": 59.0,
     "entry_price": 105.61,
     "timestamp": "2026-07-27T21:31:21.021658+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 98.6,
+    "pnl": -413.76,
+    "pnl_pct": -6.64,
+    "exit_timestamp": "2026-09-16T22:59:37.500297+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -413.76
   },
   {
     "timestamp": "2026-07-28T14:25:16.798111+00:00",
@@ -2056,15 +2059,18 @@
     "qty": 2.0,
     "entry_price": 105.61,
     "timestamp": "2026-07-28T21:33:40.476522+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "qty_drift_short",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 98.6,
+    "pnl": -14.03,
+    "pnl_pct": -6.64,
+    "exit_timestamp": "2026-09-16T22:59:37.500297+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -14.03
   },
   {
     "timestamp": "2026-07-29T14:06:22.882969+00:00",
@@ -2381,15 +2387,18 @@
     "qty": 29.0,
     "entry_price": 111.429655,
     "timestamp": "2026-08-17T20:46:11.197796+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 105.78,
+    "pnl": -163.93,
+    "pnl_pct": -5.07,
+    "exit_timestamp": "2026-09-16T22:59:37.500297+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -163.93
   },
   {
     "timestamp": "2026-09-01T14:06:12.547694+00:00",
