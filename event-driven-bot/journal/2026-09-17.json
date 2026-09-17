@@ -722,5 +722,186 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-09-17",
+    "timestamp": "2026-09-17T23:37:15.675475+00:00",
+    "audit": {
+      "equity": 98857.71,
+      "cash": 31191.4,
+      "daily_pnl": 837.31,
+      "daily_pnl_pct": 0.854,
+      "total_open_exposure": 74255.55,
+      "exposure_pct": 75.1,
+      "position_count": 14,
+      "trades_today": 1,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Healthcare": 19678.35,
+        "Tech": 18596.63,
+        "Energy": 16652.22,
+        "Consumer": 10568.39,
+        "Financials": 2262.92,
+        "Industrials": 6497.04
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ABBV",
+        "qty": "25",
+        "entry": "253.79",
+        "current": "264.02",
+        "market_value": "6600.5",
+        "unrealized_pl": "255.75",
+        "pnl_pct": 4.03,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "199.79",
+        "market_value": "8590.97",
+        "unrealized_pl": "1223.35",
+        "pnl_pct": 16.6,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "COP",
+        "qty": "33",
+        "entry": "136.27",
+        "current": "133.47",
+        "market_value": "4404.51",
+        "unrealized_pl": "-92.4",
+        "pnl_pct": -2.05,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "DDOG",
+        "qty": "-14",
+        "entry": "231.529286",
+        "current": "235.33",
+        "market_value": "-3294.62",
+        "unrealized_pl": "-53.209996",
+        "pnl_pct": -1.64,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "124.95",
+        "market_value": "5372.85",
+        "unrealized_pl": "-103.63",
+        "pnl_pct": -1.89,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "EOG",
+        "qty": "44",
+        "entry": "147.94",
+        "current": "145.47",
+        "market_value": "6400.68",
+        "unrealized_pl": "-108.68",
+        "pnl_pct": -1.67,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "JNJ",
+        "qty": "19",
+        "entry": "267.06",
+        "current": "270.0922",
+        "market_value": "5131.7518",
+        "unrealized_pl": "57.6118",
+        "pnl_pct": 1.14,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "88.06",
+        "market_value": "5195.54",
+        "unrealized_pl": "21.24",
+        "pnl_pct": 0.41,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "565.73",
+        "market_value": "2262.92",
+        "unrealized_pl": "10.51",
+        "pnl_pct": 0.47,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "7",
+        "entry": "414.08",
+        "current": "421.96",
+        "market_value": "2953.72",
+        "unrealized_pl": "55.16",
+        "pnl_pct": 1.9,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "147.15",
+        "market_value": "7946.1",
+        "unrealized_pl": "77.850018",
+        "pnl_pct": 0.99,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "MRVL",
+        "qty": "28",
+        "entry": "203.974643",
+        "current": "239.68",
+        "market_value": "6711.04",
+        "unrealized_pl": "999.749996",
+        "pnl_pct": 17.51,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "UNP",
+        "qty": "23",
+        "entry": "289.2",
+        "current": "282.48",
+        "market_value": "6497.04",
+        "unrealized_pl": "-154.56",
+        "pnl_pct": -2.32,
+        "sector": "Industrials"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "7",
+        "entry": "401.79",
+        "current": "413.33",
+        "market_value": "2893.31",
+        "unrealized_pl": "80.78",
+        "pnl_pct": 2.87,
+        "sector": "Energy"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "VLO",
+        "side": "buy",
+        "qty": 7,
+        "signal_type": "BUY",
+        "tranche": "core_swing",
+        "score": 0.45,
+        "reasons": [
+          "MACD bullish crossover",
+          "Strong RS vs SPY (+40.1%)",
+          "Above EMA50 & EMA200"
+        ]
+      }
+    ]
   }
 ]
