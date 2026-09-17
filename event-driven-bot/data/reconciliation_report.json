@@ -1,11 +1,17 @@
 {
-  "timestamp": "2026-09-16T23:52:51.489293+00:00",
-  "positions_held": 12,
-  "open_trades_logged": 12,
+  "timestamp": "2026-09-17T22:52:45.565449+00:00",
+  "positions_held": 14,
+  "open_trades_logged": 14,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "add_unlogged",
+      "symbol": "MPC",
+      "qty": 7.0
+    }
+  ]
 }
