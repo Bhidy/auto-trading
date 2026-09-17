@@ -2590,5 +2590,33 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-09-17T14:06:39.496853+00:00",
+    "date": "2026-09-17",
+    "symbol": "MPC",
+    "side": "buy",
+    "qty": 7,
+    "entry_price": 414.08,
+    "intended_price": 414.53,
+    "slippage_pct": -0.1086,
+    "client_order_id": "p3-20260917-MPC-buy",
+    "stop_loss": 387.18,
+    "take_profit_1": 469.23,
+    "atr": 10.94,
+    "trade_value": 2901.71,
+    "order_id": "6010beb3-8b12-4303-b8ce-d42ed9b7ef32",
+    "order_status": "filled",
+    "filled_qty": 7.0,
+    "sector": "Energy",
+    "tranche": "core_swing",
+    "signal_score": 0.45,
+    "reasons": [
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+43.1%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
