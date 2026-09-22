@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-09-21T14:26:27.963583+00:00",
+  "timestamp": "2026-09-22T14:06:17.443561+00:00",
   "portfolio_id": "portfolio_3",
   "total_signals": 5,
   "approved": 5,
-  "placed": 0,
-  "filled": 0,
+  "placed": 1,
+  "filled": 1,
   "unexplained": 0,
   "skipped": [
     {
       "symbol": "AAPL",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "sector Tech would breach cap",
       "benign": true
     },
     {
@@ -18,13 +18,8 @@
       "benign": true
     },
     {
-      "symbol": "MPC",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
       "symbol": "CVX",
-      "reason": "core_swing tranche room < 1 share",
+      "reason": "below $2,000 min notional",
       "benign": true
     },
     {
