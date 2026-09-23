@@ -2628,7 +2628,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-23T22:58:36.684993+00:00",
+    "exit_price": 374.27,
+    "exit_reason": "stop_loss",
+    "pnl": -192.71,
+    "realized_pnl": -192.71,
+    "pnl_pct": -6.85
   },
   {
     "symbol": "MPC",
