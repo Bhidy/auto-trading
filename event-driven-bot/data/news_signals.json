@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-09-09T14:25:10.455028+00:00",
+  "timestamp": "2026-09-23T14:06:21.958042+00:00",
   "signals": [
     {
-      "symbol": "NEM",
-      "sector": "Materials",
+      "symbol": "META",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Bernstein Maintains Outperform on Newmont, Lowers Price Target to $144",
+      "headline": "Meta\u2019s Muse Tests Show Human Callers Outperform AI Alone",
       "source": "benzinga",
-      "created_at": "2026-09-09T14:14:45Z",
+      "created_at": "2026-09-23T13:51:06Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 127.64,
-      "atr": 4.56
+      "price": 648.03,
+      "atr": 21.37
     }
   ]
 }
