@@ -2697,5 +2697,34 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null
+  },
+  {
+    "timestamp": "2026-09-24T14:06:14.598693+00:00",
+    "date": "2026-09-24",
+    "symbol": "VLO",
+    "side": "buy",
+    "qty": 7,
+    "entry_price": 382.14,
+    "intended_price": 381.96,
+    "slippage_pct": 0.0471,
+    "client_order_id": "p3-20260924-VLO-buy",
+    "stop_loss": 354.33,
+    "take_profit_1": 437.21,
+    "atr": 11.05,
+    "trade_value": 2673.72,
+    "order_id": "41ad0a2f-2457-419a-9d09-aa08ca201f53",
+    "order_status": "filled",
+    "filled_qty": 7.0,
+    "sector": "Energy",
+    "tranche": "core_swing",
+    "signal_score": 0.75,
+    "reasons": [
+      "Breaking upper BB ($392.14)",
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+47.9%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]
