@@ -1,12 +1,32 @@
 {
-  "timestamp": "2026-09-24T14:06:16.639874+00:00",
+  "timestamp": "2026-09-24T14:24:45.888361+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 1,
-  "approved": 1,
+  "total_signals": 5,
+  "approved": 5,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
+    {
+      "symbol": "AAPL",
+      "reason": "sector Tech would breach cap",
+      "benign": true
+    },
+    {
+      "symbol": "VLO",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "MPC",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "CVX",
+      "reason": "already hold",
+      "benign": true
+    },
     {
       "symbol": "META",
       "reason": "sector Tech would breach cap",
