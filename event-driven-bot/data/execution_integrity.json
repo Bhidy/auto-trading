@@ -1,15 +1,45 @@
 {
-  "timestamp": "2026-09-29T14:06:28.192064+00:00",
+  "timestamp": "2026-09-29T14:25:28.597667+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 1,
-  "approved": 1,
-  "placed": 0,
-  "filled": 0,
+  "total_signals": 8,
+  "approved": 8,
+  "placed": 1,
+  "filled": 1,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "LLY",
-      "reason": "sector Healthcare would breach cap",
+      "symbol": "TMO",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "PANW",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "FTNT",
+      "reason": "below $2,000 min notional",
+      "benign": true
+    },
+    {
+      "symbol": "ABBV",
+      "reason": "below $2,000 min notional",
+      "benign": true
+    },
+    {
+      "symbol": "ANET",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "MPC",
+      "reason": "already hold",
+      "benign": true
+    },
+    {
+      "symbol": "VLO",
+      "reason": "already hold",
       "benign": true
     }
   ],
