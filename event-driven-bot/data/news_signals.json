@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-09-24T14:06:16.081269+00:00",
+  "timestamp": "2026-09-29T14:06:27.690205+00:00",
   "signals": [
     {
-      "symbol": "META",
-      "sector": "Tech",
+      "symbol": "LLY",
+      "sector": "Healthcare",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Reiterates Outperform on Meta Platforms, Maintains $770 Price Target",
+      "headline": "Wegovy or Zepbound? Eli Lilly Shows Zepbound Outperforms Wegovy in New Weight Loss Data",
       "source": "benzinga",
-      "created_at": "2026-09-24T13:36:37Z",
+      "created_at": "2026-09-29T13:23:16Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 648.03,
-      "atr": 21.37
+      "price": 1152.93,
+      "atr": 29.51
     }
   ]
 }

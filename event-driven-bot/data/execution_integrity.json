@@ -1,50 +1,15 @@
 {
-  "timestamp": "2026-09-28T14:25:56.864703+00:00",
+  "timestamp": "2026-09-29T14:06:28.192064+00:00",
   "portfolio_id": "portfolio_3",
-  "total_signals": 8,
-  "approved": 8,
+  "total_signals": 1,
+  "approved": 1,
   "placed": 0,
   "filled": 0,
   "unexplained": 0,
   "skipped": [
     {
-      "symbol": "TMO",
-      "reason": "core_swing tranche room < 1 share",
-      "benign": true
-    },
-    {
-      "symbol": "PANW",
-      "reason": "core_swing tranche room < 1 share",
-      "benign": true
-    },
-    {
-      "symbol": "FTNT",
-      "reason": "core_swing tranche room < 1 share",
-      "benign": true
-    },
-    {
-      "symbol": "ABBV",
-      "reason": "core_swing tranche room < 1 share",
-      "benign": true
-    },
-    {
-      "symbol": "ANET",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "MPC",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "VLO",
-      "reason": "already hold",
-      "benign": true
-    },
-    {
-      "symbol": "PSX",
-      "reason": "core_swing tranche room < 1 share",
+      "symbol": "LLY",
+      "reason": "sector Healthcare would breach cap",
       "benign": true
     }
   ],

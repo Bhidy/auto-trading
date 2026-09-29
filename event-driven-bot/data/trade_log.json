@@ -2742,5 +2742,63 @@
     ],
     "signal_type": "BUY",
     "status": "open"
+  },
+  {
+    "timestamp": "2026-09-29T14:06:21.218031+00:00",
+    "date": "2026-09-29",
+    "symbol": "TMO",
+    "side": "buy",
+    "qty": 9,
+    "entry_price": 674.0789,
+    "intended_price": 674.61,
+    "slippage_pct": -0.0787,
+    "client_order_id": "p3-20260929-TMO-buy",
+    "stop_loss": 635.51,
+    "take_profit_1": 752.81,
+    "atr": 15.64,
+    "trade_value": 6071.49,
+    "order_id": "324cd14b-5215-4c01-b03e-112c3034460a",
+    "order_status": "filled",
+    "filled_qty": 9.0,
+    "sector": "Healthcare",
+    "tranche": "core_swing",
+    "signal_score": 0.6,
+    "reasons": [
+      "MACD bullish crossover",
+      "High RVOL (1.6x)",
+      "Strong RS vs SPY (+38.1%)",
+      "Above EMA50 & EMA200"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
+  },
+  {
+    "timestamp": "2026-09-29T14:06:25.571069+00:00",
+    "date": "2026-09-29",
+    "symbol": "PANW",
+    "side": "buy",
+    "qty": 14,
+    "entry_price": 381.6,
+    "intended_price": 381.24,
+    "slippage_pct": 0.0944,
+    "client_order_id": "p3-20260929-PANW-buy",
+    "stop_loss": 333.62,
+    "take_profit_1": 476.49,
+    "atr": 19.05,
+    "trade_value": 5337.36,
+    "order_id": "6ad095a4-121c-491e-ae02-e31dfb8229f3",
+    "order_status": "filled",
+    "filled_qty": 14.0,
+    "sector": "Tech",
+    "tranche": "core_swing",
+    "signal_score": 0.5,
+    "reasons": [
+      "MACD bullish crossover",
+      "Strong RS vs SPY (+24.6%)",
+      "Above EMA50 & EMA200",
+      "RSI in sweet spot (53)"
+    ],
+    "signal_type": "BUY",
+    "status": "open"
   }
 ]

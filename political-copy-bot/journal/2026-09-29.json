@@ -1,0 +1,64 @@
+[
+  {
+    "date": "2026-09-29",
+    "timestamp": "2026-09-29T14:24:53.480515",
+    "account_snapshot": {
+      "equity": "101798.99",
+      "cash": "18595.31",
+      "portfolio_value": "101798.99"
+    },
+    "trades_executed": [
+      {
+        "symbol": "CB",
+        "side": "buy",
+        "qty": 8,
+        "limit_price": 339.71,
+        "entry_price": 329.83,
+        "intended_price": 339.71,
+        "slippage_pct": -2.9084,
+        "client_order_id": "p2-20260929-CB-buy",
+        "filled_qty": 8.0,
+        "estimated_value": 2717.68,
+        "order_id": "d94cef7e-10f4-4558-918e-244d15d880d1",
+        "order_status": "filled",
+        "politician": "Kevin Hern",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "08/31/2026",
+        "disclosure_date": "9/25/2026",
+        "observed_date": "2026-09-29T14:24:46.264601",
+        "disclosure_lag_days": 29,
+        "feed_source": "house_fd",
+        "reason": "Copying Kevin Hern BUY of Chubb Limited Common Stock",
+        "timestamp": "2026-09-29T14:24:46.264900",
+        "date": "2026-09-29"
+      },
+      {
+        "symbol": "KO",
+        "side": "buy",
+        "qty": 35,
+        "limit_price": 87.17,
+        "entry_price": 87.0406,
+        "intended_price": 87.17,
+        "slippage_pct": -0.1485,
+        "client_order_id": "p2-20260929-KO-buy",
+        "filled_qty": 35.0,
+        "estimated_value": 3050.95,
+        "order_id": "6126d285-7fa7-40aa-a590-aaaca2841e6a",
+        "order_status": "filled",
+        "politician": "Kevin Hern",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "08/31/2026",
+        "disclosure_date": "9/25/2026",
+        "observed_date": "2026-09-29T14:24:51.541560",
+        "disclosure_lag_days": 29,
+        "feed_source": "house_fd",
+        "reason": "Copying Kevin Hern BUY of Coca-Cola Company",
+        "timestamp": "2026-09-29T14:24:51.541865",
+        "date": "2026-09-29"
+      }
+    ],
+    "trades_count": 2
+  }
+]
