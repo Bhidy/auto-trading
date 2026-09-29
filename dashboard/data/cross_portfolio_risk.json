@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-09-29T23:52:18.502999+00:00",
-  "total_equity": 295726.51,
-  "gross_exposure_pct": 61.542,
+  "timestamp": "2026-09-29T23:57:21.783469+00:00",
+  "total_equity": 295743.59,
+  "gross_exposure_pct": 61.538,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
-      "pct_of_total": 1.835,
+      "pct_of_total": 1.834,
       "books": [
         "portfolio_1"
       ]
@@ -42,7 +42,7 @@
     },
     "SLB": {
       "market_value": 5395.64,
-      "pct_of_total": 1.825,
+      "pct_of_total": 1.824,
       "books": [
         "portfolio_1"
       ]
@@ -56,7 +56,7 @@
     },
     "DIA": {
       "market_value": 8204.96,
-      "pct_of_total": 2.775,
+      "pct_of_total": 2.774,
       "books": [
         "portfolio_2"
       ]
@@ -70,7 +70,7 @@
     },
     "KO": {
       "market_value": 8214.05,
-      "pct_of_total": 2.778,
+      "pct_of_total": 2.777,
       "books": [
         "portfolio_2",
         "portfolio_3"
@@ -162,7 +162,7 @@
     },
     "MRK": {
       "market_value": 7868.25,
-      "pct_of_total": 2.661,
+      "pct_of_total": 2.66,
       "books": [
         "portfolio_3"
       ]
@@ -190,14 +190,14 @@
     },
     "VLO": {
       "market_value": 2674.98,
-      "pct_of_total": 0.905,
+      "pct_of_total": 0.904,
       "books": [
         "portfolio_3"
       ]
     },
     "PANW": {
       "market_value": 5342.4,
-      "pct_of_total": 1.807,
+      "pct_of_total": 1.806,
       "books": [
         "portfolio_3"
       ]
@@ -213,7 +213,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 134065.36,
-      "pct_of_total": 45.334
+      "pct_of_total": 45.332
     },
     "Tech": {
       "market_value": 7367.62,
@@ -225,7 +225,7 @@
     },
     "Consumer": {
       "market_value": 10650.78,
-      "pct_of_total": 3.602
+      "pct_of_total": 3.601
     },
     "Healthcare": {
       "market_value": 12942.39,
@@ -233,7 +233,7 @@
     },
     "Energy": {
       "market_value": 14717.51,
-      "pct_of_total": 4.977
+      "pct_of_total": 4.976
     }
   },
   "single_name_cap_pct": 10.0,
