@@ -1665,7 +1665,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-29T00:23:44.226810+00:00",
+    "exit_price": 264.61,
+    "exit_reason": "market_exit",
+    "pnl": 270.31,
+    "realized_pnl": 270.31,
+    "pnl_pct": 4.26
   },
   {
     "timestamp": "2026-07-13T14:25:33.555391+00:00",
@@ -2428,7 +2436,15 @@
       "RSI in sweet spot (61)"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-09-29T00:23:44.226810+00:00",
+    "exit_price": 254.01,
+    "exit_reason": "market_exit",
+    "pnl": 1400.79,
+    "realized_pnl": 1400.79,
+    "pnl_pct": 24.53
   },
   {
     "timestamp": "2026-09-02T14:25:00.468650+00:00",

@@ -1,11 +1,24 @@
 {
-  "timestamp": "2026-09-26T00:10:18.494543+00:00",
-  "positions_held": 13,
-  "open_trades_logged": 13,
+  "timestamp": "2026-09-29T00:23:44.231212+00:00",
+  "positions_held": 11,
+  "open_trades_logged": 11,
   "orphan_open_trades": [],
   "unlogged_positions": [],
   "qty_drift": [],
   "cost_basis_drift": [],
   "in_sync": true,
-  "reconcile_actions": []
+  "reconcile_actions": [
+    {
+      "action": "close_orphan",
+      "symbol": "ABBV",
+      "lots": 1,
+      "qty": 25.0
+    },
+    {
+      "action": "close_orphan",
+      "symbol": "MRVL",
+      "lots": 1,
+      "qty": 28.0
+    }
+  ]
 }
