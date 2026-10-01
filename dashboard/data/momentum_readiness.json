@@ -1,10 +1,10 @@
 {
   "status": "in_progress",
-  "as_of": "2026-09-30",
+  "as_of": "2026-10-01",
   "activated_at": "2026-07-06",
   "basis": "p1_account_level",
-  "days_on_paper": 86,
-  "track_days_measured": 63,
+  "days_on_paper": 87,
+  "track_days_measured": 64,
   "oos_sharpe": 1.18,
   "max_drawdown_pct": 1.79,
   "momentum_fills": 5,
@@ -19,7 +19,7 @@
   },
   "checks": {
     "days_on_paper": {
-      "value": 86,
+      "value": 87,
       "threshold": 90,
       "op": ">=",
       "pass": false
