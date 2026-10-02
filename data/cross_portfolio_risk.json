@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-10-02T00:13:52.421652+00:00",
-  "total_equity": 296214.01,
-  "gross_exposure_pct": 61.387,
+  "timestamp": "2026-10-02T00:46:58.014878+00:00",
+  "total_equity": 296223.16,
+  "gross_exposure_pct": 61.385,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
-      "pct_of_total": 1.832,
+      "pct_of_total": 1.831,
       "books": [
         "portfolio_1"
       ]
@@ -42,7 +42,7 @@
     },
     "SLB": {
       "market_value": 5395.64,
-      "pct_of_total": 1.822,
+      "pct_of_total": 1.821,
       "books": [
         "portfolio_1"
       ]
@@ -213,7 +213,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 133905.5,
-      "pct_of_total": 45.206
+      "pct_of_total": 45.204
     },
     "Tech": {
       "market_value": 7367.62,
@@ -233,7 +233,7 @@
     },
     "Energy": {
       "market_value": 14717.51,
-      "pct_of_total": 4.969
+      "pct_of_total": 4.968
     }
   },
   "single_name_cap_pct": 10.0,
