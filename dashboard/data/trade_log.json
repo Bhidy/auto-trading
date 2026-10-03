@@ -2749,7 +2749,12 @@
     "exit_price": null,
     "pnl": null,
     "pnl_pct": null,
-    "id": 89
+    "id": 89,
+    "order_class": "momentum_sleeve",
+    "order_class_restored": {
+      "by": "forensic audit 2026-10-03",
+      "evidence": "broker client_order_id p1mom-20260706-MPC-buy (filled after the confirm window; reconciled 2026-07-06 without its sleeve tag)"
+    }
   },
   {
     "symbol": "MRK",

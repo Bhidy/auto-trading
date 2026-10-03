@@ -288,14 +288,35 @@ def compute_cap_trims(positions, equity, limits, bucket_map, buffer_pct=0.5):
     return trims
 
 
+_REBALANCED_SLEEVES = {"passive_core", "momentum_sleeve"}
+
+
+def is_schedule_managed(trade, active_entries_enabled):
+    """True when an open lot belongs to a REBALANCED sleeve (held to its schedule,
+    never intraday stop-managed).
+
+    A broker-reconstructed lot with no ``order_class`` has unknown provenance.
+    While active entries are disabled no active lot can exist by construction, so
+    such a lot is NOT an active trade and must not get active stops — treating it
+    as active is what stopped out 7 of 13 momentum names in July 2026 (late fills
+    reconciled without their sleeve tag)."""
+    if not isinstance(trade, dict):
+        return False
+    oc = trade.get("order_class")
+    if oc in _REBALANCED_SLEEVES:
+        return True
+    return oc is None and bool(trade.get("reconciled")) and not active_entries_enabled
+
+
 def check_stop_triggers(positions, signals_data, open_trades=None, params=None):
     stops = compute_stop_levels(positions, signals_data, open_trades, params)
     triggers = []
     # Rebalanced-sleeve positions are held to their schedule, NOT intraday
     # stop-managed — a breakeven/trailing stop would churn the monthly momentum
-    # book (audit 2026-07-04). Exempt them by order_class.
+    # book (audit 2026-07-04). Exempt them by provenance.
+    _active_on = bool((params or {}).get("active_entries_enabled"))
     _exempt = {t.get("symbol") for t in (open_trades or [])
-               if isinstance(t, dict) and t.get("order_class") == "momentum_sleeve"}
+               if is_schedule_managed(t, _active_on)}
 
     for sym, stop_info in stops.items():
         if sym in _exempt:
@@ -339,7 +360,8 @@ def _hold_days(timestamp, now):
 
 
 def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
-                                time_stop_days=4, now=None):
+                                time_stop_days=4, now=None,
+                                active_entries_enabled=True):
     """Hard per-trade max-loss + loser time-stop — ACTIVE-sleeve LONGS ONLY.
 
     Chief-expert rec #2 (audit 2026-07-04): the active satellite's 0.42 win/loss
@@ -351,10 +373,11 @@ def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
     skipped — the passive core (order_class 'passive_core') AND the momentum sleeve
     (order_class 'momentum_sleeve', a MONTHLY-rebalance hold; an intraday -4% stop
     would churn it to death, the P3 disease — audit 2026-07-04). A position with no
-    matching OPEN active lot is also skipped. Longs only. Risk-REDUCING; SELLs only.
+    matching OPEN active lot is also skipped, and so is a reconciled lot of unknown
+    provenance while active entries are disabled (see ``is_schedule_managed``).
+    Longs only. Risk-REDUCING; SELLs only.
     """
     now = now or datetime.now(timezone.utc)
-    _exempt = {"passive_core", "momentum_sleeve"}       # rebalanced, not stop-managed
     meta = {}
     for t in (open_trades or []):
         if isinstance(t, dict) and t.get("status") == "open" and t.get("symbol"):
@@ -362,7 +385,7 @@ def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
     triggers = []
     for sym, si in (stops or {}).items():
         m = meta.get(sym)
-        if m is None or m.get("order_class") in _exempt:
+        if m is None or is_schedule_managed(m, active_entries_enabled):
             continue                                    # not active, or a rebalanced sleeve
         if si.get("side", "long") != "long":
             continue
@@ -430,8 +453,14 @@ def compute_momentum_rebalance_orders(positions, target_weights, equity, prices,
         s = p.get("symbol")
         if not s:
             continue
+        q = float(p.get("qty", 0) or 0)
+        if q <= 0 or p.get("side") == "short":
+            # Long-only engine: a short is never "trimmed" by selling (that grows
+            # it — the abs(market_value) defect). Shorts are flattened by the
+            # exit-hygiene guard, never by the rebalancer.
+            continue
         cur_mv[s] = abs(float(p.get("market_value", 0) or 0))
-        cur_qty[s] = float(p.get("qty", 0) or 0)
+        cur_qty[s] = q
     band = max(float(min_notional), float(drift_band) * float(equity))
     orders = []
     for sym in sorted(set(cur_mv) | set(target_weights)):
@@ -448,7 +477,7 @@ def compute_momentum_rebalance_orders(positions, target_weights, equity, prices,
         if full_exit:
             qty, side = int(cur_qty.get(sym, 0)), "sell"
         elif diff < 0:                                 # trim toward target
-            qty, side = int(abs(diff) / price), "sell"
+            qty, side = min(int(abs(diff) / price), int(cur_qty.get(sym, 0))), "sell"
         else:                                          # add toward target
             qty, side = int(diff / price), "buy"
         if qty > 0:

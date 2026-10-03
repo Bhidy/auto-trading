@@ -1,0 +1,21 @@
+{
+  "_doc": "HUMAN-OWNED. Never written by code. Gates NEW ENTRIES only — exits, stops, exit-order hygiene and reconciliation always run. Missing/malformed = no new entries (fail closed). Read by shared/strategy_controls.py. Change only with a recorded reason, date and owner.",
+  "portfolio_1": {
+    "new_entries_enabled": true,
+    "reason": null,
+    "changed_at": null,
+    "changed_by": null
+  },
+  "portfolio_2": {
+    "new_entries_enabled": true,
+    "reason": null,
+    "changed_at": null,
+    "changed_by": null
+  },
+  "portfolio_3": {
+    "new_entries_enabled": true,
+    "reason": null,
+    "changed_at": null,
+    "changed_by": null
+  }
+}

@@ -511,6 +511,13 @@ def symbols_on_reentry_cooldown(trade_log, cooldown_days, now=None,
 
 def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
     """Execute approved signals with ATR-based position sizing and bracket orders."""
+    # Human strategy control (config/strategy_controls.json): a quarantined book
+    # opens nothing new. Exits/stops/hygiene run elsewhere and are unaffected.
+    from shared.strategy_controls import entries_enabled
+    _ok, _why = entries_enabled("portfolio_3")
+    if not _ok:
+        log.warning(f"::warning::P3 new entries blocked ({tranche}): {_why}")
+        return []
     limits = load_json(CONFIG_DIR / "risk_limits.json")
     account = alpaca.get_account()
     equity = float(account["equity"])
@@ -886,8 +893,24 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     daily_pnl_pct = (equity - last_equity) / last_equity * 100 if last_equity > 0 else 0
     log.info(f"Equity: ${equity:,.2f}, Daily P&L: {daily_pnl_pct:+.2f}%")
 
-    # Kill switch
+    # Liquidate only on a CORROBORATED read (shared.equity_guard): a breach is
+    # re-valued independently first. On 2026-07-07 Alpaca returned P1 equity ==
+    # cash (positions priced at 0) for one read; this exact check would have
+    # liquidated the whole P3 book on it.
+    eq_check = {"ok": True}
     if daily_pnl_pct <= -limits["kill_switch_daily_loss_pct"]:
+        from shared.equity_guard import confirm_equity
+        _state_eq = load_json(DATA_DIR / "bot_state.json").get("equity")
+        eq_check = confirm_equity(
+            account, alpaca.get_positions(), reference_equity=_state_eq or last_equity,
+            get_price=lambda s: float((alpaca.get_latest_trade(s).get("trade") or {}).get("p") or 0),
+            max_jump_pct=0.0)
+        if not eq_check["ok"]:
+            log.error(f"::error::P3 kill-switch breach NOT corroborated — "
+                      f"{eq_check['reason']}. No liquidation this cycle.")
+
+    # Kill switch
+    if eq_check["ok"] and daily_pnl_pct <= -limits["kill_switch_daily_loss_pct"]:
         log.critical(f"KILL SWITCH: Daily loss {daily_pnl_pct:.2f}% >= {limits['kill_switch_daily_loss_pct']}%")
         log.critical("LIQUIDATING ALL POSITIONS AND HALTING")
         try:
@@ -914,6 +937,11 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             state["halt_until"] = None
             save_json(DATA_DIR / "bot_state.json", state)
 
+    # Exit-order hygiene (shared.order_hygiene): cancel exit orders that outlived
+    # their position, then flatten any short — P3 is long-only by construction.
+    from shared.order_hygiene import enforce_exit_hygiene
+    enforce_exit_hygiene(alpaca, log, long_only=True, label="P3")
+
     # Per-position stop-loss / take-profit are enforced server-side by the entry
     # bracket's OCO legs, which are now GTC so they persist for the whole holding
     # period (a `day` bracket left multi-day positions naked after the first
@@ -931,21 +959,27 @@ def run_intraday_monitor(alpaca: AlpacaClient):
 
     # T10: catalyst-decay time stop. Force-exit news/event trades past their hold
     # window — the catalyst edge is gone and the position is now unmanaged risk.
-    _enforce_catalyst_decay(alpaca, positions, limits)
+    closing = _enforce_catalyst_decay(alpaca, positions, limits)
 
     # Safety net: re-arm protective stops on any position left naked (e.g. legacy
     # day-bracket legs that expired overnight). Capital preservation > clutter.
-    _rearm_protective_stops(alpaca, limits)
+    # Symbols closed above are EXCLUDED: their close may not have settled yet, and
+    # re-arming them is exactly how the DDOG/V/LLY orphan stops were born.
+    _rearm_protective_stops(alpaca, limits, exclude=closing)
 
     _sync_state(alpaca)
     log.info(f"Monitor: {len(positions)} positions, equity=${equity:,.2f}")
 
 
-def _rearm_protective_stops(alpaca: AlpacaClient, limits: dict):
+def _rearm_protective_stops(alpaca: AlpacaClient, limits: dict, exclude=None):
     """Re-arm exit protection on any LONG position that has no working protective
     sell order. Restores the take-profit + stop-loss the system already computed
     (stored in the trade log) as a GTC OCO; falls back to a plain GTC stop if the
-    OCO is rejected. Idempotent (deterministic client_order_id) and never raises."""
+    OCO is rejected. Idempotent (deterministic client_order_id) and never raises.
+
+    ANY open sell order (incl. a pending market close) counts as protection, and
+    ``exclude`` symbols (closed earlier this run) are skipped: arming a stop on a
+    position that is mid-exit leaves it orphaned once the close fills."""
     try:
         positions = alpaca.get_positions()
         if not positions:
@@ -955,9 +989,8 @@ def _rearm_protective_stops(alpaca: AlpacaClient, limits: dict):
         log.warning(f"  re-arm: could not read positions/orders: {e}")
         return
 
-    protected = {o.get("symbol") for o in open_orders
-                 if o.get("side") == "sell"
-                 and o.get("type") in ("stop", "stop_limit", "limit")}
+    protected = {o.get("symbol") for o in open_orders if o.get("side") == "sell"}
+    protected |= set(exclude or ())
 
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     tl_by_sym = {t["symbol"]: t for t in trade_log
@@ -1011,8 +1044,9 @@ def _enforce_catalyst_decay(alpaca: AlpacaClient, positions: list, limits: dict)
         max_hold = (limits.get("event_hold_days", {}) or {}).get("max", 1)
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     held = {p.get("symbol") for p in positions}
+    closing = set()
     if not held:
-        return
+        return closing
     try:
         open_orders = alpaca.get_orders(status="open")
     except Exception:
@@ -1035,10 +1069,12 @@ def _enforce_catalyst_decay(alpaca: AlpacaClient, positions: list, limits: dict)
         try:
             alpaca.close_position(sym)
             t["catalyst_decay_exit"] = True
+            closing.add(sym)
         except Exception as e:
             log.error(f"    catalyst-decay close failed for {sym}: {e}")
 
     save_json(DATA_DIR / "trade_log.json", trade_log)
+    return closing
 
 
 # ---------------------------------------------------------------------------
@@ -1343,6 +1379,10 @@ def main():
         if not alpaca.is_market_open():
             log.warning("Market closed — skipping trading session")
             return
+        # Clear orphan exit orders / accidental shorts before any new entry, so the
+        # morning run fixes them at the open rather than waiting for the monitor.
+        from shared.order_hygiene import enforce_exit_hygiene
+        enforce_exit_hygiene(alpaca, log, long_only=True, label="P3")
         signals_data = load_json(DATA_DIR / "signals.json")
         signals = signals_data.get("signals", [])
         if not signals:

@@ -129,6 +129,64 @@ def assess_reconciliation(reports: dict):
     return False, "Reconciliation: all books in sync."
 
 
+# Books whose state can carry a halt latch, and the books that are LONG-ONLY
+# (P1 while active entries are off; P2 and P3 by construction).
+HALT_SOURCES = {
+    "P1 Self Improving Brain": "data/portfolio_state.json",
+    "P3 Cautious Sniper": "event-driven-bot/data/bot_state.json",
+}
+
+
+def read_safety_state(root: Path):
+    """{label: {"state": dict|None, "recon": dict|None}} for the safety check."""
+    out = {}
+    for label, rel in HALT_SOURCES.items():
+        try:
+            with open(root / rel) as f:
+                state = json.load(f)
+        except Exception:
+            state = None
+        out[label] = {"state": state, "recon": None}
+    for label, rel in RECONCILE_SOURCES.items():
+        try:
+            with open(root / rel) as f:
+                out.setdefault(label, {"state": None})["recon"] = json.load(f)
+        except Exception:
+            out.setdefault(label, {"state": None, "recon": None})
+    return out
+
+
+def assess_safety_state(books: dict):
+    """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
+
+    Two conditions that sat SILENT for months before the 2026-10-03 audit:
+      * a HALTED book — P1 was latched by a phantom kill switch on 2026-07-07
+        ("73.94% drawdown" from a bad broker read) and nobody was told, because
+        a halted session exits 0 and the book still commits fresh state;
+      * a SHORT in a long-only book — P3's DDOG -14 (an orphaned stop fill)
+        held for two months.
+    Every day a book stays halted it is re-alerted: a halt is a human decision.
+    """
+    problems = []
+    for label, b in books.items():
+        st = (b or {}).get("state") or {}
+        if st.get("halted"):
+            ev = st.get("halt_evidence") or {}
+            problems.append(
+                f"{label} — HALTED: {st.get('halt_reason') or 'no reason recorded'}"
+                f" (until: {st.get('halt_until') or 'MANUAL REVIEW'})"
+                + (f"; tripped on equity ${ev.get('equity')} vs independent "
+                   f"${ev.get('independent_equity')}" if ev else ""))
+        shorts = ((b or {}).get("recon") or {}).get("short_positions") or []
+        if shorts:
+            problems.append(f"{label} — SHORT position(s) in a long-only book: "
+                            f"{', '.join(shorts)}")
+    if problems:
+        return True, ("SAFETY STATE — requires human review:\n"
+                      + "\n".join(f"  - {p}" for p in problems))
+    return False, "Safety state: no halted books, no unintended shorts."
+
+
 # Each portfolio's data dir, where the trading session writes the execution-
 # integrity, strategy-conformance, and preflight reports (Phases C/D/E).
 PORTFOLIO_DATA_DIRS = {
@@ -342,6 +400,13 @@ def main():
     if recon_alert:
         alert = True
         summary = f"{summary}\n\n{recon_summary}"
+
+    # Halted books and shorts in long-only books (audit 2026-10-03): both sat
+    # silent for months because neither fails a workflow or goes stale.
+    safe_alert, safe_summary = assess_safety_state(read_safety_state(REPO_ROOT))
+    if safe_alert:
+        alert = True
+        summary = f"{summary}\n\n{safe_summary}"
 
     # Execution integrity / conformance / preflight surfacing (Phase F): the
     # 2026-06-01 silent no-op, a refused preflight, or a mandate violation.

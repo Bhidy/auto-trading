@@ -1,0 +1,304 @@
+{
+ "pnl_data": "bars_sip_all",
+ "sig_data": "bars_sip_split_full",
+ "rebalances": {
+  "2026-07-06": {
+   "signal_date": "2026-07-02",
+   "picks": [
+    "AMD",
+    "C",
+    "CAT",
+    "GOOGL",
+    "GS",
+    "INTC",
+    "LRCX",
+    "MPC",
+    "MRK",
+    "MS",
+    "MU",
+    "PSX",
+    "SLB"
+   ],
+   "vol_scale": 0.8365,
+   "book_vol": 0.2988,
+   "deployed%": 75.3,
+   "n_univ": 115
+  },
+  "2026-08-03": {
+   "signal_date": "2026-07-31",
+   "picks": [
+    "AMD",
+    "C",
+    "CAT",
+    "GOOGL",
+    "INTC",
+    "JNJ",
+    "LLY",
+    "LRCX",
+    "MPC",
+    "MRK",
+    "MS",
+    "MU",
+    "PSX"
+   ],
+   "vol_scale": 0.8152,
+   "book_vol": 0.3067,
+   "deployed%": 73.4,
+   "n_univ": 115
+  },
+  "2026-09-01": {
+   "signal_date": "2026-08-31",
+   "picks": [
+    "AMAT",
+    "CAT",
+    "GOOGL",
+    "INTC",
+    "JNJ",
+    "LLY",
+    "LRCX",
+    "MPC",
+    "MRK",
+    "MS",
+    "MU",
+    "PSX",
+    "UNH"
+   ],
+   "vol_scale": 0.8687,
+   "book_vol": 0.2878,
+   "deployed%": 78.2,
+   "n_univ": 115
+  },
+  "2026-10-01": {
+   "signal_date": "2026-09-30",
+   "picks": [
+    "AMD",
+    "CAT",
+    "GOOGL",
+    "INTC",
+    "JNJ",
+    "LLY",
+    "LRCX",
+    "MPC",
+    "MRK",
+    "MU",
+    "PSX",
+    "SLB",
+    "TGT"
+   ],
+   "vol_scale": 1.0,
+   "book_vol": 0.2143,
+   "deployed%": 90.0,
+   "n_univ": 115
+  }
+ },
+ "oos_active": {
+  "n_days": 64,
+  "ann_IR": 0.88,
+  "PSR_active_gt_0": 0.67,
+  "ann_TE%": 13.4
+ },
+ "results": {
+  "MOM deployed spec @5bps": {
+   "tot%": 5.87,
+   "cagr%": 25.18,
+   "vol%": 17.9,
+   "sharpe": 1.34,
+   "maxdd%": -7.4,
+   "xs_cagr%": 12.86,
+   "IR": 0.88
+  },
+  "MOM deployed spec @10bps": {
+   "tot%": 5.77,
+   "cagr%": 24.73,
+   "vol%": 17.9,
+   "sharpe": 1.32,
+   "maxdd%": -7.4,
+   "xs_cagr%": 12.41,
+   "IR": 0.86
+  },
+  "MOM deployed spec @20bps": {
+   "tot%": 5.58,
+   "cagr%": 23.83,
+   "vol%": 17.9,
+   "sharpe": 1.28,
+   "maxdd%": -7.4,
+   "xs_cagr%": 11.51,
+   "IR": 0.8
+  },
+  "SPY buy&hold": {
+   "tot%": 3.0,
+   "cagr%": 12.32,
+   "vol%": 11.0,
+   "sharpe": 1.12,
+   "maxdd%": -3.4,
+   "xs_cagr%": -0.0,
+   "IR": null
+  },
+  "RSP buy&hold": {
+   "tot%": -2.15,
+   "cagr%": -8.21,
+   "vol%": 9.8,
+   "sharpe": -0.82,
+   "maxdd%": -6.3,
+   "xs_cagr%": -20.53,
+   "IR": -2.34
+  },
+  "QQQ buy&hold": {
+   "tot%": 4.18,
+   "cagr%": 17.48,
+   "vol%": 18.9,
+   "sharpe": 0.95,
+   "maxdd%": -8.8,
+   "xs_cagr%": 5.16,
+   "IR": 0.55
+  },
+  "60/40 SPY/AGG": {
+   "tot%": 0.38,
+   "cagr%": 1.51,
+   "vol%": 7.7,
+   "sharpe": 0.23,
+   "maxdd%": -2.5,
+   "xs_cagr%": -10.81,
+   "IR": -2.81
+  },
+  "MOM no-vol-target (90%)": {
+   "tot%": 6.51,
+   "cagr%": 28.2,
+   "vol%": 21.4,
+   "sharpe": 1.27,
+   "maxdd%": -8.9,
+   "xs_cagr%": 15.88,
+   "IR": 0.91
+  },
+  "MOM raw book 100% invested": {
+   "tot%": 7.11,
+   "cagr%": 31.07,
+   "vol%": 23.8,
+   "sharpe": 1.25,
+   "maxdd%": -9.9,
+   "xs_cagr%": 18.75,
+   "IR": 0.96
+  },
+  "MOM July book, no later rebal": {
+   "tot%": 5.9,
+   "cagr%": 25.33,
+   "vol%": 18.3,
+   "sharpe": 1.32,
+   "maxdd%": -7.4,
+   "xs_cagr%": 13.01,
+   "IR": 0.88
+  },
+  "MOM excl. MPC+PSX (re-picked)": {
+   "tot%": -1.48,
+   "cagr%": -5.71,
+   "vol%": 17.4,
+   "sharpe": -0.25,
+   "maxdd%": -7.8,
+   "xs_cagr%": -18.03,
+   "IR": -1.36
+  }
+ },
+ "contrib_top": [
+  [
+   "MPC",
+   2.94
+  ],
+  [
+   "PSX",
+   2.61
+  ],
+  [
+   "AMAT",
+   0.88
+  ],
+  [
+   "MRK",
+   0.67
+  ],
+  [
+   "MU",
+   0.67
+  ],
+  [
+   "SLB",
+   0.61
+  ],
+  [
+   "INTC",
+   0.55
+  ],
+  [
+   "LRCX",
+   0.03
+  ],
+  [
+   "JNJ",
+   -0.0
+  ],
+  [
+   "GS",
+   -0.03
+  ],
+  [
+   "TGT",
+   -0.03
+  ],
+  [
+   "LLY",
+   -0.07
+  ],
+  [
+   "GOOGL",
+   -0.26
+  ],
+  [
+   "UNH",
+   -0.34
+  ],
+  [
+   "C",
+   -0.41
+  ],
+  [
+   "AMD",
+   -0.57
+  ],
+  [
+   "CAT",
+   -0.66
+  ],
+  [
+   "MS",
+   -0.84
+  ]
+ ],
+ "monthly": {
+  "2026-07": {
+   "mom%": -3.04,
+   "spy%": -0.28
+  },
+  "2026-08": {
+   "mom%": 3.9,
+   "spy%": 2.68
+  },
+  "2026-09": {
+   "mom%": 3.72,
+   "spy%": -0.33
+  },
+  "2026-10": {
+   "mom%": 1.33,
+   "spy%": 0.92
+  }
+ },
+ "P1_actual": {
+  "start_equity_0702close": 94335.65,
+  "end_equity_1002close": 97023.75,
+  "tot%": 2.85,
+  "cagr%": 11.7,
+  "vol%": 7.0,
+  "sharpe": 1.61,
+  "maxdd%": -1.8
+ },
+ "SPY_0702close_to_1002close%": 3.59,
+ "defect_cost_estimate_usd": 2849.0
+}

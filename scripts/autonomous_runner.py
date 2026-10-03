@@ -42,6 +42,11 @@ from shared.alpaca_http import (  # noqa: E402  (path set above)
 )
 from shared.risk_config import load_risk_limits  # noqa: E402
 
+# client_order_id prefix -> trade-log sleeve, for attributing broker-reconstructed
+# lots (shared.reconcile.order_classes_from_orders). Active entries ("p1-") are
+# deliberately unmapped: an active lot carries no rebalanced-sleeve class.
+P1_ORDER_CLASS_BY_PREFIX = {"p1mom": "momentum_sleeve", "p1core": "passive_core"}
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -511,6 +516,37 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits):
     return True
 
 
+def _confirmed_equity(alpaca, account, positions, portfolio_state, last_equity,
+                      before_action=False):
+    """Corroborate a broker equity read (shared.equity_guard — the 2026-07-07
+    $26K phantom-read incident). ``before_action=True`` ALWAYS values the book
+    independently and is required immediately before any halt or liquidation.
+    The reference is the equity WE last trusted (saved state), not a field of
+    the same possibly-corrupt account snapshot."""
+    from shared.equity_guard import confirm_equity
+
+    def _px(sym):
+        return float(((alpaca.get_latest_trade(sym) or {}).get("trade") or {}).get("p") or 0)
+
+    ref = (portfolio_state.get("day_start_equity") or portfolio_state.get("equity")
+           or last_equity)
+    return confirm_equity(account, positions, reference_equity=ref, get_price=_px,
+                          max_jump_pct=0.0 if before_action else 15.0)
+
+
+def _latch_kill_switch(portfolio_state, drawdown_pct, check):
+    """Latch the drawdown halt WITH its evidence so a human reviewing the
+    lockdown can see exactly which read tripped it."""
+    portfolio_state["halted"] = True
+    portfolio_state["halt_reason"] = f"Kill switch: {drawdown_pct:.2f}% drawdown"
+    portfolio_state["halt_evidence"] = {
+        "at": datetime.now(timezone.utc).isoformat(),
+        "equity": check.get("equity"), "cash": check.get("cash"),
+        "reference_equity": check.get("reference_equity"),
+        "independent_equity": check.get("independent_equity"),
+        "confirmation": check.get("reason")}
+
+
 def run_trading_session(alpaca: AlpacaClient):
     log.info("=" * 60)
     log.info("TRADING SESSION — Validating signals, executing orders")
@@ -528,13 +564,51 @@ def run_trading_session(alpaca: AlpacaClient):
     portfolio_state = load_json(DATA_DIR / "portfolio_state.json")
     limits = load_risk_limits(CONFIG_DIR)
 
-    # Kill switch check
+    # Never trade — and never latch a halt — on an uncorroborated equity read.
+    eq_check = _confirmed_equity(alpaca, account, alpaca.get_positions(),
+                                 portfolio_state, last_equity)
+    if not eq_check["ok"]:
+        log.error(f"::error::P1 equity read UNCONFIRMED — {eq_check['reason']}. "
+                  f"Skipping this session; no halt latched.")
+        return
+
+    # Kill switch check — the breach must survive an independent valuation.
     starting_equity = portfolio_state.get("starting_equity", 100000)
     drawdown_pct = (starting_equity - equity) / starting_equity * 100
     if drawdown_pct >= limits["kill_switch_drawdown_pct"]:
+        eq_check = _confirmed_equity(alpaca, account, alpaca.get_positions(),
+                                     portfolio_state, last_equity, before_action=True)
+        if not eq_check["ok"]:
+            log.error(f"::error::P1 kill-switch breach NOT corroborated — "
+                      f"{eq_check['reason']}. No halt latched; skipping session.")
+            return
         log.critical(f"KILL SWITCH: Drawdown {drawdown_pct:.2f}% — HALTING ALL TRADING")
+        _latch_kill_switch(portfolio_state, drawdown_pct, eq_check)
+        save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+        return
+
+    # Weekly loss (hard limit: -8% -> halt 7 days). Previously enforced only for
+    # the disabled active sleeve via risk_officer; the momentum/core allocators
+    # bypassed it (audit 2026-10-03, H5). Corroborated before it latches, and the
+    # halt EXPIRES (halt_until) — it can never become another permanent freeze.
+    week_start = portfolio_state.get("week_start_equity") or last_equity
+    weekly_pnl_pct = (equity - week_start) / week_start * 100 if week_start > 0 else 0
+    if weekly_pnl_pct <= -limits.get("max_weekly_loss_pct", 8.0):
+        eq_check = _confirmed_equity(alpaca, account, alpaca.get_positions(),
+                                     portfolio_state, last_equity, before_action=True)
+        if not eq_check["ok"]:
+            log.error(f"::error::P1 weekly-loss breach NOT corroborated — "
+                      f"{eq_check['reason']}. No halt latched; skipping session.")
+            return
+        log.critical(f"WEEKLY LOSS LIMIT: {weekly_pnl_pct:.2f}% — halting new trading 7 days")
         portfolio_state["halted"] = True
-        portfolio_state["halt_reason"] = f"Kill switch: {drawdown_pct:.2f}% drawdown"
+        portfolio_state["halt_reason"] = f"Weekly loss: {weekly_pnl_pct:.2f}%"
+        portfolio_state["halt_until"] = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        portfolio_state["halt_evidence"] = {
+            "at": datetime.now(timezone.utc).isoformat(), "equity": eq_check.get("equity"),
+            "week_start_equity": week_start,
+            "independent_equity": eq_check.get("independent_equity"),
+            "confirmation": eq_check.get("reason")}
         save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
         return
 
@@ -547,6 +621,14 @@ def run_trading_session(alpaca: AlpacaClient):
 
     if portfolio_state.get("halted"):
         log.warning(f"System halted: {portfolio_state.get('halt_reason')}")
+        return
+
+    # Human strategy control (config/strategy_controls.json): a quarantined book
+    # runs no allocation session. The monitor's stops/kill switch are unaffected.
+    from shared.strategy_controls import entries_enabled
+    _ok, _why = entries_enabled("portfolio_1")
+    if not _ok:
+        log.warning(f"::warning::P1 allocation session skipped: {_why}")
         return
 
     # Momentum sleeve (high-return PAPER strategy, 2026-07-04 research). When
@@ -1042,25 +1124,37 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     except Exception as e:
         log.warning(f"  Order-state reconcile skipped: {e}")
 
-    # Kill switch
+    # Liquidation and halts act only on a corroborated equity read: a breach is
+    # re-valued independently before anything fires. An uncorroborated breach
+    # skips the drawdown/daily-loss action this cycle (stops below still run —
+    # they are risk-reducing and price-based, not equity-based).
     starting_equity = portfolio_state.get("starting_equity", 100000)
     drawdown_pct = (starting_equity - equity) / starting_equity * 100
-    if drawdown_pct >= limits["kill_switch_drawdown_pct"]:
+    day_start = portfolio_state.get("day_start_equity", last_equity)
+    daily_pnl_pct = (equity - day_start) / day_start * 100 if day_start > 0 else 0
+    eq_check = {"ok": True}
+    if (drawdown_pct >= limits["kill_switch_drawdown_pct"]
+            or daily_pnl_pct <= -limits["max_daily_loss_pct"]):
+        eq_check = _confirmed_equity(alpaca, account, positions, portfolio_state,
+                                     last_equity, before_action=True)
+        if not eq_check["ok"]:
+            log.error(f"::error::P1 monitor loss breach NOT corroborated — "
+                      f"{eq_check['reason']}. No liquidation/halt this cycle.")
+
+    # Kill switch
+    if eq_check["ok"] and drawdown_pct >= limits["kill_switch_drawdown_pct"]:
         log.critical(f"KILL SWITCH TRIGGERED: {drawdown_pct:.2f}% drawdown — LIQUIDATING ALL")
         try:
             alpaca.close_all_positions()
             alpaca.cancel_all_orders()
         except Exception as e:
             log.error(f"Liquidation error: {e}")
-        portfolio_state["halted"] = True
-        portfolio_state["halt_reason"] = f"Kill switch at {drawdown_pct:.2f}%"
+        _latch_kill_switch(portfolio_state, drawdown_pct, eq_check)
         save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
         return
 
     # Daily loss — use day_start_equity from state for consistency
-    day_start = portfolio_state.get("day_start_equity", last_equity)
-    daily_pnl_pct = (equity - day_start) / day_start * 100 if day_start > 0 else 0
-    if daily_pnl_pct <= -limits["max_daily_loss_pct"]:
+    if eq_check["ok"] and daily_pnl_pct <= -limits["max_daily_loss_pct"]:
         log.warning(f"Daily loss limit breached: {daily_pnl_pct:.2f}% — halting for 24h")
         portfolio_state["halted"] = True
         portfolio_state["halt_reason"] = f"Daily loss: {daily_pnl_pct:.2f}%"
@@ -1096,7 +1190,8 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             compute_stop_levels(positions, signals_data, open_trades, strategy_params),
             open_trades,
             max_loss_pct=_ase.get("max_loss_pct", 4.0),
-            time_stop_days=_ase.get("loser_time_stop_days", 4)):
+            time_stop_days=_ase.get("loser_time_stop_days", 4),
+            active_entries_enabled=bool(strategy_params.get("active_entries_enabled"))):
         if _t["symbol"] not in _already:
             triggers.append(_t)
             _already.add(_t["symbol"])
@@ -1111,10 +1206,17 @@ def run_intraday_monitor(alpaca: AlpacaClient):
             if not pos:
                 continue
             qty = int(float(pos["qty"]))
+            if qty <= 0:
+                continue        # long exits only — never sell into (or grow) a short
 
+            # Deterministic exit ids (shared.alpaca_http): a concurrent monitor /
+            # guardian run re-issuing the same exit today gets an idempotent 422
+            # instead of a second sell.
             if action in ("STOP_LOSS_SELL", "HARD_STOP_SELL", "TIME_STOP_SELL"):
-                order_result = alpaca.place_order(symbol=sym, qty=qty, side="sell",
-                                   order_type="market", time_in_force="day")
+                order_result = alpaca.place_order(
+                    symbol=sym, qty=qty, side="sell", order_type="market",
+                    time_in_force="day",
+                    client_order_id=make_client_order_id("p1stop", sym, "sell"))
                 _reason = {"STOP_LOSS_SELL": "stop_loss",
                            "HARD_STOP_SELL": "active_max_loss",
                            "TIME_STOP_SELL": "active_time_stop"}[action]
@@ -1137,6 +1239,7 @@ def run_intraday_monitor(alpaca: AlpacaClient):
                     symbol=sym, qty=sell_qty, side="sell",
                     order_type="limit" if limit_price else "market",
                     limit_price=limit_price,
+                    client_order_id=make_client_order_id("p1tp", sym, "sell"),
                 )
                 log.info(f"  TAKE PROFIT: sold {sell_qty} of {qty} x {sym}")
                 from performance_tracker import find_open_trade, close_trade
@@ -1160,6 +1263,13 @@ def run_intraday_monitor(alpaca: AlpacaClient):
         bucket_map = portfolio_state.get("positions", {})
         for trim in compute_cap_trims(positions, equity, cfg_limits, bucket_map):
             sym, tq = trim["symbol"], trim["trim_qty"]
+            # `positions` was read before the stop exits above; re-read so a
+            # name already sold this cycle is never sold again into a short.
+            fresh = alpaca.get_position(sym)
+            held = int(float(fresh["qty"])) if fresh else 0
+            tq = min(int(tq), held)
+            if tq <= 0:
+                continue
             quote = alpaca.get_latest_quote(sym)
             bid = float(quote.get("quote", {}).get("bp", 0))
             limit_price = round(bid * 0.999, 2) if bid > 0 else None
@@ -1179,6 +1289,11 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     # Portfolio health
     from portfolio_manager import portfolio_health_check
     health = portfolio_health_check(account, positions)
+    if not eq_check["ok"]:
+        # Health alerts derive from the same equity read; on an uncorroborated
+        # read they would announce a phantom "KILL SWITCH" (log-only, but false).
+        log.warning("  Health alerts suppressed: equity read not corroborated this cycle")
+        health["alerts"] = []
     for alert in health.get("alerts", []):
         level = alert["level"]
         if level in ("CRITICAL", "EMERGENCY"):
@@ -1212,12 +1327,23 @@ def reconcile_positions(alpaca: AlpacaClient):
                               that filled after the confirmation window).
     """
     from shared.reconcile import (compute_drift, reconcile_log_to_broker,
-                                  is_open_trade)
+                                  is_open_trade, order_classes_from_orders)
     from shared.accounting import realized_pnl
 
     positions = alpaca.get_positions()
     pos_syms = [p.get("symbol") for p in positions if p.get("symbol")]
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
+
+    # Sleeve attribution for reconstructed lots, read off the broker's own
+    # client_order_id prefixes — a late-filled momentum order must stay a
+    # momentum lot, never become an "active" lot that gets -4%/4-day stops.
+    try:
+        recent = alpaca._get(f"{alpaca.base_url}/v2/orders",
+                             {"status": "closed", "limit": 500, "direction": "desc"})
+        order_classes = order_classes_from_orders(recent, P1_ORDER_CLASS_BY_PREFIX)
+    except Exception as e:
+        log.warning(f"  Reconciliation: order attribution unavailable ({e})")
+        order_classes = {}
 
     # Repair the audit trail to broker ground truth BEFORE auditing it: close
     # orphan lots, trim double-logged qty, log unlogged positions. Places NO
@@ -1226,6 +1352,7 @@ def reconcile_positions(alpaca: AlpacaClient):
     repaired, recon_actions = reconcile_log_to_broker(
         trade_log, positions,
         pnl_fn=lambda side, qty, entry, ex: realized_pnl(side, qty, entry, ex)["net_pnl"],
+        order_classes=order_classes,
     )
     if recon_actions:
         save_json(DATA_DIR / "trade_log.json", repaired)

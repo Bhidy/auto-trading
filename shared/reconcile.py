@@ -34,6 +34,27 @@ def _num(x):
         return None
 
 
+def _position_qty(p):
+    """SIGNED broker position quantity: negative for a short.
+
+    ``_num`` is magnitude-only (right for prices and lot sizes). Using it on a
+    broker position made a short indistinguishable from a long: P3's unintended
+    DDOG -14 short (an orphan stop fill, 2026-08-06) was re-logged as a 14-share
+    LONG on 2026-08-07 and reported in_sync=true every day for two months."""
+    try:
+        q = float(p.get("qty"))
+    except (TypeError, ValueError):
+        return None
+    if str(p.get("side", "")).lower() == "short" and q > 0:
+        q = -q
+    return q
+
+
+def _lot_sign(t):
+    """+1 for a long lot, -1 for a logged short lot."""
+    return -1.0 if str(t.get("side", "buy")).lower() in ("sell", "short", "sell_short") else 1.0
+
+
 def _qty_weighted_avg(trades):
     """Quantity-weighted average entry price across a symbol's open trades."""
     num = 0.0
@@ -89,8 +110,8 @@ def compute_drift(position_symbols, open_trade_symbols, positions=None,
         for sym in sorted(set(pos_by_sym) & set(log_by_sym)):
             p = pos_by_sym[sym]
             trades = log_by_sym[sym]
-            broker_qty = _num(p.get("qty"))
-            logged_qty = sum(_num(t.get("qty")) or 0.0 for t in trades)
+            broker_qty = _position_qty(p)
+            logged_qty = sum(_lot_sign(t) * (_num(t.get("qty")) or 0.0) for t in trades)
             if broker_qty is not None and abs(broker_qty - logged_qty) > qty_tol:
                 qty_drift.append({
                     "symbol": sym,
@@ -109,6 +130,10 @@ def compute_drift(position_symbols, open_trade_symbols, positions=None,
                     "drift_pct": round(abs(broker_avg - logged_avg) / logged_avg * 100, 3),
                 })
 
+    short_positions = sorted(
+        p.get("symbol") for p in (positions or [])
+        if p.get("symbol") and (_position_qty(p) or 0) < 0)
+
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "positions_held": len(pos),
@@ -117,6 +142,9 @@ def compute_drift(position_symbols, open_trade_symbols, positions=None,
         "unlogged_positions": unlogged,
         "qty_drift": qty_drift,
         "cost_basis_drift": cost_basis_drift,
+        # Every short a book holds. For a LONG-ONLY book (P2, P3, P1 with active
+        # entries off) any entry here is a defect the heartbeat must alert on.
+        "short_positions": short_positions,
         "in_sync": not orphan and not unlogged and not qty_drift and not cost_basis_drift,
     }
 
@@ -379,9 +407,14 @@ def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconcil
     return trade
 
 
-def _unlogged_lot(symbol, qty, entry_price, now_iso, reason):
-    """A fresh open lot reconstructed from a live broker position (real cost basis)."""
-    return {
+def _unlogged_lot(symbol, qty, entry_price, now_iso, reason, order_class=None):
+    """A fresh open lot reconstructed from a live broker position (real cost basis).
+
+    ``order_class`` carries the sleeve the broker order belonged to (recovered by
+    the caller from its deterministic client_order_id). Without it a late-filled
+    momentum/core lot looks like an ACTIVE trade and gets active-sleeve stops —
+    the 2026-07 incident that stopped out 7 of 13 momentum names in a week."""
+    lot = {
         "symbol": symbol,
         "side": "buy",
         "qty": round(float(qty), 6),
@@ -395,10 +428,35 @@ def _unlogged_lot(symbol, qty, entry_price, now_iso, reason):
         "pnl": None,
         "pnl_pct": None,
     }
+    if order_class:
+        lot["order_class"] = order_class
+    return lot
+
+
+def order_classes_from_orders(orders, prefix_map):
+    """{symbol: order_class} from the most recent FILLED buy per symbol, read off
+    its deterministic client_order_id prefix (``shared.alpaca_http``
+    ``make_client_order_id`` → ``<prefix>-<YYYYMMDD>-<SYM>-<side>``).
+
+    ``prefix_map`` maps a prefix to a sleeve, e.g. {"p1mom": "momentum_sleeve",
+    "p1core": "passive_core"}. Unmapped prefixes / foreign ids give no entry —
+    attribution is never guessed."""
+    latest = {}
+    for o in orders or []:
+        if o.get("side") != "buy" or o.get("status") not in ("filled", "partially_filled"):
+            continue
+        sym, coid = o.get("symbol"), o.get("client_order_id") or ""
+        when = o.get("filled_at") or o.get("submitted_at") or ""
+        if not sym or not coid:
+            continue
+        if sym not in latest or when > latest[sym][0]:
+            latest[sym] = (when, coid.split("-", 1)[0])
+    return {sym: prefix_map[pfx] for sym, (_, pfx) in latest.items() if pfx in prefix_map}
 
 
 def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
-                            exit_prices=None, pnl_fn=None, exit_reasons=None):
+                            exit_prices=None, pnl_fn=None, exit_reasons=None,
+                            order_classes=None):
     """Repair the OPEN trades in ``trade_log`` to match broker ``positions``
     (ground truth). Returns ``(new_log, actions)``. Places NO orders.
 
@@ -419,6 +477,9 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
     exit price is known (pass shared.accounting.realized_pnl for net-of-fee P&L).
     ``exit_reasons``: optional {symbol: exit_reason} (see
     ``exit_reasons_from_orders``) — recorded on real-exit closes only.
+    ``order_classes``: optional {symbol: order_class} (see
+    ``order_classes_from_orders``) — stamped on every reconstructed open lot so a
+    late fill keeps its sleeve.
     """
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
     exit_prices = exit_prices or {}
@@ -431,9 +492,9 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
         s = p.get("symbol")
         if not s:
             continue
-        q = _num(p.get("qty"))
+        q = _position_qty(p)
         broker[s] = {
-            "qty": q,  # None when the caller passes symbol-only positions
+            "qty": q,  # SIGNED (short < 0); None for symbol-only positions
             "avg": _num(p.get("avg_entry_price") or p.get("avg_price")),
         }
 
@@ -448,8 +509,11 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
     for sym, idxs in open_by_sym.items():
         b = broker.get(sym)
         logged_qty = sum(_num(log[i].get("qty")) or 0.0 for i in idxs)
-        # held = present at broker with a positive (or unknown) qty
-        held = b is not None and (b["qty"] is None or b["qty"] > 0)
+        # held = present at broker on the SAME side as the logged lots (or qty
+        # unknown). A broker short against logged long lots means the long is
+        # gone — those lots are orphans, never "in sync" by magnitude.
+        side = _lot_sign(log[idxs[0]])
+        held = b is not None and (b["qty"] is None or b["qty"] * side > 0)
 
         if not held:
             for i in idxs:
@@ -460,7 +524,7 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
                             "lots": len(idxs), "qty": round(logged_qty, 6)})
             continue
 
-        broker_qty = b["qty"]
+        broker_qty = abs(b["qty"]) if b["qty"] is not None else None
         if broker_qty is None or logged_qty <= 1e-9:
             continue  # held but qty not comparable -> symbol-level audit only
 
@@ -493,7 +557,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
         elif diff < -1e-6:
             touched.add(sym)
             log.append(_unlogged_lot(sym, -diff, b["avg"], now_iso,
-                                     reason="qty_drift_short"))
+                                     reason="qty_drift_short",
+                                     order_class=(order_classes or {}).get(sym)))
             actions.append({"action": "add_qty", "symbol": sym,
                             "added_qty": round(-diff, 6), "broker_qty": broker_qty})
 
@@ -501,7 +566,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
     for sym, b in broker.items():
         if sym not in open_by_sym and (b["qty"] or 0) > 0:
             log.append(_unlogged_lot(sym, b["qty"], b["avg"], now_iso,
-                                     reason="unlogged_position"))
+                                     reason="unlogged_position",
+                                     order_class=(order_classes or {}).get(sym)))
             actions.append({"action": "add_unlogged", "symbol": sym,
                             "qty": round(b["qty"], 6)})
 

@@ -101,3 +101,87 @@ def test_healthy_drawdown_does_not_halt(tmp_path, monkeypatch, limits):
     assert alpaca.closed_all is False
     state = json.loads((tmp_path / "portfolio_state.json").read_text())
     assert state["halted"] is False
+
+
+# ---------------------------------------------------------------------------
+# Phantom-read drills (forensic audit 2026-10-03): on 2026-07-07 Alpaca returned
+# equity == cash with every position priced at $0. A kill switch must NOT act on
+# such a read — and must STILL act on a genuine, corroborated crash.
+# ---------------------------------------------------------------------------
+
+class _PricedAlpaca(_DrillAlpaca):
+    """Broker stub whose account snapshot can disagree with market data."""
+
+    def __init__(self, equity, cash, positions, prices, **kw):
+        super().__init__(equity=equity, positions=positions, **kw)
+        self._cash = float(cash)
+        self._prices = prices
+        self.orders = []
+
+    def get_account(self):
+        return {"equity": self._equity, "last_equity": self._last_equity, "cash": self._cash}
+
+    def get_latest_trade(self, sym):
+        return {"trade": {"p": self._prices[sym]}}
+
+    def get_position(self, sym):
+        return next((p for p in self._positions if p["symbol"] == sym), None)
+
+    def place_order(self, **k):
+        self.orders.append(k)
+        return {"id": "x"}
+
+
+_BOOK = [{"symbol": "NVDA", "qty": "100", "side": "long", "avg_entry_price": "400",
+          "market_value": "0", "current_price": "0"},
+         {"symbol": "XOM", "qty": "300", "side": "long", "avg_entry_price": "110",
+          "market_value": "0", "current_price": "0"}]
+_PRICES = {"NVDA": 400.0, "XOM": 110.0}            # book = $73,000
+
+
+def test_monitor_ignores_phantom_equity_equal_to_cash(tmp_path, monkeypatch, limits):
+    _seed(tmp_path, monkeypatch, _base_state(), limits)
+    alpaca = _PricedAlpaca(equity=26_060.51, cash=26_060.51, positions=_BOOK, prices=_PRICES)
+
+    ar.run_intraday_monitor(alpaca)
+
+    assert alpaca.closed_all is False, "a phantom read must never liquidate"
+    state = json.loads((tmp_path / "portfolio_state.json").read_text())
+    assert state["halted"] is False, "a phantom read must never latch a halt"
+
+
+def test_monitor_still_liquidates_a_corroborated_crash(tmp_path, monkeypatch, limits):
+    _seed(tmp_path, monkeypatch, _base_state(), limits)
+    crashed = {"NVDA": 300.0, "XOM": 80.0}          # book really fell to $54,000
+    alpaca = _PricedAlpaca(equity=26_000 + 54_000, cash=26_000, positions=_BOOK,
+                           prices=crashed)
+
+    ar.run_intraday_monitor(alpaca)
+
+    assert alpaca.closed_all is True
+    state = json.loads((tmp_path / "portfolio_state.json").read_text())
+    assert state["halted"] is True and state["halt_evidence"]["independent_equity"] == 80_000.0
+
+
+def test_trading_session_phantom_read_latches_nothing(tmp_path, monkeypatch, limits):
+    _seed(tmp_path, monkeypatch, _base_state(), limits)
+    alpaca = _PricedAlpaca(equity=26_060.51, cash=26_060.51, positions=_BOOK, prices=_PRICES)
+
+    ar.run_trading_session(alpaca)
+
+    state = json.loads((tmp_path / "portfolio_state.json").read_text())
+    assert state["halted"] is False and alpaca.orders == []
+
+
+def test_weekly_loss_breach_halts_seven_days_and_expires(tmp_path, monkeypatch, limits):
+    state = _base_state()
+    state.update(day_start_equity=91_500.0, equity=91_500.0, week_start_equity=100_000.0)
+    _seed(tmp_path, monkeypatch, state, limits)
+    alpaca = _PricedAlpaca(equity=91_000.0, cash=18_000.0, positions=_BOOK, prices=_PRICES)
+
+    ar.run_trading_session(alpaca)
+
+    st = json.loads((tmp_path / "portfolio_state.json").read_text())
+    assert st["halted"] is True and "Weekly loss" in st["halt_reason"]
+    assert st["halt_until"], "a weekly halt must expire, never latch permanently"
+    assert alpaca.orders == []

@@ -1,0 +1,36 @@
+{
+  "experiment_id": "forensic-audit-2026-10-03",
+  "purpose": "Forensic audit + alpha validation of P1/P2/P3 (see docs/audits/FORENSIC_AUDIT_2026-10-03.md). All results are PAPER / SIMULATION; none is a live track record.",
+  "code_commit_audited": "daa6eaf0 (origin/main at audit start; engine code identical to 19148d9 of 2026-07-04 — every later commit was a bot state write)",
+  "how_to_reproduce": "Run from the repo root with config/portfolios.json present (paper keys, read-only GETs). Working dir /tmp/audit_2026_10_03 (create it; broker_forensics/fetch_broker.py writes /tmp/audit_2026_10_03/broker). Order: broker_forensics/fetch_broker.py -> roundtrips.py -> expectancy.py, perf.py, attrib.py; momentum_oos/fetch.py -> task1_oos.py, task2_robust.py; signal_ic/extract.py -> prices.py -> p1.py, p3.py, robust.py; p2_forensics/*. Research tier T2 (offline); never imported by the trading path.",
+  "datasets": {
+    "broker_truth": "Alpaca paper accounts PA3HULQQ8OOH / PA38R564MIS7 / PA3M3WI7C58W: /v2/account, /v2/positions, /v2/account/portfolio/history (1D, period 1A; timestamps are 00:00 UTC = prior trading day ET), all FILL activities, all orders. Pulled 2026-10-03.",
+    "benchmark": "SPY, QQQ, IWM, RSP, AGG, BIL daily bars, adjustment=all, IEX feed, 2026-05-01..2026-10-02",
+    "momentum_history": "Alpaca SIP daily bars 2017-03..2026-10 for config/universe_wide.json (115 names); signals on split-adjusted closes, P&L on fully adjusted prices; GE 2021 reverse split and GE/RTX spin-off adjustment errors corrected (see artifacts/t2_main.out)",
+    "signal_snapshots": "Point-in-time data/signals.json, event-driven-bot/data/signals.json and news_signals.json reconstructed from git history: first commit >= 13:30 UTC whose internal timestamp is that day; 89 P1 days, 89 P3 days, 27 news days; entry next-day open",
+    "p2_feed": "political-copy-bot journals, processed/skip ledgers and Actions logs 2026-07-06..2026-10-02"
+  },
+  "windows": {
+    "live_paper": "2026-05-26/27 .. 2026-10-02 (90 trading days)",
+    "momentum_true_oos": "2026-07-06 open .. 2026-10-02 close (spec frozen 2026-07-04)",
+    "momentum_robustness": "2017-03-01 .. 2026-10-02 and 2019-01-02 .. 2026-10-02"
+  },
+  "cost_assumptions": "5 bps per side base; 10/20 bps and 2x/4x shocks reported; cash earns BIL",
+  "multiple_testing": {
+    "momentum_trials_N": 262,
+    "composition": "180 parameter-surface configs (k x lookback x max_per_sector x vol_target) + 60 data/trial_ledger.json entries + 22 prior momentum variants in scripts/research/high_return_backtest.py",
+    "deflated_sharpe_excess_vs_spy": 0.26,
+    "deflated_sharpe_raw": 0.984,
+    "pbo_raw": 0.20,
+    "pbo_excess": 0.09
+  },
+  "random_seed": "none used (deterministic)",
+  "artifacts": {
+    "perf_summary.json": "broker-verified return/beta/TE/IR/maxDD per book vs SPY",
+    "attrib.json": "daily excess-return decomposition: selection / cash-beta drag / trading residual",
+    "roundtrips.json": "FIFO round trips from broker fills (reconciles exactly to broker positions) joined to trade-log exit reasons",
+    "task2_main_2017.json, task2_2019-01-02.json, t1_main.out, t2_main.out": "momentum true-OOS and robustness/sensitivity/DSR/PBO",
+    "res_p1.json, res_p3.json, p1_out.txt, p3_out.txt": "live point-in-time signal IC / quintiles / factor IC",
+    "copy_quality.json, attrib_daily.json, feed_history.json": "P2 copy-sleeve quality, attribution and disclosure-feed health"
+  }
+}

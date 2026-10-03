@@ -156,8 +156,13 @@ def compute_sleeve_orders(equity, cash, positions, cfg, *, sleeve_symbols=None):
     band = equity * float(cfg.get("rebalance_band_pct", 2.0)) / 100.0
     max_orders = int(cfg.get("max_orders_per_run", 3))
 
-    val_by = {p.get("symbol"): abs(float(p.get("market_value", 0) or 0))
-              for p in (positions or []) if p.get("symbol")}
+    # Long holdings only: abs(market_value) made a short look like a long to
+    # trim, and the "trim" SELL would have grown the short.
+    val_by = {p.get("symbol"): float(p.get("market_value", 0) or 0)
+              for p in (positions or [])
+              if p.get("symbol") and p.get("side") != "short"
+              and float(p.get("qty", 1) or 0) > 0
+              and float(p.get("market_value", 0) or 0) >= 0}
     investable = max(0.0, cash - reserve)
 
     buys, sells = [], []
@@ -355,6 +360,12 @@ class AlpacaClient:
             data["client_order_id"] = client_order_id
         return self.post("/v2/orders", data)
 
+    def cancel_order(self, order_id: str) -> dict:
+        return self.delete(f"/v2/orders/{order_id}")
+
+    def close_position(self, symbol: str) -> dict:
+        return self.delete(f"/v2/positions/{symbol}")
+
     def get_order(self, order_id: str) -> dict:
         return self.get(f"/v2/orders/{order_id}")
 
@@ -537,6 +548,40 @@ class RiskManager:
             if not all(c.isalpha() or c == "." for c in clean):
                 return None
         return clean
+
+
+_CLOSED_LOT = {"closed", "closed_reconciled", "exit_marker"}
+
+
+def position_age_days(trade_log, symbol, now=None):
+    """Age in days of the CURRENT holding: the oldest buy lot that is still OPEN
+    and did not explicitly fail to fill.
+
+    The old rule took the oldest buy ever logged for the symbol — including
+    closed lots and orders that never filled — so any re-copy inherited months of
+    "age" and was time-exited at once: PG was bought 2026-09-21 14:25:07 and
+    market-sold 2 seconds later as "116 days old" (an unfilled May order).
+    """
+    now = now or datetime.now()
+    earliest = None
+    for t in trade_log or []:
+        if t.get("symbol") != symbol or t.get("side") != "buy" or not t.get("timestamp"):
+            continue
+        if t.get("status") in _CLOSED_LOT:
+            continue
+        # A lot that explicitly never filled (pending/cancelled/expired order)
+        # is not a holding. Legacy rows that predate order_status count as filled.
+        ostat = t.get("order_status")
+        if (ostat and ostat not in ("filled", "partially_filled")
+                and float(t.get("filled_qty") or 0) <= 0):
+            continue
+        try:
+            ts = datetime.fromisoformat(t["timestamp"]).replace(tzinfo=None)
+        except (ValueError, TypeError):
+            continue
+        if earliest is None or ts < earliest:
+            earliest = ts
+    return None if earliest is None else (now - earliest).days
 
 
 class PoliticianBot:
@@ -823,6 +868,11 @@ class PoliticianBot:
 
     def _execute_buy(self, trade: dict, ticker: str, equity: float, cash: float,
                      account: dict, cluster_counts: dict = None) -> dict | None:
+        blocked = getattr(self, "_entries_blocked", None)
+        if blocked:
+            log.warning(f"::warning::P2 copy BUY {ticker} blocked: {blocked}")
+            self._record_skip(trade, f"entries_blocked: {blocked}")
+            return None
         if not self.risk.check_duplicate_trade(ticker):
             return None
 
@@ -1038,23 +1088,9 @@ class PoliticianBot:
             return None
 
     def _position_age_days(self, symbol: str):
-        """Age (in days) of the oldest open buy for `symbol`, derived from the
-        trade log. Returns None if no buy record exists (predates logging)."""
-        buys = [t for t in self.risk.trade_log
-                if t.get("symbol") == symbol and t.get("side") == "buy" and t.get("timestamp")]
-        if not buys:
-            return None
-        earliest = None
-        for t in buys:
-            try:
-                ts = datetime.fromisoformat(t["timestamp"])
-            except (ValueError, TypeError):
-                continue
-            if earliest is None or ts < earliest:
-                earliest = ts
-        if earliest is None:
-            return None
-        return (datetime.now() - earliest).days
+        """Age (in days) of the CURRENT holding of `symbol` (see
+        ``position_age_days``). None if no open filled lot is logged."""
+        return position_age_days(self.risk.trade_log, symbol)
 
     def check_stops(self):
         sell_cfg = self.watchlist_cfg.get("sell_logic", {})
@@ -1299,6 +1335,8 @@ class PoliticianBot:
         cash = float(account.get("cash", 0))
         positions = self.alpaca.get_positions()
         orders = compute_sleeve_orders(equity, cash, positions, cfg)
+        if getattr(self, "_entries_blocked", None):
+            orders = [o for o in orders if o.get("side") != "buy"]   # trims only
         if not orders:
             log.info("Benchmark sleeve: balanced, no rebalance needed")
             return []
@@ -1364,9 +1402,15 @@ class PoliticianBot:
         log.info("=" * 50)
 
         account = self.alpaca.get_account()
+        # New BUYS are blocked by a kill-switch breach or a human quarantine
+        # (config/strategy_controls.json); politician SELL copies, stops and the
+        # rest of the cycle still run — exits are never gated (audit 2026-10-03).
+        from shared.strategy_controls import entries_enabled
+        _ok, _why = entries_enabled("portfolio_2")
+        self._entries_blocked = None if _ok else _why
         if not self.risk.check_kill_switch(account):
-            log.critical("Kill switch active. Halting.")
-            return
+            log.critical("Kill switch breached — no new entries; exits still run.")
+            self._entries_blocked = "kill switch breached"
 
         # Preflight self-check — fail closed before scanning/placing any order.
         from shared.preflight import run_preflight
@@ -1482,11 +1526,14 @@ class PoliticianBot:
             log.info("Market closed — skipping monitor")
             return
         account = self.alpaca.get_account()
+        # Protective exits are NEVER gated by the kill switch: it previously
+        # returned here and skipped check_stops exactly when losses were largest.
         if not self.risk.check_kill_switch(account):
-            log.critical("Kill switch active — liquidating if needed")
-            return
+            log.critical("Kill switch breached — no new entries; protective exits still enforced")
         if not self.risk.check_daily_loss(account):
             log.warning("Daily loss limit — no new trades until tomorrow")
+        from shared.order_hygiene import enforce_exit_hygiene
+        enforce_exit_hygiene(self.alpaca, log, long_only=True, label="P2")
         self.check_stops()
         self.save_portfolio_state()
         self.reconcile_orders()

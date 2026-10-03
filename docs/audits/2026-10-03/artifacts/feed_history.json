@@ -1,0 +1,3324 @@
+{
+ "skips": [
+  {
+   "commit_ts": "2026-07-06T14:28:08Z",
+   "label": "Guardian: catch-up self-heal 2026-07-06 14:28Z",
+   "ts": "2026-07-06T14:28:06.243157",
+   "evaluated": 3,
+   "copied": 0,
+   "skipped": 3,
+   "skips": [
+    {
+     "ticker": "AMGN",
+     "politician": "David Taylor",
+     "transaction_date": "06/05/2026",
+     "disclosure_lag_days": 31,
+     "reason": "stale_disclosure_31d"
+    },
+    {
+     "ticker": "T",
+     "politician": "David Taylor",
+     "transaction_date": "06/05/2026",
+     "disclosure_lag_days": 31,
+     "reason": "stale_disclosure_31d"
+    },
+    {
+     "ticker": "KR",
+     "politician": "David Taylor",
+     "transaction_date": "06/05/2026",
+     "disclosure_lag_days": 31,
+     "reason": "stale_disclosure_31d"
+    }
+   ]
+  },
+  {
+   "commit_ts": "2026-07-06T14:47:31Z",
+   "label": "Guardian: catch-up self-heal 2026-07-06 14:47Z",
+   "ts": "2026-07-06T14:47:29.965182",
+   "evaluated": 3,
+   "copied": 0,
+   "skipped": 3,
+   "skips": [
+    {
+     "ticker": "AMGN",
+     "politician": "David Taylor",
+     "transaction_date": "06/05/2026",
+     "disclosure_lag_days": 31,
+     "reason": "stale_disclosure_31d"
+    },
+    {
+     "ticker": "T",
+     "politician": "David Taylor",
+     "transaction_date": "06/05/2026",
+     "disclosure_lag_days": 31,
+     "reason": "stale_disclosure_31d"
+    },
+    {
+     "ticker": "KR",
+     "politician": "David Taylor",
+     "transaction_date": "06/05/2026",
+     "disclosure_lag_days": 31,
+     "reason": "stale_disclosure_31d"
+    }
+   ]
+  },
+  {
+   "commit_ts": "2026-07-07T14:24:28Z",
+   "label": "Guardian: catch-up self-heal 2026-07-07 14:24Z",
+   "ts": "2026-07-07T14:24:23.930987",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-08T14:24:27Z",
+   "label": "Guardian: catch-up self-heal 2026-07-08 14:24Z",
+   "ts": "2026-07-08T14:24:26.393445",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-08T14:42:54Z",
+   "label": "Guardian: catch-up self-heal 2026-07-08 14:42Z",
+   "ts": "2026-07-08T14:42:52.333624",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-09T14:24:34Z",
+   "label": "Guardian: catch-up self-heal 2026-07-09 14:24Z",
+   "ts": "2026-07-09T14:24:32.741697",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-09T14:43:19Z",
+   "label": "Guardian: catch-up self-heal 2026-07-09 14:43Z",
+   "ts": "2026-07-09T14:43:16.819187",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-10T14:24:27Z",
+   "label": "Guardian: catch-up self-heal 2026-07-10 14:24Z",
+   "ts": "2026-07-10T14:24:25.790200",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-10T14:43:03Z",
+   "label": "Guardian: catch-up self-heal 2026-07-10 14:43Z",
+   "ts": "2026-07-10T14:43:02.295229",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-13T14:24:31Z",
+   "label": "Guardian: catch-up self-heal 2026-07-13 14:24Z",
+   "ts": "2026-07-13T14:24:30.172582",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-13T14:43:52Z",
+   "label": "Guardian: catch-up self-heal 2026-07-13 14:43Z",
+   "ts": "2026-07-13T14:43:50.739085",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-14T14:24:14Z",
+   "label": "Guardian: catch-up self-heal 2026-07-14 14:24Z",
+   "ts": "2026-07-14T14:24:13.731241",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-14T14:42:37Z",
+   "label": "Guardian: catch-up self-heal 2026-07-14 14:42Z",
+   "ts": "2026-07-14T14:42:37.103168",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-15T14:24:15Z",
+   "label": "Guardian: catch-up self-heal 2026-07-15 14:24Z",
+   "ts": "2026-07-15T14:24:14.628692",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-15T14:42:57Z",
+   "label": "Guardian: catch-up self-heal 2026-07-15 14:42Z",
+   "ts": "2026-07-15T14:42:56.269417",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-16T14:24:12Z",
+   "label": "Guardian: catch-up self-heal 2026-07-16 14:24Z",
+   "ts": "2026-07-16T14:24:12.024797",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-16T14:42:49Z",
+   "label": "Guardian: catch-up self-heal 2026-07-16 14:42Z",
+   "ts": "2026-07-16T14:42:48.819093",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-17T14:24:40Z",
+   "label": "Guardian: catch-up self-heal 2026-07-17 14:24Z",
+   "ts": "2026-07-17T14:24:37.769681",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-17T14:43:24Z",
+   "label": "Guardian: catch-up self-heal 2026-07-17 14:43Z",
+   "ts": "2026-07-17T14:43:22.489166",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-20T14:25:04Z",
+   "label": "Guardian: catch-up self-heal 2026-07-20 14:25Z",
+   "ts": "2026-07-20T14:25:02.291085",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-20T14:44:25Z",
+   "label": "Guardian: catch-up self-heal 2026-07-20 14:44Z",
+   "ts": "2026-07-20T14:44:23.215284",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-21T14:24:31Z",
+   "label": "Guardian: catch-up self-heal 2026-07-21 14:24Z",
+   "ts": "2026-07-21T14:24:30.272101",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-21T14:43:10Z",
+   "label": "Guardian: catch-up self-heal 2026-07-21 14:43Z",
+   "ts": "2026-07-21T14:43:07.748700",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-22T14:24:19Z",
+   "label": "Guardian: catch-up self-heal 2026-07-22 14:24Z",
+   "ts": "2026-07-22T14:24:18.276214",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-22T14:42:56Z",
+   "label": "Guardian: catch-up self-heal 2026-07-22 14:42Z",
+   "ts": "2026-07-22T14:42:55.611167",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-23T14:24:18Z",
+   "label": "Guardian: catch-up self-heal 2026-07-23 14:24Z",
+   "ts": "2026-07-23T14:24:17.875893",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-23T14:43:10Z",
+   "label": "Guardian: catch-up self-heal 2026-07-23 14:43Z",
+   "ts": "2026-07-23T14:43:07.095897",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-24T14:24:22Z",
+   "label": "Guardian: catch-up self-heal 2026-07-24 14:24Z",
+   "ts": "2026-07-24T14:24:20.929803",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-24T14:42:51Z",
+   "label": "Guardian: catch-up self-heal 2026-07-24 14:42Z",
+   "ts": "2026-07-24T14:42:50.214067",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-27T14:24:33Z",
+   "label": "Guardian: catch-up self-heal 2026-07-27 14:24Z",
+   "ts": "2026-07-27T14:24:31.625145",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-27T14:43:47Z",
+   "label": "Guardian: catch-up self-heal 2026-07-27 14:43Z",
+   "ts": "2026-07-27T14:43:46.126682",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-28T14:24:34Z",
+   "label": "Guardian: catch-up self-heal 2026-07-28 14:24Z",
+   "ts": "2026-07-28T14:24:32.018679",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-28T14:43:18Z",
+   "label": "Guardian: catch-up self-heal 2026-07-28 14:43Z",
+   "ts": "2026-07-28T14:43:15.688125",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-29T14:24:27Z",
+   "label": "Guardian: catch-up self-heal 2026-07-29 14:24Z",
+   "ts": "2026-07-29T14:24:24.892978",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-29T14:43:06Z",
+   "label": "Guardian: catch-up self-heal 2026-07-29 14:43Z",
+   "ts": "2026-07-29T14:43:04.540035",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-30T14:24:40Z",
+   "label": "Guardian: catch-up self-heal 2026-07-30 14:24Z",
+   "ts": "2026-07-30T14:24:37.829832",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-30T14:43:27Z",
+   "label": "Guardian: catch-up self-heal 2026-07-30 14:43Z",
+   "ts": "2026-07-30T14:43:24.646830",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-31T14:24:39Z",
+   "label": "Guardian: catch-up self-heal 2026-07-31 14:24Z",
+   "ts": "2026-07-31T14:24:36.540494",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-07-31T14:43:27Z",
+   "label": "Guardian: catch-up self-heal 2026-07-31 14:43Z",
+   "ts": "2026-07-31T14:43:23.924243",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-03T14:25:36Z",
+   "label": "Guardian: catch-up self-heal 2026-08-03 14:25Z",
+   "ts": "2026-08-03T14:25:34.420551",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-03T14:44:45Z",
+   "label": "Guardian: catch-up self-heal 2026-08-03 14:44Z",
+   "ts": "2026-08-03T14:44:44.347516",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-04T14:24:31Z",
+   "label": "Guardian: catch-up self-heal 2026-08-04 14:24Z",
+   "ts": "2026-08-04T14:24:30.516593",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-04T14:43:04Z",
+   "label": "Guardian: catch-up self-heal 2026-08-04 14:43Z",
+   "ts": "2026-08-04T14:43:03.606029",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-05T14:24:24Z",
+   "label": "Guardian: catch-up self-heal 2026-08-05 14:24Z",
+   "ts": "2026-08-05T14:24:23.268467",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-05T14:42:40Z",
+   "label": "Guardian: catch-up self-heal 2026-08-05 14:42Z",
+   "ts": "2026-08-05T14:42:39.907730",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-06T14:24:22Z",
+   "label": "Guardian: catch-up self-heal 2026-08-06 14:24Z",
+   "ts": "2026-08-06T14:24:21.223013",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-06T14:43:09Z",
+   "label": "Guardian: catch-up self-heal 2026-08-06 14:43Z",
+   "ts": "2026-08-06T14:43:08.311122",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-07T14:24:29Z",
+   "label": "Guardian: catch-up self-heal 2026-08-07 14:24Z",
+   "ts": "2026-08-07T14:24:28.461722",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-07T14:43:23Z",
+   "label": "Guardian: catch-up self-heal 2026-08-07 14:43Z",
+   "ts": "2026-08-07T14:43:21.576077",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-10T14:25:18Z",
+   "label": "Guardian: catch-up self-heal 2026-08-10 14:25Z",
+   "ts": "2026-08-10T14:25:11.991117",
+   "evaluated": 2,
+   "copied": 2,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-10T14:44:50Z",
+   "label": "Guardian: catch-up self-heal 2026-08-10 14:44Z",
+   "ts": "2026-08-10T14:44:41.898548",
+   "evaluated": 2,
+   "copied": 2,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-11T14:24:28Z",
+   "label": "Guardian: catch-up self-heal 2026-08-11 14:24Z",
+   "ts": "2026-08-11T14:24:26.368542",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-11T14:43:35Z",
+   "label": "Guardian: catch-up self-heal 2026-08-11 14:43Z",
+   "ts": "2026-08-11T14:43:33.105658",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-12T14:24:32Z",
+   "label": "Guardian: catch-up self-heal 2026-08-12 14:24Z",
+   "ts": "2026-08-12T14:24:26.269727",
+   "evaluated": 1,
+   "copied": 1,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-12T14:43:24Z",
+   "label": "Guardian: catch-up self-heal 2026-08-12 14:43Z",
+   "ts": "2026-08-12T14:43:19.588312",
+   "evaluated": 1,
+   "copied": 1,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-13T14:24:23Z",
+   "label": "Guardian: catch-up self-heal 2026-08-13 14:24Z",
+   "ts": "2026-08-13T14:24:21.841845",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-14T14:24:23Z",
+   "label": "Guardian: catch-up self-heal 2026-08-14 14:24Z",
+   "ts": "2026-08-14T14:24:20.780930",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-14T14:42:50Z",
+   "label": "Guardian: catch-up self-heal 2026-08-14 14:42Z",
+   "ts": "2026-08-14T14:42:49.016257",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-17T14:25:01Z",
+   "label": "Guardian: catch-up self-heal 2026-08-17 14:25Z",
+   "ts": "2026-08-17T14:24:59.445289",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-17T14:43:45Z",
+   "label": "Guardian: catch-up self-heal 2026-08-17 14:43Z",
+   "ts": "2026-08-17T14:43:44.758692",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-18T14:24:13Z",
+   "label": "Guardian: catch-up self-heal 2026-08-18 14:24Z",
+   "ts": "2026-08-18T14:24:11.763476",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-18T14:42:48Z",
+   "label": "Guardian: catch-up self-heal 2026-08-18 14:42Z",
+   "ts": "2026-08-18T14:42:45.976180",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-19T14:24:16Z",
+   "label": "Guardian: catch-up self-heal 2026-08-19 14:24Z",
+   "ts": "2026-08-19T14:24:15.384415",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-19T14:43:04Z",
+   "label": "Guardian: catch-up self-heal 2026-08-19 14:43Z",
+   "ts": "2026-08-19T14:43:02.244822",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-20T14:24:12Z",
+   "label": "Guardian: catch-up self-heal 2026-08-20 14:24Z",
+   "ts": "2026-08-20T14:24:11.261161",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-20T14:42:35Z",
+   "label": "Guardian: catch-up self-heal 2026-08-20 14:42Z",
+   "ts": "2026-08-20T14:42:34.037007",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-21T14:24:27Z",
+   "label": "Guardian: catch-up self-heal 2026-08-21 14:24Z",
+   "ts": "2026-08-21T14:24:25.300572",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-21T14:43:04Z",
+   "label": "Guardian: catch-up self-heal 2026-08-21 14:43Z",
+   "ts": "2026-08-21T14:43:02.554425",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-24T14:24:49Z",
+   "label": "Guardian: catch-up self-heal 2026-08-24 14:24Z",
+   "ts": "2026-08-24T14:24:45.796069",
+   "evaluated": 1,
+   "copied": 1,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-24T14:44:28Z",
+   "label": "Guardian: catch-up self-heal 2026-08-24 14:44Z",
+   "ts": "2026-08-24T14:44:23.311319",
+   "evaluated": 1,
+   "copied": 1,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-25T14:24:34Z",
+   "label": "Guardian: catch-up self-heal 2026-08-25 14:24Z",
+   "ts": "2026-08-25T14:24:31.995859",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-25T14:43:17Z",
+   "label": "Guardian: catch-up self-heal 2026-08-25 14:43Z",
+   "ts": "2026-08-25T14:43:16.910416",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-26T14:24:37Z",
+   "label": "Guardian: catch-up self-heal 2026-08-26 14:24Z",
+   "ts": "2026-08-26T14:24:34.771753",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-26T14:43:29Z",
+   "label": "Guardian: catch-up self-heal 2026-08-26 14:43Z",
+   "ts": "2026-08-26T14:43:25.598393",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-27T14:24:25Z",
+   "label": "Guardian: catch-up self-heal 2026-08-27 14:24Z",
+   "ts": "2026-08-27T14:24:22.691122",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-27T14:43:03Z",
+   "label": "Guardian: catch-up self-heal 2026-08-27 14:43Z",
+   "ts": "2026-08-27T14:43:00.906444",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-28T14:24:24Z",
+   "label": "Guardian: catch-up self-heal 2026-08-28 14:24Z",
+   "ts": "2026-08-28T14:24:22.950891",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-28T14:42:56Z",
+   "label": "Guardian: catch-up self-heal 2026-08-28 14:42Z",
+   "ts": "2026-08-28T14:42:54.412934",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-31T14:25:29Z",
+   "label": "Guardian: catch-up self-heal 2026-08-31 14:25Z",
+   "ts": "2026-08-31T14:25:24.328780",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-08-31T14:44:19Z",
+   "label": "Guardian: catch-up self-heal 2026-08-31 14:44Z",
+   "ts": "2026-08-31T14:44:18.073216",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-01T14:24:21Z",
+   "label": "Guardian: catch-up self-heal 2026-09-01 14:24Z",
+   "ts": "2026-09-01T14:24:20.605694",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-01T14:42:53Z",
+   "label": "Guardian: catch-up self-heal 2026-09-01 14:42Z",
+   "ts": "2026-09-01T14:42:51.570707",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-02T14:24:15Z",
+   "label": "Guardian: catch-up self-heal 2026-09-02 14:24Z",
+   "ts": "2026-09-02T14:24:13.872157",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-02T14:43:13Z",
+   "label": "Guardian: catch-up self-heal 2026-09-02 14:43Z",
+   "ts": "2026-09-02T14:43:10.719337",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-03T14:24:28Z",
+   "label": "Guardian: catch-up self-heal 2026-09-03 14:24Z",
+   "ts": "2026-09-03T14:24:26.705057",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-03T14:43:01Z",
+   "label": "Guardian: catch-up self-heal 2026-09-03 14:43Z",
+   "ts": "2026-09-03T14:42:59.180228",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-04T14:24:22Z",
+   "label": "Guardian: catch-up self-heal 2026-09-04 14:24Z",
+   "ts": "2026-09-04T14:24:19.990500",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-04T14:43:07Z",
+   "label": "Guardian: catch-up self-heal 2026-09-04 14:43Z",
+   "ts": "2026-09-04T14:43:05.393741",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-08T14:24:25Z",
+   "label": "Guardian: catch-up self-heal 2026-09-08 14:24Z",
+   "ts": "2026-09-08T14:24:23.141332",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-08T14:43:12Z",
+   "label": "Guardian: catch-up self-heal 2026-09-08 14:43Z",
+   "ts": "2026-09-08T14:43:10.678338",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-09T14:24:32Z",
+   "label": "Guardian: catch-up self-heal 2026-09-09 14:24Z",
+   "ts": "2026-09-09T14:24:30.204050",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-09T14:43:21Z",
+   "label": "Guardian: catch-up self-heal 2026-09-09 14:43Z",
+   "ts": "2026-09-09T14:43:18.910021",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-10T14:25:15Z",
+   "label": "Guardian: catch-up self-heal 2026-09-10 14:25Z",
+   "ts": "2026-09-10T14:25:12.707416",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-10T14:44:08Z",
+   "label": "Guardian: catch-up self-heal 2026-09-10 14:44Z",
+   "ts": "2026-09-10T14:44:06.497292",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-11T14:24:33Z",
+   "label": "Guardian: catch-up self-heal 2026-09-11 14:24Z",
+   "ts": "2026-09-11T14:24:31.398414",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-11T14:43:08Z",
+   "label": "Guardian: catch-up self-heal 2026-09-11 14:43Z",
+   "ts": "2026-09-11T14:43:07.220145",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-14T14:24:49Z",
+   "label": "Guardian: catch-up self-heal 2026-09-14 14:24Z",
+   "ts": "2026-09-14T14:24:48.468194",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-14T14:44:19Z",
+   "label": "Guardian: catch-up self-heal 2026-09-14 14:44Z",
+   "ts": "2026-09-14T14:44:16.690000",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-15T14:24:08Z",
+   "label": "Guardian: catch-up self-heal 2026-09-15 14:24Z",
+   "ts": "2026-09-15T14:24:07.200137",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-15T14:42:33Z",
+   "label": "Guardian: catch-up self-heal 2026-09-15 14:42Z",
+   "ts": "2026-09-15T14:42:32.492267",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-16T14:24:23Z",
+   "label": "Guardian: catch-up self-heal 2026-09-16 14:24Z",
+   "ts": "2026-09-16T14:24:22.320317",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-16T14:42:45Z",
+   "label": "Guardian: catch-up self-heal 2026-09-16 14:42Z",
+   "ts": "2026-09-16T14:42:44.428276",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-17T14:24:49Z",
+   "label": "Guardian: catch-up self-heal 2026-09-17 14:24Z",
+   "ts": "2026-09-17T14:24:47.493774",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-17T14:43:43Z",
+   "label": "Guardian: catch-up self-heal 2026-09-17 14:43Z",
+   "ts": "2026-09-17T14:43:40.245639",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-18T14:24:19Z",
+   "label": "Guardian: catch-up self-heal 2026-09-18 14:24Z",
+   "ts": "2026-09-18T14:24:18.774836",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-18T14:42:58Z",
+   "label": "Guardian: catch-up self-heal 2026-09-18 14:42Z",
+   "ts": "2026-09-18T14:42:56.084852",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-21T14:25:11Z",
+   "label": "Guardian: catch-up self-heal 2026-09-21 14:25Z",
+   "ts": "2026-09-21T14:25:04.153185",
+   "evaluated": 1,
+   "copied": 1,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-21T14:44:41Z",
+   "label": "Guardian: catch-up self-heal 2026-09-21 14:44Z",
+   "ts": "2026-09-21T14:44:37.305217",
+   "evaluated": 1,
+   "copied": 1,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-22T14:24:29Z",
+   "label": "Guardian: catch-up self-heal 2026-09-22 14:24Z",
+   "ts": "2026-09-22T14:24:27.778334",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-22T14:43:40Z",
+   "label": "Guardian: catch-up self-heal 2026-09-22 14:43Z",
+   "ts": "2026-09-22T14:43:37.992530",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-23T14:24:25Z",
+   "label": "Guardian: catch-up self-heal 2026-09-23 14:24Z",
+   "ts": "2026-09-23T14:24:22.799495",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-23T14:43:05Z",
+   "label": "Guardian: catch-up self-heal 2026-09-23 14:43Z",
+   "ts": "2026-09-23T14:43:02.984323",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-24T14:24:14Z",
+   "label": "Guardian: catch-up self-heal 2026-09-24 14:24Z",
+   "ts": "2026-09-24T14:24:12.711355",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-24T14:42:51Z",
+   "label": "Guardian: catch-up self-heal 2026-09-24 14:42Z",
+   "ts": "2026-09-24T14:42:49.063437",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-25T14:24:15Z",
+   "label": "Guardian: catch-up self-heal 2026-09-25 14:24Z",
+   "ts": "2026-09-25T14:24:14.682162",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-25T14:42:38Z",
+   "label": "Guardian: catch-up self-heal 2026-09-25 14:42Z",
+   "ts": "2026-09-25T14:42:37.467641",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-28T14:25:11Z",
+   "label": "Guardian: catch-up self-heal 2026-09-28 14:25Z",
+   "ts": "2026-09-28T14:25:09.522835",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-28T14:43:58Z",
+   "label": "Guardian: catch-up self-heal 2026-09-28 14:43Z",
+   "ts": "2026-09-28T14:43:57.587769",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-29T14:24:54Z",
+   "label": "Guardian: catch-up self-heal 2026-09-29 14:24Z",
+   "ts": "2026-09-29T14:24:42.732812",
+   "evaluated": 2,
+   "copied": 2,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-29T14:43:45Z",
+   "label": "Guardian: catch-up self-heal 2026-09-29 14:43Z",
+   "ts": "2026-09-29T14:43:40.496186",
+   "evaluated": 2,
+   "copied": 2,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-30T14:24:43Z",
+   "label": "Guardian: catch-up self-heal 2026-09-30 14:24Z",
+   "ts": "2026-09-30T14:24:41.726428",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-09-30T14:43:25Z",
+   "label": "Guardian: catch-up self-heal 2026-09-30 14:43Z",
+   "ts": "2026-09-30T14:43:24.836822",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-10-01T14:24:09Z",
+   "label": "Guardian: catch-up self-heal 2026-10-01 14:24Z",
+   "ts": "2026-10-01T14:24:08.091840",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-10-01T14:42:42Z",
+   "label": "Guardian: catch-up self-heal 2026-10-01 14:42Z",
+   "ts": "2026-10-01T14:42:40.033236",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-10-02T14:24:07Z",
+   "label": "Guardian: catch-up self-heal 2026-10-02 14:24Z",
+   "ts": "2026-10-02T14:24:05.468148",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  },
+  {
+   "commit_ts": "2026-10-02T14:42:37Z",
+   "label": "Guardian: catch-up self-heal 2026-10-02 14:42Z",
+   "ts": "2026-10-02T14:42:36.480942",
+   "evaluated": 0,
+   "copied": 0,
+   "skipped": 0,
+   "skips": []
+  }
+ ],
+ "conf": [
+  {
+   "commit_ts": "2026-06-22T14:29:00Z",
+   "ts": "2026-06-22T14:29:00.192513+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-22T14:47:40Z",
+   "ts": "2026-06-22T14:47:40.160644+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-23T14:28:49Z",
+   "ts": "2026-06-23T14:28:48.856341+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-23T14:47:25Z",
+   "ts": "2026-06-23T14:47:24.856717+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-24T14:28:45Z",
+   "ts": "2026-06-24T14:28:45.093579+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-24T14:47:09Z",
+   "ts": "2026-06-24T14:47:08.730673+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-25T14:29:16Z",
+   "ts": "2026-06-25T14:29:16.237386+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-25T14:48:25Z",
+   "ts": "2026-06-25T14:48:24.157632+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-26T14:28:59Z",
+   "ts": "2026-06-26T14:28:59.012862+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-26T14:48:15Z",
+   "ts": "2026-06-26T14:48:14.130758+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-29T14:29:38Z",
+   "ts": "2026-06-29T14:29:37.969287+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-29T14:49:23Z",
+   "ts": "2026-06-29T14:49:22.931481+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-30T14:28:49Z",
+   "ts": "2026-06-30T14:28:49.363566+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-06-30T14:47:48Z",
+   "ts": "2026-06-30T14:47:48.035005+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-07-01T14:28:43Z",
+   "ts": "2026-07-01T14:28:42.890212+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-07-01T14:47:36Z",
+   "ts": "2026-07-01T14:47:35.830278+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-07-02T14:28:40Z",
+   "ts": "2026-07-02T14:28:40.337403+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-07-02T14:47:26Z",
+   "ts": "2026-07-02T14:47:26.283781+00:00",
+   "conformant": false,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": false,
+    "detail": "FEED DARK: 14/14 fetches failed"
+   }
+  },
+  {
+   "commit_ts": "2026-07-06T14:28:08Z",
+   "ts": "2026-07-06T14:28:07.895249+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-06T14:47:31Z",
+   "ts": "2026-07-06T14:47:30.418203+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-07T14:24:28Z",
+   "ts": "2026-07-07T14:24:27.677981+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-08T14:24:27Z",
+   "ts": "2026-07-08T14:24:27.200368+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-08T14:42:54Z",
+   "ts": "2026-07-08T14:42:53.503082+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-09T14:24:34Z",
+   "ts": "2026-07-09T14:24:34.031413+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-09T14:43:19Z",
+   "ts": "2026-07-09T14:43:18.397292+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-10T14:24:27Z",
+   "ts": "2026-07-10T14:24:26.497266+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-10T14:43:03Z",
+   "ts": "2026-07-10T14:43:02.884511+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-13T14:24:31Z",
+   "ts": "2026-07-13T14:24:30.524628+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-13T14:43:52Z",
+   "ts": "2026-07-13T14:43:51.846000+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-14T14:24:14Z",
+   "ts": "2026-07-14T14:24:14.233602+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-14T14:42:37Z",
+   "ts": "2026-07-14T14:42:37.401573+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-15T14:24:15Z",
+   "ts": "2026-07-15T14:24:15.344645+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-15T14:42:57Z",
+   "ts": "2026-07-15T14:42:56.951870+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-16T14:24:12Z",
+   "ts": "2026-07-16T14:24:12.363571+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-16T14:42:49Z",
+   "ts": "2026-07-16T14:42:49.142245+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-17T14:24:40Z",
+   "ts": "2026-07-17T14:24:39.782031+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-17T14:43:24Z",
+   "ts": "2026-07-17T14:43:23.474141+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-20T14:25:04Z",
+   "ts": "2026-07-20T14:25:03.265672+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-20T14:44:25Z",
+   "ts": "2026-07-20T14:44:24.663786+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-21T14:24:31Z",
+   "ts": "2026-07-21T14:24:30.595842+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-21T14:43:10Z",
+   "ts": "2026-07-21T14:43:09.867001+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-22T14:24:19Z",
+   "ts": "2026-07-22T14:24:18.736277+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-22T14:42:56Z",
+   "ts": "2026-07-22T14:42:56.265956+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-23T14:24:18Z",
+   "ts": "2026-07-23T14:24:18.186104+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-23T14:43:10Z",
+   "ts": "2026-07-23T14:43:09.914225+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-24T14:24:22Z",
+   "ts": "2026-07-24T14:24:21.857408+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-24T14:42:51Z",
+   "ts": "2026-07-24T14:42:50.841225+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-27T14:24:33Z",
+   "ts": "2026-07-27T14:24:32.571716+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-27T14:43:47Z",
+   "ts": "2026-07-27T14:43:47.012849+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-28T14:24:34Z",
+   "ts": "2026-07-28T14:24:33.722593+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-28T14:43:18Z",
+   "ts": "2026-07-28T14:43:17.826984+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-29T14:24:27Z",
+   "ts": "2026-07-29T14:24:26.498593+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-29T14:43:06Z",
+   "ts": "2026-07-29T14:43:05.799895+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-30T14:24:40Z",
+   "ts": "2026-07-30T14:24:39.851005+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-30T14:43:27Z",
+   "ts": "2026-07-30T14:43:26.547351+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-31T14:24:39Z",
+   "ts": "2026-07-31T14:24:38.320149+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-07-31T14:43:27Z",
+   "ts": "2026-07-31T14:43:26.236692+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-03T14:25:36Z",
+   "ts": "2026-08-03T14:25:36.054885+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-03T14:44:45Z",
+   "ts": "2026-08-03T14:44:45.023050+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-04T14:24:31Z",
+   "ts": "2026-08-04T14:24:30.822303+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-04T14:43:04Z",
+   "ts": "2026-08-04T14:43:04.104334+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-05T14:24:24Z",
+   "ts": "2026-08-05T14:24:23.638642+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-05T14:42:40Z",
+   "ts": "2026-08-05T14:42:40.228670+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-06T14:24:22Z",
+   "ts": "2026-08-06T14:24:21.807595+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-06T14:43:09Z",
+   "ts": "2026-08-06T14:43:09.198542+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-07T14:24:29Z",
+   "ts": "2026-08-07T14:24:28.877168+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-07T14:43:23Z",
+   "ts": "2026-08-07T14:43:23.034523+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-10T14:25:18Z",
+   "ts": "2026-08-10T14:25:17.834396+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (2 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-10T14:44:50Z",
+   "ts": "2026-08-10T14:44:48.784771+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (2 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-11T14:24:28Z",
+   "ts": "2026-08-11T14:24:27.815080+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-11T14:43:35Z",
+   "ts": "2026-08-11T14:43:34.797977+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-12T14:24:32Z",
+   "ts": "2026-08-12T14:24:31.460033+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (1 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-12T14:43:24Z",
+   "ts": "2026-08-12T14:43:23.728196+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (1 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-13T14:24:23Z",
+   "ts": "2026-08-13T14:24:22.482972+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-14T14:24:23Z",
+   "ts": "2026-08-14T14:24:22.616421+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-14T14:42:50Z",
+   "ts": "2026-08-14T14:42:49.589578+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-17T14:25:01Z",
+   "ts": "2026-08-17T14:25:00.437695+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-17T14:43:45Z",
+   "ts": "2026-08-17T14:43:45.079825+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-18T14:24:13Z",
+   "ts": "2026-08-18T14:24:12.400022+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-18T14:42:48Z",
+   "ts": "2026-08-18T14:42:47.559492+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-19T14:24:16Z",
+   "ts": "2026-08-19T14:24:15.705202+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-19T14:43:04Z",
+   "ts": "2026-08-19T14:43:03.785357+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-20T14:24:12Z",
+   "ts": "2026-08-20T14:24:11.593692+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-20T14:42:35Z",
+   "ts": "2026-08-20T14:42:34.636503+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-21T14:24:27Z",
+   "ts": "2026-08-21T14:24:26.615893+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-21T14:43:04Z",
+   "ts": "2026-08-21T14:43:03.616239+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-24T14:24:49Z",
+   "ts": "2026-08-24T14:24:49.201347+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (1 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-24T14:44:28Z",
+   "ts": "2026-08-24T14:44:27.661595+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (1 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-25T14:24:34Z",
+   "ts": "2026-08-25T14:24:33.675372+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-25T14:43:17Z",
+   "ts": "2026-08-25T14:43:17.239744+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-26T14:24:37Z",
+   "ts": "2026-08-26T14:24:36.321097+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-26T14:43:29Z",
+   "ts": "2026-08-26T14:43:27.225994+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-27T14:24:25Z",
+   "ts": "2026-08-27T14:24:24.605700+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-27T14:43:03Z",
+   "ts": "2026-08-27T14:43:02.370441+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-28T14:24:24Z",
+   "ts": "2026-08-28T14:24:24.112504+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-28T14:42:56Z",
+   "ts": "2026-08-28T14:42:55.477321+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-31T14:25:29Z",
+   "ts": "2026-08-31T14:25:28.820620+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-08-31T14:44:19Z",
+   "ts": "2026-08-31T14:44:19.027370+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-01T14:24:21Z",
+   "ts": "2026-09-01T14:24:20.901998+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-01T14:42:53Z",
+   "ts": "2026-09-01T14:42:52.620439+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-02T14:24:15Z",
+   "ts": "2026-09-02T14:24:15.308320+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-02T14:43:13Z",
+   "ts": "2026-09-02T14:43:12.356392+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-03T14:24:28Z",
+   "ts": "2026-09-03T14:24:27.459134+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-03T14:43:01Z",
+   "ts": "2026-09-03T14:43:00.524002+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-04T14:24:22Z",
+   "ts": "2026-09-04T14:24:21.631953+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-04T14:43:07Z",
+   "ts": "2026-09-04T14:43:06.817146+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-08T14:24:25Z",
+   "ts": "2026-09-08T14:24:24.796999+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-08T14:43:12Z",
+   "ts": "2026-09-08T14:43:11.830169+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-09T14:24:32Z",
+   "ts": "2026-09-09T14:24:31.334026+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-09T14:43:21Z",
+   "ts": "2026-09-09T14:43:20.330254+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-10T14:25:15Z",
+   "ts": "2026-09-10T14:25:15.033279+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-10T14:44:08Z",
+   "ts": "2026-09-10T14:44:07.844356+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-11T14:24:33Z",
+   "ts": "2026-09-11T14:24:32.806573+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-11T14:43:08Z",
+   "ts": "2026-09-11T14:43:07.525214+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-14T14:24:49Z",
+   "ts": "2026-09-14T14:24:49.116881+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-14T14:44:19Z",
+   "ts": "2026-09-14T14:44:18.509252+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-15T14:24:08Z",
+   "ts": "2026-09-15T14:24:07.891446+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-15T14:42:33Z",
+   "ts": "2026-09-15T14:42:32.954568+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-16T14:24:23Z",
+   "ts": "2026-09-16T14:24:22.670502+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-16T14:42:45Z",
+   "ts": "2026-09-16T14:42:44.917789+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-17T14:24:49Z",
+   "ts": "2026-09-17T14:24:48.949987+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-17T14:43:43Z",
+   "ts": "2026-09-17T14:43:41.801393+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-18T14:24:19Z",
+   "ts": "2026-09-18T14:24:19.117603+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-18T14:42:58Z",
+   "ts": "2026-09-18T14:42:57.840784+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-21T14:25:11Z",
+   "ts": "2026-09-21T14:25:10.702846+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (1 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-21T14:44:41Z",
+   "ts": "2026-09-21T14:44:40.840669+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (1 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-22T14:24:29Z",
+   "ts": "2026-09-22T14:24:28.913906+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-22T14:43:40Z",
+   "ts": "2026-09-22T14:43:39.416125+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-23T14:24:25Z",
+   "ts": "2026-09-23T14:24:24.399116+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-23T14:43:05Z",
+   "ts": "2026-09-23T14:43:04.726713+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-24T14:24:14Z",
+   "ts": "2026-09-24T14:24:13.573472+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-24T14:42:51Z",
+   "ts": "2026-09-24T14:42:50.068785+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-25T14:24:15Z",
+   "ts": "2026-09-25T14:24:15.079966+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-25T14:42:38Z",
+   "ts": "2026-09-25T14:42:37.866313+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-28T14:25:11Z",
+   "ts": "2026-09-28T14:25:11.067800+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-28T14:43:58Z",
+   "ts": "2026-09-28T14:43:57.882902+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-29T14:24:54Z",
+   "ts": "2026-09-29T14:24:53.481585+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (2 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-29T14:43:45Z",
+   "ts": "2026-09-29T14:43:44.813717+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (2 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-30T14:24:43Z",
+   "ts": "2026-09-30T14:24:42.631354+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-09-30T14:43:25Z",
+   "ts": "2026-09-30T14:43:25.145350+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-10-01T14:24:09Z",
+   "ts": "2026-10-01T14:24:08.464632+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-10-01T14:42:42Z",
+   "ts": "2026-10-01T14:42:41.622735+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-10-02T14:24:07Z",
+   "ts": "2026-10-02T14:24:06.429478+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  },
+  {
+   "commit_ts": "2026-10-02T14:42:37Z",
+   "ts": "2026-10-02T14:42:37.089424+00:00",
+   "conformant": true,
+   "feed": {
+    "name": "disclosure_feed_reachable",
+    "ok": true,
+    "detail": "FEED DARK: 14/14 Capitol Trades fetches failed; house_fd fallback OK (0 new trades)"
+   }
+  }
+ ],
+ "seen": [
+  {
+   "commit_ts": "2026-07-06T14:28:08Z",
+   "n": 35,
+   "new": [
+    "20033725",
+    "20033756",
+    "20033829",
+    "20033845",
+    "20033916",
+    "20033918",
+    "20033930",
+    "20034012",
+    "20034036",
+    "20034128",
+    "20034130",
+    "20034138",
+    "20034207",
+    "20034262",
+    "20034280",
+    "20034305",
+    "20034461",
+    "20034489",
+    "20034585",
+    "20034650",
+    "20034693",
+    "20034695",
+    "20034780",
+    "20034836",
+    "20034897",
+    "8221322",
+    "8221326",
+    "8221358",
+    "8221359",
+    "9115726",
+    "9115728",
+    "9115820",
+    "9115822",
+    "9116141",
+    "9116142"
+   ]
+  },
+  {
+   "commit_ts": "2026-07-06T14:47:31Z",
+   "n": 35,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-07T14:24:28Z",
+   "n": 35,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-08T14:24:27Z",
+   "n": 35,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-08T14:42:54Z",
+   "n": 35,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-09T14:24:34Z",
+   "n": 37,
+   "new": [
+    "20034938",
+    "9116206"
+   ]
+  },
+  {
+   "commit_ts": "2026-07-09T14:43:19Z",
+   "n": 37,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-10T14:24:27Z",
+   "n": 37,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-10T14:43:03Z",
+   "n": 37,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-13T14:24:31Z",
+   "n": 37,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-13T14:43:52Z",
+   "n": 37,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-14T14:24:14Z",
+   "n": 38,
+   "new": [
+    "9116211"
+   ]
+  },
+  {
+   "commit_ts": "2026-07-14T14:42:37Z",
+   "n": 38,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-15T14:24:15Z",
+   "n": 38,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-15T14:42:57Z",
+   "n": 38,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-16T14:24:12Z",
+   "n": 38,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-16T14:42:49Z",
+   "n": 38,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-17T14:24:40Z",
+   "n": 39,
+   "new": [
+    "20035013"
+   ]
+  },
+  {
+   "commit_ts": "2026-07-17T14:43:24Z",
+   "n": 39,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-20T14:25:04Z",
+   "n": 40,
+   "new": [
+    "20035024"
+   ]
+  },
+  {
+   "commit_ts": "2026-07-20T14:44:25Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-21T14:24:31Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-21T14:43:10Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-22T14:24:19Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-22T14:42:56Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-23T14:24:18Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-23T14:43:10Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-24T14:24:22Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-24T14:42:51Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-27T14:24:33Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-27T14:43:47Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-28T14:24:34Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-28T14:43:18Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-29T14:24:27Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-29T14:43:06Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-30T14:24:40Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-30T14:43:27Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-31T14:24:39Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-07-31T14:43:27Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-03T14:25:36Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-03T14:44:45Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-04T14:24:31Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-04T14:43:04Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-05T14:24:24Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-05T14:42:40Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-06T14:24:22Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-06T14:43:09Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-07T14:24:29Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-07T14:43:23Z",
+   "n": 40,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-10T14:25:18Z",
+   "n": 41,
+   "new": [
+    "20035146"
+   ]
+  },
+  {
+   "commit_ts": "2026-08-10T14:44:50Z",
+   "n": 41,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-11T14:24:28Z",
+   "n": 41,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-11T14:43:35Z",
+   "n": 41,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-12T14:24:32Z",
+   "n": 43,
+   "new": [
+    "20035134",
+    "20035186"
+   ]
+  },
+  {
+   "commit_ts": "2026-08-12T14:43:24Z",
+   "n": 43,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-13T14:24:23Z",
+   "n": 45,
+   "new": [
+    "20035196",
+    "9116267"
+   ]
+  },
+  {
+   "commit_ts": "2026-08-14T14:24:23Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-14T14:42:50Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-17T14:25:01Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-17T14:43:45Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-18T14:24:13Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-18T14:42:48Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-19T14:24:16Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-19T14:43:04Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-20T14:24:12Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-20T14:42:35Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-21T14:24:27Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-21T14:43:04Z",
+   "n": 45,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-24T14:24:49Z",
+   "n": 46,
+   "new": [
+    "20035289"
+   ]
+  },
+  {
+   "commit_ts": "2026-08-24T14:44:28Z",
+   "n": 46,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-25T14:24:34Z",
+   "n": 47,
+   "new": [
+    "20035143"
+   ]
+  },
+  {
+   "commit_ts": "2026-08-25T14:43:17Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-26T14:24:37Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-26T14:43:29Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-27T14:24:25Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-27T14:43:03Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-28T14:24:24Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-28T14:42:56Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-31T14:25:29Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-08-31T14:44:19Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-01T14:24:21Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-01T14:42:53Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-02T14:24:15Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-02T14:43:13Z",
+   "n": 47,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-03T14:24:28Z",
+   "n": 48,
+   "new": [
+    "20035326"
+   ]
+  },
+  {
+   "commit_ts": "2026-09-03T14:43:01Z",
+   "n": 48,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-04T14:24:22Z",
+   "n": 48,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-04T14:43:07Z",
+   "n": 48,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-08T14:24:25Z",
+   "n": 50,
+   "new": [
+    "20035392",
+    "9116328"
+   ]
+  },
+  {
+   "commit_ts": "2026-09-08T14:43:12Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-09T14:24:32Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-09T14:43:21Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-10T14:25:15Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-10T14:44:08Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-11T14:24:33Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-11T14:43:08Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-14T14:24:49Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-14T14:44:19Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-15T14:24:08Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-15T14:42:33Z",
+   "n": 50,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-16T14:24:23Z",
+   "n": 51,
+   "new": [
+    "20035455"
+   ]
+  },
+  {
+   "commit_ts": "2026-09-16T14:42:45Z",
+   "n": 51,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-17T14:24:49Z",
+   "n": 51,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-17T14:43:43Z",
+   "n": 51,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-18T14:24:19Z",
+   "n": 51,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-18T14:42:58Z",
+   "n": 51,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-21T14:25:11Z",
+   "n": 52,
+   "new": [
+    "20035471"
+   ]
+  },
+  {
+   "commit_ts": "2026-09-21T14:44:41Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-22T14:24:29Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-22T14:43:40Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-23T14:24:25Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-23T14:43:05Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-24T14:24:14Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-24T14:42:51Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-25T14:24:15Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-25T14:42:38Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-28T14:25:11Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-28T14:43:58Z",
+   "n": 52,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-29T14:24:54Z",
+   "n": 53,
+   "new": [
+    "20035491"
+   ]
+  },
+  {
+   "commit_ts": "2026-09-29T14:43:45Z",
+   "n": 53,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-30T14:24:43Z",
+   "n": 53,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-09-30T14:43:25Z",
+   "n": 53,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-10-01T14:24:09Z",
+   "n": 53,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-10-01T14:42:42Z",
+   "n": 53,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-10-02T14:24:07Z",
+   "n": 53,
+   "new": []
+  },
+  {
+   "commit_ts": "2026-10-02T14:42:37Z",
+   "n": 53,
+   "new": []
+  }
+ ]
+}

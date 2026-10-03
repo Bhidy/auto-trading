@@ -1,0 +1,168 @@
+days 89 2026-05-28 2026-10-02 names/day 21.0 recon agreement 0.999 0.992 missing []
+== composite IC
+all_h1         n= 87 IC=+0.012 sd=0.274 hit=48% tNW=+0.46 tNO=+0.42(n=87)
+all_h5         n= 83 IC=-0.068 sd=0.240 hit=39% tNW=-1.60 tNO=-0.98(n=17)
+all_h10        n= 78 IC=-0.123 sd=0.236 hit=24% tNW=-2.83 tNO=-1.56(n=8)
+all_h21        n= 67 IC=-0.106 sd=0.224 hit=33% tNW=-3.66 tNO=-1.83(n=4)
+risk_only_h1   n= 87 IC=+0.001 sd=0.351 hit=51% tNW=+0.02 tNO=+0.02(n=87)
+risk_only_h5   n= 83 IC=-0.104 sd=0.329 hit=41% tNW=-1.73 tNO=-1.18(n=17)
+risk_only_h10  n= 78 IC=-0.190 sd=0.352 hit=28% tNW=-2.69 tNO=-1.24(n=8)
+risk_only_h21  n= 67 IC=-0.221 sd=0.264 hit=16% tNW=-7.03 tNO=-1.61(n=4)
+== buckets (excess vs SPY, mean per-day)
+1 Q: {0: 0.05, 1: 0.03, 2: 0.09, 3: -0.08, 4: -0.06} Q5-Q1 -0.11% tNW=-0.88 tNO=-0.79
+1 T: {0: 0.01, 1: 0.05, 2: -0.09} T3-T1 -0.10% tNW=-0.90 tNO=-0.87
+5 Q: {0: 0.57, 1: -0.07, 2: 0.31, 3: -0.28, 4: -0.6} Q5-Q1 -1.17% tNW=-2.31 tNO=-1.64
+5 T: {0: 0.21, 1: 0.27, 2: -0.5} T3-T1 -0.71% tNW=-1.72 tNO=-1.20
+10 Q: {0: 1.15, 1: 0.0, 2: 0.32, 3: -0.75, 4: -0.78} Q5-Q1 -1.93% tNW=-2.72 tNO=-1.07
+10 T: {0: 0.51, 1: 0.38, 2: -0.79} T3-T1 -1.30% tNW=-2.60 tNO=-1.20
+21 Q: {0: 2.39, 1: 0.41, 2: -0.12, 3: -0.74, 4: -0.73} Q5-Q1 -3.12% tNW=-4.70 tNO=-0.95
+21 T: {0: 1.39, 1: 0.45, 2: -0.96} T3-T1 -2.35% tNW=-3.72 tNO=-2.73
+== BUY / SHORT / HOLD excess
+buy 1 days=69 meanX=-0.02% tNW=-0.26 tNO=-0.24(n=69) pooledN=406 pooledX=-0.12% raw=-0.18% hit=0.43842364532019706
+buy 5 days=66 meanX=-0.57% tNW=-3.37 tNO=-2.80(n=14) pooledN=397 pooledX=-0.45% raw=-0.81% hit=0.3879093198992443
+buy 10 days=62 meanX=-1.24% tNW=-4.80 tNO=-3.49(n=7) pooledN=384 pooledX=-1.08% raw=-1.15% hit=0.328125
+buy 21 days=51 meanX=-1.81% tNW=-4.63 tNO=-9.79(n=3) pooledN=328 pooledX=-1.35% raw=-0.76% hit=0.32926829268292684
+short 1 days=45 meanX=+0.45% tNW=+1.42 tNO=+1.38(n=45) pooledN=70 pooledX=+0.38% raw=+0.45% hit=0.5571428571428572
+short 5 days=45 meanX=+3.31% tNW=+3.17 tNO=+2.18(n=9) pooledN=70 pooledX=+2.80% raw=+3.21% hit=0.7
+short 10 days=45 meanX=+7.06% tNW=+4.04 tNO=+2.06(n=5) pooledN=70 pooledX=+6.25% raw=+6.61% hit=0.8285714285714286
+short 21 days=40 meanX=+10.70% tNW=+4.45 tNO=+nan(n=2) pooledN=65 pooledX=+10.40% raw=+10.83% hit=0.8
+hold 1 days=87 meanX=+0.01% tNW=+0.14 tNO=+0.14(n=87)
+hold 5 days=83 meanX=-0.04% tNW=-0.30 tNO=-0.38(n=17)
+hold 10 days=78 meanX=+0.03% tNW=+0.15 tNO=+0.12(n=8)
+hold 21 days=67 meanX=+0.16% tNW=+0.71 tNO=-1.59(n=4)
+== factor IC
+trend_h1               n= 87 IC=+0.005 sd=0.252 hit=48% tNW=+0.20 tNO=+0.18(n=87)
+trend_h5               n= 83 IC=-0.049 sd=0.230 hit=35% tNW=-1.22 tNO=-0.25(n=17)
+trend_h10              n= 78 IC=-0.072 sd=0.225 hit=38% tNW=-1.79 tNO=-1.17(n=8)
+trend_h21              n= 67 IC=-0.069 sd=0.217 hit=40% tNW=-1.24 tNO=-1.05(n=4)
+momentum_h1            n= 87 IC=+0.005 sd=0.258 hit=47% tNW=+0.18 tNO=+0.17(n=87)
+momentum_h5            n= 83 IC=-0.071 sd=0.235 hit=34% tNW=-1.69 tNO=-0.87(n=17)
+momentum_h10           n= 78 IC=-0.122 sd=0.238 hit=29% tNW=-2.75 tNO=-1.92(n=8)
+momentum_h21           n= 67 IC=-0.124 sd=0.222 hit=30% tNW=-3.88 tNO=-5.37(n=4)
+rsi_h1                 n= 87 IC=+0.016 sd=0.262 hit=53% tNW=+0.67 tNO=+0.59(n=87)
+rsi_h5                 n= 83 IC=+0.040 sd=0.255 hit=57% tNW=+0.94 tNO=+0.65(n=17)
+rsi_h10                n= 78 IC=+0.049 sd=0.303 hit=56% tNW=+0.86 tNO=+0.07(n=8)
+rsi_h21                n= 67 IC=+0.068 sd=0.269 hit=61% tNW=+1.50 tNO=+2.36(n=4)
+macd_h1                n= 87 IC=+0.030 sd=0.276 hit=60% tNW=+1.07 tNO=+1.02(n=87)
+macd_h5                n= 83 IC=+0.007 sd=0.242 hit=49% tNW=+0.17 tNO=+0.89(n=17)
+macd_h10               n= 78 IC=-0.030 sd=0.285 hit=49% tNW=-0.47 tNO=+0.14(n=8)
+macd_h21               n= 67 IC=-0.005 sd=0.248 hit=46% tNW=-0.11 tNO=+0.73(n=4)
+bollinger_h1           n= 72 IC=-0.029 sd=0.242 hit=44% tNW=-1.02 tNO=-1.03(n=72)
+bollinger_h5           n= 70 IC=+0.013 sd=0.261 hit=51% tNW=+0.30 tNO=-1.35(n=14)
+bollinger_h10          n= 65 IC=+0.013 sd=0.252 hit=54% tNW=+0.39 tNO=-0.33(n=7)
+bollinger_h21          n= 57 IC=+0.043 sd=0.228 hit=54% tNW=+1.54 tNO=+0.68(n=3)
+volume_h1              n= 86 IC=+0.010 sd=0.253 hit=47% tNW=+0.40 tNO=+0.38(n=86)
+volume_h5              n= 82 IC=-0.029 sd=0.252 hit=46% tNW=-0.64 tNO=-0.38(n=17)
+volume_h10             n= 77 IC=-0.072 sd=0.210 hit=32% tNW=-1.64 tNO=-0.63(n=8)
+volume_h21             n= 66 IC=-0.044 sd=0.201 hit=39% tNW=-1.31 tNO=-1.78(n=4)
+rel_strength_h1        n= 87 IC=-0.004 sd=0.280 hit=52% tNW=-0.15 tNO=-0.14(n=87)
+rel_strength_h5        n= 83 IC=-0.079 sd=0.272 hit=35% tNW=-1.51 tNO=-1.01(n=17)
+rel_strength_h10       n= 78 IC=-0.112 sd=0.228 hit=26% tNW=-2.44 tNO=-1.50(n=8)
+rel_strength_h21       n= 67 IC=-0.109 sd=0.189 hit=24% tNW=-3.83 tNO=-2.78(n=4)
+c_px_vs_ma50_h1        n= 87 IC=+0.000 sd=0.291 hit=51% tNW=+0.01 tNO=+0.01(n=87)
+c_px_vs_ma50_h5        n= 83 IC=-0.096 sd=0.268 hit=35% tNW=-2.03 tNO=-1.10(n=17)
+c_px_vs_ma50_h10       n= 78 IC=-0.158 sd=0.282 hit=23% tNW=-2.95 tNO=-1.02(n=8)
+c_px_vs_ma50_h21       n= 67 IC=-0.196 sd=0.233 hit=22% tNW=-5.35 tNO=-3.31(n=4)
+c_px_vs_ma200_h1       n= 87 IC=+0.018 sd=0.269 hit=52% tNW=+0.62 tNO=+0.61(n=87)
+c_px_vs_ma200_h5       n= 83 IC=-0.021 sd=0.246 hit=39% tNW=-0.48 tNO=-0.33(n=17)
+c_px_vs_ma200_h10      n= 78 IC=-0.068 sd=0.203 hit=33% tNW=-1.83 tNO=-0.79(n=8)
+c_px_vs_ma200_h21      n= 67 IC=-0.084 sd=0.154 hit=31% tNW=-3.17 tNO=-1.19(n=4)
+c_mom1m_h1             n= 87 IC=+0.017 sd=0.303 hit=49% tNW=+0.54 tNO=+0.52(n=87)
+c_mom1m_h5             n= 83 IC=-0.076 sd=0.266 hit=39% tNW=-1.66 tNO=-0.84(n=17)
+c_mom1m_h10            n= 78 IC=-0.099 sd=0.259 hit=35% tNW=-1.96 tNO=-0.41(n=8)
+c_mom1m_h21            n= 67 IC=-0.119 sd=0.272 hit=30% tNW=-2.63 tNO=-1.84(n=4)
+c_mom3m_h1             n= 87 IC=-0.018 sd=0.282 hit=47% tNW=-0.66 tNO=-0.60(n=87)
+c_mom3m_h5             n= 83 IC=-0.124 sd=0.231 hit=33% tNW=-3.23 tNO=-1.67(n=17)
+c_mom3m_h10            n= 78 IC=-0.171 sd=0.221 hit=23% tNW=-3.51 tNO=-2.99(n=8)
+c_mom3m_h21            n= 67 IC=-0.173 sd=0.155 hit=10% tNW=-6.78 tNO=-4.49(n=4)
+c_mom6m_h1             n= 87 IC=+0.025 sd=0.308 hit=52% tNW=+0.77 tNO=+0.76(n=87)
+c_mom6m_h5             n= 83 IC=+0.009 sd=0.275 hit=48% tNW=+0.19 tNO=-0.15(n=17)
+c_mom6m_h10            n= 78 IC=-0.034 sd=0.213 hit=45% tNW=-0.75 tNO=-0.32(n=8)
+c_mom6m_h21            n= 67 IC=-0.044 sd=0.187 hit=40% tNW=-1.14 tNO=-0.59(n=4)
+c_rsi14_h1             n= 87 IC=+0.032 sd=0.258 hit=57% tNW=+1.20 tNO=+1.16(n=87)
+c_rsi14_h5             n= 83 IC=-0.024 sd=0.241 hit=51% tNW=-0.59 tNO=+0.40(n=17)
+c_rsi14_h10            n= 78 IC=-0.065 sd=0.260 hit=42% tNW=-1.29 tNO=-0.30(n=8)
+c_rsi14_h21            n= 67 IC=-0.102 sd=0.243 hit=34% tNW=-2.40 tNO=-1.65(n=4)
+c_macdhist_px_h1       n= 87 IC=+0.018 sd=0.318 hit=53% tNW=+0.56 tNO=+0.54(n=87)
+c_macdhist_px_h5       n= 83 IC=+0.037 sd=0.299 hit=55% tNW=+0.67 tNO=+1.26(n=17)
+c_macdhist_px_h10      n= 78 IC=+0.017 sd=0.299 hit=53% tNW=+0.26 tNO=+0.78(n=8)
+c_macdhist_px_h21      n= 67 IC=+0.034 sd=0.241 hit=58% tNW=+0.85 tNO=+1.41(n=4)
+c_pctB_h1              n= 87 IC=+0.034 sd=0.273 hit=49% tNW=+1.25 tNO=+1.16(n=87)
+c_pctB_h5              n= 83 IC=+0.008 sd=0.282 hit=52% tNW=+0.15 tNO=+1.06(n=17)
+c_pctB_h10             n= 78 IC=-0.023 sd=0.300 hit=51% tNW=-0.36 tNO=+0.54(n=8)
+c_pctB_h21             n= 67 IC=-0.027 sd=0.285 hit=49% tNW=-0.52 tNO=-0.54(n=4)
+c_voltrend_h1          n= 87 IC=-0.003 sd=0.260 hit=51% tNW=-0.12 tNO=-0.12(n=87)
+c_voltrend_h5          n= 83 IC=-0.049 sd=0.237 hit=43% tNW=-1.40 tNO=-0.37(n=17)
+c_voltrend_h10         n= 78 IC=-0.080 sd=0.230 hit=32% tNW=-2.10 tNO=-0.46(n=8)
+c_voltrend_h21         n= 67 IC=+0.009 sd=0.234 hit=48% tNW=+0.23 tNO=-0.95(n=4)
+c_rs_score_h1          n= 87 IC=+0.008 sd=0.280 hit=52% tNW=+0.27 tNO=+0.26(n=87)
+c_rs_score_h5          n= 83 IC=-0.077 sd=0.253 hit=35% tNW=-1.61 tNO=-1.10(n=17)
+c_rs_score_h10         n= 78 IC=-0.110 sd=0.215 hit=27% tNW=-2.51 tNO=-1.98(n=8)
+c_rs_score_h21         n= 67 IC=-0.108 sd=0.171 hit=25% tNW=-5.45 tNO=-2.47(n=4)
+_raw_h1                n= 87 IC=+0.012 sd=0.274 hit=48% tNW=+0.43 tNO=+0.40(n=87)
+_raw_h5                n= 83 IC=-0.070 sd=0.239 hit=39% tNW=-1.66 tNO=-1.05(n=17)
+_raw_h10               n= 78 IC=-0.126 sd=0.235 hit=24% tNW=-2.91 tNO=-1.66(n=8)
+_raw_h21               n= 67 IC=-0.109 sd=0.224 hit=33% tNW=-3.68 tNO=-2.06(n=4)
+_drop_trend_h1         n= 87 IC=+0.015 sd=0.273 hit=48% tNW=+0.57 tNO=+0.53(n=87)
+_drop_trend_h5         n= 83 IC=-0.075 sd=0.238 hit=34% tNW=-1.75 tNO=-0.98(n=17)
+_drop_trend_h10        n= 78 IC=-0.131 sd=0.235 hit=24% tNW=-2.72 tNO=-1.68(n=8)
+_drop_trend_h21        n= 67 IC=-0.114 sd=0.225 hit=28% tNW=-4.27 tNO=-2.54(n=4)
+_drop_momentum_h1      n= 87 IC=+0.007 sd=0.268 hit=52% tNW=+0.27 tNO=+0.25(n=87)
+_drop_momentum_h5      n= 83 IC=-0.069 sd=0.233 hit=35% tNW=-1.68 tNO=-0.79(n=17)
+_drop_momentum_h10     n= 78 IC=-0.115 sd=0.235 hit=27% tNW=-2.55 tNO=-1.37(n=8)
+_drop_momentum_h21     n= 67 IC=-0.089 sd=0.219 hit=40% tNW=-3.05 tNO=-0.87(n=4)
+_drop_rsi_h1           n= 87 IC=+0.010 sd=0.274 hit=47% tNW=+0.35 tNO=+0.33(n=87)
+_drop_rsi_h5           n= 83 IC=-0.059 sd=0.242 hit=36% tNW=-1.39 tNO=-0.86(n=17)
+_drop_rsi_h10          n= 78 IC=-0.117 sd=0.233 hit=29% tNW=-2.69 tNO=-1.58(n=8)
+_drop_rsi_h21          n= 67 IC=-0.102 sd=0.212 hit=28% tNW=-4.58 tNO=-2.49(n=4)
+_drop_macd_h1          n= 87 IC=+0.003 sd=0.274 hit=48% tNW=+0.11 tNO=+0.10(n=87)
+_drop_macd_h5          n= 83 IC=-0.080 sd=0.243 hit=39% tNW=-1.83 tNO=-1.14(n=17)
+_drop_macd_h10         n= 78 IC=-0.134 sd=0.233 hit=26% tNW=-3.28 tNO=-1.82(n=8)
+_drop_macd_h21         n= 67 IC=-0.124 sd=0.223 hit=34% tNW=-3.90 tNO=-2.54(n=4)
+_drop_bollinger_h1     n= 87 IC=+0.014 sd=0.273 hit=49% tNW=+0.53 tNO=+0.49(n=87)
+_drop_bollinger_h5     n= 83 IC=-0.069 sd=0.239 hit=39% tNW=-1.60 tNO=-1.05(n=17)
+_drop_bollinger_h10    n= 78 IC=-0.124 sd=0.236 hit=24% tNW=-2.85 tNO=-1.57(n=8)
+_drop_bollinger_h21    n= 67 IC=-0.109 sd=0.223 hit=33% tNW=-3.61 tNO=-2.04(n=4)
+_drop_volume_h1        n= 87 IC=+0.012 sd=0.276 hit=48% tNW=+0.44 tNO=+0.41(n=87)
+_drop_volume_h5        n= 83 IC=-0.068 sd=0.238 hit=39% tNW=-1.59 tNO=-1.06(n=17)
+_drop_volume_h10       n= 78 IC=-0.125 sd=0.237 hit=27% tNW=-2.84 tNO=-1.70(n=8)
+_drop_volume_h21       n= 67 IC=-0.108 sd=0.224 hit=33% tNW=-3.71 tNO=-1.90(n=4)
+_drop_rel_strength_h1  n= 87 IC=+0.014 sd=0.266 hit=51% tNW=+0.56 tNO=+0.51(n=87)
+_drop_rel_strength_h5  n= 83 IC=-0.064 sd=0.234 hit=39% tNW=-1.55 tNO=-0.77(n=17)
+_drop_rel_strength_h10 n= 78 IC=-0.126 sd=0.239 hit=28% tNW=-2.70 tNO=-1.62(n=8)
+_drop_rel_strength_h21 n= 67 IC=-0.107 sd=0.236 hit=33% tNW=-2.65 tNO=-1.71(n=4)
+nonzero share {'trend': 0.75, 'momentum': 1.0, 'rsi': 1.0, 'macd': 0.57, 'bollinger': 0.1, 'volume': 0.23, 'rel_strength': 0.48}
+== stability (half split at 2026-07-31 )
+H1_h1            n= 44 IC=+0.011 sd=0.295 hit=52% tNW=+0.28 tNO=+0.25(n=44)
+H2_h1            n= 43 IC=+0.014 sd=0.254 hit=44% tNW=+0.37 tNO=+0.36(n=43)
+STRONG_BULL_h1   n= 29 IC=-0.003 sd=0.303 hit=45% tNW=-0.07 tNO=-0.06(n=29)
+BULL_h1          n= 44 IC=+0.033 sd=0.245 hit=52% tNW=+0.93 tNO=+0.89(n=44)
+CORRECTION_h1    n= 14 IC=-0.019 sd=0.313 hit=43% tNW=-0.24 tNO=-0.23(n=14)
+H1_h5            n= 44 IC=-0.109 sd=0.209 hit=30% tNW=-2.29 tNO=-2.02(n=9)
+H2_h5            n= 39 IC=-0.022 sd=0.266 hit=49% tNW=-0.31 tNO=-0.26(n=8)
+STRONG_BULL_h5   n= 29 IC=-0.092 sd=0.217 hit=38% tNW=-1.71 tNO=-0.59(n=6)
+BULL_h5          n= 41 IC=-0.064 sd=0.223 hit=34% tNW=-1.20 tNO=-1.55(n=9)
+CORRECTION_h5    n= 13 IC=-0.028 sd=0.341 hit=54% tNW=-0.17 tNO=+0.36(n=3)
+H1_h10           n= 44 IC=-0.142 sd=0.176 hit=18% tNW=-3.49 tNO=-1.23(n=5)
+H2_h10           n= 34 IC=-0.099 sd=0.298 hit=32% tNW=-1.02 tNO=-0.89(n=4)
+STRONG_BULL_h10  n= 29 IC=-0.220 sd=0.193 hit=3% tNW=-3.72 tNO=-7.34(n=3)
+BULL_h10         n= 37 IC=-0.096 sd=0.208 hit=30% tNW=-1.86 tNO=-5.02(n=4)
+CORRECTION_h10   n= 12 IC=+0.028 sd=0.320 hit=58% tNW=+0.26 tNO=+nan(n=2)
+H1_h21           n= 44 IC=-0.106 sd=0.182 hit=27% tNW=-3.26 tNO=-2.27(n=3)
+H2_h21           n= 23 IC=-0.104 sd=0.293 hit=43% tNW=-1.42 tNO=+nan(n=2)
+STRONG_BULL_h21  n= 25 IC=-0.121 sd=0.219 hit=28% tNW=-4.25 tNO=+nan(n=2)
+BULL_h21         n= 30 IC=-0.132 sd=0.199 hit=27% tNW=-2.82 tNO=+nan(n=2)
+CORRECTION_h21   n= 12 IC=-0.007 sd=0.280 hit=58% tNW=-0.10 tNO=+nan(n=1)
+== regime -> SPY fwd
+STRONG_BULL_h1   n=29 mean=-0.11% tNW=-0.75
+BULL_h1          n=44 mean=+0.05% tNW=+0.56
+CORRECTION_h1    n=14 mean=+0.26% tNW=+1.58
+STRONG_BULL_h5   n=29 mean=-0.65% tNW=-1.72
+BULL_h5          n=41 mean=+0.26% tNW=+1.09
+CORRECTION_h5    n=13 mean=+1.49% tNW=+1.82
+STRONG_BULL_h10  n=29 mean=-0.16% tNW=-0.83
+BULL_h10         n=37 mean=+0.64% tNW=+2.03
+CORRECTION_h10   n=12 mean=+1.16% tNW=+1.26
+STRONG_BULL_h21  n=25 mean=+0.42% tNW=+1.82
+BULL_h21         n=30 mean=+1.40% tNW=+3.61
+CORRECTION_h21   n=12 mean=+1.08% tNW=+1.53
