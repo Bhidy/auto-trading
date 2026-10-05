@@ -1,0 +1,64 @@
+[
+  {
+    "date": "2026-10-05",
+    "timestamp": "2026-10-05T14:24:43.925279",
+    "account_snapshot": {
+      "equity": "102183.18",
+      "cash": "12975.86",
+      "portfolio_value": "102183.18"
+    },
+    "trades_executed": [
+      {
+        "symbol": "AMGN",
+        "side": "buy",
+        "qty": 7,
+        "limit_price": 400.87,
+        "entry_price": 399.92,
+        "intended_price": 400.87,
+        "slippage_pct": -0.237,
+        "client_order_id": "p2-20261005-AMGN-buy",
+        "filled_qty": 7.0,
+        "estimated_value": 2806.09,
+        "order_id": "2c75b872-458c-441f-9d7c-acf4e8e616a2",
+        "order_status": "filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "09/22/2026",
+        "disclosure_date": "10/1/2026",
+        "observed_date": "2026-10-05T14:24:38.945487",
+        "disclosure_lag_days": 13,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of Amgen Inc. - Common Stock",
+        "timestamp": "2026-10-05T14:24:38.945860",
+        "date": "2026-10-05"
+      },
+      {
+        "symbol": "HD",
+        "side": "buy",
+        "qty": 10,
+        "limit_price": 282.46,
+        "entry_price": 282.0,
+        "intended_price": 282.46,
+        "slippage_pct": -0.1629,
+        "client_order_id": "p2-20261005-HD-buy",
+        "filled_qty": 10.0,
+        "estimated_value": 2824.6,
+        "order_id": "a6682c97-2ef3-449f-b952-78a6bc1e6f24",
+        "order_status": "filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "09/22/2026",
+        "disclosure_date": "10/1/2026",
+        "observed_date": "2026-10-05T14:24:41.445786",
+        "disclosure_lag_days": 13,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of Home Depot, Inc",
+        "timestamp": "2026-10-05T14:24:41.446181",
+        "date": "2026-10-05"
+      }
+    ],
+    "trades_count": 2
+  }
+]
