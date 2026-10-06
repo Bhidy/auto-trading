@@ -2737,7 +2737,7 @@
   {
     "symbol": "MPC",
     "side": "buy",
-    "qty": 20.0,
+    "qty": 18.0,
     "entry_price": 271.597,
     "timestamp": "2026-07-06T21:48:14.963240+00:00",
     "status": "open",
@@ -2824,5 +2824,32 @@
     "gross_pnl": -370.6,
     "fees": 0.13,
     "realized_pnl": -370.73
+  },
+  {
+    "symbol": "MPC",
+    "side": "buy",
+    "qty": 2.0,
+    "entry_price": 271.597,
+    "timestamp": "2026-07-06T21:48:14.963240+00:00",
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "unlogged_position",
+    "reasons": [
+      "reconciled from broker position"
+    ],
+    "exit_price": 426.57,
+    "pnl": 309.93,
+    "pnl_pct": 57.06,
+    "id": "89-trim-2026-10-06T19:36:49.086227+00:00",
+    "order_class": "momentum_sleeve",
+    "order_class_restored": {
+      "by": "forensic audit 2026-10-03",
+      "evidence": "broker client_order_id p1mom-20260706-MPC-buy (filled after the confirm window; reconciled 2026-07-06 without its sleeve tag)"
+    },
+    "exit_timestamp": "2026-10-06T19:36:49.086227+00:00",
+    "gross_pnl": 309.95,
+    "fees": 0.02,
+    "realized_pnl": 309.93,
+    "exit_reason": "cap_maintenance_stock_8pct"
   }
 ]
