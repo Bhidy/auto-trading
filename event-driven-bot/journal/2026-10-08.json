@@ -134,5 +134,141 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-10-08",
+    "timestamp": "2026-10-08T00:22:22.494748+00:00",
+    "audit": {
+      "equity": 99091.72,
+      "cash": 37307.97,
+      "daily_pnl": 68.63,
+      "daily_pnl_pct": 0.069,
+      "total_open_exposure": 61783.75,
+      "exposure_pct": 62.4,
+      "position_count": 11,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 15001.9,
+        "Energy": 20498.06,
+        "Consumer": 10331.03,
+        "Financials": 2281.94,
+        "Healthcare": 13670.82
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "216.5",
+        "market_value": "9309.5",
+        "unrealized_pl": "1941.88",
+        "pnl_pct": 26.36,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "CVX",
+        "qty": "22",
+        "entry": "203.778636",
+        "current": "205.3",
+        "market_value": "4516.6",
+        "unrealized_pl": "33.470008",
+        "pnl_pct": 0.75,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "122.3937",
+        "market_value": "5262.9291",
+        "unrealized_pl": "-213.5509",
+        "pnl_pct": -3.9,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "85.9",
+        "market_value": "5068.1",
+        "unrealized_pl": "-106.2",
+        "pnl_pct": -2.05,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "570.4847",
+        "market_value": "2281.9388",
+        "unrealized_pl": "29.5288",
+        "pnl_pct": 1.31,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "11",
+        "entry": "389.38",
+        "current": "442.26",
+        "market_value": "4864.86",
+        "unrealized_pl": "581.68",
+        "pnl_pct": 13.58,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "142.82",
+        "market_value": "7712.28",
+        "unrealized_pl": "-155.969982",
+        "pnl_pct": -1.98,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "406.6",
+        "market_value": "5692.4",
+        "unrealized_pl": "350",
+        "pnl_pct": 6.55,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "30",
+        "entry": "251.98",
+        "current": "271.62",
+        "market_value": "8148.6",
+        "unrealized_pl": "589.2",
+        "pnl_pct": 7.79,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "TMO",
+        "qty": "9",
+        "entry": "674.078889",
+        "current": "662.06",
+        "market_value": "5958.54",
+        "unrealized_pl": "-108.170001",
+        "pnl_pct": -1.78,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "VLO",
+        "qty": "7",
+        "entry": "382.14",
+        "current": "424",
+        "market_value": "2968",
+        "unrealized_pl": "293.02",
+        "pnl_pct": 10.95,
+        "sector": "Energy"
+      }
+    ],
+    "trades": []
   }
 ]
