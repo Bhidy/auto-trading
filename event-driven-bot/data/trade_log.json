@@ -2678,15 +2678,18 @@
     "qty": 7.0,
     "entry_price": 389.38,
     "timestamp": "2026-09-17T22:52:45.561269+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 448.0,
+    "pnl": 410.25,
+    "pnl_pct": 15.05,
+    "exit_timestamp": "2026-10-09T00:26:26.254035+00:00",
+    "exit_reason": "take_profit",
+    "realized_pnl": 410.25
   },
   {
     "timestamp": "2026-09-22T14:25:14.849428+00:00",
@@ -2722,15 +2725,18 @@
     "qty": 4.0,
     "entry_price": 389.38,
     "timestamp": "2026-09-22T22:59:33.573891+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "qty_drift_short",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 448.0,
+    "pnl": 234.43,
+    "pnl_pct": 15.05,
+    "exit_timestamp": "2026-10-09T00:26:26.254035+00:00",
+    "exit_reason": "take_profit",
+    "realized_pnl": 234.43
   },
   {
     "timestamp": "2026-09-24T14:06:14.598693+00:00",
@@ -2759,7 +2765,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-10-09T00:26:26.254035+00:00",
+    "exit_price": 437.34,
+    "exit_reason": "take_profit",
+    "pnl": 386.31,
+    "realized_pnl": 386.31,
+    "pnl_pct": 14.44
   },
   {
     "timestamp": "2026-09-29T14:25:28.092876+00:00",
@@ -2811,14 +2825,17 @@
     "qty": 9.0,
     "entry_price": 674.078889,
     "timestamp": "2026-09-29T23:45:30.590010+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 635.71,
+    "pnl": -345.48,
+    "pnl_pct": -5.69,
+    "exit_timestamp": "2026-10-09T00:26:26.254035+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -345.48
   }
 ]
