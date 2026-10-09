@@ -422,5 +422,111 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-10-09",
+    "timestamp": "2026-10-09T01:20:13.736555+00:00",
+    "audit": {
+      "equity": 99290.63,
+      "cash": 51018.68,
+      "daily_pnl": 263.69,
+      "daily_pnl_pct": 0.266,
+      "total_open_exposure": 48271.95,
+      "exposure_pct": 48.6,
+      "position_count": 8,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 14670.1,
+        "Energy": 13106.72,
+        "Consumer": 10507.04,
+        "Financials": 2300.0,
+        "Healthcare": 7688.08
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "211.014",
+        "market_value": "9073.602",
+        "unrealized_pl": "1705.982",
+        "pnl_pct": 23.16,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "CVX",
+        "qty": "22",
+        "entry": "203.778636",
+        "current": "211.76",
+        "market_value": "4658.72",
+        "unrealized_pl": "175.590008",
+        "pnl_pct": 3.92,
+        "sector": "Energy"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "123.9898",
+        "market_value": "5331.5614",
+        "unrealized_pl": "-144.9186",
+        "pnl_pct": -2.65,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "87.72",
+        "market_value": "5175.48",
+        "unrealized_pl": "1.18",
+        "pnl_pct": 0.02,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "575",
+        "market_value": "2300",
+        "unrealized_pl": "47.59",
+        "pnl_pct": 2.11,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "142.3719",
+        "market_value": "7688.0826",
+        "unrealized_pl": "-180.167382",
+        "pnl_pct": -2.29,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "399.75",
+        "market_value": "5596.5",
+        "unrealized_pl": "254.1",
+        "pnl_pct": 4.76,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "30",
+        "entry": "251.98",
+        "current": "281.6",
+        "market_value": "8448",
+        "unrealized_pl": "888.6",
+        "pnl_pct": 11.76,
+        "sector": "Energy"
+      }
+    ],
+    "trades": []
   }
 ]
