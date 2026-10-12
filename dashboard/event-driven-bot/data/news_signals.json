@@ -1,20 +1,35 @@
 {
-  "timestamp": "2026-10-09T14:25:07.093120+00:00",
+  "timestamp": "2026-10-12T14:06:59.132060+00:00",
   "signals": [
     {
-      "symbol": "MA",
-      "sector": "Financials",
+      "symbol": "DDOG",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "Baird Maintains Outperform on Mastercard, Raises Price Target to $710",
+      "headline": "RBC Capital Maintains Outperform on Datadog, Raises Price Target to $320",
       "source": "benzinga",
-      "created_at": "2026-10-09T13:53:00Z",
+      "created_at": "2026-10-12T13:34:52Z",
       "reasons": [
         "Positive: 'outperform'"
       ],
       "tranche": "event_driven",
-      "price": 567.65,
-      "atr": 9.3
+      "price": 277.22,
+      "atr": 11.85
+    },
+    {
+      "symbol": "TEAM",
+      "sector": "Tech",
+      "signal": "NEWS_BUY",
+      "score": 0.3,
+      "headline": "RBC Capital Maintains Outperform on Atlassian, Raises Price Target to $235",
+      "source": "benzinga",
+      "created_at": "2026-10-12T13:33:36Z",
+      "reasons": [
+        "Positive: 'outperform'"
+      ],
+      "tranche": "event_driven",
+      "price": 187.89,
+      "atr": 9.12
     }
   ]
 }
