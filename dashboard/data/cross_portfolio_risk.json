@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-13T02:10:36.398744+00:00",
-  "total_equity": 301541.71,
-  "gross_exposure_pct": 55.544,
+  "timestamp": "2026-10-13T02:14:35.777664+00:00",
+  "total_equity": 301523.67,
+  "gross_exposure_pct": 55.547,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -69,7 +69,7 @@
     },
     "HD": {
       "market_value": 2923.43,
-      "pct_of_total": 0.969,
+      "pct_of_total": 0.97,
       "books": [
         "portfolio_2"
       ]
@@ -83,7 +83,7 @@
     },
     "KO": {
       "market_value": 8287.59,
-      "pct_of_total": 2.748,
+      "pct_of_total": 2.749,
       "books": [
         "portfolio_2",
         "portfolio_3"
@@ -198,7 +198,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 127307.04,
-      "pct_of_total": 42.219
+      "pct_of_total": 42.221
     },
     "Tech": {
       "market_value": 7367.62,
@@ -226,7 +226,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.782
+    "mega_cap_tech_ai": 6.783
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
