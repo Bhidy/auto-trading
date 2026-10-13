@@ -2801,7 +2801,15 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-10-13T23:44:42.053474+00:00",
+    "exit_price": 290.34,
+    "exit_reason": "take_profit",
+    "pnl": 1150.55,
+    "realized_pnl": 1150.55,
+    "pnl_pct": 15.22
   },
   {
     "symbol": "PANW",
