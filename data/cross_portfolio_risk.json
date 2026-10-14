@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-14T00:17:17.094125+00:00",
-  "total_equity": 301630.5,
-  "gross_exposure_pct": 52.981,
+  "timestamp": "2026-10-14T00:25:24.792814+00:00",
+  "total_equity": 301639.92,
+  "gross_exposure_pct": 52.979,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -33,7 +33,7 @@
     },
     "PSX": {
       "market_value": 5364.6,
-      "pct_of_total": 1.779,
+      "pct_of_total": 1.778,
       "books": [
         "portfolio_1"
       ]
@@ -125,7 +125,7 @@
     },
     "XLI": {
       "market_value": 6706.8,
-      "pct_of_total": 2.224,
+      "pct_of_total": 2.223,
       "books": [
         "portfolio_2"
       ]
@@ -167,7 +167,7 @@
     },
     "MRK": {
       "market_value": 7868.25,
-      "pct_of_total": 2.609,
+      "pct_of_total": 2.608,
       "books": [
         "portfolio_3"
       ]
@@ -197,7 +197,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 127184.65,
-      "pct_of_total": 42.166
+      "pct_of_total": 42.164
     },
     "Tech": {
       "market_value": 7367.62,
@@ -213,7 +213,7 @@
     },
     "Healthcare": {
       "market_value": 7868.25,
-      "pct_of_total": 2.609
+      "pct_of_total": 2.608
     },
     "Energy": {
       "market_value": 4483.13,
