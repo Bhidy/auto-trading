@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-14T23:15:38.799064+00:00",
-  "total_equity": 301153.52,
-  "gross_exposure_pct": 52.793,
+  "timestamp": "2026-10-14T23:20:54.487230+00:00",
+  "total_equity": 301166.32,
+  "gross_exposure_pct": 52.791,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -54,7 +54,7 @@
     },
     "CB": {
       "market_value": 2799.24,
-      "pct_of_total": 0.93,
+      "pct_of_total": 0.929,
       "books": [
         "portfolio_2"
       ]
@@ -174,7 +174,7 @@
     },
     "DG": {
       "market_value": 5476.48,
-      "pct_of_total": 1.819,
+      "pct_of_total": 1.818,
       "books": [
         "portfolio_3"
       ]
@@ -197,7 +197,7 @@
   "by_sector": {
     "Unknown": {
       "market_value": 126365.61,
-      "pct_of_total": 41.961
+      "pct_of_total": 41.959
     },
     "Tech": {
       "market_value": 7367.62,
