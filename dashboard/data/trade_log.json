@@ -2590,7 +2590,7 @@
     "timestamp": "2026-07-06T14:08:54.547142+00:00",
     "symbol": "PSX",
     "side": "buy",
-    "qty": 30.0,
+    "qty": 27.0,
     "entry_price": 178.82,
     "intended_price": 178.95,
     "slippage_pct": -0.0726,
@@ -2850,6 +2850,36 @@
     "gross_pnl": 309.95,
     "fees": 0.02,
     "realized_pnl": 309.93,
+    "exit_reason": "cap_maintenance_stock_8pct"
+  },
+  {
+    "id": "83-trim-2026-10-14T18:44:52.553711+00:00",
+    "schema_version": 2,
+    "timestamp": "2026-07-06T14:08:54.547142+00:00",
+    "symbol": "PSX",
+    "side": "buy",
+    "qty": 3.0,
+    "entry_price": 178.82,
+    "intended_price": 178.95,
+    "slippage_pct": -0.0726,
+    "bucket": "momentum",
+    "signal_score": null,
+    "reasons": [
+      "momentum top13 rebalance 2026-07"
+    ],
+    "borrow_status": null,
+    "order_class": "momentum_sleeve",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": 295.15,
+    "exit_timestamp": "2026-10-14T18:44:52.553711+00:00",
+    "gross_pnl": 348.99,
+    "fees": 0.03,
+    "pnl": 348.96,
+    "pnl_pct": 65.05,
+    "realized_pnl": 348.96,
+    "hold_days": null,
+    "status": "closed",
     "exit_reason": "cap_maintenance_stock_8pct"
   }
 ]
