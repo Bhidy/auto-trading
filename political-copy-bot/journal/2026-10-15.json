@@ -1,0 +1,46 @@
+[
+  {
+    "date": "2026-10-15",
+    "timestamp": "2026-10-15T14:24:20.983019",
+    "account_snapshot": {
+      "equity": "103669.56",
+      "cash": "15966.21",
+      "portfolio_value": "103669.56"
+    },
+    "trades_executed": [
+      {
+        "symbol": "CB",
+        "side": "sell",
+        "qty": 4,
+        "status": "exit_marker",
+        "limit_price": 334.4,
+        "fill_price": 357.02,
+        "lots_closed_qty": 4.0,
+        "order_id": "9f560d87-ee9b-4a33-b5cc-274e55b5491f",
+        "order_status": "pending_new",
+        "politician": "Kevin Hern",
+        "source": "backup",
+        "reason": "Copying Kevin Hern SELL of Chubb Limited Common Stock",
+        "timestamp": "2026-10-15T14:24:17.432210",
+        "date": "2026-10-15"
+      },
+      {
+        "symbol": "HD",
+        "side": "sell",
+        "qty": 5,
+        "status": "exit_marker",
+        "limit_price": 308.1,
+        "fill_price": 308.64,
+        "lots_closed_qty": 5.0,
+        "order_id": "43e9c227-26c8-49ab-a7ac-2f7cfeed2805",
+        "order_status": "pending_new",
+        "politician": "Kevin Hern",
+        "source": "backup",
+        "reason": "Copying Kevin Hern SELL of Home Depot, Inc",
+        "timestamp": "2026-10-15T14:24:19.695281",
+        "date": "2026-10-15"
+      }
+    ],
+    "trades_count": 2
+  }
+]
