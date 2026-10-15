@@ -1,7 +1,7 @@
 {
-  "equity": 98078.51,
+  "equity": 98073.32,
   "starting_equity": 100000.0,
-  "day_start_equity": 98492.35,
+  "day_start_equity": 98073.32,
   "week_start_equity": 97143.45,
   "positions": {
     "C": {
@@ -36,18 +36,18 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 35697.125,
-  "long_market_value": 35697.125,
+  "total_exposure": 35690.7,
+  "long_market_value": 35690.7,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 62382.62,
-  "day_pnl": -413.84,
-  "day_pnl_pct": -0.004202,
-  "week_pnl": 935.06,
-  "week_pnl_pct": 0.009626,
+  "day_pnl": 0.0,
+  "day_pnl_pct": 0.0,
+  "week_pnl": 929.87,
+  "week_pnl_pct": 0.009572,
   "halted": true,
   "halt_reason": "Kill switch: 73.94% drawdown",
   "halt_until": null,
-  "last_updated": "2026-10-15T19:59:02.302566+00:00"
+  "last_updated": "2026-10-15T23:04:53.849746+00:00"
 }
