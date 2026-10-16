@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-16T22:52:47.983121+00:00",
+  "timestamp": "2026-10-16T22:59:09.270229+00:00",
   "positions_held": 6,
   "open_trades_logged": 6,
   "orphan_open_trades": [],
@@ -8,12 +8,5 @@
   "cost_basis_drift": [],
   "short_positions": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "CVX",
-      "lots": 1,
-      "qty": 22.0
-    }
-  ]
+  "reconcile_actions": []
 }
