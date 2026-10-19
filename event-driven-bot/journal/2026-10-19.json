@@ -1,0 +1,87 @@
+[
+  {
+    "date": "2026-10-19",
+    "timestamp": "2026-10-19T23:45:55.922509+00:00",
+    "audit": {
+      "equity": 98937.11,
+      "cash": 64669.69,
+      "daily_pnl": 200.72,
+      "daily_pnl_pct": 0.203,
+      "total_open_exposure": 34267.42,
+      "exposure_pct": 34.6,
+      "position_count": 6,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 12800.27,
+        "Consumer": 11241.21,
+        "Financials": 2465.6,
+        "Healthcare": 7760.34
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "184.2155",
+        "market_value": "7921.2665",
+        "unrealized_pl": "553.6465",
+        "pnl_pct": 7.51,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "133.27",
+        "market_value": "5730.61",
+        "unrealized_pl": "254.13",
+        "pnl_pct": 4.64,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "93.4",
+        "market_value": "5510.6",
+        "unrealized_pl": "336.3",
+        "pnl_pct": 6.5,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "616.4",
+        "market_value": "2465.6",
+        "unrealized_pl": "213.19",
+        "pnl_pct": 9.46,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "143.71",
+        "market_value": "7760.34",
+        "unrealized_pl": "-107.909982",
+        "pnl_pct": -1.37,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "348.5",
+        "market_value": "4879",
+        "unrealized_pl": "-463.4",
+        "pnl_pct": -8.67,
+        "sector": "Tech"
+      }
+    ],
+    "trades": []
+  }
+]
