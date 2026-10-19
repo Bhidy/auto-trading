@@ -1,0 +1,39 @@
+[
+  {
+    "date": "2026-10-19",
+    "timestamp": "2026-10-19T14:25:18.795358",
+    "account_snapshot": {
+      "equity": "103823.56",
+      "cash": "14206.43",
+      "portfolio_value": "103823.56"
+    },
+    "trades_executed": [
+      {
+        "symbol": "T",
+        "side": "buy",
+        "qty": 133,
+        "limit_price": 23.29,
+        "entry_price": 23.22,
+        "intended_price": 23.29,
+        "slippage_pct": -0.3006,
+        "client_order_id": "p2-20261019-T-buy",
+        "filled_qty": 133.0,
+        "estimated_value": 3097.57,
+        "order_id": "f8cc3e48-4cc7-4304-be08-1645b16948ad",
+        "order_status": "filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "10/09/2026",
+        "disclosure_date": "10/15/2026",
+        "observed_date": "2026-10-19T14:25:16.401490",
+        "disclosure_lag_days": 10,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of AT&T Inc",
+        "timestamp": "2026-10-19T14:25:16.401863",
+        "date": "2026-10-19"
+      }
+    ],
+    "trades_count": 1
+  }
+]
