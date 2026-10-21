@@ -338,5 +338,90 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-10-21",
+    "timestamp": "2026-10-21T23:43:15.618136+00:00",
+    "audit": {
+      "equity": 99091.96,
+      "cash": 64695.06,
+      "daily_pnl": 65.85,
+      "daily_pnl_pct": 0.066,
+      "total_open_exposure": 34396.9,
+      "exposure_pct": 34.7,
+      "position_count": 6,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 12698.0,
+        "Consumer": 11155.18,
+        "Financials": 2490.48,
+        "Healthcare": 8053.24
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "182",
+        "market_value": "7826",
+        "unrealized_pl": "458.38",
+        "pnl_pct": 6.22,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "132.12",
+        "market_value": "5681.16",
+        "unrealized_pl": "204.68",
+        "pnl_pct": 3.74,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "92.78",
+        "market_value": "5474.02",
+        "unrealized_pl": "299.72",
+        "pnl_pct": 5.79,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MA",
+        "qty": "4",
+        "entry": "563.1025",
+        "current": "622.62",
+        "market_value": "2490.48",
+        "unrealized_pl": "238.07",
+        "pnl_pct": 10.57,
+        "sector": "Financials"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "149.1341",
+        "market_value": "8053.2414",
+        "unrealized_pl": "184.991418",
+        "pnl_pct": 2.35,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "348",
+        "market_value": "4872",
+        "unrealized_pl": "-470.4",
+        "pnl_pct": -8.8,
+        "sector": "Tech"
+      }
+    ],
+    "trades": []
   }
 ]
