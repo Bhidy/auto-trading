@@ -1548,10 +1548,29 @@ app.get('/api/market-indices', async (req, res) => {
 });
 
 // 5b. Market clock — Alpaca clock/calendar
+// Broker clock unavailable: estimate from New York wall time (Vercel runs in
+// UTC, so local getHours() was wrong by 4-5h). Holidays are not modelled,
+// hence `estimated: true` — consumers must not treat it as authoritative.
+function estimatedClock() {
+    const now = new Date();
+    const ny = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23',
+    }).formatToParts(now).map(p => [p.type, p.value]));
+    const mins = Number(ny.hour) * 60 + Number(ny.minute);
+    const isWeekday = !['Sat', 'Sun'].includes(ny.weekday);
+    return {
+        timestamp: now.toISOString(),
+        is_open: isWeekday && mins >= 570 && mins < 960,
+        next_open: null,
+        next_close: null,
+        estimated: true,
+    };
+}
+
 app.get('/api/market/clock', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
-    if (!cfg) return res.json({ is_open: false, next_open: null, next_close: null, timestamp: null });
+    if (!cfg) return res.json(estimatedClock());
 
     try {
         const clock = await alpacaRequest('GET', `${cfg.base_url}/v2/clock`, cfg.api_key, cfg.api_secret);
@@ -1563,7 +1582,7 @@ app.get('/api/market/clock', async (req, res) => {
         });
     } catch (e) {
         console.warn('Failed to fetch market clock:', e.message);
-        res.json({ is_open: false, next_open: null, next_close: null, timestamp: null });
+        res.json(estimatedClock());
     }
 });
 
@@ -1631,22 +1650,7 @@ app.get('/api/market-clock', async (req, res) => {
             console.warn('Alpaca clock query failed, falling back to simulated clock:', e.message);
         }
     }
-    // Broker clock unavailable: estimate from New York wall time (Vercel runs in
-    // UTC, so local getHours() was wrong by 4-5h). Holidays are not modelled,
-    // hence `estimated: true` — consumers must not treat it as authoritative.
-    const now = new Date();
-    const ny = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23',
-    }).formatToParts(now).map(p => [p.type, p.value]));
-    const mins = Number(ny.hour) * 60 + Number(ny.minute);
-    const isWeekday = !['Sat', 'Sun'].includes(ny.weekday);
-    res.json({
-        timestamp: now.toISOString(),
-        is_open: isWeekday && mins >= 570 && mins < 960,
-        next_open: null,
-        next_close: null,
-        estimated: true,
-    });
+    res.json(estimatedClock());
 });
 
 // 8. Proxy US Market News (Alpaca beta / Simulated)
@@ -1752,6 +1756,7 @@ app.get('/api/market/quotes', async (req, res) => {
                     price,
                     change,
                     changePct,
+                    prevClose,
                     open: parseFloat(dailyBar.o || price),
                     high: parseFloat(dailyBar.h || price),
                     low: parseFloat(dailyBar.l || price),

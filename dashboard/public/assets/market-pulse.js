@@ -26,6 +26,12 @@
     var _cdIsOpen = false;     // true = market currently open (counting down to close)
     var _cdInitialSec = 0;     // seconds remaining when countdown was last set from API
     var _cdInterval = null;    // setInterval handle
+    var _mktOpen = null;       // null = unknown until /api/market-clock answers
+    var _clockOffsetMs = null; // broker clock − browser clock
+    var _clockTimer = null;
+    // Poll only when someone can see it and the tape can move (audit D8: the page
+    // made ~85 req/min while the market was closed, against a 120/min/IP limit).
+    function livePollingAllowed() { return !document.hidden && _mktOpen !== false; }
 
     function getLogoHtml(sym, size = 28) {
         if (!sym) return '';
@@ -40,6 +46,7 @@
         }
         var src = '/assets/logos/' + logoFile + '.svg';
         var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+        if (!ATFmt.hasLocalLogo(logoFile)) src = fallbackSrc;
         return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
             'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.55rem; transition: transform 0.2s;" ' +
             'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
@@ -49,10 +56,10 @@
 
     function getPortfolioLogoHtml(id, size = 28) {
         var initials = 'PF';
-        var grad = 'linear-gradient(135deg, #1e3a8a, #3b82f6)';
+        var grad = 'linear-gradient(135deg, #A33A14, #E55A1F)';
         if (id === 'portfolio_1') {
             initials = 'SIB';
-            grad = 'linear-gradient(135deg, #7c3aed, #2563eb)'; // Purple to Blue
+            grad = 'linear-gradient(135deg, #C9461A, #FF8A3D)'; // brand solar ramp
         } else if (id === 'portfolio_2') {
             initials = 'CSH';
             grad = 'linear-gradient(135deg, #ea580c, #f97316)'; // Dark Orange to Light Orange
@@ -111,12 +118,12 @@
             scope_val: 'Trading Value', scope_vol: 'Trading Volume',
             scope_adv: 'Advancers', scope_dec: 'Decliners',
             scope_desc: 'More listed US tech and growth equities advanced than declined.',
-            stat_open: 'Open', stat_high: 'High', stat_low: 'Low', stat_close: 'Close', stat_vol: 'Volume',
+            stat_open: 'Open', stat_high: 'High', stat_low: 'Low', stat_close: 'Prev Close', stat_vol: 'Volume',
             chart_title: '60-Day Technical Close Chart',
             pane_overview: 'Chart', pane_orderbook: 'Order Book', pane_options: 'Options', pane_news: 'News',
             pane_financials_tab: 'Financials', pane_profile_tab: 'Specs', pane_all_orders: 'All Orders',
             lbl_market_clock: 'Market Clock',
-            lbl_realtime: 'Real-Time Feed via Alpaca API', tab_active: 'Most Active',
+            lbl_realtime: 'IEX feed via Alpaca · may be delayed', tab_active: 'Most Active',
             tab_gainers: 'Top Gainers', tab_losers: 'Top Losers',
             title_news: 'Market News Feed', lbl_viewall: 'View All',
             empty_portfolio_state: 'Loading portfolio holdings from Alpaca...', lbl_l2_title: 'L2 Order Book',
@@ -139,12 +146,12 @@
             scope_val: 'قيمة التداول', scope_vol: 'حجم التداول',
             scope_adv: 'الصاعدة', scope_dec: 'الهابطة',
             scope_desc: 'ارتفعت أوراق مالية أمريكية في قطاع التكنولوجيا والنمو أكثر مما تراجعت.',
-            stat_open: 'افتتاح', stat_high: 'أعلى', stat_low: 'أدنى', stat_close: 'إغلاق', stat_vol: 'حجم',
+            stat_open: 'افتتاح', stat_high: 'أعلى', stat_low: 'أدنى', stat_close: 'الإغلاق السابق', stat_vol: 'حجم',
             chart_title: 'مخطط الإغلاق الفني لمدة 60 يومًا',
             pane_overview: 'الرسم البياني', pane_orderbook: 'دفتر الأوامر', pane_options: 'عقود الخيارات', pane_news: 'الأخبار',
             pane_financials_tab: 'البيانات المالية', pane_profile_tab: 'المواصفات', pane_all_orders: 'جميع الأوامر',
             lbl_market_clock: 'ساعة السوق',
-            lbl_realtime: 'تغذية الأسعار الفورية عبر Alpaca', tab_active: 'الأكثر نشاطًا',
+            lbl_realtime: 'بيانات IEX عبر Alpaca · قد تكون متأخرة', tab_active: 'الأكثر نشاطًا',
             tab_gainers: 'الأعلى ارتفاعًا', tab_losers: 'الأكثر انخفاضًا',
             title_news: 'تغذية أخبار السوق', lbl_viewall: 'عرض الكل',
             empty_portfolio_state: 'جاري تحميل بيانات المحفظة من Alpaca...', lbl_l2_title: 'كتاب الأوامر L2',
@@ -196,12 +203,37 @@
         if (v >= 1e3) return (v / 1e3).toFixed(0) + 'K';
         return String(v);
     }
+    // Direction badge for a % change. Missing data is "—" (never a green ▲0.00%),
+    // and an exactly-flat move is neutral: only a real move gets an arrow + colour.
+    function chgBadge(pct, hasData) {
+        var v = parseFloat(pct);
+        if (!hasData || !isFinite(v)) return { cls: '', text: '—' };
+        if (Math.abs(v) < 0.005) return { cls: '', text: '0.00%' };
+        return v > 0 ? { cls: 'pf-pos', text: '▲ ' + v.toFixed(2) + '%' }
+                     : { cls: 'pf-neg', text: '▼ ' + Math.abs(v).toFixed(2) + '%' };
+    }
+
+    // "▲ +1.23 (+0.45%)" / "▼ -1.23 (-0.45%)": arrow, colour and both signs agree.
+    function paintHeroChange(el, change, changePct) {
+        if (!el) return;
+        if (change === null || change === undefined || !isFinite(change)) {
+            el.className = 'mp-hero-price-chg pf-num';
+            el.textContent = '—';
+            return;
+        }
+        var up = change >= 0;
+        el.className = 'mp-hero-price-chg pf-num ' + (up ? 'pf-pos' : 'pf-neg');
+        el.textContent = (up ? '▲ ' : '▼ ') + (up ? '+' : '-') + Math.abs(change).toFixed(2) +
+            (changePct !== null && changePct !== undefined && isFinite(changePct) ? ' (' + ATFmt.signedPct(changePct) + ')' : '');
+    }
+
     function fmtMoney(n) {
         n = parseFloat(n) || 0;
-        if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
-        if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
-        if (Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
-        return '$' + n.toFixed(2);
+        var a = Math.abs(n), sign = n < 0 ? '-' : '';   // "-$1.2K", never "$-1.2K"
+        if (a >= 1e9) return sign + '$' + (a / 1e9).toFixed(2) + 'B';
+        if (a >= 1e6) return sign + '$' + (a / 1e6).toFixed(2) + 'M';
+        if (a >= 1e3) return sign + '$' + (a / 1e3).toFixed(1) + 'K';
+        return sign + '$' + a.toFixed(2);
     }
     // A bid/ask is only shown when it forms a sane NBBO. The free IEX feed can
     // return a stale/crossed ask (e.g. a 7%+ spread on a liquid name); we never
@@ -229,11 +261,11 @@
     async function loadAndRenderSpySparkline() {
         var canvas = document.getElementById('spySparklineCanvas');
         if (!canvas) return;
-        var spyBars = await apiFetch('/api/market/bars/SPY?timeframe=5Min&limit=78');
+        var spyBars = ATFmt.lastSession(await apiFetch('/api/market/bars/SPY?timeframe=5Min&limit=200&start=' + ATFmt.intradayStart()));
         var points, labels;
         if (spyBars && spyBars.length > 0) {
             points = spyBars.map(function (b) { return parseFloat(b.c); });
-            labels = spyBars.map(function (b) { return b.t ? b.t.slice(11, 16) : ''; });
+            labels = spyBars.map(function (b) { return b.t ? ATFmt.etTime(b.t) + ' ET' : ''; });
         } else {
             var ctxFallback = canvas.getContext('2d');
             if (ctxFallback) {
@@ -324,7 +356,7 @@
                 row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;';
                 row.innerHTML =
                     '<span class="mp-sec-name" style="font-family:var(--pf-ui);font-size:0.7rem;font-weight:700;color:var(--ink);min-width:105px;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>' +
-                    '<div style="flex:1;height:12px;background:rgba(148,163,184,0.08);border-radius:4px;overflow:hidden;position:relative;"><div class="mp-sec-bar" style="height:100%;width:0%;border-radius:4px;transition:width 0.5s ease;"></div></div>' +
+                    '<div style="flex:1;height:12px;background:rgba(122,107,94,0.08);border-radius:4px;overflow:hidden;position:relative;"><div class="mp-sec-bar" style="height:100%;width:0%;border-radius:4px;transition:width 0.5s ease;"></div></div>' +
                     '<span class="mp-sec-pct pf-num" style="font-family:var(--pf-mono);font-size:0.7rem;font-weight:700;min-width:52px;text-align:end;"></span>';
                 container.appendChild(row);
             });
@@ -381,7 +413,7 @@
                 : (conv === 'high' ? 'High Conviction' : conv === 'med' ? 'Medium Conviction' : 'Low Conviction');
             var sideCls = s.signal === 'BUY' ? 'pf-pos' : 'pf-neg';
             var sideTxt = s.signal === 'BUY' ? (lang === 'ar' ? 'شراء' : 'BUY') : (lang === 'ar' ? 'بيع' : 'SELL');
-            var reason = (s.reasons && s.reasons[0]) ? String(s.reasons[0]) : '';
+            var reason = (s.reasons && s.reasons[0]) ? ATFmt.reason(s.reasons[0]) : '';
             return '<div class="ai-signal-card" style="cursor:pointer;" data-sym="' + s.symbol + '">' +
                 '<div>' +
                     '<span style="font-family:var(--pf-mono); font-weight:800; font-size:0.75rem; color:var(--ink);">' + s.symbol + '</span>' +
@@ -417,7 +449,7 @@
             card.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;">
                     <span style="font-size:0.68rem;font-weight:800;text-transform:uppercase;color:var(--teal-dark);letter-spacing:0.04em;">${pf.label}</span>
-                    <span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:99px;background:${pf.liveConnected ? 'rgba(34,197,94,0.1)' : 'rgba(148,163,184,0.1)'};color:${pf.liveConnected ? 'var(--pf-green)' : 'var(--muted)'};border:1px solid ${pf.liveConnected ? 'rgba(34,197,94,0.2)' : 'var(--line)'};">
+                    <span style="display:inline-flex;align-items:center;gap:0.2rem;font-size:0.6rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:99px;background:${pf.liveConnected ? 'rgba(34,197,94,0.1)' : 'rgba(122,107,94,0.1)'};color:${pf.liveConnected ? 'var(--pf-green)' : 'var(--muted)'};border:1px solid ${pf.liveConnected ? 'rgba(34,197,94,0.2)' : 'var(--line)'};">
                         <span style="width:4px;height:4px;border-radius:50%;background:currentColor;display:inline-block;"></span>
                         ${pf.liveConnected ? 'LIVE' : 'LOCAL'}
                     </span>
@@ -460,7 +492,7 @@
             } else {
                 logoFile = logoFile.replace('/', '-');
             }
-            heroLogo.src = '/assets/logos/' + logoFile + '.svg';
+            heroLogo.src = ATFmt.hasLocalLogo(logoFile) ? '/assets/logos/' + logoFile + '.svg' : 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=128';
             heroLogo.onerror = function() {
                 this.onerror = null;
                 this.src = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=128';
@@ -516,15 +548,17 @@
 
             var price = (qdb && qdb.price) ? qdb.price
                        : (data.quote && data.quote.price ? parseFloat(data.quote.price) : 0);
-            var prevClose = (qdb && qdb.close) ? qdb.close
-                       : (data.quote && data.quote.prev ? parseFloat(data.quote.prev) : price);
-            var change = (qdb && qdb.change !== undefined) ? qdb.change : (price - prevClose);
+            // Previous close = the PRIOR session's close. The quote's `close` is today's
+            // daily-bar close (≈ the live price), so it must never be used here (D3).
+            var prevClose = (qdb && qdb.change !== undefined && qdb.price) ? (qdb.price - qdb.change)
+                       : (data.quote && data.quote.prev ? parseFloat(data.quote.prev) : null);
+            var change = (qdb && qdb.change !== undefined) ? qdb.change
+                       : (prevClose ? price - prevClose : null);
             var changePct = (qdb && qdb.changePct !== undefined) ? qdb.changePct
-                       : (prevClose > 0 ? (change / prevClose) * 100 : 0);
+                       : (prevClose > 0 && change !== null ? (change / prevClose) * 100 : null);
 
             document.getElementById('heroPrice').textContent = price ? fmtPrice(price) : '—';
-            chgEl.className = 'mp-hero-price-chg pf-num ' + (change >= 0 ? 'pf-pos' : 'pf-neg');
-            chgEl.textContent = price ? ((change >= 0 ? '▲ +' : '▼ ') + Math.abs(change).toFixed(2) + ' (' + Math.abs(changePct).toFixed(2) + '%)') : '';
+            paintHeroChange(chgEl, change, changePct);
 
             // Live stat row — real Alpaca quote fields only (no fabricated fallbacks).
             function setStat(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
@@ -532,7 +566,7 @@
                 setStat('statOpen',  qdb.open  ? fmtPrice(qdb.open)  : '—');
                 setStat('statHigh',  qdb.high  ? fmtPrice(qdb.high)  : '—');
                 setStat('statLow',   qdb.low   ? fmtPrice(qdb.low)   : '—');
-                setStat('statClose', qdb.close ? fmtPrice(qdb.close) : '—');
+                setStat('statClose', prevClose ? fmtPrice(prevClose) : '—');
                 setStat('statVolume', qdb.volume ? fmtVol(qdb.volume) : '—');
                 var sane = plausibleQuote(qdb, price);
                 setStat('statBid', sane ? fmtPrice(qdb.bid) : '—');
@@ -570,6 +604,7 @@
 
             // Merge (never replace) so OHLC / bid / ask survive for live ticks.
             stockPriceDatabase[activeSymbol] = Object.assign(stockPriceDatabase[activeSymbol] || {}, { price: price, changePct: changePct, prev: prevClose });
+            if (change !== null) stockPriceDatabase[activeSymbol].change = change;
             updateSelectedListStyles();
 
             if (window.loadChartForPeriod) loadChartForPeriod('1D');
@@ -788,12 +823,11 @@
 
             if (items.length > 0) {
                 panel.innerHTML = items.map(function(item) {
-                    var cls = item.chg >= 0 ? 'pf-pos' : 'pf-neg';
-                    var arrow = item.chg >= 0 ? '▲' : '▼';
+                    var badge = chgBadge(item.chg, parseFloat(item.price) > 0);
                     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--line);">' +
                         '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.75rem;color:var(--ink);">' + item.sym + '</span>' +
                         '<span style="font-family:var(--pf-mono);font-weight:700;font-size:0.8rem;color:var(--ink);">$' + Number(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>' +
-                        '<span class="pf-num ' + cls + '" style="font-size:0.7rem;font-weight:700;">' + arrow + ' ' + Math.abs(item.chg).toFixed(2) + '%</span>' +
+                        '<span class="pf-num ' + badge.cls + '" style="font-size:0.7rem;font-weight:700;' + (badge.cls ? '' : 'color:var(--muted);') + '">' + badge.text + '</span>' +
                     '</div>';
                 }).join('');
             } else {
@@ -971,6 +1005,7 @@
     // flat columns from a $0 baseline.
     var _chartState = null;
     var _chartMouseBound = false;
+    var _chartAxisNote = '';
 
     function renderWorkspaceChart(bars, chartType) {
         chartType = chartType || 'daily';
@@ -996,16 +1031,26 @@
         var firstT = new Date(candles[0].t).getTime();
         var lastT = new Date(candles[candles.length - 1].t).getTime();
         var spanDays = (lastT - firstT) / 86400000;
+        // Axis + tooltip labels are US Eastern (the exchange clock), marked "ET" —
+        // never raw UTC and never the viewer's local zone (audit D6).
+        var hasTime = candles[0].t && String(candles[0].t).indexOf('T') >= 0;
         candles.forEach(function(c) {
-            var dt = new Date(c.t);
-            if (isIntraday && spanDays <= 1.5 && c.t && c.t.indexOf('T') >= 0) {
-                c.label = c.t.slice(11, 16);
+            var dt = ATFmt.toDate(c.t);
+            if (isIntraday && spanDays <= 1.5 && hasTime) {
+                c.label = ATFmt.etTime(c.t);
+                c.tipLabel = ATFmt.etDate(c.t) + ' ' + c.label + ' ET';
+            } else if (isNaN(dt.getTime())) {
+                c.label = c.tipLabel = c.t ? String(c.t).slice(0, 10) : '';
+            } else if (hasTime) {
+                c.label = ATFmt.etDate(c.t);
+                c.tipLabel = c.label + (isIntraday ? ' ' + ATFmt.etTime(c.t) + ' ET' : '');
             } else {
-                c.label = isNaN(dt.getTime())
-                    ? (c.t ? c.t.slice(0, 10) : '')
-                    : dt.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+                // Daily bars carry a session DATE; format it as a calendar date (UTC
+                // midnight), not shifted into a zone where it becomes the day before.
+                c.label = c.tipLabel = dt.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
             }
         });
+        _chartAxisNote = (isIntraday && spanDays <= 1.5 && hasTime) ? 'ET' : '';
 
         _chartState = { candles: candles, hoverIdx: -1, geom: null };
         if (!_chartMouseBound) {
@@ -1106,6 +1151,10 @@
             var lxx = plotX + step * idx + step / 2;
             ctx.fillText(cc.label, Math.max(plotX + 14, Math.min(plotX + plotW - 14, lxx)), plotY + priceH + volH + 10);
         }
+        if (_chartAxisNote) {
+            ctx.textAlign = rtl ? 'left' : 'right';
+            ctx.fillText(_chartAxisNote, rtl ? plotX + plotW + 4 : plotX - 6, plotY + priceH + volH + 10);
+        }
 
         var hidx = _chartState.hoverIdx;
         if (hidx >= 0 && hidx < n) {
@@ -1116,10 +1165,10 @@
             ctx.beginPath(); ctx.moveTo(hx, plotY); ctx.lineTo(hx, plotY + priceH); ctx.stroke();
             ctx.setLineDash([]);
             var chg = hc.c - hc.o, chgPct = hc.o ? (chg / hc.o * 100) : 0;
-            var tip = [hc.label, 'O ' + hc.o.toFixed(2), 'H ' + hc.h.toFixed(2),
+            var tip = [hc.tipLabel || hc.label, 'O ' + hc.o.toFixed(2), 'H ' + hc.h.toFixed(2),
                        'L ' + hc.l.toFixed(2), 'C ' + hc.c.toFixed(2),
                        (chg >= 0 ? '▲ ' : '▼ ') + chg.toFixed(2) + ' (' + chgPct.toFixed(2) + '%)'];
-            var tw = 104, th = tip.length * 14 + 10;
+            var tw = 128, th = tip.length * 14 + 10;
             var tx = hx + (hx > plotX + plotW - tw - 12 ? -tw - 12 : 12);
             var ty = plotY + 4;
             ctx.fillStyle = isDark ? 'rgba(20,12,6,0.96)' : 'rgba(255,255,255,0.98)';
@@ -1210,8 +1259,9 @@
     async function loadSparklineData(symbols) {
         var syms = symbols || watchlistSymbols;
         var promises = syms.map(function(sym) {
-            return apiFetch('/api/market/bars/' + sym + '?timeframe=5Min&limit=78')
+            return apiFetch('/api/market/bars/' + sym + '?timeframe=5Min&limit=200&start=' + ATFmt.intradayStart())
                 .then(function(bars) {
+                    bars = ATFmt.lastSession(bars);
                     if (bars && bars.length > 0) {
                         var db = stockPriceDatabase[sym] || {};
                         db._sparkData = bars.map(function(b) { return parseFloat(b.c); });
@@ -1251,10 +1301,8 @@
 
         if (activeListTab === 'Watchlist') {
             watchlistSymbols.forEach(function (sym) {
-                var db = stockPriceDatabase[sym] || { price: 0, changePct: 0 };
-                var isPos = db.changePct >= 0;
-                var cls = isPos ? 'pf-pos' : 'pf-neg';
-                var sign = isPos ? '▲' : '▼';
+                var db = stockPriceDatabase[sym];
+                var badge = chgBadge(db && db.changePct, !!(db && parseFloat(db.price) > 0));
                 var selectedCls = sym === activeSymbol ? 'selected' : '';
 
                 var row = document.createElement('div');
@@ -1269,7 +1317,7 @@
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; justify-content:flex-end; flex-shrink:0;">
-                        <span class="pf-num mp-chg-val ${cls}" style="font-size:0.68rem; font-weight:600; text-align:end;">${sign} ${Math.abs(db.changePct).toFixed(2)}%</span>
+                        <span class="pf-num mp-chg-val ${badge.cls}" style="font-size:0.68rem; font-weight:600; text-align:end;${badge.cls ? '' : ' color:var(--muted);'}">${badge.text}</span>
                     </div>
                 `;
                 row.addEventListener('click', function () { loadStockDetails(sym); });
@@ -1429,15 +1477,23 @@
                 badge.innerHTML = '';
             }
             if (statusLabel) statusLabel.textContent = data.is_open ? 'OPEN' : 'CLOSED';
+            // Only a real broker clock (with a timestamp) may pause polling; an
+            // unknown state keeps the previous behaviour.
+            _mktOpen = data.timestamp ? !!data.is_open : null;
+            // The clock reads the broker's timestamp, rendered in New York time (never
+            // the browser's zone), and keeps ticking locally between 30s polls.
             if (data.timestamp && clockTime) {
-                var ts = new Date(data.timestamp);
-                clockTime.textContent = ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                if (clockZone) clockZone.textContent = 'US Eastern Time';
+                var serverMs = new Date(data.timestamp).getTime();
+                if (isFinite(serverMs)) _clockOffsetMs = serverMs - Date.now();
+                paintMarketClock();
+                if (!_clockTimer) _clockTimer = setInterval(paintMarketClock, 1000);
+                if (clockZone) clockZone.textContent = 'New York · ET';
             }
-            if (!data.is_open && data.next_open) {
-                var nextOpen = new Date(data.next_open);
-                var nextOpenEl = document.getElementById('nextOpenTime');
-                if (nextOpenEl) { nextOpenEl.textContent = nextOpen.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }); }
+            var nextOpenEl = document.getElementById('nextOpenTime');
+            if (nextOpenEl) {
+                nextOpenEl.textContent = (!data.is_open && data.next_open)
+                    ? new Date(data.next_open).toLocaleString('en-US', { timeZone: ATFmt.ET_ZONE, weekday: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })
+                    : (data.is_open ? 'In session' : '—');
             }
 
             /* ── Set countdown target from API data ── */
@@ -1459,6 +1515,14 @@
                 startCountdownTick();
             }
         } catch (e) { console.error('Market clock error:', e); }
+    }
+
+    function paintMarketClock() {
+        var el = document.getElementById('marketClockTime');
+        if (!el || _clockOffsetMs === null) return;
+        el.textContent = new Date(Date.now() + _clockOffsetMs).toLocaleTimeString('en-US', {
+            timeZone: ATFmt.ET_ZONE, hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
     }
 
     /* ─── Live Countdown Ticker ──────────────────────────────────────── */
@@ -1603,6 +1667,7 @@
     function runMicroTicks() {
         if (priceTickInterval) clearInterval(priceTickInterval);
         priceTickInterval = setInterval(function () {
+            if (!livePollingAllowed()) return;
             var symbols = Object.keys(stockPriceDatabase);
             if (symbols.length === 0) return;
             fetch('/api/market/quotes?symbols=' + symbols.join(','))
@@ -1616,7 +1681,7 @@
                         db.price = q.price;
                         db.changePct = q.changePct || 0;
                         if (q.change !== undefined) db.change = q.change;
-                        db.prev = (q.close) ? q.close : (q.price - (q.change || 0));
+                        if (q.change !== undefined) db.prev = q.price - q.change;   // prior session close
                         ['open','high','low','close','volume','bid','ask','bidSize','askSize'].forEach(function (k) {
                             if (q[k] !== undefined) db[k] = q[k];
                         });
@@ -1626,16 +1691,13 @@
                         var hEl = document.getElementById('heroPrice');
                         var cEl = document.getElementById('heroPriceChg');
                         if (hEl) hEl.textContent = fmtPrice(db.price);
-                        if (cEl) {
-                            cEl.className = 'mp-hero-price-chg pf-num ' + (db.changePct >= 0 ? 'pf-pos' : 'pf-neg');
-                            cEl.textContent = (db.changePct >= 0 ? '▲ +' : '▼ ') + Math.abs(db.price - db.prev).toFixed(2) + ' (' + Math.abs(db.changePct).toFixed(2) + '%)';
-                        }
+                        if (cEl) paintHeroChange(cEl, db.change !== undefined ? db.change : (db.prev ? db.price - db.prev : null), db.changePct);
                         // Live stat patches — real fields only. Prev Close = prior session close (not the live price).
                         function setS(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
                         if (db.high) setS('statHigh', fmtPrice(db.high));
                         if (db.low) setS('statLow', fmtPrice(db.low));
                         if (db.volume) setS('statVolume', fmtVol(db.volume));
-                        if (db.close) setS('statClose', fmtPrice(db.close));
+                        if (db.prev) setS('statClose', fmtPrice(db.prev));
                         var saneT = plausibleQuote(db, db.price);
                         setS('statBid', saneT ? fmtPrice(db.bid) : '—');
                         setS('statAsk', saneT ? fmtPrice(db.ask) : '—');
@@ -2040,7 +2102,7 @@
                 _mpAo.inited = true;
                 mpRenderAoFilters();
                 mpFetchAndRender();
-                _mpAo.timer = setInterval(mpFetchAndRender, 30000);
+                _mpAo.timer = setInterval(function () { if (!document.hidden) mpFetchAndRender(); }, 30000);
             } else if (_mpAo.data) {
                 mpRenderAoTable();
             }
@@ -2104,7 +2166,7 @@
                     _mpAo.data = d; _mpAo.loading = false;
                     mpRenderAoTable();
                     var ts = document.getElementById('mpAoTs');
-                    if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+                    if (ts) ts.textContent = 'Updated ' + ATFmt.etTime(new Date(), true) + ' ET';
                 })
                 .catch(function() { _mpAo.loading = false; });
         }
@@ -2185,9 +2247,9 @@
                     if (!n.dateStr || n.dateStr < cutoffStr) return;
                     var sc=n.side==='buy'?'pf-badge-pos':'pf-badge-neg';
                     var isBracket = n.orderStatus==='held';
-                    var sBg=isBracket?'rgba(245,158,11,.12)':'rgba(59,130,246,.12)';
-                    var sCol=isBracket?'#f59e0b':'#3b82f6';
-                    var sBorder=isBracket?'rgba(245,158,11,.25)':'rgba(59,130,246,.25)';
+                    var sBg=isBracket?'rgba(245,158,11,.12)':'rgba(229,90,31,.12)';
+                    var sCol=isBracket?'#f59e0b':'var(--teal-dark)';
+                    var sBorder=isBracket?'rgba(245,158,11,.25)':'rgba(229,90,31,.25)';
                     var desc = (n.orderType.replace(/_/g,' ')||'')+(n.tif?' · '+n.tif:'');
                     totalCount++; openCount++; totalOpen+=n.qty*n.price;
                     rows.push('<tr><td style="white-space:nowrap;font-family:var(--pf-mono,monospace);font-size:.74rem;">'+mpEsc(n.dateStr||'—')+'</td>'+
@@ -2214,7 +2276,7 @@
                     (totalBuy>0?' <span style="color:var(--muted);">(Bought $'+mpFmt(totalBuy)+(totalSell>0?' · Sold $'+mpFmt(totalSell):'')+')':'')+'</span>');
             }
             if (openCount>0) {
-                sumParts.push('<span style="color:#3b82f6;font-weight:700;">'+openCount+' Open</span>'+
+                sumParts.push('<span style="color:var(--teal-dark);font-weight:700;">'+openCount+' Open</span>'+
                     (totalOpen>0?' <span style="color:var(--muted);">($'+mpFmt(totalOpen)+' exposure)</span>':''));
             }
             var tfoot = '<tfoot><tr style="background:var(--surface);border-top:2px solid var(--line);">'+
@@ -2396,7 +2458,7 @@ function loadChartForPeriod(range) {
     // candle per day, exactly as requested). Daily/hourly REQUIRE an explicit
     // start date or Alpaca returns a single bar.
     var cfgMap = {
-        '1D': { tf: '5Min', days: 1,   intraday: true,  limit: 130 },
+        '1D': { tf: '5Min', days: 5,   intraday: true,  limit: 200 },
         '1W': { tf: '1Hour', days: 8,  intraday: true,  limit: 130 },
         '1M': { tf: '1Day', days: 35,  intraday: false, limit: 40 },
         '3M': { tf: '1Day', days: 95,  intraday: false, limit: 110 },
@@ -2404,21 +2466,23 @@ function loadChartForPeriod(range) {
         '1Y': { tf: '1Day', days: 372, intraday: false, limit: 400 }
     };
     var cf = cfgMap[range] || cfgMap['1M'];
-    var startDate = '';
-    if (range !== '1D') {
-        var d = new Date(); d.setDate(d.getDate() - cf.days);
-        startDate = d.toISOString().slice(0, 10);
-    }
+    // Every request carries an explicit start. 1D asks for ~5 days of 5-min bars
+    // and keeps only the latest regular session (09:30–16:00 ET), so the view can
+    // never silently stitch two sessions together (audit D7).
+    var d = new Date(); d.setDate(d.getDate() - cf.days);
+    var startDate = d.toISOString().slice(0, 10);
+    function shape(b) { return range === '1D' ? ATFmt.lastSession(b) : b; }
     var url = '/api/market/bars/' + activeSymbol + '?timeframe=' + cf.tf +
               '&limit=' + cf.limit + '&feed=iex' + (startDate ? ('&start=' + startDate) : '');
 
     apiFetch(url).then(function(bars) {
         if (bars && Array.isArray(bars) && bars.length > 0) {
-            renderWorkspaceChart(bars, cf.intraday ? 'intraday' : 'daily');
+            renderWorkspaceChart(shape(bars), cf.intraday ? 'intraday' : 'daily');
             if (range === '1D' || range === '1W') {
                 intradayRefreshTimer = setInterval(function() {
                     if (activePeriod !== range) { clearInterval(intradayRefreshTimer); intradayRefreshTimer = null; return; }
-                    apiFetch(url).then(function(b) { if (b && b.length > 0) renderWorkspaceChart(b, cf.intraday ? 'intraday' : 'daily'); });
+                    if (!livePollingAllowed()) return;
+                    apiFetch(url).then(function(b) { if (b && b.length > 0) renderWorkspaceChart(shape(b), cf.intraday ? 'intraday' : 'daily'); });
                 }, 20000);
             }
         } else {
@@ -2491,14 +2555,30 @@ window.loadChartForPeriod = loadChartForPeriod;
 
         runMicroTicks();
 
-        if (quotesRefreshInterval) clearInterval(quotesRefreshInterval);
-        quotesRefreshInterval = setInterval(function () {
+        // Refresh budget (audit D8). Per 30s cycle while the market is open:
+        // quotes + sectors + clock + signals; the 29 sparkline series only every
+        // 5 min. Market closed: clock every cycle, everything else every 10 min.
+        // Hidden tab: nothing. Returning to the tab refreshes immediately.
+        var _cycle = 0, _lastSpark = Date.now();
+        function refreshCycle(force) {
+            if (document.hidden) return;
+            _cycle++;
+            loadMarketClock();
+            var closed = _mktOpen === false;
+            if (!force && closed && _cycle % 20 !== 0) return;
             refreshAllData();
             loadAndRenderSectors();
-            loadSparklineData(watchlistSymbols);
-            loadMarketClock();
             loadPortfolioSignals();
-        }, 30000);
+            if (!closed && Date.now() - _lastSpark >= 300000) {
+                _lastSpark = Date.now();
+                loadSparklineData(watchlistSymbols);
+            }
+        }
+        if (quotesRefreshInterval) clearInterval(quotesRefreshInterval);
+        quotesRefreshInterval = setInterval(refreshCycle, 30000);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) refreshCycle(true);
+        });
 
         // Deep-link: /market-pulse?view=options opens the options-chain pane
         // (the global "Options Lab" nav routes here).

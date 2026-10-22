@@ -31,6 +31,7 @@
     }
     var src = '/assets/logos/' + logoFile + '.svg';
     var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+    if (!ATFmt.hasLocalLogo(logoFile)) src = fallbackSrc;
     return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
         'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
         'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
@@ -242,7 +243,7 @@
   }
 
   async function loadAll() {
-    $('lastUpdated').textContent = 'Refreshing…';
+    $('lastUpdated').textContent = I18N[lang].refreshing;
     try {
       const cross = await getJSON('/api/intelligence/cross-portfolio');
       renderConcentration(cross);
@@ -273,7 +274,8 @@
         $(b).innerHTML = '<div class="empty-note">Unavailable.</div>';
       });
     }
-    $('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    // Exchange clock, labelled — never the viewer's unlabelled local time (D19).
+    $('lastUpdated').textContent = I18N[lang].updated + ' ' + ATFmt.etTime(new Date(), true) + ' ET';
   }
 
   function initSelector() {
@@ -287,7 +289,50 @@
     });
   }
 
+  // ── Language: same header contract as every other page (AR toggle, RTL, nav) ──
+  let lang = (function () { try { return localStorage.getItem('starta-lang') || 'en'; } catch (_) { return 'en'; } })();
+  const I18N = {
+    en: {
+      nav_home: 'Home', nav_portfolios: 'Portfolios', nav_market_pulse: 'Market Pulse', nav_crypto_link: 'Crypto',
+      nav_orders: 'Orders', nav_readiness: 'Readiness', nav_workspace: 'Workspace', nav_intelligence: 'Intelligence',
+      nav_research: 'Research & AI', nav_screener: 'Screener', nav_history: 'Account History', nav_settings: 'Settings',
+      intel_tag: 'Institutional Control Surface', intel_title: 'System Intelligence',
+      intel_sub: 'Execution quality, model validation, fee-aware accounting, cross-portfolio risk and fully-automated governance — the evidence behind every autonomous decision.',
+      seg_all: 'All Books', t_conc: 'Cross-Portfolio Concentration', t_val: 'Validation', t_exec: 'Execution Quality',
+      t_acct: 'Fee-Aware Accounting', t_gov: 'Automated Governance', t_rec: 'Reconciliation',
+      refreshing: 'Refreshing…', updated: 'Updated'
+    },
+    ar: {
+      nav_home: 'الرئيسية', nav_portfolios: 'المحافظ', nav_market_pulse: 'نبض السوق', nav_crypto_link: 'الكريبتو',
+      nav_orders: 'الأوامر', nav_readiness: 'الجاهزية', nav_workspace: 'مساحة العمل', nav_intelligence: 'ذكاء النظام',
+      nav_research: 'البحث والذكاء', nav_screener: 'الفرز', nav_history: 'سجل الحساب', nav_settings: 'الإعدادات',
+      intel_tag: 'سطح التحكم المؤسسي', intel_title: 'ذكاء النظام',
+      intel_sub: 'جودة التنفيذ، والتحقق من النماذج، والمحاسبة بعد الرسوم، ومخاطر المحافظ مجتمعة، والحوكمة الآلية — الأدلة وراء كل قرار آلي.',
+      seg_all: 'كل المحافظ', t_conc: 'التركّز عبر المحافظ', t_val: 'التحقق', t_exec: 'جودة التنفيذ',
+      t_acct: 'المحاسبة بعد الرسوم', t_gov: 'الحوكمة الآلية', t_rec: 'المطابقة',
+      refreshing: 'جارٍ التحديث…', updated: 'آخر تحديث'
+    }
+  };
+  function applyLang() {
+    if (!I18N[lang]) lang = 'en';
+    const map = I18N[lang];
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-key]').forEach(el => { if (map[el.dataset.key]) el.textContent = map[el.dataset.key]; });
+    document.querySelectorAll('[data-i18n]').forEach(el => { if (map[el.dataset.i18n]) el.textContent = map[el.dataset.i18n]; });
+    const btn = $('langToggle');
+    if (btn) btn.textContent = lang === 'ar' ? 'EN' : 'AR';
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    applyLang();
+    const langBtn = $('langToggle');
+    if (langBtn) langBtn.addEventListener('click', () => {
+      lang = lang === 'ar' ? 'en' : 'ar';
+      try { localStorage.setItem('starta-lang', lang); } catch (_) {}
+      applyLang();
+      loadAll();
+    });
     initSelector();
     loadAll();
     timer = setInterval(loadAll, 30000);

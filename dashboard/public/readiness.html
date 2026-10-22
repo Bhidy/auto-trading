@@ -41,7 +41,7 @@
         .eta b { color: var(--ink); }
         .rd-banner { display: flex; gap: .85rem; align-items: flex-start; background: var(--teal-soft, #FFF1E8);
             border: 1px solid var(--line); border-radius: .85rem; padding: 1rem 1.15rem; margin-bottom: 1.5rem; font-size: .9rem; color: var(--ink); line-height: 1.65; }
-        .rd-banner .ic { font-size: 1.1rem; flex-shrink: 0; }
+        .rd-banner .ic { flex-shrink: 0; color: var(--teal-dark); margin-top: .1rem; }
         .rd-banner b { color: var(--ink); }
         .gate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1rem; }
         .gate { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: 1.1rem 1.2rem; }
@@ -146,7 +146,7 @@
         </section>
 
         <div class="rd-banner">
-            <span class="ic">🛈</span>
+            <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r="0.6" fill="currentColor"/></svg>
             <div id="disclosure"></div>
         </div>
 
@@ -185,7 +185,7 @@
                 lbl_target:'Target', lbl_backtest:'Backtest', lbl_live:'Live now',
                 st_pass:'PASSED', st_warn:'NEEDS WORK', st_pend:'IN PROGRESS',
                 g_track:'Paper track record', g_sharpe:'Out-of-sample Sharpe', g_maxdd:'Max drawdown (live)',
-                g_pf:'Profit factor (live)', g_sample:'Closed trades (measured)', g_return:'Net return (live)',
+                g_pf:'Profit factor (live)', g_sample:'Closed trades (measured)', g_return:'Net return (since inception)',
                 tgt_track:'≥ 90 trading days', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
                 tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 measured', tgt_return:'positive',
                 v_days:'{n} days', v_pct:'{n}%', v_none:'no backtest yet', v_insufficient:'insufficient sample',
@@ -223,7 +223,7 @@
                 lbl_target:'الهدف', lbl_backtest:'باك-تيست', lbl_live:'الآن مباشر',
                 st_pass:'تحقّق', st_warn:'يحتاج عمل', st_pend:'قيد التقدّم',
                 g_track:'سجل التداول الورقي', g_sharpe:'Sharpe خارج العينة', g_maxdd:'أقصى هبوط (مباشر)',
-                g_pf:'معامل الربح (مباشر)', g_sample:'الصفقات المغلقة (المقاسة)', g_return:'صافي العائد (مباشر)',
+                g_pf:'معامل الربح (مباشر)', g_sample:'الصفقات المغلقة (المقاسة)', g_return:'صافي العائد (منذ البداية)',
                 tgt_track:'≥ 90 يوم تداول', tgt_sharpe:'≥ 1.0', tgt_maxdd:'≤ 15%',
                 tgt_pf:'≥ 1.3', tgt_sample:'≥ 50 مقاسة', tgt_return:'موجب',
                 v_days:'{n} يوم', v_pct:'{n}%', v_none:'لا يوجد باك-تيست بعد', v_insufficient:'عينة غير كافية',
@@ -274,6 +274,12 @@
         function daysSince(d){ return d ? Math.max(0, Math.floor((Date.now() - new Date(d+'T00:00:00Z'))/86400000)) : 0; }
         function fmtMoney(v){ return (v==null||isNaN(v)) ? '—' : '$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0}); }
         function pf(id){ for (var i=0;i<PF.length;i++) if (PF[i].id===id) return PF[i]; }
+        function startingCapital(c){
+            var d = (c && c.details) || {};
+            var v = Number(d.initial_capital || (d.account && d.account.initial_capital) || 100000);
+            return v > 0 ? v : 100000;
+        }
+        function fmtRet(r){ return r==null ? '—' : ATFmt.signedPct(r, 1); }
 
         function maxDrawdown(eqs){
             var peak = -Infinity, mdd = 0;
@@ -286,9 +292,13 @@
             var meta = pf(id), c = cache[id] || {};
             var details = c.details || {}, hist = (c.history && c.history.history) || [];
             var acct = details.account || {};
-            var equity = (acct.equity!=null) ? Number(acct.equity) : (hist.length ? hist[hist.length-1].equity : 100000);
-            var startEq = hist.length ? hist[0].equity : 100000;
-            var ret = startEq ? (equity/startEq - 1)*100 : 0;
+            var equity = (acct.equity!=null) ? Number(acct.equity) : (hist.length ? hist[hist.length-1].equity : null);
+            // Since-inception return vs STARTING CAPITAL — the same basis the
+            // portfolio list/detail pages use. Never the first point of whatever
+            // history window the API returned (that showed P1 at +4.0% while the
+            // book was −2.7% since inception — audit 2026-10-23 D5).
+            var startEq = startingCapital(c);
+            var ret = (equity!=null && startEq) ? (equity/startEq - 1)*100 : null;
 
             var tl = details.trade_log || [];
             var closed = tl.filter(function(tr){ return String(tr.status||'').indexOf('closed')===0; });
@@ -328,8 +338,8 @@
                 progress: measured.length/50*100, status: measured.length>=50?'pass':'pend' });
             // 6) Net return (live, informational)
             gates.push({ key:'g_return', target:'tgt_return', backtest:t('v_dash'),
-                live:(ret>=0?'+':'')+ret.toFixed(1)+'%',
-                progress: ret>0?100:0, status: ret>0?'pass':'warn' });
+                live: ATFmt.ltr(fmtRet(ret)),
+                progress: ret>0?100:0, status: ret==null?'pend':(ret>0?'pass':'warn') });
 
             return { gates:gates, equity:equity, ret:ret, closed:closed.length, measured:measured.length, dd:dd, days:days,
                 hardGates: gates.slice(0,5) };
@@ -350,10 +360,9 @@
             document.getElementById('tabs').innerHTML = PF.map(function(p){
                 var c = cache[p.id], acct = (c && c.details && c.details.account) || {};
                 var eq = acct.equity!=null ? Number(acct.equity) : null;
-                var ret = (c && c.history && c.history.history && c.history.history.length)
-                    ? (eq/c.history.history[0].equity - 1)*100 : null;
+                var ret = eq!=null ? (eq/startingCapital(c) - 1)*100 : null;   // since inception
                 var eqCls = ret==null?'':(ret>=0?'pos':'neg');
-                var eqTxt = eq!=null ? fmtMoney(eq)+(ret!=null?'  ('+(ret>=0?'+':'')+ret.toFixed(1)+'%)':'') : '—';
+                var eqTxt = eq!=null ? ATFmt.ltr(fmtMoney(eq)+(ret!=null?'  ('+fmtRet(ret)+')':'')) : '—';
                 return '<div class="rd-tab'+(p.id===current?' active':'')+'" data-pf="'+p.id+'">'+
                     '<span class="pf-id">'+p.id.replace('portfolio_','P')+'</span>'+
                     '<span class="pf-nm">'+t(p.nameKey)+'</span>'+
@@ -392,7 +401,7 @@
             var foot = document.getElementById('foot');
             foot.removeAttribute('data-key');
             foot.innerHTML = tmpl('foot_tmpl', {
-                name: t(meta.nameKey), equity: fmtMoney(r.equity), ret:(r.ret>=0?'+':'')+r.ret.toFixed(1)+'%',
+                name: t(meta.nameKey), equity: ATFmt.ltr(fmtMoney(r.equity)), ret: ATFmt.ltr(fmtRet(r.ret)),
                 closed: r.closed, measured: r.measured, dd: r.dd!=null ? r.dd.toFixed(1)+'%' : '—'
             });
         }

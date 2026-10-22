@@ -67,6 +67,7 @@
         }
         var src = '/assets/logos/' + logoFile + '.svg';
         var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        if (!ATFmt.hasLocalLogo(logoFile)) src = fallbackSrc;
         return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
             'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
             'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
@@ -189,20 +190,46 @@
         } catch (e) {}
     };
 
-    async function createWatchlist() {
+    function wlError(msg) {
+        var el = $('wlError');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.hidden = !msg;
+    }
+    function openWlModal() {
+        wlError('');
+        $('wlModal').classList.add('open');
+        setTimeout(function () { $('wlName').focus(); }, 30);
+    }
+    function closeWlModal() { $('wlModal').classList.remove('open'); wlError(''); }
+
+    async function createWatchlist(e) {
+        if (e) e.preventDefault();
         var name = $('wlName').value.trim();
         var symbols = $('wlSymbols').value.split(',').map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean);
-        if (!name) return;
+        if (!name) { wlError(lang === 'ar' ? 'أدخل اسماً لقائمة المراقبة.' : 'Enter a name for the watchlist.'); $('wlName').focus(); return; }
+        if (!wlPfId) { wlError(lang === 'ar' ? 'اختر محفظة أولاً.' : 'Select a portfolio first.'); return; }
+        var btn = $('btnCreateWl');
+        btn.disabled = true;
         try {
-            await fetch('/api/portfolio/' + wlPfId + '/watchlists', {
+            var res = await fetch('/api/portfolio/' + wlPfId + '/watchlists', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name, symbols: symbols })
             });
-            $('wlModal').classList.remove('active');
+            if (!res.ok) {
+                // Surface the real outcome (e.g. 401/503 when mutations are token-gated).
+                wlError((lang === 'ar' ? 'تعذّر إنشاء القائمة' : 'Could not create the watchlist') + ' (HTTP ' + res.status + ').');
+                return;
+            }
+            closeWlModal();
             $('wlName').value = '';
             $('wlSymbols').value = '';
             loadWatchlists();
-        } catch (e) {}
+        } catch (err) {
+            wlError(lang === 'ar' ? 'تعذّر الوصول إلى الخادم.' : 'Could not reach the server.');
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     function init() {
@@ -215,9 +242,14 @@
             $('filterExchange').style.display = this.value === 'crypto' ? 'none' : '';
         });
         $('wlPortfolio').addEventListener('change', function () { wlPfId = this.value; loadWatchlists(); });
-        $('btnNewWl').addEventListener('click', function () { $('wlModal').classList.add('active'); });
-        $('btnCancelWl').addEventListener('click', function () { $('wlModal').classList.remove('active'); });
-        $('btnCreateWl').addEventListener('click', createWatchlist);
+        $('btnNewWl').addEventListener('click', openWlModal);
+        $('btnCancelWl').addEventListener('click', closeWlModal);
+        $('btnCloseWl').addEventListener('click', closeWlModal);
+        $('wlForm').addEventListener('submit', createWatchlist);
+        $('wlModal').addEventListener('click', function (e) { if (e.target === this) closeWlModal(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && $('wlModal').classList.contains('open')) closeWlModal();
+        });
 
         var langBtn = $('langToggle');
         if (langBtn) langBtn.addEventListener('click', function () {

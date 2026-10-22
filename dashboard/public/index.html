@@ -5,7 +5,7 @@
     <script>if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('has-motion');}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Trading — Autonomous Quant Intelligence, Live on Alpaca</title>
+    <title>Auto Trading — Autonomous Quant Intelligence, Paper-Trading on Alpaca</title>
     <meta name="description" content="Three self-improving quant portfolios trade a $300,000 book on Alpaca, fully autonomous. Multi-factor signals, congressional copy-trades, and event-driven snipes, every market day.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -108,7 +108,7 @@
             <div class="home-live-strip" data-reveal="up">
                 <div class="home-stat">
                     <span class="home-stat__val" id="stat-equity">—</span>
-                    <span class="home-stat__label" data-key="stat_aum">Under management</span>
+                    <span class="home-stat__label" data-key="stat_aum">Paper capital</span>
                 </div>
                 <div class="home-stat">
                     <span class="home-stat__val" id="stat-return">—</span>
@@ -377,11 +377,11 @@
                 nav_trading: 'Trading', nav_orders: 'Orders', nav_crypto: 'Crypto Terminal',
                 nav_options: 'Options Lab', nav_screener: 'Screener', nav_history: 'Account History',
                 nav_alerts: 'Alerts', nav_intelligence: 'Intelligence', nav_research: 'Research & AI', nav_settings: 'Settings',
-                hero_eyebrow: 'Live on Alpaca · three autonomous portfolios',
+                hero_eyebrow: 'Paper-trading on Alpaca · three autonomous portfolios',
                 hero_title: '<span class="line">Institutional intelligence.</span><span class="line">Automated strategies.</span><span class="line accent">Real-time edge.</span>',
                 hero_sub: 'Three self-improving quant portfolios trading a $300,000 book on Alpaca, fully autonomous.',
                 hero_cta1: 'Explore the portfolios', hero_cta2: 'Open Market Pulse',
-                stat_aum: 'Under management', stat_return: 'Total return', stat_positions: 'Open positions', stat_portfolios: 'Autonomous portfolios',
+                stat_aum: 'Paper capital', stat_return: 'Total return', stat_positions: 'Open positions', stat_portfolios: 'Autonomous portfolios',
                 scroll_cue: 'Scroll',
                 proof_kicker: 'The system, live', proof_title: 'Three minds, <em>one book.</em>',
                 proof_lead: 'Separate strategies, separate accounts, separate risk. Figures pulled live.',
@@ -418,11 +418,11 @@
                 nav_trading: 'التداول', nav_orders: 'الأوامر', nav_crypto: 'منصة الكريبتو',
                 nav_options: 'مختبر الخيارات', nav_screener: 'الماسح', nav_history: 'سجل الحساب',
                 nav_alerts: 'التنبيهات', nav_intelligence: 'الذكاء', nav_research: 'الأبحاث والذكاء', nav_settings: 'الإعدادات',
-                hero_eyebrow: 'مباشر على Alpaca · ثلاث محافظ ذاتية القيادة',
+                hero_eyebrow: 'تداول ورقي على Alpaca · ثلاث محافظ ذاتية القيادة',
                 hero_title: '<span class="line">الذكاء المؤسسي.</span><span class="line">استراتيجيات مؤتمتة.</span><span class="line accent">تفوّق فوري.</span>',
                 hero_sub: 'ثلاث محافظ كمية ذاتية التحسين تدير دفتراً بقيمة 300,000 دولار على Alpaca، باستقلال تام.',
                 hero_cta1: 'استكشف المحافظ', hero_cta2: 'افتح نبض السوق',
-                stat_aum: 'تحت الإدارة', stat_return: 'العائد الكلي', stat_positions: 'المراكز المفتوحة', stat_portfolios: 'محافظ مستقلة',
+                stat_aum: 'رأس المال الورقي', stat_return: 'العائد الكلي', stat_positions: 'المراكز المفتوحة', stat_portfolios: 'محافظ مستقلة',
                 scroll_cue: 'انزل',
                 proof_kicker: 'النظام، مباشرةً', proof_title: 'ثلاثة عقول، <em>دفتر واحد.</em>',
                 proof_lead: 'استراتيجيات منفصلة، حسابات منفصلة، مخاطر منفصلة. أرقام مباشرة.',
@@ -518,8 +518,8 @@
                 var live = tile.querySelector('[data-live]');
                 if (live) {
                     var txt = live.querySelector('[data-live-text]');
-                    if (p.liveConnected) { live.classList.remove('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'مباشر' : 'Live'); }
-                    else { live.classList.add('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'مزامنة' : 'Synced'); }
+                    if (p.liveConnected) { live.classList.remove('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · متصل' : 'Paper · Connected'); }
+                    else { live.classList.add('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · مزامنة' : 'Paper · Synced'); }
                 }
             });
         }).catch(function () {});
@@ -552,6 +552,7 @@
             if (t.indexOf('BTC') > -1) f = 'BTC_USD'; else if (t.indexOf('ETH') > -1) f = 'ETH_USD'; else f = f.replace('/', '-');
             var src = '/assets/logos/' + f + '.svg';
             var fb = 'https://img.logo.dev/ticker/' + f.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+            if (!ATFmt.hasLocalLogo(f)) src = fb;
             return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + t + '" onerror="this.onerror=null;this.src=\'' + fb + '\'">';
         }
         var MKT_SYMS = ['SPY', 'QQQ', 'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'XLK', 'XLE', 'BTC/USD', 'ETH/USD'];

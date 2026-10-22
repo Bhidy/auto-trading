@@ -290,10 +290,15 @@ def analyze_symbol_v2(bars, symbol, instrument_type, regime, rs_data, params,
     if mom_3m and mom_3m < -params["momentum_threshold"]: mom_score -= 0.10
     if mom_6m and mom_6m is not None and mom_6m < -params["momentum_threshold"]: mom_score -= 0.07
     score += mom_score
+    # The factor is a 1M/3M/6M composite: label it as such and show all three,
+    # so "Positive" next to a negative 1M figure is not read as a contradiction.
+    def _pct(v):
+        return "n/a" if v is None else f"{v:.1f}%"
+    _mom_detail = f"1M:{_pct(mom_1m)} 3M:{_pct(mom_3m)} 6M:{_pct(mom_6m)}"
     if mom_score > 0:
-        reasons.append(f"Positive momentum (1M:{mom_1m:.1f}% 3M:{mom_3m:.1f}%)")
+        reasons.append(f"Positive composite momentum ({_mom_detail})")
     elif mom_score < 0:
-        reasons.append(f"Negative momentum (1M:{mom_1m:.1f}% 3M:{mom_3m:.1f}%)")
+        reasons.append(f"Negative composite momentum ({_mom_detail})")
 
     # 3) RSI (weight: 0.15)
     if rsi_val:

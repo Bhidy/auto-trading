@@ -6,6 +6,21 @@ html {
     zoom: 0.9;
 }
 
+/* Phones/tablets: no global zoom. At <=820px it shrank body copy below a legible
+   size and made full-bleed fixed layers (.backdrop/.aurora/.site-nav) overflow the
+   viewport by ~10px at 375px (audit 2026-10-23). Desktop density is unchanged. */
+@media (max-width: 820px) {
+    html {
+        zoom: 1;
+    }
+}
+
+/* A canvas must never force its container wider than the viewport (an un-rendered
+   sparkline canvas defaults to 300px inside a 75px slot). */
+canvas {
+    max-width: 100%;
+}
+
 :root {
     --page: #FFF7F0;
     --surface: #ffffff;
@@ -221,7 +236,7 @@ html[dir="rtl"] .hero-subtitle { letter-spacing: 0; }
     border-radius: 1.45rem;
     background: var(--surface);
     backdrop-filter: blur(20px);
-    box-shadow: 0 18px 42px rgba(100,116,139,.09);
+    box-shadow: 0 18px 42px rgba(122,107,94,.09);
 }
 .search-box {
     flex: 1 1 0%;
@@ -293,7 +308,7 @@ html[dir="rtl"] .search-box svg { left: auto; right: 1rem; }
 .search-box input {
     width: 100%;
     min-height: 3.3rem;
-    border: 1px solid rgba(148,163,184,.17);
+    border: 1px solid rgba(122,107,94,.17);
     border-radius: 1rem;
     background: var(--page);
     padding: 0 1rem 0 2.8rem;
@@ -329,7 +344,7 @@ html[dir="rtl"] .search-box input { padding: 0 2.8rem 0 1rem; }
 .periods button.active {
     background: var(--surface);
     color: var(--teal-dark);
-    box-shadow: 0 8px 18px rgba(100,116,139,.12);
+    box-shadow: 0 8px 18px rgba(122,107,94,.12);
 }
 .feature {
     margin-bottom: 1.45rem;
@@ -339,7 +354,7 @@ html[dir="rtl"] .search-box input { padding: 0 2.8rem 0 1rem; }
     overflow: hidden;
     border-radius: 2rem;
     background: var(--surface);
-    box-shadow: 0 26px 62px rgba(100,116,139,.12);
+    box-shadow: 0 26px 62px rgba(122,107,94,.12);
 }
 .feature-media { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--page); }
 .feature-media img, .story-media img, .article-image img {
@@ -415,7 +430,7 @@ html[dir="rtl"] .feature:hover .read-more span, html[dir="rtl"] .story-card:hove
     border: 1px solid var(--line);
     border-radius: 1.65rem;
     background: var(--surface);
-    box-shadow: 0 20px 48px rgba(100,116,139,.08);
+    box-shadow: 0 20px 48px rgba(122,107,94,.08);
     transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
 }
 .story-card:hover {
@@ -479,7 +494,7 @@ html[dir="rtl"] .feature:hover .read-more span, html[dir="rtl"] .story-card:hove
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 .message {
     grid-column: 1 / -1;
-    border: 1px dashed rgba(148,163,184,.28);
+    border: 1px dashed rgba(122,107,94,.28);
     border-radius: 1.6rem;
     padding: 4.2rem 1.4rem;
     text-align: center;
@@ -495,7 +510,7 @@ html[dir="rtl"] .feature:hover .read-more span, html[dir="rtl"] .story-card:hove
     background:
         radial-gradient(circle at 12% 8%, rgba(229,90,31,.08), transparent 33%),
         var(--surface);
-    box-shadow: 0 22px 58px rgba(45, 64, 87, .08);
+    box-shadow: 0 22px 58px rgba(26,15,8, .08);
 }
 .article-hero-grid {
     position: relative;
@@ -540,10 +555,10 @@ html[dir="rtl"] .article-title {
     padding: .34rem;
     aspect-ratio: 1.38 / 1;
     border-radius: 1.72rem;
-    border: 1px solid rgba(148,163,184,.18);
+    border: 1px solid rgba(122,107,94,.18);
     background: var(--surface);
     box-shadow:
-        0 18px 42px rgba(45,64,87,.09),
+        0 18px 42px rgba(26,15,8,.09),
         inset 0 1px 0 rgba(255,255,255,.85);
 }
 .article-image img,
@@ -555,12 +570,12 @@ html[dir="rtl"] .article-title {
 }
 .article-body {
     margin-top: 0;
-    border: 1px solid rgba(148,163,184,.15);
+    border: 1px solid rgba(122,107,94,.15);
     border-radius: 2rem;
     padding: clamp(1.75rem, 4vw, 3.35rem) clamp(1.5rem, 4.6vw, 4rem);
     background: var(--surface);
     box-shadow:
-        0 20px 56px rgba(45,64,87,.075),
+        0 20px 56px rgba(26,15,8,.075),
         inset 0 1px 0 rgba(255,255,255,.9);
 }
 .article-body p {
@@ -582,7 +597,7 @@ html[dir="rtl"] .article-title {
     .article-body {
         column-count: 2;
         column-gap: clamp(2.5rem, 5vw, 4.75rem);
-        column-rule: 1px solid rgba(148,163,184,.16);
+        column-rule: 1px solid rgba(122,107,94,.16);
     }
     .article-body p {
         break-inside: avoid;
@@ -646,3 +661,29 @@ html[dir="rtl"] .article-title {
 
 /* Visually-hidden but screen-reader-available (for skip-links & per-page h1). */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+/* ── Shared numeric + logo primitives (audit 2026-10-23) ───────────────────
+   Numbers are LTR islands inside Arabic text: "-0.85%" must never reorder to
+   "0.85%-" (D15). The ATFmt.ltr() helper emits <bdi class="at-num">; existing
+   inline .pf-num spans get the same isolation in RTL. */
+.at-num { unicode-bidi: isolate; direction: ltr; }
+html[dir="rtl"] span.pf-num,
+html[dir="rtl"] strong.pf-num,
+html[dir="rtl"] b.pf-num { unicode-bidi: isolate; direction: ltr; }
+/* Block-level numeric cells: direction comes from the digits, alignment still
+   follows the RTL page (match-parent resolves start/end against the parent). */
+html[dir="rtl"] td.pf-num { unicode-bidi: plaintext; }
+html[dir="rtl"] div.pf-num { unicode-bidi: plaintext; text-align: match-parent; }
+
+/* Logo fallback tile (D13) — replaces a ticker logo that 404s locally and on
+   the CDN with brand-styled initials, sized to the image it replaces. */
+.at-logo-fallback {
+    display: inline-grid; place-items: center; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+    border: 1px solid rgba(229, 90, 31, 0.22);
+    font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+    font-weight: 600; letter-spacing: -0.02em; line-height: 1;
+    vertical-align: middle; overflow: hidden; user-select: none;
+}

@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI & Market Alerts Manager | Auto Trading</title>
-    <meta name="description" content="Set real-time price thresholds, volume triggers, moving average crossovers, and neural AI signal alerts.">
+    <meta name="description" content="Set real-time price thresholds, volume triggers, moving average crossovers, and signal-engine alerts.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -288,7 +288,7 @@
                         <option value="news_sentiment" data-key="opt_sentiment">AI news sentiment negative</option>
                         <option value="earnings" data-key="opt_earnings">Earnings release announcement</option>
                         <option value="technical_ma" data-key="opt_ma">Technical MA(20/50) crossover</option>
-                        <option value="ai_signal" data-key="opt_ai_signal">AI Neural Buy/Sell Signal</option>
+                        <option value="ai_signal" data-key="opt_ai_signal">Signal-engine Buy/Sell</option>
                     </select>
                 </div>
 
@@ -303,10 +303,10 @@
             <!-- AI Real-Time Signals Feed -->
             <div class="alerts-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--teal);" data-key="feed_title">Neural Signals Feed</h3>
+                    <h3 style="font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--teal);" data-key="feed_title">Signal Engine Feed</h3>
                     <span style="font-size:0.65rem; padding: 0.15rem 0.5rem; border-radius: 999px; background:var(--teal-soft); color:var(--teal-dark); font-family:var(--pf-mono);">LATEST ANALYSIS</span>
                 </div>
-                <div class="live-feed-box" id="neuralSignalsFeed" role="log" aria-live="polite" aria-relevant="additions" aria-label="AI neural signals feed">
+                <div class="live-feed-box" id="neuralSignalsFeed" role="log" aria-live="polite" aria-relevant="additions" aria-label="Signal engine feed">
                     <!-- Dynamic feeds -->
                 </div>
             </div>

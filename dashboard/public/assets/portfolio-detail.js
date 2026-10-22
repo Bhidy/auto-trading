@@ -53,6 +53,7 @@
         }
         var src = '/assets/logos/' + logoFile + '.svg';
         var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+        if (!ATFmt.hasLocalLogo(logoFile)) src = fallbackSrc;
         return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
             'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; transition: transform 0.2s;" ' +
             'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
@@ -140,11 +141,14 @@
     function t(key) { return (T[lang] || T.en)[key] || key; }
     function fmt(n, d) { return PFStore.fmt(n, d === undefined ? 2 : d); }
     function pct(n, forceSign) {
-        var sign = (forceSign !== false && n >= 0) ? '+' : '';
-        return sign + fmt(n, 2) + '%';
+        return forceSign === false ? fmt(n, 2) + '%' : ATFmt.signedPct(n);
     }
 
-    function money(n) { return fmt(Math.abs(n), 2); }
+    /* Signed money / percent for HTML cells — one shared formatter (ATFmt in
+       starta-theme.js) so a loss can never render as a positive amount, and
+       numbers stay LTR inside Arabic text (audit 2026-10-23 D1/D15/D17). */
+    function sMoney(n, d) { return ATFmt.ltr(ATFmt.signedMoney(n, d)); }
+    function sPct(n) { return ATFmt.ltr(ATFmt.signedPct(n)); }
     function escHtml(s) { return String(s).replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
     /* ── Shared branded tooltip for non-Chart.js elements ────────────────
@@ -324,8 +328,8 @@
 
         var kpis = [
             kpi(t('totalValue'),  '$' + fmt(metrics.totalValue), null),
-            kpi(t('todayPL'),     (metrics.todayGain >= 0 ? '+$' : '-$') + fmt(Math.abs(metrics.todayGain)), pct(metrics.todayPct), todayClass),
-            kpi(t('totalGain'),   (metrics.totalGain >= 0 ? '+$' : '-$') + fmt(Math.abs(metrics.totalGain)), null, gainClass),
+            kpi(t('todayPL'),     ATFmt.signedMoney(metrics.todayGain), pct(metrics.todayPct), todayClass),
+            kpi(t('totalGain'),   ATFmt.signedMoney(metrics.totalGain), null, gainClass),
             kpi(t('totalReturn'), pct(metrics.totalReturn), null, retClass),
             kpi(t('cashBal'),     '$' + fmt(metrics.cashBalance), null),
             kpi(t('invested'),    '$' + fmt(metrics.invested), null),
@@ -358,7 +362,7 @@
         return '<div class="pf-kpi">' +
             '<div class="pf-kpi__label">' + label + '</div>' +
             '<div class="pf-kpi__value pf-num' + (cls ? ' ' + cls : '') + '">' + escHtml(String(value)) + '</div>' +
-            (sub ? '<div class="pf-kpi__sub' + (cls ? ' ' + cls : '') + '">' + escHtml(String(sub)) + '</div>' : '') +
+            (sub ? '<div class="pf-kpi__sub pf-num' + (cls ? ' ' + cls : '') + '">' + escHtml(String(sub)) + '</div>' : '') +
         '</div>';
     }
 
@@ -521,8 +525,9 @@
     }
     function bmLabel(raw, intraday) {
         if (intraday) {
-            var dt = new Date(raw.replace('T', ' ').replace('Z', ''));
-            return dt.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
+            // Broker timestamps are UTC instants; show them on the exchange clock
+            // (New York), never as stripped-Z "local" time (audit D6).
+            return ATFmt.etTime(raw);
         }
         var parts = raw.slice(0, 10).split('-');
         var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -885,7 +890,8 @@
                 interaction: { intersect: false, mode: 'index' },
                 animation: { duration: 600 },
                 scales: {
-                    x: { grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: intraday ? 10 : 8, maxRotation: 0 } },
+                    x: { grid: { color: gridColor, drawBorder: false }, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: tickColor, maxTicksLimit: intraday ? 10 : 8, maxRotation: 0 },
+                         title: { display: intraday, text: bl('Time (ET, New York)', 'التوقيت: نيويورك (ET)'), color: tickColor, font: { family: 'Manrope', size: 10, weight: '700' } } },
                     y: yScale
                 },
                 plugins: {
@@ -1002,7 +1008,7 @@
 
         // ── Live pill timestamp ──
         var ts = new Date();
-        bmSetText('benchLiveTs', bl('Updated ', 'تحديث ') + ts.toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        bmSetText('benchLiveTs', bl('Updated ', 'تحديث ') + ATFmt.etTime(ts, true) + ' ET');
 
         _benchLastGood = { period: chartPeriod, mode: chartMode };
     }
@@ -1053,11 +1059,12 @@
     };
 
     function il(en, ar) { return lang === 'ar' ? ar : en; }
-    function moneyShort(n) {
+    function moneyShort(n, signed) {
         var a = Math.abs(n);
-        if (a >= 1e6) return '$' + fmt(n / 1e6, 2) + 'M';
-        if (a >= 1e3) return '$' + fmt(n / 1e3, 1) + 'K';
-        return '$' + fmt(n, 0);
+        var body = a >= 1e6 ? fmt(a / 1e6, 2) + 'M' : (a >= 1e3 ? fmt(a / 1e3, 1) + 'K' : fmt(a, 0));
+        var zero = parseFloat(body.replace(/[^0-9.]/g, '')) === 0;   // never "-$0"
+        var sign = zero ? '' : (n < 0 ? '-' : (signed && n > 0 ? '+' : ''));
+        return sign + '$' + body;
     }
 
     /* ── SVG micro-visualization helpers (self-contained, theme-aware) ──── */
@@ -1380,11 +1387,11 @@
 
     /* ── 2) Risk Exposure Dashboard ───────────────────────────────────── */
     function riskExposureCard(I) {
-        var palette = ['#E55A1F', '#FF8A3D', '#FFC396', '#C9461A', '#8b5cf6', '#14b8a6', '#3b82f6', '#94a3b8'];
+        var palette = ['#E55A1F', '#FF8A3D', '#FFC396', '#C9461A', '#A33A14', '#FFA86A', '#6A220A', '#F26B1F'];
         var sleeves = I.sleeves.slice(0, 7);
         var otherW = I.sleeves.slice(7).reduce(function (s, x) { return s + x.weight; }, 0);
         var segs = sleeves.map(function (s, i) { return { name: s.sector, w: s.weight, color: palette[i % palette.length] }; });
-        if (otherW > 0.05) segs.push({ name: il('Other', 'أخرى'), w: otherW, color: '#94a3b8' });
+        if (otherW > 0.05) segs.push({ name: il('Other', 'أخرى'), w: otherW, color: '#7A6B5E' });
         var totalW = segs.reduce(function (s, x) { return s + x.w; }, 0) || 1;
 
         var acc = 0, stops = segs.map(function (s) {
@@ -1446,7 +1453,7 @@
 
     /* ── 3) Strategy Attribution (real per-sleeve attribution) ────────── */
     function strategyAttributionCard(I) {
-        var palette = ['#E55A1F', '#FF8A3D', '#8b5cf6', '#14b8a6', '#3b82f6', '#FFC396', '#C9461A', '#94a3b8'];
+        var palette = ['#E55A1F', '#FF8A3D', '#A33A14', '#FFA86A', '#6A220A', '#FFC396', '#C9461A', '#7A6B5E'];
         var rows = I.sleeves.map(function (s, i) {
             var ret = s.cost > 0 ? (s.gain / s.cost) * 100 : 0;
             var winRate = s.count > 0 ? (s.wins / s.count) * 100 : 0;
@@ -1461,8 +1468,8 @@
                 '<td><div class="pf-attr-name"><span class="pf-attr-swatch" style="background:' + color + '"></span>' +
                     '<span><b>' + escHtml(s.sector) + '</b><small>' + s.count + ' ' + il('positions', 'مراكز') + '</small></span></div></td>' +
                 '<td>' + moneyShort(s.mv) + '<br><small style="color:var(--muted);font-weight:500;">' + fmt(s.weight, 1) + '%</small></td>' +
-                '<td class="' + dayCls + '">' + (s.day >= 0 ? '+' : '') + moneyShort(s.day) + '</td>' +
-                '<td class="' + retCls + '">' + pct(ret) + '</td>' +
+                '<td class="' + dayCls + '">' + ATFmt.ltr(moneyShort(s.day, true)) + '</td>' +
+                '<td class="' + retCls + '">' + sPct(ret) + '</td>' +
                 '<td>' + fmt(winRate, 0) + '%</td>' +
                 '<td class="pf-neg">' + fmt(dd, 1) + '%</td>' +
                 '<td>' + s.count + '</td>' +
@@ -1936,13 +1943,13 @@
                 '<td class="num pf-num">$' + fmt(h.lastPrice) + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.marketValue) + '</td>' +
                 '<td class="num pf-num">' + h.weight.toFixed(1) + '%</td>' +
-                '<td class="num"><span class="' + dayClass + ' pf-num">' + (h.dayChange >= 0 ? '+' : '') + fmt(h.dayChange) + '</span>' +
-                    '<br><span class="' + dayClass + ' pf-num" style="font-size:.7rem;">' + pct(h.dayChangePct) + '</span>' +
+                '<td class="num"><span class="' + dayClass + ' pf-num">' + sMoney(h.dayChange) + '</span>' +
+                    '<br><span class="' + dayClass + ' pf-num" style="font-size:.7rem;">' + sPct(h.dayChangePct) + '</span>' +
                     ((h.unrealizedIntradayPl !== undefined && h.unrealizedIntradayPl !== 0) ? 
-                        `<br><span class="${intraClass} pf-num" style="font-size:0.65rem; opacity:0.85; font-weight:600;">Day: ${(h.unrealizedIntradayPl >= 0 ? '+' : '')}$${money(h.unrealizedIntradayPl)}</span>` : '') +
+                        `<br><span class="${intraClass} pf-num" style="font-size:0.65rem; opacity:0.85; font-weight:600;">${il('Day', 'اليوم')}: ${sMoney(h.unrealizedIntradayPl)}</span>` : '') +
                 '</td>' +
-                '<td class="num"><span class="' + plClass + ' pf-num">' + (h.totalGain >= 0 ? '+' : '') + fmt(h.totalGain) + '</span>' +
-                    '<br><span class="' + plClass + ' pf-num" style="font-size:.7rem;">' + pct(h.totalReturn) + '</span></td>' +
+                '<td class="num"><span class="' + plClass + ' pf-num">' + sMoney(h.totalGain) + '</span>' +
+                    '<br><span class="' + plClass + ' pf-num" style="font-size:.7rem;">' + sPct(h.totalReturn) + '</span></td>' +
                 '<td><button class="pf-action-btn pf-row-action" data-symbol="' + escHtml(h.symbol) + '" title="' + (pfId === 'all' ? il('Open ' + h.symbol + ' detail', 'فتح تفاصيل ' + h.symbol) : il('Trade ' + h.symbol, 'تداول ' + h.symbol)) + '">⋮</button></td>' +
             '</tr>';
         }).join('');
@@ -1969,10 +1976,10 @@
                 '<td class="num pf-num">$' + fmt(h.avgCost) + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.lastPrice) + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.costBasis || (h.quantity * h.avgCost)) + '</td>' +
-                '<td class="num pf-num ' + plCls + '">' + (h.totalGain >= 0 ? '+' : '') + '$' + money(h.totalGain) + '</td>' +
-                '<td class="num pf-num ' + plCls + '">' + (h.totalReturn >= 0 ? '+' : '') + fmt(h.totalReturn) + '%</td>' +
-                '<td class="num pf-num ' + intraCls + '">' + (h.unrealizedIntradayPl >= 0 ? '+' : '') + '$' + money(h.unrealizedIntradayPl) + ' (' + pct(h.unrealizedIntradayPlpc) + ')</td>' +
-                '<td class="num pf-num ' + dayCls + '">' + (h.dayChange >= 0 ? '+' : '') + fmt(h.dayChange) + ' (' + pct(h.dayChangePct) + ')</td>' +
+                '<td class="num pf-num ' + plCls + '">' + sMoney(h.totalGain) + '</td>' +
+                '<td class="num pf-num ' + plCls + '">' + sPct(h.totalReturn) + '</td>' +
+                '<td class="num pf-num ' + intraCls + '">' + sMoney(h.unrealizedIntradayPl) + ' (' + sPct(h.unrealizedIntradayPlpc) + ')</td>' +
+                '<td class="num pf-num ' + dayCls + '">' + sMoney(h.dayChange) + ' (' + sPct(h.dayChangePct) + ')</td>' +
             '</tr>';
         }).join('');
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
@@ -2150,9 +2157,7 @@
                 renderAllOrdersTable();
                 var ts = document.getElementById('aoLiveTs');
                 if (ts) {
-                    ts.textContent = il('Updated ', 'تحديث ') +
-                        new Date().toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB',
-                            { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    ts.textContent = il('Updated ', 'تحديث ') + ATFmt.etTime(new Date(), true) + ' ET';
                 }
             })
             .catch(function() { _aoState.loading = false; });
@@ -2233,9 +2238,9 @@
                 if (!n.dateStr || new Date(n.dateStr) < cutoff) return;
                 var exposure = n.qty * n.price;
                 var sideCls = n.side === 'buy' ? 'pf-badge-pos' : 'pf-badge-neg';
-                var statusBg = n.orderStatus === 'held' ? 'rgba(245,158,11,.12)' : 'rgba(59,130,246,.12)';
-                var statusCol = n.orderStatus === 'held' ? '#f59e0b' : '#3b82f6';
-                var statusBorder = n.orderStatus === 'held' ? 'rgba(245,158,11,.25)' : 'rgba(59,130,246,.25)';
+                var statusBg = n.orderStatus === 'held' ? 'rgba(245,158,11,.12)' : 'rgba(229,90,31,.12)';
+                var statusCol = n.orderStatus === 'held' ? '#f59e0b' : 'var(--teal-dark)';
+                var statusBorder = n.orderStatus === 'held' ? 'rgba(245,158,11,.25)' : 'rgba(229,90,31,.25)';
                 var statusTxt = (n.orderStatus || 'pending').replace(/_/g, ' ');
                 var orderDesc = (n.orderType ? n.orderType.replace(/_/g,' ') : '') + (n.tif ? ' · ' + n.tif : '');
                 // Accumulate summary
@@ -2276,7 +2281,7 @@
         }
         if (openCount > 0) {
             summaryParts.push(
-                '<span style="color:#3b82f6;font-weight:700;">' + openCount + ' ' + il('Open', 'مفتوح') + '</span>' +
+                '<span style="color:var(--teal-dark);font-weight:700;">' + openCount + ' ' + il('Open', 'مفتوح') + '</span>' +
                 (totalOpenExposure > 0 ? ' <span style="color:var(--muted);">($' + fmt(totalOpenExposure) + ' ' + il('exposure', 'تعرّض') + ')</span>' : '')
             );
         }
@@ -2349,7 +2354,7 @@
                             '</div>' +
                             '<div style="display:flex;justify-content:space-between;margin-top:0.2rem;">' +
                                 '<span class="pf-num" style="font-size:0.7rem;color:var(--muted);">$'+fmt(h.marketValue)+'</span>' +
-                                '<span class="pf-num '+plCls+'" style="font-size:0.68rem;">'+(h.totalGain>=0?'+':'')+fmt(h.totalGain)+'</span>' +
+                                '<span class="pf-num '+plCls+'" style="font-size:0.68rem;">'+sMoney(h.totalGain)+'</span>' +
                             '</div>' +
                         '</div>';
                     }).join('') +
@@ -2409,7 +2414,7 @@
                     var cl = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
                     return '<div style="padding:0.4rem 0.8rem;border:1px solid var(--line);border-radius:var(--pf-radius-sm);flex:1;min-width:100px;">' +
                         '<span style="font-weight:700;font-size:0.75rem;">'+h.symbol+'</span>' +
-                        '<span class="pf-num '+cl+'" style="float:right;font-size:0.75rem;">'+(h.totalGain>=0?'+':'')+'$'+money(h.totalGain)+'</span>' +
+                        '<span class="pf-num '+cl+'" style="float:right;font-size:0.75rem;">'+sMoney(h.totalGain)+'</span>' +
                     '</div>';
                 }).join('') +
             '</div></div>';
@@ -2671,13 +2676,12 @@
 
         function row(h) {
             var cls  = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
-            var sign = h.totalGain >= 0 ? '+' : '';
             return '<div class="pf-contrib-row">' +
                 '<div class="pf-contrib-chip" style="background:' + h.color + '">' + h.symbol.slice(0,3) + '</div>' +
                 '<span class="pf-contrib-name">' + h.symbol + '</span>' +
                 '<div class="pf-contrib-val">' +
-                    '<span class="' + cls + ' pf-num">' + sign + '$' + fmt(h.totalGain, 0) + '</span>' +
-                    '<span class="pf-num ' + cls + '">' + pct(h.totalReturn) + '</span>' +
+                    '<span class="' + cls + ' pf-num">' + sMoney(h.totalGain, 0) + '</span>' +
+                    '<span class="pf-num ' + cls + '">' + sPct(h.totalReturn) + '</span>' +
                 '</div></div>';
         }
 
