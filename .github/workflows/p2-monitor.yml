@@ -27,6 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # A run that waited in its concurrency queue still checks out the commit
+      # from TRIGGER time. Rebase onto the latest main BEFORE reading any state
+      # so the bot never acts on (or later commits over) stale files
+      # (audit 2026-10-23 D1).
+      - name: Sync to latest origin/main
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git reset --hard origin/main
+          echo "State base: $(git rev-parse --short HEAD)"
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"

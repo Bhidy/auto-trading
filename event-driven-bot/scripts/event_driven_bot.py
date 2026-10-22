@@ -63,6 +63,45 @@ def save_json(path, data):
         json.dump(data, f, indent=2)
 
 
+def session_date_et(now=None):
+    """The US-equity SESSION date (America/New_York) as YYYY-MM-DD.
+
+    Journals and the day-start anchor are keyed by the trading session, not
+    the UTC calendar: an EOD run delayed past 8 pm ET (00:00 UTC) used to file
+    its journal under TOMORROW's date (audit 2026-10-23 D12)."""
+    from zoneinfo import ZoneInfo
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return now.astimezone(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+
+
+def resolve_day_start_equity(state, last_equity, session_date):
+    """Return (day_start_equity, state_changed) for P3's daily-loss checks.
+
+    CLAUDE.md rule (audit 2026-10-23 D11): daily loss is measured against
+    ``day_start_equity`` from the bot's OWN state, not Alpaca's live
+    ``last_equity`` — one bad broker read of last_equity must not be able to
+    move the kill-switch reference mid-session. The anchor is set once per ET
+    session (from the prior close, i.e. ``last_equity`` on the first read of
+    the day) and then held fixed for that session."""
+    try:
+        anchored = float(state.get("day_start_equity") or 0)
+    except (TypeError, ValueError):
+        anchored = 0.0
+    if state.get("day_start_date") == session_date and anchored > 0:
+        return anchored, False
+    try:
+        ref = float(last_equity or 0)
+    except (TypeError, ValueError):
+        ref = 0.0
+    if ref <= 0:
+        return 0.0, False
+    state["day_start_equity"] = ref
+    state["day_start_date"] = session_date
+    return ref, True
+
+
 # ---------------------------------------------------------------------------
 # CATALYST-DECAY TIME STOP (T10) — pure + unit-testable.
 #
@@ -890,8 +929,15 @@ def run_intraday_monitor(alpaca: AlpacaClient):
     last_equity = float(account["last_equity"])
     limits = load_json(CONFIG_DIR / "risk_limits.json")
 
-    daily_pnl_pct = (equity - last_equity) / last_equity * 100 if last_equity > 0 else 0
-    log.info(f"Equity: ${equity:,.2f}, Daily P&L: {daily_pnl_pct:+.2f}%")
+    # D11: daily loss vs the session's anchored day_start_equity (bot state),
+    # not Alpaca's last_equity — consistent with P1's risk_officer.
+    _st = load_json(DATA_DIR / "bot_state.json")
+    day_start, _anchored_now = resolve_day_start_equity(_st, last_equity, session_date_et())
+    if _anchored_now:
+        save_json(DATA_DIR / "bot_state.json", _st)
+    daily_pnl_pct = (equity - day_start) / day_start * 100 if day_start > 0 else 0
+    log.info(f"Equity: ${equity:,.2f}, Daily P&L: {daily_pnl_pct:+.2f}% "
+             f"(vs day-start ${day_start:,.2f})")
 
     # Liquidate only on a CORROBORATED read (shared.equity_guard): a breach is
     # re-valued independently first. On 2026-07-07 Alpaca returned P1 equity ==
@@ -902,7 +948,7 @@ def run_intraday_monitor(alpaca: AlpacaClient):
         from shared.equity_guard import confirm_equity
         _state_eq = load_json(DATA_DIR / "bot_state.json").get("equity")
         eq_check = confirm_equity(
-            account, alpaca.get_positions(), reference_equity=_state_eq or last_equity,
+            account, alpaca.get_positions(), reference_equity=_state_eq or day_start,
             get_price=lambda s: float((alpaca.get_latest_trade(s).get("trade") or {}).get("p") or 0),
             max_jump_pct=0.0)
         if not eq_check["ok"]:
@@ -1143,11 +1189,20 @@ def run_eod_journal(alpaca: AlpacaClient):
         if recon["unlogged_positions"]:
             log.warning(f"  Reconciliation: positions not in trade log: {recon['unlogged_positions']}")
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    # D12: journal + "today" are keyed by the ET SESSION date, not the
+    # runner's clock (UTC) — a delayed EOD no longer files under tomorrow.
+    today = session_date_et()
     today_trades = [t for t in trade_log if t.get("date", "").startswith(today)]
 
     total_exposure = sum(abs(float(p.get("market_value", 0))) for p in positions)
-    daily_pnl = equity - last_equity
+    # D11: same day-start reference as the intraday kill switch.
+    _st = load_json(DATA_DIR / "bot_state.json")
+    day_start, _anchored_now = resolve_day_start_equity(_st, last_equity, today)
+    if _anchored_now:
+        save_json(DATA_DIR / "bot_state.json", _st)
+    if day_start <= 0:
+        day_start = last_equity
+    daily_pnl = equity - day_start
 
     closed_today = [t for t in today_trades if t.get("status") == "closed"]
     wins = [t for t in closed_today if (t.get("pnl", 0) or 0) > 0]
@@ -1166,7 +1221,8 @@ def run_eod_journal(alpaca: AlpacaClient):
             "equity": equity,
             "cash": float(account["cash"]),
             "daily_pnl": round(daily_pnl, 2),
-            "daily_pnl_pct": round(daily_pnl / last_equity * 100, 3) if last_equity > 0 else 0,
+            "daily_pnl_pct": round(daily_pnl / day_start * 100, 3) if day_start > 0 else 0,
+            "day_start_equity": day_start,
             "total_open_exposure": round(total_exposure, 2),
             "exposure_pct": round(total_exposure / equity * 100, 1),
             "position_count": len(positions),
@@ -1215,7 +1271,8 @@ def run_eod_journal(alpaca: AlpacaClient):
 
     _sync_state(alpaca)
 
-    log.info(f"EOD: equity=${equity:,.2f}, P&L=${daily_pnl:+,.2f} ({daily_pnl/last_equity*100:+.2f}%), "
+    _pct = daily_pnl / day_start * 100 if day_start > 0 else 0.0
+    log.info(f"EOD: equity=${equity:,.2f}, P&L=${daily_pnl:+,.2f} ({_pct:+.2f}%), "
              f"{len(positions)} positions, {len(today_trades)} trades today")
 
 

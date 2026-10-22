@@ -7,6 +7,7 @@ Executes via Alpaca paper trading API.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 import time
@@ -32,6 +33,14 @@ logging.basicConfig(
     ],
 )
 log = logging.getLogger("politician_bot")
+
+# Capitol Trades circuit breaker (audit 2026-10-23 D2). Worst case with the
+# feed down is now ONE probe (~MCP_PROBE_TIMEOUT_S), not 14 x ~75 s.
+MCP_PROBE_TIMEOUT_S = 30
+MCP_CALL_TIMEOUT_S = 60
+MCP_CALL_MAX_ATTEMPTS = 3
+MCP_BREAKER_THRESHOLD = 2
+MCP_INTER_CALL_SLEEP_S = 6
 
 
 # ---------------------------------------------------------------------------
@@ -483,7 +492,7 @@ class RiskManager:
         self._save_trade_log()
 
     def apply_exit(self, symbol: str, sell_qty: float, exit_price: float,
-                   reason: str) -> float:
+                   reason: str, politician: str | None = None) -> float:
         """FIFO-close open BUY lots for a FILLED exit (long math, net of fees).
 
         The exit paths used to append only a bare ``side: "sell"`` row; the EOD
@@ -494,6 +503,12 @@ class RiskManager:
         on partial exit; never fabricates P&L (no cost basis -> pnl=None).
         Returns the qty actually closed; 0.0 means no open lot was found (the
         EOD reconciler settles it from broker truth).
+
+        ``politician`` (copy-sells only, audit 2026-10-23 D7): restrict the
+        FIFO to lots opened by copying THAT politician, and skip lots that
+        explicitly never filled. Without it a Kevin Hern SELL closed a David
+        Taylor HD lot. Protective exits (stops/time exits) pass None and close
+        the whole holding FIFO as before.
         """
         from shared.accounting import realized_pnl
         remaining = float(sell_qty)
@@ -507,6 +522,8 @@ class RiskManager:
             if str(t.get("side", "buy")).lower() == "sell":
                 continue
             if t.get("status", "open") != "open":
+                continue
+            if politician is not None and not _is_attributable_lot(t, politician):
                 continue
             lot_qty = float(t.get("qty", 0) or 0)
             if lot_qty <= 0:
@@ -553,6 +570,81 @@ class RiskManager:
 _CLOSED_LOT = {"closed", "closed_reconciled", "exit_marker"}
 
 
+def _norm_name(name) -> str:
+    return " ".join(str(name or "").split()).casefold()
+
+
+def _never_filled(t) -> bool:
+    """A logged buy whose order explicitly never filled is not a holding.
+    Legacy rows that predate order_status count as filled."""
+    ostat = t.get("order_status")
+    return bool(ostat and ostat not in ("filled", "partially_filled")
+                and float(t.get("filled_qty") or 0) <= 0)
+
+
+def _is_attributable_lot(t, politician) -> bool:
+    """An OPEN, filled buy lot opened by copying ``politician`` (D7)."""
+    return (str(t.get("side", "buy")).lower() == "buy"
+            and t.get("status", "open") == "open"
+            and _norm_name(t.get("politician")) == _norm_name(politician)
+            and bool(_norm_name(politician))
+            and not _never_filled(t))
+
+
+def politician_open_lot_qty(trade_log, symbol, politician) -> float:
+    """Open copied qty of ``symbol`` attributable to ``politician`` (D7).
+
+    A politician's SELL disclosure may only unwind what WE bought because of
+    that politician's BUY. Ticker-only matching let one member's sale close
+    another member's lot (2026-10-15: a Kevin Hern SELL closed a David Taylor
+    HD lot). Benchmark-sleeve rows and legacy lots with no politician recorded
+    are never attributable, so they are never copy-sold."""
+    total = 0.0
+    for t in trade_log or []:
+        if t.get("symbol") != symbol or not _is_attributable_lot(t, politician):
+            continue
+        try:
+            total += float(t.get("qty", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+    return total
+
+
+def exit_client_order_id(kind: str, symbol: str, politician: str | None = None) -> str:
+    """Deterministic idempotency key for a P2 EXIT order (audit 2026-10-23 D6).
+
+    Exits used to go out with no client_order_id, so a duplicate/stale run
+    (the 2026-10-15 Guardian re-run) placed a second copy-sell of CB and HD.
+    One key per (exit kind, symbol, UTC day) — and, for copy-sells, per
+    politician — so a re-run is rejected by Alpaca as a 422 duplicate while two
+    DIFFERENT exit reasons (or two different politicians' sells) stay distinct.
+    """
+    prefix = f"p2{kind}"
+    if politician:
+        prefix += hashlib.sha1(_norm_name(politician).encode()).hexdigest()[:8]
+    return make_client_order_id(prefix, symbol, "sell")
+
+
+def is_duplicate_client_order_id(exc) -> bool:
+    """True if ``exc`` is Alpaca's 422 duplicate-client_order_id rejection."""
+    resp = getattr(exc, "response", None)
+    return (resp is not None and getattr(resp, "status_code", None) == 422
+            and "client_order_id" in (getattr(resp, "text", "") or ""))
+
+
+def cross_source_key(trade):
+    """Source-agnostic identity of a disclosure (politician, ticker, side,
+    transaction date). The House index and Capitol Trades format sizes and
+    dates differently, so their fingerprints differ for the SAME filing; this
+    key lets one scan drop the second copy of a trade seen in both feeds."""
+    parsed = _parse_date((trade.get("dates", {}) or {}).get("trade", ""))
+    return (_norm_name((trade.get("politician", {}) or {}).get("name", "")),
+            str((trade.get("issuer", {}) or {}).get("ticker", "") or "").upper(),
+            str((trade.get("transaction", {}) or {}).get("type", "") or "").upper(),
+            parsed.strftime("%Y-%m-%d") if parsed else
+            str((trade.get("dates", {}) or {}).get("trade", "")))
+
+
 def position_age_days(trade_log, symbol, now=None):
     """Age in days of the CURRENT holding: the oldest buy lot that is still OPEN
     and did not explicitly fail to fill.
@@ -571,9 +663,7 @@ def position_age_days(trade_log, symbol, now=None):
             continue
         # A lot that explicitly never filled (pending/cancelled/expired order)
         # is not a holding. Legacy rows that predate order_status count as filled.
-        ostat = t.get("order_status")
-        if (ostat and ostat not in ("filled", "partially_filled")
-                and float(t.get("filled_qty") or 0) <= 0):
+        if _never_filled(t):
             continue
         try:
             ts = datetime.fromisoformat(t["timestamp"]).replace(tzinfo=None)
@@ -680,6 +770,17 @@ class PoliticianBot:
         tx_type = (trade.get("transaction", {}).get("type", "") or "").upper()
         return tx_type == "SELL"
 
+    def _is_sell_candidate(self, trade: dict) -> bool:
+        """A politician SELL is actionable only if we hold the ticker AND hold
+        lots opened by copying that same politician (D7)."""
+        ticker = self.risk.validate_ticker(trade.get("issuer", {}).get("ticker", ""))
+        if not ticker:
+            return False
+        pol = (trade.get("politician", {}) or {}).get("name", "")
+        if politician_open_lot_qty(self.risk.trade_log, ticker, pol) <= 0:
+            return False
+        return bool(self.alpaca.get_position(ticker))
+
     def _max_disclosure_age(self) -> int:
         """Max age (days) of the underlying transaction we will still copy.
         Default 45 (the STOCK Act disclosure window) — older = decayed edge."""
@@ -702,107 +803,116 @@ class PoliticianBot:
         self._fetch_attempts = 0
         self._fetch_failures = 0
         self._skips = []   # Rec C: structured per-disclosure skip reasons
-
-        self._fetch_attempts += 1
-        try:
-            buy_trades = call_mcp_tool("get_politician_trades", {
-                "politician": primary, "type": ["BUY"], "days": days,
-            })
-            for t in buy_trades.get("trades", []):
-                fp = self._trade_fingerprint(t)
-                if fp not in self.processed_trades and self._is_copyable_trade(t):
-                    t["_source"] = "primary"
-                    t["_action"] = "BUY"
-                    all_new_trades.append(t)
-        except Exception as e:
-            self._fetch_failures += 1
-            log.error(f"Error scanning {primary}: {e}")
-
-        if self.watchlist_cfg.get("sell_logic", {}).get("copy_politician_sells"):
-            self._fetch_attempts += 1
-            try:
-                sell_trades = call_mcp_tool("get_politician_trades", {
-                    "politician": primary, "type": ["SELL"], "days": days,
-                })
-                for t in sell_trades.get("trades", []):
-                    fp = self._trade_fingerprint(t)
-                    if fp not in self.processed_trades:
-                        ticker = self.risk.validate_ticker(t.get("issuer", {}).get("ticker", ""))
-                        if ticker:
-                            pos = self.alpaca.get_position(ticker)
-                            if pos:
-                                t["_source"] = "primary"
-                                t["_action"] = "SELL"
-                                all_new_trades.append(t)
-            except Exception as e:
-                self._fetch_failures += 1
-                log.error(f"Error scanning sells for {primary}: {e}")
-
-        # Space out requests to Capitol Trades — rapid-fire subprocess spawns
-        # across 13 politicians exhausts the external API's rate limit (429). Widened
-        # 3s->6s (2026-06-18) after a ~3-week dark-feed outage; combined with the
-        # more patient per-call retries in mcp_client, this is strictly more
-        # rate-limit-friendly. Scheduled run, so the extra wall-clock is fine.
-        time.sleep(6)
-
-        for backup in self.watchlist_cfg.get("backup_politicians", []):
-            time.sleep(6)  # rate-limit guard between each politician scan
-            self._fetch_attempts += 1
-            try:
-                backup_trades = call_mcp_tool("get_politician_trades", {
-                    "politician": backup, "type": ["BUY"], "days": days,
-                })
-                for t in backup_trades.get("trades", []):
-                    fp = self._trade_fingerprint(t)
-                    if fp not in self.processed_trades and self._is_copyable_trade(t):
-                        t["_source"] = "backup"
-                        t["_action"] = "BUY"
-                        all_new_trades.append(t)
-            except Exception as e:
-                self._fetch_failures += 1
-                log.error(f"Error scanning {backup}: {e}")
-
-        # A DARK feed (every fetch failed) means no copy can ever open this cycle —
-        # make it LOUD and a conformance failure (heartbeat surfaces it). This is the
-        # alarm the 3-week 2026-06 rate-limit outage never had.
-        self._feed_dark = disclosure_feed_status(self._fetch_attempts, self._fetch_failures) == "dark"
+        # House-feed health (now the PRIMARY source) + the filings whose trades
+        # this scan surfaced; they are marked seen only after processing (D9).
         self._fallback_trades = 0
         self._fallback_ok = False
-        if self._feed_dark:
-            log.error(f"::error::P2 FEED DARK: {self._fetch_failures}/{self._fetch_attempts} "
-                      f"Capitol Trades fetches failed (unreachable/rate-limited). "
-                      f"Falling back to the official House Clerk disclosure index.")
-            # D3 fallback (audit 2026-07-04): source the SAME signal from the
-            # primary source — the House Clerk index + stdlib PTR parsing —
-            # shaped exactly like MCP trades so every downstream gate applies.
-            try:
-                from house_fd_feed import fetch_tracked_ptr_trades
-                tracked = [primary] + list(self.watchlist_cfg.get("backup_politicians", []))
-                fb = fetch_tracked_ptr_trades(tracked, max_age_days=self._max_disclosure_age())
-                self._fallback_ok = True
-                for t in fb:
-                    fp = self._trade_fingerprint(t)
-                    if fp in self.processed_trades:
-                        continue
-                    action = (t.get("transaction", {}).get("type", "") or "").upper()
-                    if action == "SELL":
-                        if not self.watchlist_cfg.get("sell_logic", {}).get("copy_politician_sells"):
-                            continue
-                        ticker = self.risk.validate_ticker(t.get("issuer", {}).get("ticker", ""))
-                        if not (ticker and self.alpaca.get_position(ticker)):
-                            continue
-                    elif not self._is_copyable_trade(t):
-                        continue
-                    t["_source"] = ("primary" if t.get("politician", {}).get("name") == primary
-                                    else "backup")
-                    t["_action"] = action or "BUY"
-                    all_new_trades.append(t)
+        self._house_pending_docs = set()
+        self._mcp_circuit_open = False
+        mcp_consecutive_failures = 0
+        copy_sells = bool(self.watchlist_cfg.get("sell_logic", {}).get("copy_politician_sells"))
+        backups = list(self.watchlist_cfg.get("backup_politicians", []))
+        seen_keys = set()
+
+        def consider(t, source_label):
+            """Run one disclosure through dedup + the copy gates; True if queued."""
+            fp = self._trade_fingerprint(t)
+            if fp in self.processed_trades:
+                return False
+            key = cross_source_key(t)
+            if key in seen_keys:
+                return False          # same filing already seen from the other feed
+            seen_keys.add(key)
+            action = (t.get("transaction", {}).get("type", "") or "").upper()
+            if action == "SELL":
+                if not copy_sells or not self._is_sell_candidate(t):
+                    return False
+            elif not self._is_copyable_trade(t):
+                return False
+            t["_source"] = source_label or (
+                "primary" if _norm_name(t.get("politician", {}).get("name")) == _norm_name(primary)
+                else "backup")
+            t["_action"] = action or "BUY"
+            all_new_trades.append(t)
+            return True
+
+        # 1) PRIMARY SOURCE — the official House Clerk index (audit 2026-10-23
+        #    D2). Capitol Trades has been WAF-blocked from Actions IPs since
+        #    July; running it first and the House feed only after all 14 MCP
+        #    fetches had failed (~75 s each) blew the 15-min job timeout daily,
+        #    so the fallback never ran. One ZIP + a bounded PDF budget.
+        try:
+            from house_fd_feed import fetch_tracked_ptr_trades
+            house_status = {}
+            fb = fetch_tracked_ptr_trades([primary] + backups,
+                                          max_age_days=self._max_disclosure_age(),
+                                          pending=self._house_pending_docs,
+                                          status=house_status)
+            self._fallback_ok = bool(house_status.get("index_ok"))
+            for t in fb:
+                if consider(t, None):
                     self._fallback_trades += 1
-                log.info(f"house_fd fallback: {self._fallback_trades} new copyable "
-                         f"trade(s) from the official index")
+            if self._fallback_ok:
+                log.info(f"house_fd: {self._fallback_trades} new copyable trade(s) "
+                         f"from the official House index")
+            else:
+                log.error("::error::house_fd: House Clerk index unreachable this cycle")
+        except Exception as e:
+            log.error(f"::error::house_fd primary feed failed: {e}")
+
+        # 2) SECONDARY — Capitol Trades MCP (the only source for Senators),
+        #    behind a circuit breaker: ONE cheap probe (single attempt, short
+        #    timeout); if it fails the feed is treated as down and every other
+        #    MCP fetch is skipped. After a good probe, MCP_BREAKER_THRESHOLD
+        #    consecutive failures also open the circuit.
+        def mcp_fetch(politician, tx_type, probe=False):
+            nonlocal mcp_consecutive_failures
+            if self._mcp_circuit_open:
+                return []
+            self._fetch_attempts += 1
+            try:
+                res = call_mcp_tool("get_politician_trades", {
+                    "politician": politician, "type": [tx_type], "days": days,
+                }, timeout=MCP_PROBE_TIMEOUT_S if probe else MCP_CALL_TIMEOUT_S,
+                    max_attempts=1 if probe else MCP_CALL_MAX_ATTEMPTS)
+                mcp_consecutive_failures = 0
+                return (res or {}).get("trades", []) or []
             except Exception as e:
-                log.error(f"::error::house_fd fallback ALSO failed: {e} — "
-                          f"no disclosure source available this cycle.")
+                self._fetch_failures += 1
+                mcp_consecutive_failures += 1
+                log.error(f"Error scanning {politician} {tx_type}: {e}")
+                if probe or mcp_consecutive_failures >= MCP_BREAKER_THRESHOLD:
+                    self._mcp_circuit_open = True
+                    log.warning("Capitol Trades circuit OPEN — skipping remaining MCP "
+                                f"fetches this cycle ({'probe failed' if probe else 'consecutive failures'})")
+                return []
+
+        for t in mcp_fetch(primary, "BUY", probe=True):
+            consider(t, "primary")
+        if copy_sells:
+            for t in mcp_fetch(primary, "SELL"):
+                consider(t, "primary")
+        for backup in backups:
+            if self._mcp_circuit_open:
+                break
+            # Space out requests — rapid-fire subprocess spawns across 13
+            # politicians exhaust the external API's rate limit (429).
+            time.sleep(MCP_INTER_CALL_SLEEP_S)
+            for t in mcp_fetch(backup, "BUY"):
+                consider(t, "backup")
+
+        # MCP feed health: DARK = every attempted MCP fetch failed (a failed
+        # probe alone is dark). Only a conformance VIOLATION when the House
+        # feed failed too (see run_scan_and_trade) — then no source worked.
+        self._feed_dark = disclosure_feed_status(self._fetch_attempts, self._fetch_failures) == "dark"
+        if self._feed_dark and not self._fallback_ok:
+            log.error(f"::error::P2 FEED DARK: Capitol Trades {self._fetch_failures}/"
+                      f"{self._fetch_attempts} fetches failed AND the House index was "
+                      f"unreachable — no disclosure source available this cycle.")
+        elif self._feed_dark:
+            log.warning(f"::warning::Capitol Trades dark ({self._fetch_failures}/"
+                        f"{self._fetch_attempts}); House index healthy — Senate "
+                        f"members are not covered this cycle.")
         elif self._fetch_failures:
             log.warning(f"P2 feed degraded: {self._fetch_failures}/{self._fetch_attempts} "
                         f"disclosure fetches failed this cycle.")
@@ -1035,17 +1145,27 @@ class PoliticianBot:
             return None
 
     def _execute_sell(self, trade: dict, ticker: str) -> dict | None:
+        pol_name = (trade.get("politician", {}) or {}).get("name", "")
         pos = self.alpaca.get_position(ticker)
         if not pos:
             log.info(f"No position in {ticker} to sell")
             return None
 
-        qty = int(float(pos.get("qty", 0)))
-        if qty <= 0:
+        held_qty = int(float(pos.get("qty", 0)))
+        if held_qty <= 0:
             return None
 
-        sell_qty = max(1, qty // 2)
+        # D7: only unwind lots WE opened by copying this same politician, and
+        # never more than the broker actually holds.
+        attributable = int(politician_open_lot_qty(self.risk.trade_log, ticker, pol_name))
+        if attributable <= 0:
+            log.info(f"{ticker}: {pol_name or 'unknown politician'} SELL ignored — no open "
+                     f"lots were copied from this politician")
+            self._record_skip(trade, "copy_sell_no_attributable_lots")
+            return None
+        sell_qty = min(held_qty, max(1, attributable // 2))
 
+        coid = exit_client_order_id("cs", ticker, politician=pol_name)
         try:
             quote = self.alpaca.get_latest_quote(ticker)
             bid_price = float(quote.get("quote", {}).get("bp", 0))
@@ -1054,17 +1174,19 @@ class PoliticianBot:
                 bid_price = float(trade_data.get("trade", {}).get("p", 0))
             limit_price = round(bid_price * (1 - self.risk.limits["limit_offset_pct"] / 100), 2)
 
-            log.info(f"SELLING {sell_qty} x {ticker} @ limit ${limit_price:.2f}")
+            log.info(f"SELLING {sell_qty} x {ticker} @ limit ${limit_price:.2f} "
+                     f"(copy-sell of {pol_name}; {attributable} attributable)")
 
             order = self.alpaca.place_order(
                 symbol=ticker, qty=sell_qty, side="sell",
                 order_type="limit", limit_price=limit_price,
+                client_order_id=coid,
             )
             _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
             closed_qty = 0.0
             if fill_qty and fill_price:
                 closed_qty = self.risk.apply_exit(ticker, fill_qty, fill_price,
-                                                  reason="copy_sell")
+                                                  reason="copy_sell", politician=pol_name)
 
             trade_record = {
                 "symbol": ticker,
@@ -1074,15 +1196,22 @@ class PoliticianBot:
                 "limit_price": limit_price,
                 "fill_price": fill_price,
                 "lots_closed_qty": closed_qty,
+                "client_order_id": coid,
                 "order_id": order.get("id"),
                 "order_status": order.get("status"),
-                "politician": trade.get("politician", {}).get("name", ""),
+                "politician": pol_name,
                 "source": trade.get("_source", ""),
-                "reason": f"Copying {trade.get('politician', {}).get('name', '')} SELL of {trade.get('issuer', {}).get('name', '')}",
+                "reason": f"Copying {pol_name} SELL of {trade.get('issuer', {}).get('name', '')}",
             }
             self.risk.log_trade(trade_record)
             return trade_record
 
+        except requests.HTTPError as e:
+            if is_duplicate_client_order_id(e):
+                log.info(f"{ticker}: copy-sell already placed today (idempotent skip)")
+                return None
+            log.error(f"Sell order failed for {ticker}: {e}")
+            return None
         except Exception as e:
             log.error(f"Sell order failed for {ticker}: {e}")
             return None
@@ -1144,7 +1273,8 @@ class PoliticianBot:
                             f"(peak {peak_plpc:+.1f}%, {trailing_stop_pct:.0f}% trail)")
                 try:
                     order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                                    order_type="market", time_in_force="day")
+                                                    order_type="market", time_in_force="day",
+                                                    client_order_id=exit_client_order_id("ts", symbol))
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
                     closed_qty = 0.0
                     if fill_qty and fill_price:
@@ -1159,7 +1289,11 @@ class PoliticianBot:
                     })
                     peaks.pop(symbol, None)
                 except Exception as e:
-                    log.error(f"Trailing stop order failed for {symbol}: {e}")
+                    if is_duplicate_client_order_id(e):
+                        log.info(f"{symbol}: exit already placed today (idempotent skip)")
+                        peaks.pop(symbol, None)
+                    else:
+                        log.error(f"Trailing stop order failed for {symbol}: {e}")
 
             elif age_days is not None and age_days >= alpha_capture_days:
                 # D7 PRIMARY exit: hold to the ~63-trading-day alpha-capture
@@ -1169,7 +1303,8 @@ class PoliticianBot:
                          f">= {alpha_capture_days}d ({unrealized_plpc:+.1f}%) — exiting full")
                 try:
                     order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                                    order_type="market", time_in_force="day")
+                                                    order_type="market", time_in_force="day",
+                                                    client_order_id=exit_client_order_id("tx", symbol))
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
                     closed_qty = 0.0
                     if fill_qty and fill_price:
@@ -1183,14 +1318,19 @@ class PoliticianBot:
                     })
                     peaks.pop(symbol, None)
                 except Exception as e:
-                    log.error(f"Alpha-capture exit failed for {symbol}: {e}")
+                    if is_duplicate_client_order_id(e):
+                        log.info(f"{symbol}: exit already placed today (idempotent skip)")
+                        peaks.pop(symbol, None)
+                    else:
+                        log.error(f"Alpha-capture exit failed for {symbol}: {e}")
 
             elif age_days is not None and age_days >= max_hold_days:
                 log.warning(f"MAX HOLD reached for {symbol}: held {age_days}d "
                             f">= {max_hold_days}d ({unrealized_plpc:+.1f}%) — exiting")
                 try:
                     order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                                    order_type="market", time_in_force="day")
+                                                    order_type="market", time_in_force="day",
+                                                    client_order_id=exit_client_order_id("mh", symbol))
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
                     closed_qty = 0.0
                     if fill_qty and fill_price:
@@ -1204,7 +1344,11 @@ class PoliticianBot:
                     })
                     peaks.pop(symbol, None)
                 except Exception as e:
-                    log.error(f"Max-hold exit failed for {symbol}: {e}")
+                    if is_duplicate_client_order_id(e):
+                        log.info(f"{symbol}: exit already placed today (idempotent skip)")
+                        peaks.pop(symbol, None)
+                    else:
+                        log.error(f"Max-hold exit failed for {symbol}: {e}")
 
             elif take_profit_enabled and unrealized_plpc >= take_profit_pct:
                 # OFF by default (D7): the backtest proved this rule amputates the
@@ -1219,6 +1363,7 @@ class PoliticianBot:
                         symbol=symbol, qty=sell_qty, side="sell",
                         order_type="limit" if limit_price else "market",
                         limit_price=limit_price,
+                        client_order_id=exit_client_order_id("tp", symbol),
                     )
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
                     closed_qty = 0.0
@@ -1232,7 +1377,10 @@ class PoliticianBot:
                         "reason": f"Take profit at {unrealized_plpc:.1f}%",
                     })
                 except Exception as e:
-                    log.error(f"Take profit order failed for {symbol}: {e}")
+                    if is_duplicate_client_order_id(e):
+                        log.info(f"{symbol}: take-profit already placed today (idempotent skip)")
+                    else:
+                        log.error(f"Take profit order failed for {symbol}: {e}")
 
         # Drop high-water marks for names no longer held (closed/sold) so the trail
         # store can't grow unbounded or apply a stale peak to a re-bought name.
@@ -1426,13 +1574,13 @@ class PoliticianBot:
         log.info(f"Market open: {is_open}")
 
         if not is_open:
-            log.info("Market closed — scanning and queuing for next open")
-            new_trades = self.scan_politician_trades()
-            for trade in new_trades:
-                fp = self._trade_fingerprint(trade)
-                self.processed_trades.add(fp)
-            self._save_processed()
-            log.info(f"Queued {len(new_trades)} trades for next market open")
+            # D10 (audit 2026-10-23): this branch used to scan and mark every new
+            # disclosure PROCESSED as "queued" — but nothing ever executes a
+            # queue, so those trades were silently dropped. Leave them
+            # unprocessed: the next market-open scan re-reads them and the
+            # freshness gate (max_transaction_age_days) re-evaluates each one.
+            log.info("Market closed — no scan; new disclosures stay unprocessed "
+                     "for the next market-open run")
             return
 
         new_trades = self.scan_politician_trades()
@@ -1449,12 +1597,25 @@ class PoliticianBot:
         for trade in new_trades:
             fp = self._trade_fingerprint(trade)
             result = self.execute_trade(trade, cluster_counts=cluster_counts)
+            # D6: persist after EVERY disclosure, not once after the loop — a
+            # run killed mid-loop (job timeout/cancel) must not forget orders it
+            # already placed, or the next run re-copies them.
             self.processed_trades.add(fp)
+            self._save_processed()
             if result:
                 executed.append(result)
             time.sleep(1)
 
         self._save_processed()
+        # D9: only now — after every trade from them went through the pipeline
+        # — are this scan's House filings marked seen.
+        pending_docs = getattr(self, "_house_pending_docs", None)
+        if pending_docs:
+            try:
+                from house_fd_feed import mark_docs_seen
+                mark_docs_seen(pending_docs)
+            except Exception as e:
+                log.warning(f"house_fd: could not mark filings seen: {e}")
         self.check_stops()
         self.run_benchmark_sleeve()   # deploy idle cash so the book is never fully idle
         self.save_portfolio_state()
@@ -1506,15 +1667,15 @@ class PoliticianBot:
              # blind — noted in detail so the heartbeat stays readable.
              "ok": (not getattr(self, "_feed_dark", False)
                     or getattr(self, "_fallback_ok", False)),
-             "detail": (f"FEED DARK: {getattr(self, '_fetch_failures', 0)}/"
-                        f"{getattr(self, '_fetch_attempts', 0)} Capitol Trades fetches failed"
-                        + (f"; house_fd fallback OK "
-                           f"({getattr(self, '_fallback_trades', 0)} new trades)"
-                           if getattr(self, "_fallback_ok", False)
-                           else "; house_fd fallback FAILED — no source available")
-                        if getattr(self, "_feed_dark", False)
-                        else f"{getattr(self, '_fetch_failures', 0)}/"
-                             f"{getattr(self, '_fetch_attempts', 0)} fetch failures")},
+             "detail": (f"house_fd primary "
+                        + (f"OK ({getattr(self, '_fallback_trades', 0)} new trades)"
+                           if getattr(self, "_fallback_ok", False) else "FAILED")
+                        + f"; Capitol Trades {getattr(self, '_fetch_failures', 0)}/"
+                          f"{getattr(self, '_fetch_attempts', 0)} fetches failed"
+                        + (" (DARK)" if getattr(self, "_feed_dark", False) else "")
+                        + ("" if (not getattr(self, "_feed_dark", False)
+                                  or getattr(self, "_fallback_ok", False))
+                           else " — no source available"))},
         ])
         write_conformance_report(str(BASE_DIR / "data" / "strategy_conformance.json"), conf)
 
