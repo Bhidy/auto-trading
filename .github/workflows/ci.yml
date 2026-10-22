@@ -12,11 +12,19 @@ on:
       - "event-driven-bot/scripts/**"
       - "political-copy-bot/scripts/**"
       - "tests/**"
+      - "config/**"
+      - "dashboard/server.js"
+      - "dashboard/package*.json"
+      - "dashboard/test/**"
       - "pyproject.toml"
       - "requirements*.txt"
       - ".github/workflows/ci.yml"
   pull_request:
   workflow_dispatch:
+  # Daily safety net: state/config commits by the bots never touch the path
+  # filter above, so a latent red main (as on 2026-10-03..10-23) must still surface.
+  schedule:
+    - cron: "15 11 * * 1-5"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,3 +49,18 @@ jobs:
 
       - name: Pytest
         run: python3 -m pytest tests/ -v
+
+  dashboard-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+      - name: Install dashboard dependencies (lockfile)
+        working-directory: dashboard
+        run: npm ci --omit=dev
+      - name: Dashboard API security tests
+        working-directory: dashboard
+        run: node --test test/*.test.js

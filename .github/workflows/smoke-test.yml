@@ -24,6 +24,7 @@ on:
       - "dashboard/package.json"
       - "dashboard/package-lock.json"
       - "dashboard/build.sh"
+      - "dashboard/test/**"
       - ".github/workflows/smoke-test.yml"
   workflow_dispatch:
 
@@ -40,7 +41,25 @@ env:
   VERCEL_PROJECT_ID: prj_Ig61I6uR0q614j6xGS07EQCkIyZ3
 
 jobs:
+  # Pre-deploy gate: the API security regression suite must pass before anything
+  # reaches production (previously this workflow deployed first, tested after).
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+      - name: Install dashboard dependencies (lockfile)
+        working-directory: dashboard
+        run: npm ci --omit=dev
+      - name: Dashboard API security tests
+        working-directory: dashboard
+        run: node --test test/*.test.js
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -136,6 +155,22 @@ jobs:
           import json, sys
           print('P3 trade_log=' + str(len(json.load(sys.stdin).get('trade_log', []))))
           " || FAILURES=$((FAILURES + 1))
+
+          echo "--- Live state overlay (latest committed state, not the deploy bundle) ---"
+          curl -sf "$PROD_URL/api/health" | python3 -c "
+          import json, sys
+          ls = json.load(sys.stdin).get('liveState') or {}
+          print('liveState=' + json.dumps(ls))
+          if not ls.get('enabled') or not ls.get('overlaid'):
+              print('FAIL: live state overlay not serving fresh state'); sys.exit(1)
+          " || FAILURES=$((FAILURES + 1))
+
+          echo "--- Mutation auth gate (no token => 401/503, never reaches a handler) ---"
+          for P in /api/portfolio/portfolio_1/order /API/portfolio/portfolio_1/order /Api/portfolio/portfolio_1/positions/close-all; do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$PROD_URL$P" -H 'content-type: application/json' -d '{}')
+            echo "POST $P -> $CODE"
+            case "$CODE" in 401|503|400|404) ;; *) echo "FAIL: unauthenticated mutation reached $P ($CODE)"; FAILURES=$((FAILURES + 1));; esac
+          done
 
           echo "=== SMOKE TEST: $FAILURES failures ==="
           if [ "$FAILURES" -gt 0 ]; then
