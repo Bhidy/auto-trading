@@ -2,8 +2,10 @@ name: "P1 Self Improving Brain — Weekly Review"
 
 on:
   schedule:
-    # Friday 4:30 PM ET = 20:30 UTC
+    # Friday 4:30 PM ET. EDT = 20:30 UTC, EST = 21:30 UTC. Both lines fire; the
+    # review overwrites journal/weekly-<week>.json, so the later run is final.
     - cron: "30 20 * * 5"
+    - cron: "30 21 * * 5"
   workflow_dispatch:
 
 permissions:

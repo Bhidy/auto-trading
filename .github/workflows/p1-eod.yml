@@ -26,6 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # A queued cron can start on a STALE commit (it checks out the SHA it was
+      # queued at). Gates that read committed state (EOD idempotency, trading
+      # dedup, halt-clear consumption) must see the latest main, so sync to
+      # origin/main BEFORE any step reads state — same pattern as guardian.yml.
+      - name: Sync to latest origin/main
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git reset --hard origin/main
+          echo "State base: $(git rev-parse --short HEAD)"
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -45,6 +55,11 @@ jobs:
           CONF
 
       - name: Run end-of-day journal
+        env:
+          # The runner is idempotent per ET trading session (last_eod_session_date):
+          # the 6 staggered cron fires do the EOD work once. A manual dispatch is
+          # operator intent and forces a re-run.
+          P1_EOD_FORCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
         run: |
           cd "$GITHUB_WORKSPACE"
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"

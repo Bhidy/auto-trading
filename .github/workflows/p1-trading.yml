@@ -35,6 +35,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # A queued cron can start on a STALE commit (it checks out the SHA it was
+      # queued at). Gates that read committed state (EOD idempotency, trading
+      # dedup, halt-clear consumption) must see the latest main, so sync to
+      # origin/main BEFORE any step reads state — same pattern as guardian.yml.
+      - name: Sync to latest origin/main
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git reset --hard origin/main
+          echo "State base: $(git rev-parse --short HEAD)"
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"

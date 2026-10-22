@@ -63,6 +63,26 @@ def load_portfolio_state():
         "halt_until": None,
     }
 
+def drawdown_reference_equity(state):
+    """Equity the kill-switch drawdown is measured FROM (audit 2026-10-23, M5).
+
+    A drawdown is a fall from the HIGH-WATER MARK, not from the fixed $100K
+    start: measured from the start, a book that ran to $130K could lose 30% of
+    its value before an 18% "drawdown" registered. ``peak_equity`` is only ever
+    raised from a cross-checked equity read (autonomous_runner.update_peak_equity),
+    so a phantom spike cannot inflate it. The start remains the floor because it
+    is a real, confirmed equity (the funded balance).
+    """
+    state = state or {}
+    start = _f(state.get("starting_equity")) or 100000.0
+    return max(start, _f(state.get("peak_equity")))
+
+
+def drawdown_pct_from_peak(state, equity):
+    ref = drawdown_reference_equity(state)
+    return (ref - _f(equity)) / ref * 100 if ref > 0 else 0.0
+
+
 def save_portfolio_state(state):
     with open(os.path.join(DATA_DIR, "portfolio_state.json"), "w") as f:
         json.dump(state, f, indent=2)
@@ -150,7 +170,7 @@ def validate_trade(signal, portfolio, limits, asset_info=None, cross_books=None)
         return {"approved": False, "rejections": ["WEEKLY LOSS LIMIT BREACHED — trading halted for 7 days"]}
 
     # Kill switch
-    drawdown_pct = ((portfolio["starting_equity"] - equity) / portfolio["starting_equity"]) * 100
+    drawdown_pct = drawdown_pct_from_peak(portfolio, equity)
     if drawdown_pct >= limits["kill_switch_drawdown_pct"]:
         return {"approved": False, "rejections": ["KILL SWITCH — max drawdown breached, full liquidation required"]}
 
