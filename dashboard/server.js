@@ -2553,10 +2553,14 @@ app.get('/api/crypto/bars/:symbol', async (req, res) => {
         const tfMin = { '1Min': 1, '5Min': 5, '15Min': 15, '1Hour': 60, '4Hour': 240, '1Day': 1440 }[tf] || 1440;
         startParam = new Date(Date.now() - tfMin * 60000 * lim * 1.5).toISOString();
     }
-    let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/bars?symbols=${sym}&timeframe=${tf}&start=${startParam}&limit=${lim}`;
-    if (end) url += `&end=${end}`;
+    // sort=desc + limit => the most RECENT `lim` bars (ascending from a 1.5x
+    // lookback returned the OLDEST bars, leaving the chart ~0.5x`lim` bars stale);
+    // reverse each series back to chronological for the chart.
+    let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/bars?symbols=${sym}&timeframe=${encodeURIComponent(tf)}&start=${encodeURIComponent(startParam)}&limit=${lim}&sort=desc`;
+    if (end) url += `&end=${encodeURIComponent(end)}`;
     try {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
+        if (data && data.bars) for (const k of Object.keys(data.bars)) data.bars[k] = (data.bars[k] || []).slice().reverse();
         res.json(data);
     } catch (e) {
         res.json({ bars: {} });
@@ -2603,10 +2607,12 @@ app.get('/api/crypto/trades/:symbol', async (req, res) => {
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
     const sym = req.params.symbol.replace('/', '%2F');
     const { start, end, limit } = req.query;
-    let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/trades?symbols=${sym}`;
-    if (start) url += `&start=${start}`;
-    if (end) url += `&end=${end}`;
-    if (limit) url += `&limit=${limit || 100}`;
+    // Newest first: without sort=desc Alpaca returns the first trades of the UTC
+    // day, so the "Recent Trades" tape showed hours-old prints (audit D4).
+    const lim = Math.min(1000, Math.max(1, parseInt(limit, 10) || 100));
+    let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/trades?symbols=${sym}&limit=${lim}&sort=desc`;
+    if (start) url += `&start=${encodeURIComponent(start)}`;
+    if (end) url += `&end=${encodeURIComponent(end)}`;
     try {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
         res.json(data);
