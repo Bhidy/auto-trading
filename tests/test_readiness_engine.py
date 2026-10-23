@@ -707,3 +707,27 @@ def test_predictable_cs_holds_its_level_through_a_volatility_jump():
                 false_go += 1
                 break
     assert false_go <= 1
+
+
+# --- chart series (readiness page draws these; it computes nothing itself) -----
+
+def test_cs_path_ends_at_the_decision_bounds_and_uses_only_the_past():
+    y, x, _ = _series(200, 0.0004, seed=5)
+    th = R.THRESHOLDS
+    full = R.predictable_cs(y, x, 252, 0.05, path=True)
+    assert full["path"], "a path is recorded"
+    t_last, lo, hi, pt = full["path"][-1]
+    assert t_last == len(y) - 1 and lo == full["lower"] and hi == full["upper"] and pt == full["point"]
+    # Every path point equals the decision the engine would have made stopping there.
+    for t, lo_t, hi_t, _pt in full["path"][::37]:
+        pre = R.predictable_cs(y[:t + 1], x[:t + 1], 252, 0.05)
+        assert abs(pre["lower"] - lo_t) < 1e-12 and abs(pre["upper"] - hi_t) < 1e-12
+    assert th["cs_burn_in"] == 20
+
+
+def test_chart_series_compounds_and_drawdown_is_peak_relative():
+    s = R.chart_series(["d1", "d2", "d3"], [0.10, -0.10, 0.05], {"d1": 0.01, "d3": 0.02})
+    assert s["cum_return"] == [0.1, round(1.1 * 0.9 - 1, 5), round(1.1 * 0.9 * 1.05 - 1, 5)]
+    assert s["drawdown"][0] == 0.0 and s["drawdown"][1] == round(0.99 / 1.1 - 1, 5)
+    # Benchmark compounded over the SAME dates; a missing day contributes 0.
+    assert s["benchmark_cum"] == [0.01, 0.01, round(1.01 * 1.02 - 1, 5)]

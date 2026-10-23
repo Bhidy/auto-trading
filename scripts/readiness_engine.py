@@ -732,6 +732,13 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         warnings.append(f"benchmark bars from {bars_note}")
     bars = bars or {}
 
+    for pid in books:
+        whole = book_info[pid]["whole"] or {"dates": [], "returns": []}
+        spy_whole = R.window_returns(bars.get("SPY", {}), sessions, whole["dates"][0], as_of) \
+            if whole["dates"] else {"dates": [], "returns": []}
+        books[pid]["series"] = R.chart_series(whole["dates"], whole["returns"],
+                                              dict(zip(spy_whole["dates"], spy_whole["returns"])))
+
     labels = regime_labels(set(sessions))
     freshness = heartbeat.read_freshness(Path(REPO_ROOT))
     fresh_by_book = {pid: freshness.get(b["label"]) for pid, b in BOOKS.items()}
@@ -869,6 +876,16 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
             "gates_passed": v["gates_passed"], "gates_total": v["gates_total"],
             "measurement_gaps": v["measurement_gaps"],
         })
+        path = edge.get("cs_path") or []
+        entry["series"] = {
+            # Always-valid alpha bounds (annualized) at every session the engine
+            # could have stopped: the evidence trajectory behind the verdict.
+            "edge": {"dates": [aligned[t][0] for t, _lo, _hi, _pt in path],
+                     "lower": [round(lo * R.PERIODS_PER_YEAR, 5) for _t, lo, _hi, _pt in path],
+                     "upper": [round(hi * R.PERIODS_PER_YEAR, 5) for _t, _lo, hi, _pt in path],
+                     "point": [round(pt * R.PERIODS_PER_YEAR, 5) for _t, _lo, _hi, pt in path]},
+            "window": R.chart_series(risk_w["dates"], risk_w["returns"], spy_by),
+        }
         entry["narrative"] = R.narrative({**entry, "edge": edge, "eta": v["eta"]})
         sleeves_out.append(entry)
         books[pid]["sleeves"].append(s["id"])

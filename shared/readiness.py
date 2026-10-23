@@ -260,6 +260,26 @@ def window_returns(values_by_date, sessions, start, end, exclude=None, max_abs=N
             "excluded": excluded, "faults": faults}
 
 
+def chart_series(dates, returns, bench_by_date=None, nd=5):
+    """Compounded cumulative return and drawdown for charting (rounded). The
+    benchmark is compounded over the SAME dates only (a missing benchmark day
+    contributes 0), so the two lines are always comparable."""
+    cum, b_cum, dd = [], [], []
+    v = bv = peak = 1.0
+    for d, r in zip(dates, returns):
+        v *= 1.0 + r
+        peak = max(peak, v)
+        cum.append(round(v - 1.0, nd))
+        dd.append(round(v / peak - 1.0, nd))
+        if bench_by_date is not None:
+            bv *= 1.0 + bench_by_date.get(d, 0.0)
+            b_cum.append(round(bv - 1.0, nd))
+    out = {"dates": list(dates), "cum_return": cum, "drawdown": dd}
+    if bench_by_date is not None:
+        out["benchmark_cum"] = b_cum
+    return out
+
+
 def equity_curve(returns, start_value=1.0):
     curve = [start_value]
     for r in returns:
@@ -404,7 +424,7 @@ def confidence_sequence(alpha_hat, sigma, n, rho, a):
     return alpha_hat - half, alpha_hat + half
 
 
-def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=21):
+def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=21, path=False):
     """Always-valid bounds on the daily alpha of y = alpha + beta*x + e, built
     from PREDICTABLE plug-ins (v2.2; replaces the full-sample plug-in of 2.1).
 
@@ -422,7 +442,11 @@ def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=2
     changes over time is tracked by the expanding estimate instead of being
     averaged retrospectively, and beta error enters only through
     beta-prediction noise (mean-zero up to the small market drift).
-    Returns dict(lower, upper, point, m) — daily units; None bounds if m < 1."""
+    Returns dict(lower, upper, point, m) — daily units; None bounds if m < 1.
+    ``path=True`` adds "path": [(t, lower, upper, point)] for every input index
+    t that produced an increment — the SAME bounds the decision would have
+    seen had the engine stopped at t (the time-uniform guarantee covers every
+    one of them), for charting the evidence trajectory."""
     n = len(y)
     sx = sy = sxx = sxy = 0.0
     k = 0                                  # points in the OLS sums
@@ -433,6 +457,7 @@ def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=2
     gam = [0.0] * (lag + 1)                # running sums of u_t*u_{t-l} (centred at update)
     A = B = 0.0
     m = 0
+    trail = [] if path else None
     for t in range(n):
         xt, yt = (x[t] if fit_beta else 0.0), y[t]
         beta = 0.0
@@ -455,6 +480,9 @@ def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=2
                 A += w * u
                 B += w
                 m += 1
+                if trail is not None:
+                    bt = cs_boundary(m, rho, a)
+                    trail.append((t, (A - bt) / B, (A + bt) / B, A / B))
         # update the plug-ins with u_t (after it was used)
         ku += 1
         d = u - mu
@@ -476,9 +504,13 @@ def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=2
             sxx += xt * xt
             sxy += xt * yt
     if m < 1 or B <= 0:
-        return {"lower": None, "upper": None, "point": None, "m": m}
-    b = cs_boundary(m, rho, a)
-    return {"lower": (A - b) / B, "upper": (A + b) / B, "point": A / B, "m": m}
+        out = {"lower": None, "upper": None, "point": None, "m": m}
+    else:
+        b = cs_boundary(m, rho, a)
+        out = {"lower": (A - b) / B, "upper": (A + b) / B, "point": A / B, "m": m}
+    if trail is not None:
+        out["path"] = trail
+    return out
 
 
 def sessions_to_cross(alpha_daily, sigma, rho, a, cap):
@@ -543,7 +575,7 @@ def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_
     psr = M.probabilistic_sharpe_ratio(ir_d, 0.0, n, skew, kurt) if sr > 0 else 0.0
     dsr = M.deflated_sharpe_at_trial_count(ir_d, n, trial_count, skew, kurt) if sr > 0 else 0.0
     sig_eff = max(sr, reg["se_alpha_hac"] * math.sqrt(n))
-    pcs = predictable_cs(y, x, rho, a_lvl, lag=th["hac_lag"], burn_in=th["cs_burn_in"])
+    pcs = predictable_cs(y, x, rho, a_lvl, lag=th["hac_lag"], burn_in=th["cs_burn_in"], path=True)
     lo, hi = pcs["lower"], pcs["upper"]
     out.update({
         "alpha_daily": a, "alpha_annual": a * PERIODS_PER_YEAR, "beta": reg["beta"],
@@ -551,7 +583,7 @@ def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_
         "dsr": dsr, "sigma_resid_daily": sr, "sigma_eff_daily": sig_eff,
         "se_alpha_hac_daily": reg["se_alpha_hac"], "skew": skew, "kurtosis": kurt,
         "cs_lower_daily": lo, "cs_upper_daily": hi, "cs_increments": pcs["m"],
-        "alpha_predictive_daily": pcs["point"],
+        "alpha_predictive_daily": pcs["point"], "cs_path": pcs.get("path") or [],
         "cs_lower": None if lo is None else lo * PERIODS_PER_YEAR,
         "cs_upper": None if hi is None else hi * PERIODS_PER_YEAR,
     })
