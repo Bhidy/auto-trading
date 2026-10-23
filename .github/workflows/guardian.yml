@@ -175,8 +175,14 @@ jobs:
 
           def p3_session_prefixes():
               day = datetime.datetime.now(ET).strftime("%Y%m%d")
-              # Allocator + legacy entry ids only; p3-rearm-/p3-stop- (monitor) excluded.
-              return (f"p3alloc-{day}-", f"p3-{day}-")
+              # Legacy trading-session ids only. p3-rearm-/p3-stop- (monitor) are
+              # excluded, and so are allocator ids (p3alloc-): the allocator step
+              # runs BEFORE the scan + session in p3-trading.yml, so its orders
+              # prove only that step ran — counting them would let a failed scan
+              # or session skip this catch-up (Codex review, PR #99). A catch-up
+              # cannot double-place allocator orders: the allocator itself stops
+              # when the broker shows today's p3alloc orders its state lacks.
+              return (f"p3-{day}-",)
 
           BROKER_RULES = {
               "p1": ("config/alpaca_config.json", lambda: P1_SESSION_PREFIXES),

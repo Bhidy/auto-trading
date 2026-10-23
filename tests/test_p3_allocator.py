@@ -911,7 +911,7 @@ def test_unconstrained_run_records_zero_shortfall(env):
     assert st["targets_constrained"] == pytest.approx(st["targets"])
 
 
-def test_guardian_p3_fresh_when_broker_has_todays_p3alloc_order(tmp_path):
+def test_guardian_p3_freshness_counts_legacy_session_orders_not_allocator_orders(tmp_path):
     import subprocess
     from zoneinfo import ZoneInfo
     import test_audit_2026_10_23_p1 as G
@@ -935,7 +935,8 @@ def test_guardian_p3_fresh_when_broker_has_todays_p3alloc_order(tmp_path):
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     day = datetime.now(ZoneInfo("America/New_York")).strftime("%Y%m%d")
     for coid, expect in ((f"p3-rearm-{day}-SPY-sell", 1), ("p3alloc-20200101-SPY-buy", 1),
-                         (f"p3alloc-{day}-SPY-buy", 0), (f"p3-{day}-ANET-buy", 0)):
+                         (f"p3alloc-{day}-SPY-buy", 1),   # allocator-only => pipeline NOT fresh
+                         (f"p3-{day}-ANET-buy", 0)):
         (fake / "requests.py").write_text(
             "class _R:\n"
             "    def raise_for_status(self): pass\n"
