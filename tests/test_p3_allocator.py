@@ -929,6 +929,10 @@ def test_guardian_p3_fresh_when_broker_has_todays_p3alloc_order(tmp_path):
     script.write_text(G._guardian_script())
     env = {k: v for k, v in os.environ.items() if k != "GH_TOKEN"}
     env["PYTHONPATH"] = str(fake)
+    # The fake module is rewritten each iteration, sometimes with the SAME byte
+    # length within the same second; Python's mtime+size .pyc check would then
+    # reuse the previous iteration's bytecode (flaky on fast CI runners).
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     day = datetime.now(ZoneInfo("America/New_York")).strftime("%Y%m%d")
     for coid, expect in ((f"p3-rearm-{day}-SPY-sell", 1), ("p3alloc-20200101-SPY-buy", 1),
                          (f"p3alloc-{day}-SPY-buy", 0), (f"p3-{day}-ANET-buy", 0)):
@@ -937,6 +941,7 @@ def test_guardian_p3_fresh_when_broker_has_todays_p3alloc_order(tmp_path):
             "    def raise_for_status(self): pass\n"
             f"    def json(self): return [{{'client_order_id': '{coid}'}}]\n"
             "def get(*a, **k): return _R()\n")
+        G.shutil.rmtree(fake / "__pycache__", ignore_errors=True)
         r = subprocess.run([sys.executable, str(script), "p3"], cwd=repo, env=env,
                            capture_output=True, text=True)
         assert r.returncode == expect, (coid, r.stdout + r.stderr)
