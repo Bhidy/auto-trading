@@ -672,6 +672,31 @@ app.get('/api/momentum/readiness', (req, res) => {
     res.json(readJsonFile(p, { status: 'not_started', note: 'No readiness data yet.' }));
 });
 
+// Readiness Engine v2 report (scripts/readiness_engine.py → data/readiness_report.json).
+// The dashboard only SERVES the engine's verdicts — it never recomputes a gate, a
+// score or an ETA in the browser. Read through readJsonFile so the live-state
+// overlay keeps it current between deploys. Absent ⇒ 404 and malformed ⇒ 503,
+// both `{unavailable:true}`: an honest "no verdict", never a fabricated one.
+const READINESS_REPORT_PATH = path.join(ROOT_DIR, 'data', 'readiness_report.json');
+function readinessResponse(report) {
+    if (report == null) {
+        return { status: 404, body: { unavailable: true, reason: 'absent', error: 'Readiness report not available yet.' } };
+    }
+    const valid = typeof report === 'object' && !Array.isArray(report)
+        && typeof report.generated_at === 'string' && !Number.isNaN(Date.parse(report.generated_at))
+        && Array.isArray(report.sleeves)
+        && report.sleeves.every(s => s && typeof s === 'object' && typeof s.id === 'string'
+            && typeof s.book === 'string' && typeof s.verdict === 'string' && Array.isArray(s.gates));
+    if (!valid) {
+        return { status: 503, body: { unavailable: true, reason: 'malformed', error: 'Readiness report is malformed.' } };
+    }
+    return { status: 200, body: report };
+}
+app.get('/api/readiness', (req, res) => {
+    const { status, body } = readinessResponse(readJsonFile(READINESS_REPORT_PATH, null));
+    res.status(status).json(body);
+});
+
 // Helper to get local data paths for a portfolio (cloud-safe, uses copied data dirs)
 function getPortfolioPaths(id) {
     const item = portfoliosConfig[id];
@@ -721,6 +746,7 @@ const SAFETY_FILES = ['haltGovernance', 'pendingExits', 'pendingEntries', 'booke
         }
     }
     add(path.join(ROOT_DIR, 'data', 'momentum_readiness.json'));
+    add(READINESS_REPORT_PATH);
 })();
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -3916,6 +3942,6 @@ if (require.main === module) {
 app._internals = {
     journalDatesToCover, planOverlayUpdate, dayPnlBasis, aggregateDayPnlBasis, sectorFor,
     normalizeCryptoPair, pageAssets, markEquityAnchors, previousWeekday, haltAssessment,
-    buildAllocatorStatus, getIntelligencePaths, hotStatePaths,
+    buildAllocatorStatus, getIntelligencePaths, hotStatePaths, readinessResponse, READINESS_REPORT_PATH,
 };
 module.exports = app;
