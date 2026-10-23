@@ -1,11 +1,15 @@
 {
-  "generated_at": "2026-10-23T15:40:15.169536+00:00",
+  "generated_at": "2026-10-23T16:13:42.542442+00:00",
   "as_of_session": "2026-10-22",
-  "methodology_version": "2.0.0",
-  "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2)",
+  "methodology_version": "2.1.0",
+  "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.1)",
   "thresholds": {
     "min_track_sessions": 90,
     "min_edge_sessions": 60,
+    "alpha_family": 0.05,
+    "k_family_floor": 6,
+    "cs_rho_sessions": 252,
+    "max_abs_daily_return": 0.25,
     "dsr_min": 0.95,
     "psr_confidence": 0.95,
     "hac_lag": 5,
@@ -29,7 +33,23 @@
     "eta_cap_sessions": 2520,
     "rf_fallback_annual": 0.04
   },
-  "verdict_rule": "GO only if every hard gate passes; NOT_ELIGIBLE for exits_only/quarantined; no percentage score. Real capital remains a human decision.",
+  "edge_decision": {
+    "rule": "always-valid one-sided normal-mixture confidence sequence on the HAC-scaled OLS alpha vs SPY; PASS iff the lower bound > 0 (n >= min_edge_sessions)",
+    "alpha_family": 0.05,
+    "k_family": 6,
+    "k_live_edge_sleeves": 2,
+    "k_floor": 6,
+    "alpha_level_per_sleeve": 0.008333,
+    "rho_sessions": 252
+  },
+  "verdict_rule": "GO only if every hard gate passes; FORWARD_TEST_PASS caps forward tests; BETA_SLEEVE for no-edge sleeves; NOT_ELIGIBLE for exits_only/quarantined; no percentage score. Real capital remains a human decision.",
+  "verdict_values": [
+    "GO",
+    "NOT_READY",
+    "NOT_ELIGIBLE",
+    "BETA_SLEEVE",
+    "FORWARD_TEST_PASS"
+  ],
   "sleeves": [
     {
       "id": "p1-momentum-v1",
@@ -43,61 +63,74 @@
       "benchmark": "SPY",
       "trial_count": 20,
       "spec": "docs/HIGH_RETURN_MOMENTUM.md",
+      "claims_edge": true,
       "window": {
         "start": "2026-07-06",
         "end": "2026-10-22",
         "trading_days": 78,
+        "active_trading_days": 1,
+        "halted_sessions": 77,
         "daily_returns": 78,
-        "aligned_with_spy": 78,
-        "missing_sessions": []
+        "edge_returns": 1,
+        "aligned_with_spy": 1,
+        "missing_sessions": [],
+        "data_fault_sessions": [],
+        "cash_flow_sessions": []
       },
       "attribution": "book_level",
-      "attribution_note": "no clean sleeve-level series; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
+      "owns_edge_test": true,
+      "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
           "name": "Paper track record (trading sessions)",
           "threshold": ">= 90",
-          "value": 78,
+          "value": 1,
           "status": "insufficient",
-          "detail": "78 sessions since the version start",
-          "eta_sessions": 12,
+          "detail": "1 active sessions since the version start (78 total, 77 halted/frozen excluded)",
+          "eta_sessions": 89,
           "hard": true
         },
         {
           "id": "edge",
-          "name": "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-          "threshold": "alpha > 0, DSR >= 0.95 at honest N, t_HAC >= z_req, n >= 60",
+          "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+          "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
-            "alpha_annual": 0.0548,
-            "t_hac": 0.481,
-            "dsr": 0.0776,
-            "n": 78
+            "alpha_annual": null,
+            "t_hac": null,
+            "dsr": null,
+            "n": 1,
+            "cs_lower": null,
+            "cs_upper": null
           },
-          "status": "fail",
-          "detail": "alpha +5.48%/yr, beta 0.17, t_HAC 0.48 vs z_req 3.546, DSR 0.078 at N=20",
+          "status": "insufficient",
+          "detail": "only 1 aligned daily returns",
           "eta_sessions": null,
           "hard": true
         },
         {
           "id": "max_drawdown",
-          "name": "Max drawdown (window)",
+          "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
-          "value": 0.0179,
+          "value": 0.078,
           "status": "pass",
-          "detail": "peak-to-trough 1.79% over 78 sessions",
+          "detail": "window 1.79% over 78 sessions; whole paper period 7.80%",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "window_value": 0.0179,
+          "book_value": 0.078
         },
         {
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
-          "threshold": ">= 6% (18% kill switch - current DD)",
-          "value": 0.1668,
+          "threshold": ">= 6% (live kill switch - drawdown from its reference)",
+          "value": 0.1522,
           "status": "pass",
-          "detail": "current drawdown 1.32%",
+          "detail": "18% kill switch; drawdown 2.78% from $100,000 (P1 risk_officer.drawdown_reference_equity (max(start, verified peak)))",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "reference_equity": 100000.0,
+          "current_drawdown": 0.0278
         },
         {
           "id": "worst_day",
@@ -182,9 +215,9 @@
           "id": "slippage",
           "name": "Average adverse slippage",
           "threshold": "avg <= 15 bps",
-          "value": -10.9,
-          "status": "pass",
-          "detail": "5 fills measured",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no decision/arrival reference recorded: this sleeve logs its LIMIT price as intended_price, which measures limit headroom, not execution quality",
           "eta_sessions": null,
           "hard": true
         },
@@ -210,40 +243,57 @@
         }
       ],
       "edge": {
-        "alpha": 0.054803,
-        "alpha_daily": 0.00021747,
-        "beta": 0.1703,
-        "t_hac": 0.4814,
-        "ir": 0.8207,
-        "psr": 0.672,
-        "dsr": 0.0776,
-        "n": 78,
+        "alpha": null,
+        "alpha_daily": null,
+        "beta": null,
+        "t_hac": null,
+        "ir": null,
+        "psr": null,
+        "dsr": null,
+        "dsr_informational": true,
+        "n": 1,
         "trial_count": 20,
         "z_required": 3.546,
         "rf_source": "BIL daily total return",
-        "status": "fail",
-        "eta_state": "not_converging"
+        "status": "insufficient",
+        "eta_state": "too_early",
+        "decision_rule": "confidence_sequence",
+        "cs_lower": null,
+        "cs_upper": null,
+        "alpha_level": 0.008333,
+        "rho": 252
       },
       "eta": {
         "edge": {
-          "state": "not_converging",
+          "median_sessions": null,
+          "pessimistic_sessions": null,
+          "optimistic_sessions": null,
+          "n_required": null,
+          "state": "too_early",
           "sessions_remaining": null,
-          "n_required": 4705,
-          "detail": "n_required 4705 > cap 2520 sessions"
+          "detail": "needs >= 20 daily returns to estimate",
+          "median_date": null,
+          "pessimistic_date": null,
+          "optimistic_date": null
         },
         "overall": {
           "sessions_remaining": null,
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge",
-          "excludes_measurement_gaps": []
+          "excludes_measurement_gaps": [
+            "slippage"
+          ]
         }
       },
       "verdict": "NOT_ELIGIBLE",
+      "verdict_note": null,
       "binding_gate": "edge",
-      "gates_passed": 9,
+      "gates_passed": 8,
       "gates_total": 12,
-      "measurement_gaps": [],
-      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Alpha vs SPY +5.5%/yr (beta 0.17, t_HAC 0.48 vs 3.546 needed, DSR 0.08, n=78). Binding: Benchmark-relative edge (alpha vs SPY, HAC t, DSR) \u2014 alpha +5.48%/yr, beta 0.17, t_HAC 0.48 vs z_req 3.546, DSR 0.078 at N=20. Returns are BOOK-level (sleeve shares the account)."
+      "measurement_gaps": [
+        "slippage"
+      ],
+      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 1 aligned daily returns. Not yet measured (blocks GO): slippage. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p1-multifactor-satellite-v2",
@@ -257,16 +307,25 @@
       "benchmark": "SPY",
       "trial_count": 60,
       "spec": "docs/specs/p1_spec.json",
+      "claims_edge": true,
       "window": {
         "start": "2026-05-27",
         "end": "2026-06-17",
         "trading_days": 16,
-        "daily_returns": 16,
-        "aligned_with_spy": 16,
-        "missing_sessions": []
+        "active_trading_days": 16,
+        "halted_sessions": 0,
+        "daily_returns": 15,
+        "edge_returns": 15,
+        "aligned_with_spy": 15,
+        "missing_sessions": [],
+        "data_fault_sessions": [],
+        "cash_flow_sessions": [
+          "2026-05-27"
+        ]
       },
       "attribution": "book_level",
-      "attribution_note": "no clean sleeve-level series; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
+      "owns_edge_test": true,
+      "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
@@ -274,44 +333,50 @@
           "threshold": ">= 90",
           "value": 16,
           "status": "insufficient",
-          "detail": "16 sessions since the version start",
+          "detail": "16 active sessions since the version start (16 total, 0 halted/frozen excluded)",
           "eta_sessions": 74,
           "hard": true
         },
         {
           "id": "edge",
-          "name": "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-          "threshold": "alpha > 0, DSR >= 0.95 at honest N, t_HAC >= z_req, n >= 60",
+          "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+          "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
-            "alpha_annual": -0.7095,
-            "t_hac": -4.283,
+            "alpha_annual": -0.7788,
+            "t_hac": -4.86,
             "dsr": 0.0,
-            "n": 16
+            "n": 15,
+            "cs_lower": -5.2405,
+            "cs_upper": 3.6829
           },
           "status": "insufficient",
-          "detail": "n=16 < 60 pre-registered minimum",
+          "detail": "n=15 < 60 pre-registered minimum",
           "eta_sessions": null,
           "hard": true
         },
         {
           "id": "max_drawdown",
-          "name": "Max drawdown (window)",
+          "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
-          "value": 0.0614,
+          "value": 0.078,
           "status": "pass",
-          "detail": "peak-to-trough 6.14% over 16 sessions",
+          "detail": "window 6.14% over 15 sessions; whole paper period 7.80%",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "window_value": 0.0614,
+          "book_value": 0.078
         },
         {
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
-          "threshold": ">= 6% (18% kill switch - current DD)",
-          "value": 0.1212,
+          "threshold": ">= 6% (live kill switch - drawdown from its reference)",
+          "value": 0.1522,
           "status": "pass",
-          "detail": "current drawdown 5.88%",
+          "detail": "18% kill switch; drawdown 2.78% from $100,000 (P1 risk_officer.drawdown_reference_equity (max(start, verified peak)))",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "reference_equity": 100000.0,
+          "current_drawdown": 0.0278
         },
         {
           "id": "worst_day",
@@ -329,8 +394,8 @@
           "threshold": "<= 3.0%",
           "value": null,
           "status": "insufficient",
-          "detail": "refused: n=16 < 60",
-          "eta_sessions": 44,
+          "detail": "refused: n=15 < 60",
+          "eta_sessions": 45,
           "hard": true
         },
         {
@@ -359,12 +424,12 @@
           "threshold": ">= 2 regime groups x >= 5 sessions, none < -8%",
           "value": {
             "bull": {
-              "sessions": 16,
-              "return": -0.0542
+              "sessions": 15,
+              "return": -0.0553
             }
           },
           "status": "insufficient",
-          "detail": "observed: bull (16d)",
+          "detail": "observed: bull (15d)",
           "eta_sessions": null,
           "hard": true
         },
@@ -392,9 +457,9 @@
           "id": "slippage",
           "name": "Average adverse slippage",
           "threshold": "avg <= 15 bps",
-          "value": -16.86,
-          "status": "pass",
-          "detail": "47 fills measured",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no decision/arrival reference recorded: this sleeve logs its LIMIT price as intended_price, which measures limit headroom, not execution quality",
           "eta_sessions": null,
           "hard": true
         },
@@ -420,39 +485,57 @@
         }
       ],
       "edge": {
-        "alpha": -0.709468,
-        "alpha_daily": -0.00281535,
-        "beta": 0.8401,
-        "t_hac": -4.2835,
-        "ir": -8.0248,
-        "psr": 0.0133,
+        "alpha": -0.778801,
+        "alpha_daily": -0.00309048,
+        "beta": 0.8387,
+        "t_hac": -4.8602,
+        "ir": -8.6703,
+        "psr": 0.0122,
         "dsr": 0.0,
-        "n": 16,
+        "dsr_informational": true,
+        "n": 15,
         "trial_count": 60,
         "z_required": 3.99,
         "rf_source": "BIL daily total return",
         "status": "insufficient",
-        "eta_state": "too_early"
+        "eta_state": "too_early",
+        "decision_rule": "confidence_sequence",
+        "cs_lower": -5.240514,
+        "cs_upper": 3.682912,
+        "alpha_level": 0.008333,
+        "rho": 252
       },
       "eta": {
         "edge": {
+          "median_sessions": null,
+          "pessimistic_sessions": null,
+          "optimistic_sessions": null,
+          "n_required": null,
           "state": "too_early",
           "sessions_remaining": null,
-          "detail": "needs >= 20 daily returns to estimate"
+          "detail": "needs >= 20 daily returns to estimate",
+          "median_date": null,
+          "pessimistic_date": null,
+          "optimistic_date": null
         },
         "overall": {
           "sessions_remaining": null,
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge, profit_factor, regime_coverage",
-          "excludes_measurement_gaps": []
+          "excludes_measurement_gaps": [
+            "slippage"
+          ]
         }
       },
       "verdict": "NOT_ELIGIBLE",
+      "verdict_note": null,
       "binding_gate": "edge",
-      "gates_passed": 8,
+      "gates_passed": 7,
       "gates_total": 14,
-      "measurement_gaps": [],
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Alpha vs SPY -70.9%/yr (beta 0.84, t_HAC -4.28 vs 3.99 needed, DSR 0.00, n=16). Binding: Benchmark-relative edge (alpha vs SPY, HAC t, DSR) \u2014 n=16 < 60 pre-registered minimum. Returns are BOOK-level (sleeve shares the account)."
+      "measurement_gaps": [
+        "slippage"
+      ],
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Alpha vs SPY -77.9%/yr (beta 0.84, n=15); always-valid bounds [-524.1%, +368.3%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-copy-v2",
@@ -466,16 +549,23 @@
       "benchmark": "SPY",
       "trial_count": 34,
       "spec": "docs/specs/p2_satellite.json",
+      "claims_edge": true,
       "window": {
         "start": "2026-07-06",
         "end": "2026-10-22",
         "trading_days": 78,
+        "active_trading_days": 78,
+        "halted_sessions": 0,
         "daily_returns": 78,
+        "edge_returns": 78,
         "aligned_with_spy": 78,
-        "missing_sessions": []
+        "missing_sessions": [],
+        "data_fault_sessions": [],
+        "cash_flow_sessions": []
       },
       "attribution": "book_level",
-      "attribution_note": "no clean sleeve-level series; returns are the whole portfolio_2 account (alpaca portfolio history (1D))",
+      "owns_edge_test": true,
+      "attribution_note": "owns the shared book-level edge test (overlaps: p2-benchmark-etf-v1); returns are the whole portfolio_2 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
@@ -483,44 +573,50 @@
           "threshold": ">= 90",
           "value": 78,
           "status": "insufficient",
-          "detail": "78 sessions since the version start",
+          "detail": "78 active sessions since the version start (78 total, 0 halted/frozen excluded)",
           "eta_sessions": 12,
           "hard": true
         },
         {
           "id": "edge",
-          "name": "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-          "threshold": "alpha > 0, DSR >= 0.95 at honest N, t_HAC >= z_req, n >= 60",
+          "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+          "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
             "alpha_annual": 0.0283,
             "t_hac": 0.37,
             "dsr": 0.0417,
-            "n": 78
+            "n": 78,
+            "cs_lower": -0.4288,
+            "cs_upper": 0.4854
           },
-          "status": "fail",
-          "detail": "alpha +2.83%/yr, beta 0.45, t_HAC 0.37 vs z_req 3.769, DSR 0.042 at N=34",
+          "status": "insufficient",
+          "detail": "alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042",
           "eta_sessions": null,
           "hard": true
         },
         {
           "id": "max_drawdown",
-          "name": "Max drawdown (window)",
+          "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
           "value": 0.0332,
           "status": "pass",
-          "detail": "peak-to-trough 3.32% over 78 sessions",
+          "detail": "window 3.32% over 78 sessions; whole paper period 3.32%",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "window_value": 0.0332,
+          "book_value": 0.0332
         },
         {
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
-          "threshold": ">= 6% (18% kill switch - current DD)",
-          "value": 0.1781,
+          "threshold": ">= 6% (live kill switch - drawdown from its reference)",
+          "value": 0.15,
           "status": "pass",
-          "detail": "current drawdown 0.19%",
+          "detail": "15% kill switch; drawdown 0.00% from $100,000 (P2 check_kill_switch: drawdown from initial capital $100,000)",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "reference_equity": 100000.0,
+          "current_drawdown": 0.0
         },
         {
           "id": "worst_day",
@@ -605,9 +701,9 @@
           "id": "slippage",
           "name": "Average adverse slippage",
           "threshold": "avg <= 15 bps",
-          "value": -92.87,
-          "status": "pass",
-          "detail": "9 fills measured; P2 reference = its limit price (house convention), so a negative value is headroom under the limit, not price improvement vs arrival",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no decision/arrival reference recorded: this sleeve logs its LIMIT price as intended_price, which measures limit headroom, not execution quality",
           "eta_sessions": null,
           "hard": true
         },
@@ -640,37 +736,60 @@
         "ir": 0.6888,
         "psr": 0.6473,
         "dsr": 0.0417,
+        "dsr_informational": true,
         "n": 78,
         "trial_count": 34,
         "z_required": 3.769,
         "rf_source": "BIL daily total return",
-        "status": "fail",
-        "eta_state": "not_converging"
+        "status": "insufficient",
+        "eta_state": "uncertain",
+        "decision_rule": "confidence_sequence",
+        "cs_lower": -0.428827,
+        "cs_upper": 0.485374,
+        "alpha_level": 0.008333,
+        "rho": 252
       },
       "eta": {
         "edge": {
-          "state": "not_converging",
+          "state": "uncertain",
           "sessions_remaining": null,
-          "n_required": 8090,
-          "detail": "n_required 8090 > cap 2520 sessions"
+          "median_sessions": null,
+          "pessimistic_sessions": null,
+          "optimistic_sessions": 486,
+          "n_required": null,
+          "detail": "crossing beyond 2520 sessions at the estimate; the upper bound keeps it open \u2014 no central projection",
+          "median_date": null,
+          "pessimistic_date": null,
+          "optimistic_date": "2028-09-28"
         },
         "overall": {
           "sessions_remaining": null,
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge",
           "excludes_measurement_gaps": [
-            "reconciliation"
-          ]
+            "reconciliation",
+            "slippage"
+          ],
+          "edge_range": {
+            "median_sessions": null,
+            "pessimistic_sessions": null,
+            "optimistic_sessions": 486,
+            "median_date": null,
+            "pessimistic_date": null,
+            "optimistic_date": "2028-09-28"
+          }
         }
       },
       "verdict": "NOT_READY",
+      "verdict_note": null,
       "binding_gate": "edge",
-      "gates_passed": 8,
+      "gates_passed": 7,
       "gates_total": 14,
       "measurement_gaps": [
-        "reconciliation"
+        "reconciliation",
+        "slippage"
       ],
-      "narrative": "NOT READY: 8/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, t_HAC 0.37 vs 3.769 needed, DSR 0.04, n=78). Binding: Benchmark-relative edge (alpha vs SPY, HAC t, DSR) \u2014 alpha +2.83%/yr, beta 0.45, t_HAC 0.37 vs z_req 3.769, DSR 0.042 at N=34. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation. Returns are BOOK-level (sleeve shares the account)."
+      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-42.9%, +48.5%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-benchmark-etf-v1",
@@ -684,16 +803,23 @@
       "benchmark": "SPY",
       "trial_count": 1,
       "spec": null,
+      "claims_edge": false,
       "window": {
         "start": "2026-06-02",
         "end": "2026-10-22",
         "trading_days": 100,
+        "active_trading_days": 100,
+        "halted_sessions": 0,
         "daily_returns": 100,
+        "edge_returns": 100,
         "aligned_with_spy": 100,
-        "missing_sessions": []
+        "missing_sessions": [],
+        "data_fault_sessions": [],
+        "cash_flow_sessions": []
       },
-      "attribution": "book_level",
-      "attribution_note": "no clean sleeve-level series; returns are the whole portfolio_2 account (alpaca portfolio history (1D))",
+      "attribution": "book_level_shared",
+      "owns_edge_test": false,
+      "attribution_note": "claims no edge; the book-level series is never credited to it; returns are the whole portfolio_2 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
@@ -701,44 +827,43 @@
           "threshold": ">= 90",
           "value": 100,
           "status": "pass",
-          "detail": "100 sessions since the version start",
+          "detail": "100 active sessions since the version start (100 total, 0 halted/frozen excluded)",
           "eta_sessions": 0,
           "hard": true
         },
         {
           "id": "edge",
-          "name": "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-          "threshold": "alpha > 0, DSR >= 0.95 at honest N, t_HAC >= z_req, n >= 60",
-          "value": {
-            "alpha_annual": 0.0721,
-            "t_hac": 1.081,
-            "dsr": 0.8479,
-            "n": 100
-          },
-          "status": "fail",
-          "detail": "alpha +7.21%/yr, beta 0.53, t_HAC 1.08 vs z_req 1.645, DSR 0.848 at N=1",
-          "eta_sessions": 146,
-          "hard": true
+          "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+          "threshold": "not applicable: no edge claimed",
+          "value": null,
+          "status": "not_applicable",
+          "detail": "sleeve claims no edge (registry claims_edge=false)",
+          "eta_sessions": null,
+          "hard": false
         },
         {
           "id": "max_drawdown",
-          "name": "Max drawdown (window)",
+          "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
           "value": 0.0332,
           "status": "pass",
-          "detail": "peak-to-trough 3.32% over 100 sessions",
+          "detail": "window 3.32% over 100 sessions; whole paper period 3.32%",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "window_value": 0.0332,
+          "book_value": 0.0332
         },
         {
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
-          "threshold": ">= 6% (18% kill switch - current DD)",
-          "value": 0.1781,
+          "threshold": ">= 6% (live kill switch - drawdown from its reference)",
+          "value": 0.15,
           "status": "pass",
-          "detail": "current drawdown 0.19%",
+          "detail": "15% kill switch; drawdown 0.00% from $100,000 (P2 check_kill_switch: drawdown from initial capital $100,000)",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "reference_equity": 100000.0,
+          "current_drawdown": 0.0
         },
         {
           "id": "worst_day",
@@ -825,7 +950,7 @@
           "threshold": "avg <= 15 bps",
           "value": null,
           "status": "not_measured",
-          "detail": "no fills with a recorded reference price in the window",
+          "detail": "no decision/arrival reference recorded: this sleeve logs its LIMIT price as intended_price, which measures limit headroom, not execution quality",
           "eta_sessions": null,
           "hard": true
         },
@@ -851,45 +976,51 @@
         }
       ],
       "edge": {
-        "alpha": 0.072054,
-        "alpha_daily": 0.00028593,
-        "beta": 0.5322,
-        "t_hac": 1.0811,
-        "ir": 1.6667,
-        "psr": 0.8479,
-        "dsr": 0.8479,
-        "n": 100,
+        "alpha": null,
+        "alpha_daily": null,
+        "beta": null,
+        "t_hac": null,
+        "ir": null,
+        "psr": null,
+        "dsr": null,
+        "dsr_informational": true,
+        "n": null,
         "trial_count": 1,
-        "z_required": 1.645,
-        "rf_source": "BIL daily total return",
-        "status": "fail",
-        "eta_state": "estimate"
+        "z_required": null,
+        "rf_source": null,
+        "status": "not_applicable",
+        "eta_state": "not_applicable",
+        "decision_rule": "none",
+        "cs_lower": null,
+        "cs_upper": null,
+        "alpha_level": null,
+        "rho": null
       },
       "eta": {
         "edge": {
-          "state": "estimate",
-          "sessions_remaining": 146,
-          "n_required": 246
+          "state": "not_applicable",
+          "sessions_remaining": null
         },
         "overall": {
-          "sessions_remaining": 146,
-          "projected_date": "2027-05-24",
-          "label": "estimate (current alpha / trade rate held constant)",
+          "sessions_remaining": 17,
+          "projected_date": "2026-11-16",
+          "label": "estimate (current alpha / trade / clean-session rates held constant)",
           "excludes_measurement_gaps": [
             "reconciliation",
             "slippage"
           ]
         }
       },
-      "verdict": "NOT_READY",
-      "binding_gate": "edge",
+      "verdict": "BETA_SLEEVE",
+      "verdict_note": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only",
+      "binding_gate": "exception_free",
       "gates_passed": 8,
-      "gates_total": 12,
+      "gates_total": 11,
       "measurement_gaps": [
         "reconciliation",
         "slippage"
       ],
-      "narrative": "NOT READY: 8/12 hard gates pass. 100 sessions since 2026-06-02. Alpha vs SPY +7.2%/yr (beta 0.53, t_HAC 1.08 vs 1.645 needed, DSR 0.85, n=100). Binding: Benchmark-relative edge (alpha vs SPY, HAC t, DSR) \u2014 alpha +7.21%/yr, beta 0.53, t_HAC 1.08 vs z_req 1.645, DSR 0.848 at N=1. ETA 2027-05-24 (estimate (current alpha / trade rate held constant)). Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level (sleeve shares the account)."
+      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 8/11 hard gates pass. 100 sessions since 2026-06-02. Binding: Unhandled-exception-free sessions \u2014 13 consecutive clean sessions. ETA 2026-11-16 (estimate (current alpha / trade / clean-session rates held constant)). Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p3-event-driven-legacy",
@@ -903,16 +1034,25 @@
       "benchmark": "SPY",
       "trial_count": 13,
       "spec": "docs/specs/p3_spec.json",
+      "claims_edge": true,
       "window": {
         "start": "2026-05-27",
         "end": "2026-10-03",
         "trading_days": 90,
-        "daily_returns": 90,
-        "aligned_with_spy": 90,
-        "missing_sessions": []
+        "active_trading_days": 90,
+        "halted_sessions": 0,
+        "daily_returns": 89,
+        "edge_returns": 89,
+        "aligned_with_spy": 89,
+        "missing_sessions": [],
+        "data_fault_sessions": [],
+        "cash_flow_sessions": [
+          "2026-05-27"
+        ]
       },
       "attribution": "book_level",
-      "attribution_note": "no clean sleeve-level series; returns are the whole portfolio_3 account (alpaca portfolio history (1D))",
+      "owns_edge_test": true,
+      "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_3 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
@@ -920,44 +1060,50 @@
           "threshold": ">= 90",
           "value": 90,
           "status": "pass",
-          "detail": "90 sessions since the version start",
+          "detail": "90 active sessions since the version start (90 total, 0 halted/frozen excluded)",
           "eta_sessions": 0,
           "hard": true
         },
         {
           "id": "edge",
-          "name": "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-          "threshold": "alpha > 0, DSR >= 0.95 at honest N, t_HAC >= z_req, n >= 60",
+          "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+          "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
-            "alpha_annual": -0.1164,
-            "t_hac": -0.564,
-            "dsr": 0.0104,
-            "n": 90
+            "alpha_annual": -0.119,
+            "t_hac": -0.572,
+            "dsr": 0.0103,
+            "n": 89,
+            "cs_lower": -1.3053,
+            "cs_upper": 1.0673
           },
-          "status": "fail",
-          "detail": "alpha -11.64%/yr, beta 0.57, t_HAC -0.56 vs z_req 3.348, DSR 0.010 at N=13",
+          "status": "insufficient",
+          "detail": "alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010",
           "eta_sessions": null,
           "hard": true
         },
         {
           "id": "max_drawdown",
-          "name": "Max drawdown (window)",
+          "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
           "value": 0.0915,
           "status": "pass",
-          "detail": "peak-to-trough 9.15% over 90 sessions",
+          "detail": "window 9.15% over 89 sessions; whole paper period 9.15%",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "window_value": 0.0915,
+          "book_value": 0.0915
         },
         {
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
-          "threshold": ">= 6% (18% kill switch - current DD)",
-          "value": 0.1035,
+          "threshold": ">= 6% (live kill switch - drawdown from its reference)",
+          "value": 0.1708,
           "status": "pass",
-          "detail": "current drawdown 7.65%",
+          "detail": "18% kill switch; drawdown 0.92% from $100,000 (P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity)",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "reference_equity": 100000.0,
+          "current_drawdown": 0.0092
         },
         {
           "id": "worst_day",
@@ -1005,8 +1151,8 @@
           "threshold": ">= 2 regime groups x >= 5 sessions, none < -8%",
           "value": {
             "bull": {
-              "sessions": 75,
-              "return": 0.0007
+              "sessions": 74,
+              "return": 0.0003
             },
             "correction": {
               "sessions": 15,
@@ -1044,7 +1190,7 @@
           "threshold": "avg <= 15 bps",
           "value": 5.22,
           "status": "pass",
-          "detail": "45 fills measured",
+          "detail": "45 fills measured; reference = latest trade read just before the bracket market order (event_driven_bot.py: price = live trade 'p')",
           "eta_sessions": null,
           "hard": true
         },
@@ -1070,39 +1216,61 @@
         }
       ],
       "edge": {
-        "alpha": -0.116444,
-        "alpha_daily": -0.00046208,
-        "beta": 0.5685,
-        "t_hac": -0.5636,
-        "ir": -1.0656,
-        "psr": 0.2656,
-        "dsr": 0.0104,
-        "n": 90,
+        "alpha": -0.119035,
+        "alpha_daily": -0.00047236,
+        "beta": 0.5686,
+        "t_hac": -0.5724,
+        "ir": -1.0832,
+        "psr": 0.2635,
+        "dsr": 0.0103,
+        "dsr_informational": true,
+        "n": 89,
         "trial_count": 13,
         "z_required": 3.348,
         "rf_source": "BIL daily total return",
-        "status": "fail",
-        "eta_state": "not_converging"
+        "status": "insufficient",
+        "eta_state": "uncertain",
+        "decision_rule": "confidence_sequence",
+        "cs_lower": -1.305349,
+        "cs_upper": 1.067279,
+        "alpha_level": 0.008333,
+        "rho": 252
       },
       "eta": {
         "edge": {
-          "state": "not_converging",
+          "state": "uncertain",
           "sessions_remaining": null,
-          "detail": "alpha <= 0: more time cannot produce a positive significant alpha"
+          "median_sessions": null,
+          "pessimistic_sessions": null,
+          "optimistic_sessions": null,
+          "n_required": null,
+          "detail": "alpha estimate <= 0; the upper bound keeps it open \u2014 no central projection",
+          "median_date": null,
+          "pessimistic_date": null,
+          "optimistic_date": null
         },
         "overall": {
           "sessions_remaining": null,
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge, profit_factor",
-          "excludes_measurement_gaps": []
+          "excludes_measurement_gaps": [],
+          "edge_range": {
+            "median_sessions": null,
+            "pessimistic_sessions": null,
+            "optimistic_sessions": null,
+            "median_date": null,
+            "pessimistic_date": null,
+            "optimistic_date": null
+          }
         }
       },
       "verdict": "NOT_ELIGIBLE",
+      "verdict_note": null,
       "binding_gate": "edge",
       "gates_passed": 11,
       "gates_total": 14,
       "measurement_gaps": [],
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.6%/yr (beta 0.57, t_HAC -0.56 vs 3.348 needed, DSR 0.01, n=90). Binding: Benchmark-relative edge (alpha vs SPY, HAC t, DSR) \u2014 alpha -11.64%/yr, beta 0.57, t_HAC -0.56 vs z_req 3.348, DSR 0.010 at N=13. Returns are BOOK-level (sleeve shares the account)."
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-130.5%, +106.7%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p3-crisis-core-v1-forward",
@@ -1116,16 +1284,23 @@
       "benchmark": "SPY",
       "trial_count": 40,
       "spec": "docs/specs/crisis_core_v1_forward.json",
+      "claims_edge": true,
       "window": {
         "start": "2026-10-23",
         "end": "2026-10-22",
         "trading_days": 0,
+        "active_trading_days": 0,
+        "halted_sessions": 0,
         "daily_returns": 0,
+        "edge_returns": 0,
         "aligned_with_spy": 0,
-        "missing_sessions": []
+        "missing_sessions": [],
+        "data_fault_sessions": [],
+        "cash_flow_sessions": []
       },
       "attribution": "book_level",
-      "attribution_note": "no clean sleeve-level series; returns are the whole portfolio_3 account (alpaca portfolio history (1D))",
+      "owns_edge_test": true,
+      "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_3 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
@@ -1133,19 +1308,21 @@
           "threshold": ">= 90",
           "value": 0,
           "status": "insufficient",
-          "detail": "0 sessions since the version start",
+          "detail": "0 active sessions since the version start (0 total, 0 halted/frozen excluded)",
           "eta_sessions": 90,
           "hard": true
         },
         {
           "id": "edge",
-          "name": "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-          "threshold": "alpha > 0, DSR >= 0.95 at honest N, t_HAC >= z_req, n >= 60",
+          "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+          "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
             "alpha_annual": null,
             "t_hac": null,
             "dsr": null,
-            "n": 0
+            "n": 0,
+            "cs_lower": null,
+            "cs_upper": null
           },
           "status": "insufficient",
           "detail": "only 0 aligned daily returns",
@@ -1154,7 +1331,7 @@
         },
         {
           "id": "max_drawdown",
-          "name": "Max drawdown (window)",
+          "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
           "value": null,
           "status": "insufficient",
@@ -1165,12 +1342,14 @@
         {
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
-          "threshold": ">= 6%",
-          "value": null,
-          "status": "insufficient",
-          "detail": "only 0 daily returns in the window",
+          "threshold": ">= 6% (live kill switch - drawdown from its reference)",
+          "value": 0.1708,
+          "status": "pass",
+          "detail": "18% kill switch; drawdown 0.92% from $100,000 (P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity)",
           "eta_sessions": null,
-          "hard": true
+          "hard": true,
+          "reference_equity": 100000.0,
+          "current_drawdown": 0.0092
         },
         {
           "id": "worst_day",
@@ -1248,7 +1427,7 @@
           "threshold": "avg <= 15 bps",
           "value": null,
           "status": "not_measured",
-          "detail": "no fills with a recorded reference price in the window",
+          "detail": "no fills with a recorded reference price in the window; reference = last trade at submit (allocator ref_price = quote 'last')",
           "eta_sessions": null,
           "hard": true
         },
@@ -1281,23 +1460,36 @@
         "ir": null,
         "psr": null,
         "dsr": null,
+        "dsr_informational": true,
         "n": 0,
         "trial_count": 40,
         "z_required": 3.834,
         "rf_source": "constant 4%/yr (BIL returns unavailable)",
         "status": "insufficient",
-        "eta_state": "too_early"
+        "eta_state": "too_early",
+        "decision_rule": "confidence_sequence",
+        "cs_lower": null,
+        "cs_upper": null,
+        "alpha_level": 0.008333,
+        "rho": 252
       },
       "eta": {
         "edge": {
+          "median_sessions": null,
+          "pessimistic_sessions": null,
+          "optimistic_sessions": null,
+          "n_required": null,
           "state": "too_early",
           "sessions_remaining": null,
-          "detail": "needs >= 20 daily returns to estimate"
+          "detail": "needs >= 20 daily returns to estimate",
+          "median_date": null,
+          "pessimistic_date": null,
+          "optimistic_date": null
         },
         "overall": {
           "sessions_remaining": null,
           "projected_date": null,
-          "label": "no projection \u2014 no convergence path for: edge, max_drawdown, kill_switch_headroom, worst_day, cvar95",
+          "label": "no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95",
           "excludes_measurement_gaps": [
             "regime_coverage",
             "duplicate_orders",
@@ -1306,15 +1498,16 @@
         }
       },
       "verdict": "NOT_READY",
+      "verdict_note": "forward test: the parent spec failed promotion; a pass never means GO \u2014 promotion needs a new registry version",
       "binding_gate": "edge",
-      "gates_passed": 2,
+      "gates_passed": 3,
       "gates_total": 12,
       "measurement_gaps": [
         "regime_coverage",
         "duplicate_orders",
         "slippage"
       ],
-      "narrative": "NOT READY: 2/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (alpha vs SPY, HAC t, DSR) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, kill_switch_headroom, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage. Returns are BOOK-level (sleeve shares the account)."
+      "narrative": "NOT READY: 3/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage. Returns are BOOK-level (whole account)."
     }
   ],
   "books": {
@@ -1332,6 +1525,23 @@
         "p1-momentum-v1",
         "p1-multifactor-satellite-v2"
       ],
+      "cash_flow_check": "alpaca account activities (CSD/CSW/JNLC/JNLS)",
+      "cash_flow_sessions": [
+        "2026-05-27"
+      ],
+      "data_fault_sessions": [],
+      "halted_sessions": 77,
+      "halted_span": [
+        "2026-07-07",
+        "2026-10-22"
+      ],
+      "max_drawdown_paper_period": 0.078,
+      "kill_switch": {
+        "reference_equity": 100000.0,
+        "current_equity": 97220.5,
+        "kill_drawdown": 0.18,
+        "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"
+      },
       "verdicts": {
         "p1-momentum-v1": "NOT_ELIGIBLE",
         "p1-multifactor-satellite-v2": "NOT_ELIGIBLE"
@@ -1352,9 +1562,23 @@
         "p2-copy-v2",
         "p2-benchmark-etf-v1"
       ],
+      "cash_flow_check": "alpaca account activities (CSD/CSW/JNLC/JNLS)",
+      "cash_flow_sessions": [
+        "2026-05-27"
+      ],
+      "data_fault_sessions": [],
+      "halted_sessions": 0,
+      "halted_span": null,
+      "max_drawdown_paper_period": 0.0332,
+      "kill_switch": {
+        "reference_equity": 100000.0,
+        "current_equity": 104552.28,
+        "kill_drawdown": 0.15,
+        "source": "P2 check_kill_switch: drawdown from initial capital $100,000"
+      },
       "verdicts": {
         "p2-copy-v2": "NOT_READY",
-        "p2-benchmark-etf-v1": "NOT_READY"
+        "p2-benchmark-etf-v1": "BETA_SLEEVE"
       },
       "any_go": false
     },
@@ -1372,6 +1596,20 @@
         "p3-event-driven-legacy",
         "p3-crisis-core-v1-forward"
       ],
+      "cash_flow_check": "alpaca account activities (CSD/CSW/JNLC/JNLS)",
+      "cash_flow_sessions": [
+        "2026-05-27"
+      ],
+      "data_fault_sessions": [],
+      "halted_sessions": 0,
+      "halted_span": null,
+      "max_drawdown_paper_period": 0.0915,
+      "kill_switch": {
+        "reference_equity": 100000.0,
+        "current_equity": 99084.45,
+        "kill_drawdown": 0.18,
+        "source": "P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity"
+      },
       "verdicts": {
         "p3-event-driven-legacy": "NOT_ELIGIBLE",
         "p3-crisis-core-v1-forward": "NOT_READY"
@@ -1388,15 +1626,19 @@
       "portfolio_3": "github actions run history"
     }
   },
-  "warnings": [],
+  "warnings": [
+    "portfolio_1: cash-flow sessions excluded from returns: ['2026-05-27']",
+    "portfolio_2: cash-flow sessions excluded from returns: ['2026-05-27']",
+    "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
+  ],
   "provenance": {
-    "as_of": "2026-10-23T15:40:39.214363+00:00",
+    "as_of": "2026-10-23T16:14:06.107904+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
         "exists": true,
-        "sha256": "abe299729bc680b6441909b0711d58b5add40382b8afd30b82ac26a69f1f8f82",
-        "bytes": 6998
+        "sha256": "4096e559381159dfafc1f49f100ce99c7c45f6d4da5a34d85eae0faaf8f77164",
+        "bytes": 8119
       },
       {
         "path": "config/strategy_controls.json",
@@ -1447,7 +1689,7 @@
         "bytes": 275
       }
     ],
-    "combined_sha256": "5b46bbd543320e23e7739f216de8005e0b26ece583a0a1dddde62c92f5e7e606",
+    "combined_sha256": "f022f4d3af57c9f7494145e1e2825ba8d1d42481cedb7f9bacbd89a29b77da47",
     "meta": {
       "engine": "scripts/readiness_engine.py"
     }

@@ -11,13 +11,19 @@ Sharpe gate hard-coded PASS from a stale constant, calendar days counted as
 Sharpe >= 1.0 hurdle that is the wrong test (SPY itself is ~0.66 this year).
 
 v2 measures each SLEEVE-VERSION from its registry ``start_date`` on a real
-session calendar and asks one statistical question about edge: is the
-benchmark-relative alpha (OLS on SPY, Newey-West HAC t-stat) positive and does
-the appraisal ratio survive deflation for the honest number of trials
-(DSR >= 0.95)? Everything else is a risk, sample, regime or operational gate.
-Verdicts: GO only when EVERY hard gate passes; NOT_ELIGIBLE for sleeves that
-accrue no new evidence (exits_only / quarantined); otherwise NOT_READY. There
-is deliberately no percentage score.
+session calendar (halted sessions excluded) and asks one statistical question
+about edge: is the benchmark-relative alpha (OLS on SPY, Newey-West HAC
+scale) positive with ALWAYS-VALID confidence? v2.1 decides edge with a
+normal-mixture confidence sequence (Robbins / Howard et al.) so the daily
+re-evaluation cannot manufacture a GO by repeated looks, at a family error
+alpha / K across the live sleeve-versions. DSR at the backtest trial count is
+kept as an informational number, not the gate (selection bias inflates
+backtests, not post-selection live returns). Everything else is a risk,
+sample, regime or operational gate. Verdicts: GO only when EVERY hard gate
+passes; FORWARD_TEST_PASS caps forward tests (their parent spec failed
+promotion); BETA_SLEEVE for sleeves that claim no edge; NOT_ELIGIBLE for
+sleeves that accrue no new evidence (exits_only / quarantined); otherwise
+NOT_READY. There is deliberately no percentage score.
 
 Gate status vocabulary: pass | fail | insufficient | not_measured |
 not_applicable. Only ``pass`` counts; ``not_measured`` never passes by default.
@@ -36,7 +42,7 @@ for _p in (_ROOT, os.path.join(_ROOT, "scripts")):
 from backtest import metrics as M  # noqa: E402
 from shared.portfolio_risk import conditional_var  # noqa: E402
 
-METHODOLOGY_VERSION = "2.0.0"
+METHODOLOGY_VERSION = "2.1.0"
 PERIODS_PER_YEAR = 252
 
 # --- PRE-REGISTERED THRESHOLDS (docs/LIVE_READINESS.md §2, v2) ---------------
@@ -45,8 +51,12 @@ PERIODS_PER_YEAR = 252
 THRESHOLDS = {
     "min_track_sessions": 90,          # trading sessions in the version window
     "min_edge_sessions": 60,           # daily returns before an edge verdict
-    "dsr_min": 0.95,                   # deflated appraisal ratio at honest N
-    "psr_confidence": 0.95,            # one-sided level behind z_req
+    "alpha_family": 0.05,              # family-wise type-I error of the live edge decision
+    "k_family_floor": 6,               # Bonferroni K floor (3 books x 2 live versions)
+    "cs_rho_sessions": 252,            # normal-mixture parameter (intrinsic time, sessions)
+    "max_abs_daily_return": 0.25,      # |r| above this = data fault, excluded + warned
+    "dsr_min": 0.95,                   # INFORMATIONAL since 2.1 (DSR @ backtest trials)
+    "psr_confidence": 0.95,            # INFORMATIONAL: level behind z_required
     "hac_lag": 5,                      # Newey-West lag (one trading week)
     "max_drawdown": 0.15,              # peak-to-trough over the window
     "kill_switch_drawdown": 0.18,      # config/risk_limits.json kill switch
@@ -204,30 +214,41 @@ def previous_session(sessions, anchor):
 # Series
 # ---------------------------------------------------------------------------
 
-def window_returns(values_by_date, sessions, start, end):
+def window_returns(values_by_date, sessions, start, end, exclude=None, max_abs=None):
     """Daily simple returns for each session in [start, end], computed from the
     value on that session and the value on the PREVIOUS session (which may be
     before ``start`` — it is only the base of the first in-window return).
     Returns before ``start`` are excluded (strategy-version reset); a session
     whose value or base is missing is skipped and counted in ``missing``.
+    Sessions in ``exclude`` (halted, cash-flow days) are dropped into
+    ``excluded``; a return with |r| > ``max_abs`` is a DATA FAULT (phantom
+    equity read, unrecorded flow) — dropped into ``faults``, never used.
 
-    Returns {"dates": [...], "returns": [...], "missing": [...]}"""
+    Returns {"dates", "returns", "missing", "excluded", "faults"}"""
     vals = {(_iso(_d(k))): v for k, v in (values_by_date or {}).items()
             if v is not None and v > 0}
     a, b = _iso(_d(start)), _iso(_d(end))
-    dates, rets, missing = [], [], []
+    ex = set(exclude or ())
+    dates, rets, missing, excluded, faults = [], [], [], [], []
     prev = None
     for s in sessions:
         if s > b:
             break
         if s >= a:
             if prev is not None and prev in vals and s in vals:
-                dates.append(s)
-                rets.append(vals[s] / vals[prev] - 1.0)
+                r = vals[s] / vals[prev] - 1.0
+                if max_abs is not None and abs(r) > max_abs:
+                    faults.append(s)
+                elif s in ex:
+                    excluded.append(s)
+                else:
+                    dates.append(s)
+                    rets.append(r)
             else:
                 missing.append(s)
         prev = s
-    return {"dates": dates, "returns": rets, "missing": missing}
+    return {"dates": dates, "returns": rets, "missing": missing,
+            "excluded": excluded, "faults": faults}
 
 
 def equity_curve(returns, start_value=1.0):
@@ -309,25 +330,115 @@ def ols_hac(y, x, lag=5):
 
 
 def z_required(trial_count, confidence=0.95):
-    """Statistic an alpha must reach for DSR >= confidence at ``trial_count``:
-    the one-sided normal quantile plus the expected max of N null z-scores."""
+    """INFORMATIONAL (v2.0 rule): statistic an alpha needs for DSR >= confidence
+    at ``trial_count`` in ONE fixed-sample look."""
     return M.inverse_normal_cdf(confidence) + M.expected_max_null_z(trial_count)
 
 
-def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None):
+# --- always-valid sequential test (v2.1) --------------------------------------
+#
+# One-sided normal-mixture (Robbins) martingale for a standardized sum S after
+# intrinsic time V (= number of daily returns once each increment is scaled by
+# its long-run sd): mixing exp(lam*S - lam^2 V/2) over lam ~ half-normal with
+# precision rho gives
+#     M(S, V) = 2 sqrt(rho/(V+rho)) exp(S^2 / (2(V+rho))) Phi(S / sqrt(V+rho)).
+# Ville's inequality: P(exists V: M >= 1/a) <= a. The crossing boundary b(V)
+# therefore holds uniformly over EVERY look, so the engine may re-evaluate daily
+# forever without inflating the false-GO rate (Howard, Ramdas, McAuliffe &
+# Sekhon 2021, "Time-uniform, nonparametric, nonasymptotic confidence sequences").
+
+def _log_phi(z):
+    if z < -30:
+        return -0.5 * z * z - math.log(-z * math.sqrt(2 * math.pi))
+    return math.log(0.5 * math.erfc(-z / math.sqrt(2.0)))
+
+
+def _log_mixture(s, v, rho):
+    return (math.log(2.0) + 0.5 * math.log(rho / (v + rho)) + s * s / (2.0 * (v + rho))
+            + _log_phi(s / math.sqrt(v + rho)))
+
+
+_BOUNDARY_CACHE = {}
+
+
+def cs_boundary(v, rho, a):
+    """Smallest standardized sum S with M(S, v) >= 1/a (one-sided, level a)."""
+    key = (int(v), float(rho), float(a))
+    if key in _BOUNDARY_CACHE:
+        return _BOUNDARY_CACHE[key]
+    target = math.log(1.0 / a)
+    lo, hi = 0.0, max(1.0, math.sqrt(v + rho))
+    while _log_mixture(hi, v, rho) < target:
+        hi *= 2.0
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if _log_mixture(mid, v, rho) < target:
+            lo = mid
+        else:
+            hi = mid
+    _BOUNDARY_CACHE[key] = hi
+    return hi
+
+
+def family_alpha_level(k, th=None):
+    """Per-sleeve level after Bonferroni across the K live sleeve-versions."""
+    th = th or THRESHOLDS
+    return th["alpha_family"] / max(int(k or 1), int(th["k_family_floor"]))
+
+
+def confidence_sequence(alpha_hat, sigma, n, rho, a):
+    """Always-valid (lower, upper) bounds on the daily alpha, each one-sided at
+    level ``a``: alpha_hat -/+ sigma * b(n) / n."""
+    if n < 1 or sigma is None or sigma <= 0:
+        return None, None
+    half = sigma * cs_boundary(n, rho, a) / n
+    return alpha_hat - half, alpha_hat + half
+
+
+def sessions_to_cross(alpha_daily, sigma, rho, a, cap):
+    """Expected sessions until the lower bound clears 0 if the TRUE alpha were
+    ``alpha_daily`` (drift alpha*n/sigma meets the boundary b(n)); None if not
+    within ``cap`` or alpha <= 0."""
+    if alpha_daily is None or sigma is None or alpha_daily <= 0 or sigma <= 0:
+        return None
+    d = alpha_daily / sigma
+
+    def ok(n):
+        return d * n >= cs_boundary(n, rho, a)
+
+    if not ok(cap):
+        return None
+    lo, hi = 1, cap               # boundary ~ sqrt(n log n): one crossing for d > 0
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if ok(mid):
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
+
+
+def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_level=None):
     """Benchmark-relative edge on aligned daily series (same length/dates).
 
-    PASS iff n >= min_edge_sessions AND alpha > 0 AND DSR >= dsr_min AND the HAC
-    t-stat >= z_req (the HAC condition guards the iid DSR against serial
-    correlation; it can only make the test stricter). Otherwise 'insufficient'
-    (n too small) or 'fail'."""
+    Decision (v2.1): an always-valid one-sided confidence sequence on the daily
+    OLS alpha, scaled by the HAC long-run sd (sigma_eff = max(resid sd,
+    se_HAC * sqrt(n))). PASS iff n >= min_edge_sessions AND the lower bound > 0.
+    'fail' iff the UPPER bound < 0 (alpha significantly negative); otherwise
+    'insufficient' (still accruing). t_HAC / PSR / DSR@trial_count / z_required
+    are reported for information only."""
     th = thresholds or THRESHOLDS
+    a_lvl = alpha_level if alpha_level is not None else family_alpha_level(0, th)
+    rho = th["cs_rho_sessions"]
     n = len(book_rets)
     zr = z_required(trial_count, th["psr_confidence"])
     out = {"n": n, "trial_count": trial_count, "z_required": round(zr, 3),
            "alpha_daily": None, "alpha_annual": None, "beta": None, "t_hac": None,
            "ir_annual": None, "psr": None, "dsr": None, "sigma_resid_daily": None,
-           "sigma_eff_daily": None, "status": "insufficient"}
+           "sigma_eff_daily": None, "se_alpha_hac_daily": None,
+           "cs_lower_daily": None, "cs_upper_daily": None, "cs_lower": None, "cs_upper": None,
+           "alpha_level": a_lvl, "rho": rho, "decision_rule": "confidence_sequence",
+           "status": "insufficient"}
     if n < 3 or len(spy_rets) != n or len(rf_rets) != n:
         out["detail"] = f"only {n} aligned daily returns"
         return out
@@ -344,49 +455,71 @@ def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None):
     psr = M.probabilistic_sharpe_ratio(ir_d, 0.0, n, skew, kurt) if sr > 0 else 0.0
     dsr = M.deflated_sharpe_at_trial_count(ir_d, n, trial_count, skew, kurt) if sr > 0 else 0.0
     sig_eff = max(sr, reg["se_alpha_hac"] * math.sqrt(n))
-    t = reg["t_alpha_hac"]
+    lo, hi = confidence_sequence(a, sig_eff, n, rho, a_lvl)
     out.update({
         "alpha_daily": a, "alpha_annual": a * PERIODS_PER_YEAR, "beta": reg["beta"],
-        "t_hac": t, "ir_annual": ir_d * math.sqrt(PERIODS_PER_YEAR), "psr": psr,
+        "t_hac": reg["t_alpha_hac"], "ir_annual": ir_d * math.sqrt(PERIODS_PER_YEAR), "psr": psr,
         "dsr": dsr, "sigma_resid_daily": sr, "sigma_eff_daily": sig_eff,
-        "skew": skew, "kurtosis": kurt,
+        "se_alpha_hac_daily": reg["se_alpha_hac"], "skew": skew, "kurtosis": kurt,
+        "cs_lower_daily": lo, "cs_upper_daily": hi,
+        "cs_lower": None if lo is None else lo * PERIODS_PER_YEAR,
+        "cs_upper": None if hi is None else hi * PERIODS_PER_YEAR,
     })
     if n < th["min_edge_sessions"]:
         out["status"] = "insufficient"
         out["detail"] = f"n={n} < {th['min_edge_sessions']} pre-registered minimum"
-    elif a > 0 and dsr >= th["dsr_min"] and t is not None and t >= zr:
+    elif lo is not None and lo > 0:
         out["status"] = "pass"
-    else:
+    elif hi is not None and hi < 0:
         out["status"] = "fail"
+    else:
+        out["status"] = "insufficient"
     return out
 
 
 def edge_eta(edge, thresholds=None):
-    """Honest power projection: sessions needed for the alpha t-stat to reach
-    z_req at the CURRENT alpha and effective (HAC) residual vol:
-    n_req = (z_req * sigma_eff / alpha)^2. An ESTIMATE that moves as alpha does."""
+    """ETA as a RANGE under the sequential boundary (sessions from now).
+
+    For a true daily alpha a, the expected first passage is the n where the
+    drift a*n/sigma meets the boundary b(n). median = at the estimate;
+    pessimistic / optimistic = at estimate -/+ 1 HAC s.e. (None = not within the
+    10-year cap). 'not_converging' only if the always-valid UPPER bound is <= 0
+    or even at that upper bound the passage lies beyond the cap; 'too_early'
+    below min_sessions_for_eta returns; 'uncertain' when no central projection
+    exists (estimate <= 0 or beyond the cap) but the upper bound keeps it open."""
     th = thresholds or THRESHOLDS
     n = edge.get("n") or 0
     a, sig = edge.get("alpha_daily"), edge.get("sigma_eff_daily")
+    rho, cap = th["cs_rho_sessions"], th["eta_cap_sessions"]
+    lvl = edge.get("alpha_level") or family_alpha_level(0, th)
+    base = {"median_sessions": None, "pessimistic_sessions": None, "optimistic_sessions": None,
+            "n_required": None}
     if edge.get("status") == "pass":
-        return {"state": "met", "sessions_remaining": 0}
-    if n < th["min_sessions_for_eta"] or a is None or sig is None:
-        return {"state": "too_early", "sessions_remaining": None,
+        return {**base, "state": "met", "sessions_remaining": 0, "median_sessions": 0}
+    if n < th["min_sessions_for_eta"] or a is None or sig is None or sig <= 0:
+        return {**base, "state": "too_early", "sessions_remaining": None,
                 "detail": f"needs >= {th['min_sessions_for_eta']} daily returns to estimate"}
-    if a <= 0 or sig <= 0:
-        return {"state": "not_converging", "sessions_remaining": None,
-                "detail": "alpha <= 0: more time cannot produce a positive significant alpha"}
-    n_req = math.ceil((edge["z_required"] * sig / a) ** 2)
-    n_req = max(n_req, th["min_edge_sessions"])
-    remaining = max(0, n_req - n)
-    if n_req > th["eta_cap_sessions"]:
-        return {"state": "not_converging", "sessions_remaining": None, "n_required": n_req,
-                "detail": f"n_required {n_req} > cap {th['eta_cap_sessions']} sessions"}
-    if remaining == 0:
-        # Enough data already yet not passing: the estimate is noise-limited.
-        return {"state": "not_converging", "sessions_remaining": None, "n_required": n_req,
-                "detail": "sample already exceeds the projected requirement without passing"}
-    return {"state": "estimate", "sessions_remaining": remaining, "n_required": n_req}
+    hi = edge.get("cs_upper_daily")
+    if hi is None or hi <= 0:
+        return {**base, "state": "not_converging", "sessions_remaining": None,
+                "detail": "always-valid upper bound on alpha <= 0"}
+    if sessions_to_cross(hi, sig, rho, lvl, cap) is None:
+        return {**base, "state": "not_converging", "sessions_remaining": None,
+                "detail": f"even at the upper bound the boundary is not reached within {cap} sessions"}
+
+    def remaining(alpha):
+        k = sessions_to_cross(alpha, sig, rho, lvl, cap)
+        return None if k is None else max(1, k - n)
+
+    se = edge.get("se_alpha_hac_daily") or 0.0
+    med, pes, opt = remaining(a), remaining(a - se), remaining(a + se)
+    out = {"state": "estimate" if med is not None else "uncertain",
+           "sessions_remaining": med, "median_sessions": med, "pessimistic_sessions": pes,
+           "optimistic_sessions": opt, "n_required": None if med is None else n + med}
+    if med is None:
+        out["detail"] = ("alpha estimate <= 0" if a <= 0 else f"crossing beyond {cap} sessions at the estimate") \
+            + "; the upper bound keeps it open — no central projection"
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -415,19 +548,22 @@ def track_record_gate(n_sessions, th=None):
 def edge_gate(edge, eta, th=None):
     th = th or THRESHOLDS
     val = {"alpha_annual": _r(edge.get("alpha_annual")), "t_hac": _r(edge.get("t_hac"), 3),
-           "dsr": _r(edge.get("dsr")), "n": edge.get("n")}
+           "dsr": _r(edge.get("dsr")), "n": edge.get("n"),
+           "cs_lower": _r(edge.get("cs_lower")), "cs_upper": _r(edge.get("cs_upper"))}
     if edge.get("detail"):
         detail = edge["detail"]
     else:
-        t = edge.get("t_hac")
-        detail = (f"alpha {edge['alpha_annual'] * 100:+.2f}%/yr, beta {edge['beta']:.2f}, "
-                  f"t_HAC {'n/a' if t is None else round(t, 2)} vs z_req {edge['z_required']}, "
-                  f"DSR {edge['dsr']:.3f} at N={edge['trial_count']}")
+        detail = (f"alpha {edge['alpha_annual'] * 100:+.2f}%/yr (beta {edge['beta']:.2f}); "
+                  f"always-valid bounds [{edge['cs_lower'] * 100:+.2f}%, {edge['cs_upper'] * 100:+.2f}%]/yr "
+                  f"at level {edge['alpha_level']:.4f}; info: t_HAC "
+                  f"{'n/a' if edge.get('t_hac') is None else round(edge['t_hac'], 2)}, "
+                  f"DSR@{edge['trial_count']} {edge['dsr']:.3f}")
     eta_s = eta.get("sessions_remaining") if eta.get("state") in ("estimate", "met") else None
     if edge.get("status") == "insufficient" and eta_s is not None:
         eta_s = max(eta_s, th["min_edge_sessions"] - (edge.get("n") or 0))
-    return gate("edge", "Benchmark-relative edge (alpha vs SPY, HAC t, DSR)",
-                f"alpha > 0, DSR >= {th['dsr_min']} at honest N, t_HAC >= z_req, n >= {th['min_edge_sessions']}",
+    return gate("edge", "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+                f"lower confidence-sequence bound on alpha > 0 (level {th['alpha_family']}/K), "
+                f"n >= {th['min_edge_sessions']}",
                 val, edge.get("status"), detail, eta_sessions=eta_s)
 
 
@@ -439,29 +575,43 @@ def drawdown_stats(returns):
     return {"max_drawdown": mdd, "current_drawdown": cur}
 
 
-def risk_gates(returns, th=None):
-    """Max DD, kill-switch headroom, worst day, CVaR95 on the window's daily returns."""
+def risk_gates(returns, th=None, book_returns=None, kill=None):
+    """Max DD (stricter of the version window and the whole paper period),
+    kill-switch headroom (vs the LIVE engine's reference equity when ``kill`` is
+    given), worst day and CVaR95 on the window's daily returns.
+
+    ``kill``: {"reference_equity", "current_equity", "kill_drawdown", "source"}."""
     th = th or THRESHOLDS
     n = len(returns)
     gates = []
     if n < 2:
         msg = f"only {n} daily returns in the window"
         for gid, name, thr in (
-                ("max_drawdown", "Max drawdown (window)", f"<= {th['max_drawdown']:.0%}"),
+                ("max_drawdown", "Max drawdown (window and book)", f"<= {th['max_drawdown']:.0%}"),
                 ("kill_switch_headroom", "Kill-switch headroom", f">= {th['min_kill_headroom']:.0%}"),
                 ("worst_day", "Worst day vs daily stop", f"> -{th['daily_stop']:.0%}"),
                 ("cvar95", "Daily CVaR 95% (historical)", f"<= {th['max_cvar']:.1%}")):
             gates.append(gate(gid, name, thr, None, "insufficient", msg))
+        if kill:
+            gates[1] = _kill_gate(kill, th)
         return gates
     dd = drawdown_stats(returns)
-    gates.append(gate("max_drawdown", "Max drawdown (window)", f"<= {th['max_drawdown']:.0%}",
-                      _r(dd["max_drawdown"]), "pass" if dd["max_drawdown"] <= th["max_drawdown"] else "fail",
-                      f"peak-to-trough {dd['max_drawdown']:.2%} over {n} sessions"))
-    head = th["kill_switch_drawdown"] - dd["current_drawdown"]
-    gates.append(gate("kill_switch_headroom", "Kill-switch headroom",
-                      f">= {th['min_kill_headroom']:.0%} (18% kill switch - current DD)",
-                      _r(head), "pass" if head >= th["min_kill_headroom"] else "fail",
-                      f"current drawdown {dd['current_drawdown']:.2%}"))
+    book_dd = drawdown_stats(book_returns)["max_drawdown"] if book_returns and len(book_returns) >= 2 else None
+    worst_dd = max(dd["max_drawdown"], book_dd or 0.0)
+    g = gate("max_drawdown", "Max drawdown (window and book)", f"<= {th['max_drawdown']:.0%}",
+             _r(worst_dd), "pass" if worst_dd <= th["max_drawdown"] else "fail",
+             f"window {dd['max_drawdown']:.2%} over {n} sessions"
+             + (f"; whole paper period {book_dd:.2%}" if book_dd is not None else ""))
+    g["window_value"], g["book_value"] = _r(dd["max_drawdown"]), _r(book_dd)
+    gates.append(g)
+    if kill:
+        gates.append(_kill_gate(kill, th))
+    else:
+        head = th["kill_switch_drawdown"] - dd["current_drawdown"]
+        gates.append(gate("kill_switch_headroom", "Kill-switch headroom",
+                          f">= {th['min_kill_headroom']:.0%} (kill switch - current DD)",
+                          _r(head), "pass" if head >= th["min_kill_headroom"] else "fail",
+                          f"FALLBACK (no live reference): window drawdown {dd['current_drawdown']:.2%}"))
     worst = min(returns)
     gates.append(gate("worst_day", "Worst day vs daily stop", f"> -{th['daily_stop']:.0%}", _r(worst),
                       "pass" if worst > -th["daily_stop"] else "fail", f"worst session {worst:.2%}"))
@@ -474,6 +624,21 @@ def risk_gates(returns, th=None):
         gates.append(gate("cvar95", "Daily CVaR 95% (historical)", f"<= {th['max_cvar']:.1%}", _r(cv),
                           "pass" if cv <= th["max_cvar"] else "fail", f"mean loss in worst 5% of days {cv:.2%}"))
     return gates
+
+
+def _kill_gate(kill, th):
+    ref, eq, kd = kill.get("reference_equity"), kill.get("current_equity"), kill.get("kill_drawdown")
+    thr = f">= {th['min_kill_headroom']:.0%} (live kill switch - drawdown from its reference)"
+    if not ref or eq is None or kd is None:
+        return gate("kill_switch_headroom", "Kill-switch headroom", thr, None, "not_measured",
+                    "live kill-switch reference or current equity unavailable")
+    cur = max(0.0, (ref - eq) / ref)
+    head = kd - cur
+    g = gate("kill_switch_headroom", "Kill-switch headroom", thr, _r(head),
+             "pass" if head >= th["min_kill_headroom"] else "fail",
+             f"{kd:.0%} kill switch; drawdown {cur:.2%} from ${ref:,.0f} ({kill.get('source')})")
+    g["reference_equity"], g["current_drawdown"] = ref, _r(cur)
+    return g
 
 
 def trade_gates(pnls, sessions_elapsed, source_detail="", th=None):
@@ -642,7 +807,7 @@ iso_date_et = _iso_date_et
 # Verdict
 # ---------------------------------------------------------------------------
 
-def verdict(sleeve_status, gates, sessions, as_of):
+def verdict(sleeve_status, gates, sessions, as_of, claims_edge=True):
     """GO only if every hard gate passes; NOT_ELIGIBLE when the sleeve accrues no
     new evidence; else NOT_READY. No percentage score.
 
@@ -664,8 +829,15 @@ def verdict(sleeve_status, gates, sessions, as_of):
 
     pool = evidence or open_
     binding = sorted(pool, key=key)[0] if pool else None
+    note = None
     if sleeve_status in NOT_ELIGIBLE_STATUSES:
         v = "NOT_ELIGIBLE"
+    elif not claims_edge:
+        v, note = "BETA_SLEEVE", "BETA_SLEEVE — no edge claim; readiness = risk/ops only"
+    elif sleeve_status == "forward_test":
+        v = "NOT_READY" if open_ else "FORWARD_TEST_PASS"
+        note = ("forward test: the parent spec failed promotion; a pass never means GO — "
+                "promotion needs a new registry version")
     elif not open_:
         v = "GO"
     else:
@@ -675,7 +847,7 @@ def verdict(sleeve_status, gates, sessions, as_of):
         k = max(g["eta_sessions"] for g in evidence)
         eta = {"sessions_remaining": k,
                "projected_date": session_after(sessions, as_of, k) if k else as_of,
-               "label": "estimate (current alpha / trade rate held constant)"}
+               "label": "estimate (current alpha / trade / clean-session rates held constant)"}
     elif evidence:
         blockers = [g["id"] for g in evidence if g.get("eta_sessions") is None]
         eta = {"sessions_remaining": None, "projected_date": None,
@@ -687,7 +859,7 @@ def verdict(sleeve_status, gates, sessions, as_of):
         eta["excludes_measurement_gaps"] = gaps
     return {"verdict": v, "gates_passed": passed, "gates_total": len(hard),
             "binding_gate": binding["id"] if binding else None,
-            "measurement_gaps": gaps, "eta": eta}
+            "measurement_gaps": gaps, "eta": eta, "verdict_note": note}
 
 
 def narrative(entry):
@@ -700,23 +872,26 @@ def narrative(entry):
         parts.append(f"NOT ELIGIBLE: sleeve is {entry['status']} (no new evidence accrues).")
     elif v == "GO":
         parts.append("All hard gates pass — eligible for a human go-live review (never automatic).")
+    elif v in ("BETA_SLEEVE", "FORWARD_TEST_PASS"):
+        parts.append(f"{entry.get('verdict_note')}. {gp}/{gt} hard gates pass.")
     else:
         parts.append(f"NOT READY: {gp}/{gt} hard gates pass.")
     w = entry.get("window") or {}
     parts.append(f"{w.get('trading_days', 0)} sessions since {w.get('start')}.")
-    if edge.get("alpha_annual") is not None and edge.get("t_hac") is not None:
-        parts.append(f"Alpha vs SPY {edge['alpha_annual'] * 100:+.1f}%/yr (beta {edge['beta']:.2f}, "
-                     f"t_HAC {edge['t_hac']:.2f} vs {edge['z_required']} needed, DSR {edge['dsr']:.2f}, "
-                     f"n={edge['n']}).")
+    if edge.get("alpha_annual") is not None and edge.get("cs_lower") is not None:
+        parts.append(f"Alpha vs SPY {edge['alpha_annual'] * 100:+.1f}%/yr (beta {edge['beta']:.2f}, n={edge['n']}); "
+                     f"always-valid bounds [{edge['cs_lower'] * 100:+.1f}%, {edge['cs_upper'] * 100:+.1f}%]/yr.")
     if b:
         g = next((x for x in entry["gates"] if x["id"] == b), {})
         parts.append(f"Binding: {g.get('name', b)} — {g.get('detail', '')}.")
     eta = entry.get("eta") or {}
-    if v == "NOT_READY":
+    if v in ("NOT_READY", "BETA_SLEEVE") and eta:
         parts.append(f"ETA {eta.get('projected_date')} ({eta.get('label')})." if eta.get("projected_date")
                      else f"ETA: {eta.get('label', 'n/a')}.")
     if entry.get("measurement_gaps"):
         parts.append("Not yet measured (blocks GO): " + ", ".join(entry["measurement_gaps"]) + ".")
     if entry.get("attribution") == "book_level":
-        parts.append("Returns are BOOK-level (sleeve shares the account).")
+        parts.append("Returns are BOOK-level (whole account).")
+    elif entry.get("attribution") == "book_level_shared":
+        parts.append("Returns are BOOK-level and SHARED with another sleeve: no edge credit.")
     return " ".join(parts)

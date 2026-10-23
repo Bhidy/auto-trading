@@ -1,7 +1,16 @@
 {
-  "_doc": "HUMAN-OWNED. Never written by code (read-only input to scripts/readiness_engine.py). One entry per sleeve-VERSION. start_date = first ET session whose returns/trades count as evidence for this version (pre-start data is excluded, so a strategy change resets the track record). end_date (optional) = last session the version traded new entries. status: active | forward_test | exits_only | quarantined (exits_only/quarantined accrue no new evidence => verdict NOT_ELIGIBLE). evidence_basis: daily_returns | trades | both. trial_count = honest number of configurations tried on this idea (DSR deflates at it); never lower it without a recorded reason. Change only with a recorded reason, date and owner.",
+  "_doc": "HUMAN-OWNED. Never written by code (read-only input to scripts/readiness_engine.py). One entry per sleeve-VERSION. start_date = first ET session whose returns/trades count as evidence for this version (pre-start data is excluded, so a strategy change resets the track record). end_date (optional) = last session the version traded new entries. status: active | forward_test | exits_only | quarantined (exits_only/quarantined accrue no new evidence => verdict NOT_ELIGIBLE). evidence_basis: daily_returns | trades | both. trial_count = honest number of configurations tried on this idea (DSR deflates at it); never lower it without a recorded reason. Change only with a recorded reason, date and owner. claims_edge (bool, default true): false = beta/allocation sleeve that claims no edge (edge gate not applicable, verdict BETA_SLEEVE). owns_book_edge (bool): when sleeves of one book overlap in time, the ONE sleeve whose edge test may use the shared book-level series; the others are book_level_shared and cannot GO on edge. book_halts: sessions a book was halted/frozen (excluded from evidence windows), each with cited evidence.",
   "_changed_at": "2026-10-23",
   "_changed_by": "owner-delegated chief-expert decision (Claude, readiness-v2 session 2026-10-23)",
+  "book_halts": [
+    {
+      "book": "portfolio_1",
+      "from": "2026-07-07",
+      "to": "2026-10-22",
+      "reason": "Phantom kill-switch latch ('Kill switch: 73.94% drawdown' from a bad $26,060.51 equity read)",
+      "evidence": "git: halted=true first committed in cadcf71d (Guardian 2026-07-07 14:24Z), cleared in 4a3abf52 (2026-10-23 14:11Z); data/halt_governance.json halt_clear applied 2026-10-23T14:10:33Z, so the 2026-10-23 session traded."
+    }
+  ],
   "sleeves": [
     {
       "id": "p1-momentum-v1",
@@ -13,6 +22,7 @@
       "status": "exits_only",
       "status_since": "2026-10-23",
       "evidence_basis": "daily_returns",
+      "claims_edge": true,
       "benchmark": "SPY",
       "trial_count": 20,
       "trial_count_source": "LOWER BOUND: 16 strategy variants in data/high_return_momentum_backtest.json (18 rows minus 2 buy-and-hold benchmarks) + >=4 audit/vol-target re-specifications on the same window (trend-off, sector cap, vol target 0.18 -> 0.25; memory high-return-momentum-research 2026-07-04).",
@@ -30,6 +40,7 @@
       "status": "quarantined",
       "status_since": "2026-06-17",
       "evidence_basis": "trades",
+      "claims_edge": true,
       "benchmark": "SPY",
       "trial_count": 60,
       "trial_count_source": "data/trial_ledger.json (60 recorded P1 self-learning trials).",
@@ -46,6 +57,8 @@
       "status": "active",
       "status_since": "2026-07-06",
       "evidence_basis": "both",
+      "claims_edge": true,
+      "owns_book_edge": true,
       "benchmark": "SPY",
       "trial_count": 34,
       "trial_count_source": "data/p2_scorecard.json honest_trial_count.n_trials = 34 (5+8+15+4 backtest variants + 2 live pipeline versions).",
@@ -62,6 +75,8 @@
       "status": "active",
       "status_since": "2026-06-02",
       "evidence_basis": "daily_returns",
+      "claims_edge": false,
+      "owns_book_edge": false,
       "benchmark": "SPY",
       "trial_count": 1,
       "trial_count_source": "Passive beta sleeve; no parameter search recorded.",
@@ -78,6 +93,7 @@
       "status": "quarantined",
       "status_since": "2026-10-03",
       "evidence_basis": "trades",
+      "claims_edge": true,
       "benchmark": "SPY",
       "trial_count": 13,
       "trial_count_source": "LOWER BOUND: 13 configurations in data/p3_exit_restructure_backtest.json reports (baseline + 12 variants).",
@@ -94,6 +110,7 @@
       "status": "forward_test",
       "status_since": "2026-10-23",
       "evidence_basis": "daily_returns",
+      "claims_edge": true,
       "benchmark": "SPY",
       "trial_count": 40,
       "trial_count_source": "data/strategy_lab_results.json trial_count: lab_N = registered_N = 38, N_incl_passive_core = 40 (the more conservative 40 is used).",

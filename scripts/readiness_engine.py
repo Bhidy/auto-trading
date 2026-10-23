@@ -277,6 +277,113 @@ def fetch_workflow_failures(workflows, sessions, as_of, horizon=45):
     return counts, "github actions run history"
 
 
+def fetch_cash_flows(headers, start):
+    """ET dates with deposits/withdrawals/journals (CSD/CSW/JNLC/JNLS) from
+    Alpaca account activities. Returns (set, note) or (None, note)."""
+    if not headers:
+        return None, "no Alpaca keys"
+    try:
+        out, token = set(), None
+        for _ in range(20):
+            params = {"activity_types": "CSD,CSW,JNLC,JNLS", "after": start, "direction": "asc",
+                      "page_size": 100}
+            if token:
+                params["page_token"] = token
+            rows = resilient_request("GET", f"{PAPER_API}/v2/account/activities", headers,
+                                     params=params, timeout=20) or []
+            for r in rows:
+                d = r.get("date") or R.iso_date_et(r.get("transaction_time"))
+                if d:
+                    out.add(str(d)[:10])
+            if len(rows) < 100:
+                break
+            token = rows[-1].get("id")
+        return out, "alpaca account activities (CSD/CSW/JNLC/JNLS)"
+    except Exception as e:
+        return None, f"account activities failed ({type(e).__name__})"
+
+
+STATE_FILES = {"portfolio_1": "data/portfolio_state.json",
+               "portfolio_2": "political-copy-bot/data/portfolio_state.json",
+               "portfolio_3": "event-driven-bot/data/bot_state.json"}
+
+
+def halted_sessions(pid, registry_doc, sessions, as_of):
+    """Sessions the book was halted/frozen: human-owned registry ``book_halts``
+    (cited evidence) + a CURRENT latch in state (halt_set_at -> as_of) + a
+    state ``last_halt`` with both set_at and ended_at."""
+    spans = [(h.get("from"), h.get("to")) for h in (registry_doc.get("book_halts") or [])
+             if h.get("book") == pid]
+    st = _load(_rel(STATE_FILES[pid]), {}) or {}
+    if st.get("halted"):
+        spans.append((R.iso_date_et(st.get("halt_set_at")) or None, as_of))
+    lh = st.get("last_halt") or {}
+    if lh.get("set_at") and lh.get("ended_at"):
+        spans.append((R.iso_date_et(lh["set_at"]), R.previous_session(sessions, R.iso_date_et(lh["ended_at"]))))
+    out, unknown_start = set(), False
+    for a, b in spans:
+        if not a:
+            unknown_start = True      # a live latch with no stamp: cannot date it
+            continue
+        out.update(x for x in sessions if a <= x <= (b or as_of))
+    return out, unknown_start
+
+
+def kill_reference(pid, current_equity):
+    """The LIVE engine's kill-switch reference per book (H4)."""
+    lim = _load(_rel("config", "risk_limits.json"), {}) or {}
+    system_kd = float(lim.get("kill_switch_drawdown_pct") or 18.0) / 100.0
+    if pid == "portfolio_1":
+        st = _load(_rel(STATE_FILES[pid]), {}) or {}
+        try:
+            from risk_officer import drawdown_reference_equity
+            ref = drawdown_reference_equity(st)
+        except Exception:
+            ref = max(float(st.get("starting_equity") or 100000.0), float(st.get("peak_equity") or 0.0))
+        return {"reference_equity": ref, "current_equity": current_equity, "kill_drawdown": system_kd,
+                "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"}
+    if pid == "portfolio_2":
+        p2 = _load(_rel("political-copy-bot", "config", "risk_limits.json"), {}) or {}
+        return {"reference_equity": 100000.0, "current_equity": current_equity,
+                "kill_drawdown": float(p2.get("kill_switch_drawdown_pct") or 15.0) / 100.0,
+                "source": "P2 check_kill_switch: drawdown from initial capital $100,000"}
+    st = _load(_rel(STATE_FILES[pid]), {}) or {}
+    return {"reference_equity": float(st.get("starting_equity") or 100000.0), "current_equity": current_equity,
+            "kill_drawdown": system_kd,
+            "source": "P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity"}
+
+
+def family_k(registry, th=None):
+    """K for the Bonferroni split of the live edge decision: sleeves that claim
+    an edge and are under live evaluation, floored at the pre-registered value."""
+    th = th or R.THRESHOLDS
+    live = sum(1 for s in registry if s.get("claims_edge", True) and s.get("status") in ("active", "forward_test"))
+    return max(int(th["k_family_floor"]), live), live
+
+
+def edge_ownership(s, registry, as_of):
+    """(attribution, owns_edge, note). Sleeves of one book whose live windows
+    overlap share the book-level series; only ONE may own the edge test."""
+    def span(x):
+        return x["start_date"], min(x.get("end_date") or as_of, as_of)
+    a0, a1 = span(s)
+    group = [o for o in registry if o["book"] == s["book"] and o["id"] != s["id"]
+             and span(o)[0] <= a1 and a0 <= span(o)[1]]
+    if not group:
+        return "book_level", s.get("claims_edge", True), "sole registered sleeve in the book over its window"
+    peers = [s] + group
+    if not s.get("claims_edge", True):
+        return "book_level_shared", False, "claims no edge; the book-level series is never credited to it"
+    claimants = [o for o in peers if o.get("claims_edge", True)]
+    flagged = [o for o in claimants if o.get("owns_book_edge")]
+    owner = claimants[0] if len(claimants) == 1 else (flagged[0] if len(flagged) == 1 else None)
+    if owner is not None and owner["id"] == s["id"]:
+        return "book_level", True, ("owns the shared book-level edge test (overlaps: "
+                                    + ", ".join(o["id"] for o in group) + ")")
+    return "book_level_shared", False, ("book-level series owned by "
+                                        + (owner["id"] if owner else "NO sleeve (ambiguous owns_book_edge)"))
+
+
 # ---------------------------------------------------------------------------
 # Trade-row selection per sleeve (code knows the log schemas; registry does not)
 # ---------------------------------------------------------------------------
@@ -339,19 +446,34 @@ def duplicate_entries(rows):
             continue
         ident = t.get("order_id") or t.get("client_order_id") or t.get("id")
         key = (t.get("symbol"), str(t.get("side")).lower(), R.iso_date_et(t.get("timestamp")))
-        groups.setdefault(key, set()).add(str(ident))
+        # An id-less row is its own order (never merged with another id-less row).
+        groups.setdefault(key, set()).add(str(ident) if ident is not None else f"__row{id(t)}")
     return sum(len(v) - 1 for v in groups.values() if len(v) > 1), len(groups)
 
 
+# Sleeves whose trade-log ``intended_price`` is a DECISION/ARRIVAL price (a
+# quote or last trade read at signal/submit time), per the writing code. Every
+# other sleeve logs its LIMIT price there (P1 momentum/multi-factor, P2), which
+# measures headroom under the limit, not execution quality => not_measured.
+ARRIVAL_REFERENCE = {
+    "p3-event-driven-legacy": "latest trade read just before the bracket market order "
+                              "(event_driven_bot.py: price = live trade 'p')",
+    "p3-crisis-core-v1-forward": "last trade at submit (allocator ref_price = quote 'last')",
+}
+
+
 def adverse_slippage_bps(rows):
-    """Adverse slippage (bps, + = cost) vs each row's recorded reference price,
-    ONE sample per order (lot-split rows share an order id and would otherwise
-    be counted several times). Buys: fill above reference is adverse; sells:
-    below."""
+    """Adverse slippage (bps, + = cost) vs each row's recorded ARRIVAL reference,
+    ONE sample per order (lot-split rows share an order id). A row whose
+    reference equals its limit price is skipped (the allocator falls back to the
+    limit when no quote was recorded). Buys: fill above reference is adverse;
+    sells: below."""
     out, seen = [], set()
     for t in rows:
-        sp = t.get("slippage_pct")
-        if sp is None or not _is_entry(t):
+        ref, fill = t.get("intended_price"), t.get("entry_price")
+        if ref is None or fill is None or not _is_entry(t):
+            continue
+        if t.get("limit_price") is not None and float(t["limit_price"]) == float(ref):
             continue
         ident = t.get("order_id") or t.get("client_order_id") or t.get("id")
         if ident is not None:
@@ -359,11 +481,25 @@ def adverse_slippage_bps(rows):
                 continue
             seen.add(ident)
         try:
+            ref, fill = float(ref), float(fill)
+            if ref <= 0:
+                continue
             sign = -1.0 if str(t.get("side")).lower() == "sell" else 1.0
-            out.append(float(sp) * 100.0 * sign)
+            out.append((fill - ref) / ref * 1e4 * sign)
         except (TypeError, ValueError):
             continue
     return out
+
+
+def slippage_for_sleeve(sleeve_id, rows):
+    if sleeve_id not in ARRIVAL_REFERENCE:
+        g = R.slippage_gate(None)
+        g["detail"] = ("no decision/arrival reference recorded: this sleeve logs its LIMIT price as "
+                       "intended_price, which measures limit headroom, not execution quality")
+        return g
+    g = R.slippage_gate(adverse_slippage_bps(rows))
+    g["detail"] += f"; reference = {ARRIVAL_REFERENCE[sleeve_id]}"
+    return g
 
 
 def trade_pnls(sleeve_id, rows, start):
@@ -419,26 +555,6 @@ def regime_labels(sessions):
 # Assembly
 # ---------------------------------------------------------------------------
 
-def _edge_summary(edge, eta_edge):
-    def rd(x, nd=6):
-        return round(x, nd) if isinstance(x, float) else x
-    return {
-        "alpha": rd(edge.get("alpha_annual")),           # annualized (x252), arithmetic
-        "alpha_daily": rd(edge.get("alpha_daily"), 8),
-        "beta": rd(edge.get("beta"), 4),
-        "t_hac": rd(edge.get("t_hac"), 4),
-        "ir": rd(edge.get("ir_annual"), 4),              # appraisal ratio, annualized
-        "psr": rd(edge.get("psr"), 4),
-        "dsr": rd(edge.get("dsr"), 4),
-        "n": edge.get("n"),
-        "trial_count": edge.get("trial_count"),
-        "z_required": edge.get("z_required"),
-        "rf_source": edge.get("rf_source"),
-        "status": edge.get("status"),
-        "eta_state": eta_edge.get("state"),
-    }
-
-
 def resolve_as_of(sessions, now_utc):
     now_et = now_utc.astimezone(ET)
     today = now_et.date().isoformat()
@@ -462,8 +578,42 @@ def controls_warnings(registry, controls):
     return w
 
 
+def _edge_summary(edge, eta_edge):
+    def rd(x, nd=6):
+        return round(x, nd) if isinstance(x, float) else x
+    return {
+        "alpha": rd(edge.get("alpha_annual")),           # annualized (x252), arithmetic
+        "alpha_daily": rd(edge.get("alpha_daily"), 8),
+        "beta": rd(edge.get("beta"), 4),
+        "t_hac": rd(edge.get("t_hac"), 4),               # informational since 2.1
+        "ir": rd(edge.get("ir_annual"), 4),              # appraisal ratio, annualized
+        "psr": rd(edge.get("psr"), 4),
+        "dsr": rd(edge.get("dsr"), 4),                   # informational since 2.1 (DSR @ backtest trials)
+        "dsr_informational": True,
+        "n": edge.get("n"),
+        "trial_count": edge.get("trial_count"),
+        "z_required": edge.get("z_required"),            # informational (v2.0 fixed-look rule)
+        "rf_source": edge.get("rf_source"),
+        "status": edge.get("status"),
+        "eta_state": eta_edge.get("state"),
+        "decision_rule": edge.get("decision_rule"),
+        "cs_lower": rd(edge.get("cs_lower")),            # always-valid bound on annual alpha
+        "cs_upper": rd(edge.get("cs_upper")),
+        "alpha_level": rd(edge.get("alpha_level"), 6),
+        "rho": edge.get("rho"),
+    }
+
+
+def _not_applicable_edge(trial_count, why):
+    return {"n": None, "trial_count": trial_count, "z_required": None, "alpha_daily": None,
+            "alpha_annual": None, "beta": None, "t_hac": None, "ir_annual": None, "psr": None,
+            "dsr": None, "status": "not_applicable", "decision_rule": "none", "detail": why,
+            "cs_lower": None, "cs_upper": None, "alpha_level": None, "rho": None}
+
+
 def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
     now_utc = now_utc or datetime.now(timezone.utc)
+    th = R.THRESHOLDS
     warnings = []
     registry = registry_doc.get("sleeves") or []
     hdr = None if offline else _any_keys()
@@ -476,8 +626,11 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
     sessions = R.nyse_sessions(HISTORY_START, horizon_end, broker_days)
     as_of = as_of or resolve_as_of(sessions, now_utc)
 
-    # Books: equity series (one source per book, in priority order)
-    books, equity = {}, {}
+    k_family, k_live = family_k(registry)
+    a_level = R.family_alpha_level(k_family)
+
+    # Books: equity series (one source per book), sanity, flows, halts, kill ref
+    books, equity, book_info = {}, {}, {}
     for pid, b in BOOKS.items():
         series, note, tried = None, None, []
         sources = [] if offline else [lambda: fetch_equity_alpaca(_keys(b["env"]), HISTORY_START, _next_day(as_of)),
@@ -490,11 +643,35 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
                 break
         series = {d: v for d, v in (series or {}).items() if d <= as_of}
         equity[pid] = series
+        flows, flow_note = (None, "offline") if offline else fetch_cash_flows(_keys(b["env"]), HISTORY_START)
+        if flows is None:
+            warnings.append(f"{pid}: deposits/withdrawals NOT verified ({flow_note}); "
+                            f"only the |r| > {th['max_abs_daily_return']:.0%} fault screen applies")
+        elif flows:
+            warnings.append(f"{pid}: cash-flow sessions excluded from returns: {sorted(flows)}")
+        halts, halt_unknown = halted_sessions(pid, registry_doc, sessions, as_of)
+        if halt_unknown:
+            warnings.append(f"{pid}: state shows a halt with no halt_set_at — its sessions cannot be dated")
+        first = min(series) if series else None
+        whole = R.window_returns(series, sessions, first or as_of, as_of, exclude=flows or (),
+                                 max_abs=th["max_abs_daily_return"]) if series else None
+        if whole and whole["faults"]:
+            warnings.append(f"{pid}: DATA FAULT sessions excluded (|daily return| > "
+                            f"{th['max_abs_daily_return']:.0%}): {whole['faults']}")
+        last_eq = series[max(series)] if series else None
+        kill = kill_reference(pid, last_eq)
+        book_dd = R.drawdown_stats(whole["returns"])["max_drawdown"] if whole and len(whole["returns"]) >= 2 else None
+        book_info[pid] = {"flows": flows or set(), "halts": halts, "whole": whole, "kill": kill}
         books[pid] = {"label": b["label"], "equity_source": note if series else None,
                       "equity_sources_tried": tried, "equity_points": len(series),
-                      "first_date": min(series) if series else None,
-                      "last_date": max(series) if series else None,
-                      "last_equity": series[max(series)] if series else None, "sleeves": []}
+                      "first_date": first, "last_date": max(series) if series else None,
+                      "last_equity": last_eq, "sleeves": [],
+                      "cash_flow_check": flow_note, "cash_flow_sessions": sorted(flows or []),
+                      "data_fault_sessions": (whole or {}).get("faults", []),
+                      "halted_sessions": len(halts),
+                      "halted_span": [min(halts), max(halts)] if halts else None,
+                      "max_drawdown_paper_period": None if book_dd is None else round(book_dd, 4),
+                      "kill_switch": {k: (round(v, 4) if isinstance(v, float) else v) for k, v in kill.items()}}
 
     # Benchmark + risk-free (BIL) closes
     bars, bars_note = (None, "offline") if offline else fetch_bars(hdr, ["SPY", "BIL"], HISTORY_START, as_of)
@@ -516,40 +693,66 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         if b is None:
             warnings.append(f"{s.get('id')}: unknown book {pid}")
             continue
+        info = book_info[pid]
+        claims_edge = s.get("claims_edge", True)
         start = s["start_date"]
         end = min(s.get("end_date") or as_of, as_of)
         n_sessions = R.count_sessions(sessions, start, end) if start <= end else 0
-        th = R.THRESHOLDS
+        halted_in = sorted(x for x in info["halts"] if start <= x <= end)
+        active_sessions = n_sessions - len(halted_in)
 
-        book_w = R.window_returns(equity[pid], sessions, start, end)
+        # Risk series: every non-fault, non-flow return in the window (halted
+        # sessions still carried real risk). Edge series: halted sessions removed.
+        risk_w = R.window_returns(equity[pid], sessions, start, end, exclude=info["flows"],
+                                  max_abs=th["max_abs_daily_return"])
+        edge_w = R.window_returns(equity[pid], sessions, start, end,
+                                  exclude=set(info["flows"]) | set(halted_in),
+                                  max_abs=th["max_abs_daily_return"])
         spy_w = R.window_returns(bars.get("SPY", {}), sessions, start, end)
         bil_w = R.window_returns(bars.get("BIL", {}), sessions, start, end)
         spy_by, bil_by = dict(zip(spy_w["dates"], spy_w["returns"])), dict(zip(bil_w["dates"], bil_w["returns"]))
         rf_const = th["rf_fallback_annual"] / R.PERIODS_PER_YEAR
-        use_bil = bool(book_w["dates"]) and sum(1 for d in book_w["dates"] if d in bil_by) >= 0.9 * len(book_w["dates"])
-        aligned = [(d, r) for d, r in zip(book_w["dates"], book_w["returns"]) if d in spy_by]
-        y = [r for _, r in aligned]
-        x = [spy_by[d] for d, _ in aligned]
-        rf = [(bil_by.get(d, rf_const) if use_bil else rf_const) for d, _ in aligned]
-        edge = R.edge_test(y, x, rf, s["trial_count"])
-        edge["rf_source"] = "BIL daily total return" if use_bil else \
-            f"constant {th['rf_fallback_annual']:.0%}/yr (BIL returns unavailable)"
-        eta_edge = R.edge_eta(edge)
+        use_bil = bool(edge_w["dates"]) and sum(1 for d in edge_w["dates"] if d in bil_by) >= 0.9 * len(edge_w["dates"])
+        aligned = [(d, r) for d, r in zip(edge_w["dates"], edge_w["returns"]) if d in spy_by]
 
-        gates = [R.track_record_gate(n_sessions), R.edge_gate(edge, eta_edge)]
-        gates += R.risk_gates(book_w["returns"])
+        attribution, owns_edge, attr_note = edge_ownership(s, registry, as_of)
+        if not claims_edge:
+            edge = _not_applicable_edge(s["trial_count"], "sleeve claims no edge (registry claims_edge=false)")
+            eta_edge = {"state": "not_applicable", "sessions_remaining": None}
+            edge_g = R.gate("edge", "Benchmark-relative edge (always-valid alpha bound vs SPY)",
+                            "not applicable: no edge claimed", None, "not_applicable", edge["detail"], hard=False)
+        else:
+            y = [r for _, r in aligned]
+            x = [spy_by[d] for d, _ in aligned]
+            rf = [(bil_by.get(d, rf_const) if use_bil else rf_const) for d, _ in aligned]
+            edge = R.edge_test(y, x, rf, s["trial_count"], alpha_level=a_level)
+            edge["rf_source"] = "BIL daily total return" if use_bil else \
+                f"constant {th['rf_fallback_annual']:.0%}/yr (BIL returns unavailable)"
+            eta_edge = R.edge_eta(edge)
+            for key in ("median", "pessimistic", "optimistic"):
+                k = eta_edge.get(f"{key}_sessions")
+                eta_edge[f"{key}_date"] = R.session_after(sessions, as_of, k) if k else None
+            edge_g = R.edge_gate(edge, eta_edge)
+            if not owns_edge:
+                edge_g["status"], edge_g["eta_sessions"] = "not_measured", None
+                edge_g["detail"] = f"no clean sleeve series: {attr_note} (stats shown are the book's)"
+        gates = [R.track_record_gate(active_sessions), edge_g]
+        gates[0]["detail"] = (f"{active_sessions} active sessions since the version start "
+                              f"({n_sessions} total, {len(halted_in)} halted/frozen excluded)")
+        gates += R.risk_gates(risk_w["returns"], book_returns=(info["whole"] or {}).get("returns"),
+                              kill=info["kill"])
 
         log = _load(_rel(b["dir"], "trade_log.json"), [])
         rows = sleeve_rows(s["id"], log, start, end)
         if s["evidence_basis"] in ("trades", "both"):
             pnls, why = trade_pnls(s["id"], rows, start)
-            gates += R.trade_gates(pnls, n_sessions, why)
+            gates += R.trade_gates(pnls, active_sessions, why)
         else:
             for gid, name in (("sample", "Closed round trips (whole trades)"), ("profit_factor", "Profit factor")):
                 gates.append(R.gate(gid, name, "trade-based sleeves only", None, "not_applicable",
                                     "evidence basis is daily returns", hard=False))
 
-        gates.append(R.regime_gate(book_w["dates"], book_w["returns"], labels))
+        gates.append(R.regime_gate(risk_w["dates"], risk_w["returns"], labels))
         gates.append(R.reconciliation_gate(_load(_rel(b["dir"], "reconciliation_report.json")), as_of, sessions))
         dup_extra = ""
         if s["sleeve"] == "crisis_core_allocator":
@@ -562,31 +765,37 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         else:
             dups, checked = duplicate_entries(rows)
             gates.append(R.duplicate_gate(dups, checked, dup_extra))
-            sg = R.slippage_gate(adverse_slippage_bps(rows))
-            if pid == "portfolio_2" and sg["value"] is not None:
-                sg["detail"] += ("; P2 reference = its limit price (house convention), so a negative value "
-                                 "is headroom under the limit, not price improvement vs arrival")
-            gates.append(sg)
+            gates.append(slippage_for_sleeve(s["id"], rows))
         gates.append(R.freshness_gate(fresh_by_book.get(pid), as_of, sessions))
         if pid not in wf_cache:
             wf_cache[pid] = (None, "offline") if offline else fetch_workflow_failures(b["workflows"], sessions, as_of)
         fails, _wf_note = wf_cache[pid]
         gates.append(R.exception_gate(fails, as_of, sessions))
 
-        v = R.verdict(s["status"], gates, sessions, as_of)
+        v = R.verdict(s["status"], gates, sessions, as_of, claims_edge=claims_edge)
+        if v["eta"] is not None and eta_edge.get("state") in ("estimate", "uncertain"):
+            v["eta"]["edge_range"] = {k: eta_edge.get(k) for k in (
+                "median_sessions", "pessimistic_sessions", "optimistic_sessions",
+                "median_date", "pessimistic_date", "optimistic_date")}
         entry = {k: s.get(k) for k in ("id", "book", "sleeve", "version", "start_date", "end_date", "status",
                                        "evidence_basis", "benchmark", "trial_count", "spec")}
+        entry["claims_edge"] = claims_edge
         entry.update({
             "window": {"start": start, "end": end, "trading_days": n_sessions,
-                       "daily_returns": len(book_w["returns"]), "aligned_with_spy": len(aligned),
-                       "missing_sessions": book_w["missing"][:20]},
-            "attribution": "book_level",
-            "attribution_note": f"no clean sleeve-level series; returns are the whole {pid} account "
+                       "active_trading_days": active_sessions, "halted_sessions": len(halted_in),
+                       "daily_returns": len(risk_w["returns"]), "edge_returns": len(edge_w["returns"]),
+                       "aligned_with_spy": len(aligned),
+                       "missing_sessions": risk_w["missing"][:20],
+                       "data_fault_sessions": risk_w["faults"],
+                       "cash_flow_sessions": risk_w["excluded"]},
+            "attribution": attribution,
+            "owns_edge_test": owns_edge,
+            "attribution_note": f"{attr_note}; returns are the whole {pid} account "
                                 f"({books[pid]['equity_source'] or 'no equity source'})",
             "gates": gates,
             "edge": _edge_summary(edge, eta_edge),
             "eta": {"edge": eta_edge, "overall": v["eta"]},
-            "verdict": v["verdict"], "binding_gate": v["binding_gate"],
+            "verdict": v["verdict"], "verdict_note": v["verdict_note"], "binding_gate": v["binding_gate"],
             "gates_passed": v["gates_passed"], "gates_total": v["gates_total"],
             "measurement_gaps": v["measurement_gaps"],
         })
@@ -605,10 +814,19 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         "generated_at": now_utc.isoformat(),
         "as_of_session": as_of,
         "methodology_version": R.METHODOLOGY_VERSION,
-        "methodology_doc": "docs/LIVE_READINESS.md §2 (v2)",
+        "methodology_doc": "docs/LIVE_READINESS.md §2 (v2.1)",
         "thresholds": dict(R.THRESHOLDS),
-        "verdict_rule": "GO only if every hard gate passes; NOT_ELIGIBLE for exits_only/quarantined; "
-                        "no percentage score. Real capital remains a human decision.",
+        "edge_decision": {
+            "rule": "always-valid one-sided normal-mixture confidence sequence on the HAC-scaled OLS alpha "
+                    "vs SPY; PASS iff the lower bound > 0 (n >= min_edge_sessions)",
+            "alpha_family": th["alpha_family"], "k_family": k_family, "k_live_edge_sleeves": k_live,
+            "k_floor": th["k_family_floor"], "alpha_level_per_sleeve": round(a_level, 6),
+            "rho_sessions": th["cs_rho_sessions"],
+        },
+        "verdict_rule": "GO only if every hard gate passes; FORWARD_TEST_PASS caps forward tests; BETA_SLEEVE "
+                        "for no-edge sleeves; NOT_ELIGIBLE for exits_only/quarantined; no percentage score. "
+                        "Real capital remains a human decision.",
+        "verdict_values": ["GO", "NOT_READY", "NOT_ELIGIBLE", "BETA_SLEEVE", "FORWARD_TEST_PASS"],
         "sleeves": sleeves_out,
         "books": books,
         "data_sources": {"calendar": "alpaca" if broker_days else "nyse_rules", "bars": bars_note,
@@ -617,6 +835,18 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         "provenance": data_fingerprint(inputs, extra={"engine": "scripts/readiness_engine.py"}),
         "disclosure": "Paper-trading evidence for internal model-risk use — not investment advice. PAPER ONLY.",
     }
+
+
+def report_is_current(prev, cur, today_et):
+    """Dedup ONLY when the stored report already covers TODAY's completed
+    session (as_of == today) with every book's equity point for it, under the
+    same methodology. An 18:45 run whose broker had not yet published today's
+    point must not suppress the 19:45 retry."""
+    prev = prev or {}
+    books_current = all(b.get("last_date") == cur for b in (prev.get("books") or {}).values()
+                        if b.get("equity_source"))
+    return bool(cur == today_et and prev.get("as_of_session") == cur
+                and prev.get("methodology_version") == R.METHODOLOGY_VERSION and books_current)
 
 
 def main(argv=None):
@@ -647,8 +877,7 @@ def main(argv=None):
         cal, _ = (None, "offline") if a.offline else fetch_calendar(
             _any_keys(), HISTORY_START, (now.date() + timedelta(days=7)).isoformat())
         cur = resolve_as_of(R.nyse_sessions(HISTORY_START, (now.date() + timedelta(days=7)).isoformat(), cal), now)
-        if (prev.get("as_of_session") == cur and prev.get("methodology_version") == R.METHODOLOGY_VERSION
-                and (R.iso_date_et(prev.get("generated_at")) or "") >= cur):
+        if report_is_current(prev, cur, now.astimezone(ET).date().isoformat()):
             print(f"[readiness] report for session {cur} already current — unchanged.")
             return 0
     report = build_report(registry, as_of=a.as_of, offline=a.offline)

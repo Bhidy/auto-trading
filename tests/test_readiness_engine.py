@@ -110,42 +110,133 @@ def test_hac_se_matches_iid_and_widens_under_autocorrelation():
 def test_significant_positive_alpha_passes_only_after_enough_data():
     b, m, f = _series(700, 0.0008, seed=3)
     full = R.edge_test(b, m, f, trial_count=34)
-    assert full["status"] == "pass" and full["alpha_daily"] > 0 and full["dsr"] >= 0.95
+    assert full["status"] == "pass" and full["cs_lower_daily"] > 0
+    assert full["decision_rule"] == "confidence_sequence"
     assert abs(full["beta"] - 0.5) < 0.05
     early = R.edge_test(b[:40], m[:40], f[:40], trial_count=34)
     assert early["status"] == "insufficient"          # n < 60, whatever the numbers say
 
 
-def test_zero_alpha_is_insufficient_then_fail():
+def test_zero_alpha_never_passes_and_stays_insufficient():
     b, m, f = _series(600, 0.0, seed=5)
     assert R.edge_test(b[:30], m[:30], f[:30], 34)["status"] == "insufficient"
-    assert R.edge_test(b, m, f, 34)["status"] == "fail"
-
-
-def test_negative_alpha_is_not_converging():
-    b, m, f = _series(200, -0.0006, seed=9)
     e = R.edge_test(b, m, f, 34)
-    assert e["status"] == "fail" and e["alpha_daily"] < 0
+    assert e["status"] == "insufficient" and e["cs_lower_daily"] < 0 < e["cs_upper_daily"]
+
+
+def test_significantly_negative_alpha_fails_and_is_not_converging():
+    b, m, f = _series(1000, -0.0006, seed=9)
+    e = R.edge_test(b, m, f, 34)
+    assert e["status"] == "fail" and e["cs_upper_daily"] < 0
     eta = R.edge_eta(e)
     assert eta["state"] == "not_converging" and eta["sessions_remaining"] is None
 
 
-def test_trial_count_deflates():
+def test_live_decision_does_not_use_backtest_trial_count():
+    """H3: selection inflates backtests, not post-selection live returns — the
+    trial count only moves the informational DSR, never the decision."""
     b, m, f = _series(300, 0.0006, seed=4)
-    assert R.edge_test(b, m, f, 1)["dsr"] > R.edge_test(b, m, f, 40)["dsr"]
+    e1, e40 = R.edge_test(b, m, f, 1), R.edge_test(b, m, f, 40)
+    assert e1["dsr"] > e40["dsr"]
+    assert (e1["status"], e1["cs_lower_daily"]) == (e40["status"], e40["cs_lower_daily"])
     assert R.z_required(1) < R.z_required(34) < R.z_required(40)
 
 
-def test_eta_monotonic():
-    def eta(n, alpha, sig=0.003, trials=34):
-        e = {"status": "fail", "n": n, "alpha_daily": alpha, "sigma_eff_daily": sig,
-             "z_required": R.z_required(trials)}
-        return R.edge_eta(e)
-    rem = [eta(n, 0.0004)["sessions_remaining"] for n in (60, 100, 150, 200)]
-    assert all(a >= b for a, b in zip(rem, rem[1:]))                     # more data -> sooner
-    assert eta(60, 0.0008)["n_required"] < eta(60, 0.0004)["n_required"]  # bigger alpha -> sooner
-    assert eta(60, 0.0004, trials=40)["n_required"] > eta(60, 0.0004, trials=1)["n_required"]
-    assert eta(10, 0.0004)["state"] == "too_early"
+def test_confidence_sequence_boundary_math():
+    rho, a = R.THRESHOLDS["cs_rho_sessions"], 0.01
+    for v in (60, 252, 1260):
+        b = R.cs_boundary(v, rho, a)
+        assert abs(R._log_mixture(b, v, rho) - math.log(1 / a)) < 1e-6
+    assert R.cs_boundary(252, rho, 0.001) > R.cs_boundary(252, rho, 0.01)   # stricter level, wider
+    lo, hi = R.confidence_sequence(0.001, 0.01, 500, rho, a)
+    assert abs((0.001 - lo) - (hi - 0.001)) < 1e-15
+
+
+def test_family_alpha_bonferroni_with_floor():
+    assert R.family_alpha_level(2) == 0.05 / 6
+    assert R.family_alpha_level(9) == 0.05 / 9
+    import readiness_engine as E
+    reg = [{"claims_edge": True, "status": "active"}, {"claims_edge": False, "status": "active"},
+           {"claims_edge": True, "status": "forward_test"}, {"claims_edge": True, "status": "quarantined"}]
+    assert E.family_k(reg) == (6, 2)
+
+
+def _path(seed, n, alpha_ann=0.0, ir=None):
+    if ir is not None:
+        alpha_ann = ir * 0.10
+    rng = random.Random(seed)
+    rf = 0.04 / 252
+    y, x, f = [], [], []
+    for _ in range(n):
+        mk = rng.gauss(0.0004, 0.16 / math.sqrt(252))
+        y.append(rf + alpha_ann / 252 + 0.5 * mk + rng.gauss(0, 0.10 / math.sqrt(252)))
+        x.append(mk + rf)
+        f.append(rf)
+    return y, x, f
+
+
+def _first_pass(y, x, f, level, step=5, start=60):
+    for n in range(start, len(y) + 1, step):
+        if R.edge_test(y[:n], x[:n], f[:n], 1, alpha_level=level)["status"] == "pass":
+            return n
+    return None
+
+
+def test_sequential_validity_under_repeated_looks():
+    """C1: zero true alpha, re-evaluated every 5 sessions for 2 years on 120
+    fixed-seed paths (80). The always-valid rule must not manufacture a GO; the v2.0
+    fixed-z rule (N=1) is shown for contrast on the same paths."""
+    lvl = R.family_alpha_level(6)
+    new_hits = old_hits = 0
+    for seed in range(80):
+        y, x, f = _path(1000 + seed, 504)
+        if _first_pass(y, x, f, lvl, step=5) is not None:
+            new_hits += 1
+        for n in range(90, 505, 5):
+            e = R.edge_test(y[:n], x[:n], f[:n], 1)
+            if e["alpha_daily"] > 0 and e["dsr"] >= 0.95 and (e["t_hac"] or 0) >= e["z_required"]:
+                old_hits += 1
+                break
+    assert new_hits <= 1               # expectation <= 80 * 0.0083 ~ 0.7
+    assert old_hits > new_hits         # repeated looks inflate the fixed-z rule
+
+
+def test_sequential_power_strong_alpha():
+    """A strong edge (annual IR 3) is detected within 2 years on most paths
+    (expected crossing ~420 sessions); IR ~0.8 needs ~18 years (see docs §2)."""
+    lvl = R.family_alpha_level(6)
+    hits = [_first_pass(*_path(2000 + s, 504, ir=3.0), lvl, step=12) for s in range(10)]
+    assert sum(h is not None for h in hits) >= 7
+    assert R.sessions_to_cross(3.0 / math.sqrt(252), 1.0, 252, lvl, 2520) < 504
+    assert R.sessions_to_cross(0.8 / math.sqrt(252), 1.0, 252, lvl, 10 ** 5) > 252 * 15
+
+
+def _edge(n, alpha, sig=0.003, se=None, status="insufficient"):
+    lvl = R.family_alpha_level(6)
+    lo, hi = R.confidence_sequence(alpha, sig, n, R.THRESHOLDS["cs_rho_sessions"], lvl)
+    return {"status": status, "n": n, "alpha_daily": alpha, "sigma_eff_daily": sig,
+            "se_alpha_hac_daily": se if se is not None else sig / math.sqrt(n),
+            "cs_lower_daily": lo, "cs_upper_daily": hi, "alpha_level": lvl}
+
+
+def test_eta_is_a_range_and_monotonic():
+    e = R.edge_eta(_edge(100, 0.0008))
+    assert e["state"] == "estimate"
+    assert e["optimistic_sessions"] < e["median_sessions"] < (e["pessimistic_sessions"] or 10 ** 9)
+    rem = [R.edge_eta(_edge(n, 0.0008))["median_sessions"] for n in (60, 100, 150)]
+    assert all(a > b for a, b in zip(rem, rem[1:]))                    # more data -> sooner
+    assert (R.edge_eta(_edge(60, 0.0012))["n_required"]
+            < R.edge_eta(_edge(60, 0.0008))["n_required"])            # bigger alpha -> sooner
+    assert R.edge_eta(_edge(10, 0.0004))["state"] == "too_early"
+
+
+def test_not_converging_only_when_upper_bound_is_negative():
+    # alpha estimate <= 0 but the upper bound is still positive: NOT "not converging"
+    e = R.edge_eta(_edge(80, -0.0001))
+    assert e["state"] == "uncertain" and e["median_sessions"] is None
+    hi_neg = _edge(80, -0.01)
+    assert hi_neg["cs_upper_daily"] < 0
+    assert R.edge_eta(hi_neg)["state"] == "not_converging"
 
 
 # --- parity with metrics.py ---------------------------------------------------------
@@ -270,7 +361,7 @@ def test_engine_offline_report_shape_and_honesty(monkeypatch):
     assert rep["methodology_version"] == R.METHODOLOGY_VERSION
     assert {s["id"] for s in rep["sleeves"]} == {s["id"] for s in reg["sleeves"]}
     for s in rep["sleeves"]:
-        assert s["verdict"] in ("GO", "NOT_READY", "NOT_ELIGIBLE")
+        assert s["verdict"] in rep["verdict_values"]
         assert {"start", "end", "trading_days"} <= set(s["window"])
         assert {"alpha", "beta", "t_hac", "ir", "psr", "dsr", "n"} <= set(s["edge"])
         if s["status"] in ("exits_only", "quarantined"):
@@ -278,6 +369,16 @@ def test_engine_offline_report_shape_and_honesty(monkeypatch):
         ex = next(g for g in s["gates"] if g["id"] == "exception_free")
         assert ex["status"] == "not_measured"            # offline: never a default pass
         assert s["verdict"] != "GO"
+    by = {s["id"]: s for s in rep["sleeves"]}
+    beta = by["p2-benchmark-etf-v1"]
+    assert beta["verdict"] == "BETA_SLEEVE" and beta["attribution"] == "book_level_shared"
+    assert next(g for g in beta["gates"] if g["id"] == "edge")["status"] == "not_applicable"
+    assert beta["edge"]["alpha"] is None                    # book series never credited to it
+    assert by["p2-copy-v2"]["owns_edge_test"] is True
+    assert by["p3-crisis-core-v1-forward"]["verdict"] in ("NOT_READY", "FORWARD_TEST_PASS")
+    mom = by["p1-momentum-v1"]["window"]
+    assert mom["halted_sessions"] > 70 and mom["active_trading_days"] == mom["trading_days"] - mom["halted_sessions"]
+    assert rep["edge_decision"]["k_family"] >= 6
     banned = ("pct_ready", "percent", "readiness_pct", "score", "overall_pct")
     assert not [k for k in _keys(rep["sleeves"]) if any(b in str(k).lower() for b in banned)]
 
@@ -317,3 +418,102 @@ def test_journal_equity_dated_by_et_session(tmp_path):
     ]))
     eq, _ = E.equity_from_journals(str(tmp_path))
     assert eq == {"2026-10-21": 100.0}          # EOD written 20:00 ET belongs to 10-21; intraday ignored
+
+
+# --- v2.1 review fixes (H2, H4, H5, M7, M8, L9, slippage, cron dedup) ------------------
+
+def test_forward_test_can_never_be_go():
+    s = R.nyse_sessions("2026-01-01", "2027-12-31")
+    v = R.verdict("forward_test", _all_pass_gates(), s, "2026-10-22")
+    assert v["verdict"] == "FORWARD_TEST_PASS" and "new registry version" in v["verdict_note"]
+
+
+def test_no_edge_sleeve_is_beta_sleeve():
+    s = R.nyse_sessions("2026-01-01", "2027-12-31")
+    assert R.verdict("active", _all_pass_gates(), s, "2026-10-22", claims_edge=False)["verdict"] == "BETA_SLEEVE"
+    assert R.verdict("quarantined", _all_pass_gates(), s, "2026-10-22", claims_edge=False)["verdict"] == "NOT_ELIGIBLE"
+
+
+def test_only_one_sleeve_owns_a_shared_book_series():
+    import readiness_engine as E
+    a = {"id": "a", "book": "portfolio_2", "start_date": "2026-07-06", "claims_edge": True}
+    b = {"id": "b", "book": "portfolio_2", "start_date": "2026-06-02", "claims_edge": True}
+    reg = [a, b]
+    assert E.edge_ownership(a, reg, "2026-10-22")[:2] == ("book_level_shared", False)   # ambiguous: nobody
+    a["owns_book_edge"] = True
+    assert E.edge_ownership(a, reg, "2026-10-22")[:2] == ("book_level", True)
+    assert E.edge_ownership(b, reg, "2026-10-22")[:2] == ("book_level_shared", False)
+    solo = {"id": "c", "book": "portfolio_3", "start_date": "2026-10-23", "claims_edge": True}
+    old = {"id": "d", "book": "portfolio_3", "start_date": "2026-05-27", "end_date": "2026-10-03"}
+    assert E.edge_ownership(solo, [solo, old], "2026-10-30")[:2] == ("book_level", True)   # no overlap
+
+
+def test_kill_headroom_uses_live_reference_not_window_peak():
+    rets = [0.01] * 30 + [-0.005] * 10            # window peak is mid-window
+    kill = {"reference_equity": 100000.0, "current_equity": 86000.0, "kill_drawdown": 0.15,
+            "source": "P2 $100K"}
+    g = next(x for x in R.risk_gates(rets, kill=kill) if x["id"] == "kill_switch_headroom")
+    assert g["status"] == "fail" and abs(g["value"] - 0.01) < 1e-9 and g["reference_equity"] == 100000.0
+    import readiness_engine as E
+    k2 = E.kill_reference("portfolio_2", 99000.0)
+    assert k2["reference_equity"] == 100000.0 and k2["kill_drawdown"] == 0.15
+
+
+def test_max_drawdown_gates_on_stricter_of_window_and_book():
+    window = [0.001] * 20
+    book = [-0.02] * 10 + [0.001] * 20             # 18% drawdown before the version started
+    g = next(x for x in R.risk_gates(window, book_returns=book) if x["id"] == "max_drawdown")
+    assert g["status"] == "fail" and g["value"] == g["book_value"] > g["window_value"]
+
+
+def test_data_faults_and_flows_are_excluded_never_used():
+    s = R.nyse_sessions("2026-07-01", "2026-07-15")
+    eq = {d: 100000.0 for d in s}
+    eq["2026-07-07"] = 27900.0                      # phantom read
+    w = R.window_returns(eq, s, "2026-07-01", "2026-07-15", exclude={"2026-07-13"}, max_abs=0.25)
+    assert w["faults"] == ["2026-07-07", "2026-07-08"]
+    assert "2026-07-13" in w["excluded"] and "2026-07-13" not in w["dates"]
+    assert max(abs(r) for r in w["returns"]) == 0.0
+
+
+def test_halted_sessions_excluded_from_track_record(tmp_path, monkeypatch):
+    import readiness_engine as E
+    s = R.nyse_sessions("2026-05-01", "2026-12-31")
+    doc = {"book_halts": [{"book": "portfolio_1", "from": "2026-07-07", "to": "2026-10-22"}]}
+    monkeypatch.setattr(E, "_load", lambda path, default=None: {} if "state" in str(path) else default)
+    halts, unknown = E.halted_sessions("portfolio_1", doc, s, "2026-10-22")
+    assert not unknown and min(halts) == "2026-07-07" and max(halts) == "2026-10-22"
+    assert len(halts) == R.count_sessions(s, "2026-07-07", "2026-10-22")
+
+
+def test_idless_rows_are_distinct_orders():
+    import readiness_engine as E
+    rows = [{"symbol": "X", "side": "buy", "timestamp": "2026-08-03T15:00:00Z", "status": "closed"},
+            {"symbol": "X", "side": "buy", "timestamp": "2026-08-03T16:00:00Z", "status": "closed"}]
+    assert E.duplicate_entries(rows) == (1, 1)
+
+
+def test_slippage_only_against_an_arrival_reference():
+    import readiness_engine as E
+    p2 = [{"symbol": "KR", "side": "buy", "intended_price": 56.58, "limit_price": 56.58,
+           "entry_price": 56.5, "order_id": "1", "timestamp": "2026-08-10T15:00:00Z"}]
+    assert E.slippage_for_sleeve("p2-copy-v2", p2)["status"] == "not_measured"
+    alloc = [{"symbol": "CTA", "side": "buy", "intended_price": 30.48, "limit_price": 30.64,
+              "entry_price": 30.56, "order_id": "a", "timestamp": "2026-10-23T14:11:00Z"},
+             {"symbol": "SPY", "side": "buy", "intended_price": 762.4, "limit_price": 762.4,
+              "entry_price": 760.0, "order_id": "b", "timestamp": "2026-10-23T14:11:00Z"}]
+    g = E.slippage_for_sleeve("p3-crisis-core-v1-forward", alloc)
+    assert abs(g["value"] - (30.56 - 30.48) / 30.48 * 1e4) < 0.01   # limit-ref row skipped
+    assert g["status"] == "fail"                                     # 26 bps > 15 bps
+
+
+def test_cron_dedup_only_when_todays_session_is_complete():
+    import readiness_engine as E
+    v = R.METHODOLOGY_VERSION
+    full = {"as_of_session": "2026-10-23", "methodology_version": v,
+            "books": {"p": {"equity_source": "alpaca", "last_date": "2026-10-23"}}}
+    lagging = {"as_of_session": "2026-10-23", "methodology_version": v,
+               "books": {"p": {"equity_source": "alpaca", "last_date": "2026-10-22"}}}
+    assert E.report_is_current(full, "2026-10-23", "2026-10-23") is True
+    assert E.report_is_current(lagging, "2026-10-23", "2026-10-23") is False   # 19:45 retry must run
+    assert E.report_is_current(full, "2026-10-22", "2026-10-23") is False
