@@ -202,10 +202,11 @@ def test_sequential_validity_under_repeated_looks():
 
 
 def test_sequential_power_strong_alpha():
-    """A strong edge (annual IR 3) is detected within 2 years on most paths
-    (expected crossing ~420 sessions); IR ~0.8 needs ~18 years (see docs §2)."""
+    """A strong edge (annual IR 3) is detected within 3 years on most paths. The
+    v2.2 predictable plug-in CS pays ~10-30% more sessions than v2.1's
+    full-sample plug-in for a valid time-uniform level (docs §2 power table)."""
     lvl = R.family_alpha_level(6)
-    hits = [_first_pass(*_path(2000 + s, 504, ir=3.0), lvl, step=12) for s in range(10)]
+    hits = [_first_pass(*_path(2000 + s, 756, ir=3.0), lvl, step=12) for s in range(10)]
     assert sum(h is not None for h in hits) >= 7
     assert R.sessions_to_cross(3.0 / math.sqrt(252), 1.0, 252, lvl, 2520) < 504
     assert R.sessions_to_cross(0.8 / math.sqrt(252), 1.0, 252, lvl, 10 ** 5) > 252 * 15
@@ -644,3 +645,65 @@ def test_two_stage_never_applies_to_shared_series_or_forward_tests():
     gates = _gates_all_pass_except("insufficient")
     E.select_path(True, True, gates[1], res, inc)
     assert R.verdict("forward_test", gates + [res, inc], sessions, "2026-10-22")["verdict"] == "FORWARD_TEST_PASS"
+
+
+# --- review round 2026-10-23: exposure-based attribution + predictable CS ------
+
+def test_exposure_lasts_until_the_last_lot_exits():
+    import readiness_engine as E
+    leg = {"id": "p3-event-driven-legacy", "book": "portfolio_3",
+           "start_date": "2026-05-27", "end_date": "2026-10-03"}
+    open_lot = [{"symbol": "KO", "status": "open", "timestamp": "2026-09-30T14:00:00Z"}]
+    closed = [{"symbol": "KO", "status": "closed", "timestamp": "2026-09-30T14:00:00Z",
+               "exit_timestamp": "2026-10-15T15:00:00Z"}]
+    assert E.exposure_end(leg, open_lot, "2026-10-30") == "2026-10-30"          # still exposed
+    assert E.exposure_end(leg, closed, "2026-10-30") == "2026-10-15"            # last exit
+    assert E.exposure_end(leg, None, "2026-10-30") == "2026-10-30"              # unknown => exposed
+    assert E.exposure_end({**leg, "id": "no-selector"}, closed, "2026-10-30") == "2026-10-30"
+    assert E.exposure_end({**leg, "end_date": None}, closed, "2026-10-30") == "2026-10-30"
+
+
+def test_open_legacy_lots_keep_a_new_sleeve_off_the_book_edge():
+    import readiness_engine as E
+    new = {"id": "p3-crisis-core-v1-forward", "book": "portfolio_3", "start_date": "2026-10-23", "claims_edge": True}
+    leg = {"id": "p3-event-driven-legacy", "book": "portfolio_3", "start_date": "2026-05-27",
+           "end_date": "2026-10-03", "claims_edge": True}
+    reg = [new, leg]
+    # Lots still open: the new sleeve may NOT claim the whole book's returns.
+    assert E.edge_ownership(new, reg, "2026-10-30", {leg["id"]: "2026-10-30"})[:2] == ("book_level_shared", False)
+    # The legacy sleeve's own evidence window (to 10-03) never overlapped the new one.
+    assert E.edge_ownership(leg, reg, "2026-10-30", {leg["id"]: "2026-10-30", new["id"]: "2026-10-30"})[:2] \
+        == ("book_level", True)
+    # All legacy lots exited before the new sleeve started: it owns the series again.
+    assert E.edge_ownership(new, reg, "2026-10-30", {leg["id"]: "2026-10-15"})[:2] == ("book_level", True)
+
+
+def test_predictable_cs_uses_only_past_information():
+    y, x, _ = _series(300, 0.0, seed=11)
+    full = R.predictable_cs(y, x, 252, 0.05)
+    # Rewriting the LAST return cannot change how earlier increments were scaled:
+    # only the last increment's own value moves the sum.
+    y2 = y[:-1] + [y[-1] + 0.05]
+    moved = R.predictable_cs(y2, x, 252, 0.05)
+    assert moved["m"] == full["m"]
+    assert abs((moved["upper"] - moved["lower"]) - (full["upper"] - full["lower"])) < 1e-12
+
+
+def test_predictable_cs_holds_its_level_through_a_volatility_jump():
+    # Zero alpha; residual vol 5% for a year, then 30% (the regime shift that
+    # broke an expanding-only scale). Daily-ish looks must stay below level.
+    a = R.family_alpha_level(6)
+    false_go = 0
+    for seed in range(40):
+        rng = random.Random(1000 + seed)
+        y, x = [], []
+        for t in range(756):
+            mk = rng.gauss(0.0004, 0.01)
+            x.append(mk)
+            y.append(0.5 * mk + rng.gauss(0, (0.05 if t < 252 else 0.30) / 16))
+        for n in range(60, 757, 20):
+            lo = R.predictable_cs(y[:n], x[:n], 252, a)["lower"]
+            if lo is not None and lo > 0:
+                false_go += 1
+                break
+    assert false_go <= 1

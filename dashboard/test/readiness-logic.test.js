@@ -69,6 +69,13 @@ test('ETA: single-point v2 schema is not a range; range shapes are read when pre
     assert.equal(RL.etaRange({ sessions_remaining: 146, projected_date: '2027-05-24', label: 'estimate' }), null);
     assert.equal(RL.etaRange({ sessions_remaining: null, projected_date: null }), null);
     assert.equal(RL.etaRange(undefined), null);
+    // The schema scripts/readiness_engine.py actually emits (eta.overall.edge_range).
+    assert.deepEqual(RL.etaRange({ sessions_remaining: 146, projected_date: '2027-05-24', edge_range: {
+        median_sessions: 146, median_date: '2027-05-24', pessimistic_sessions: 260, pessimistic_date: '2027-11-02',
+        optimistic_sessions: 90, optimistic_date: '2027-03-05' } }),
+        { median: { date: '2027-05-24', sessions: 146 }, pessimistic: { date: '2027-11-02', sessions: 260 } });
+    assert.deepEqual(RL.etaRange({ sessions_remaining: null, projected_date: null, edge_range: {
+        median_sessions: null, median_date: null, pessimistic_sessions: null, pessimistic_date: null } }), null);
 
     assert.deepEqual(RL.etaRange({ median: { projected_date: '2027-05-24', sessions_remaining: 146 }, pessimistic: { projected_date: '2027-11-02', sessions_remaining: 260 } }),
         { median: { date: '2027-05-24', sessions: 146 }, pessimistic: { date: '2027-11-02', sessions: 260 } });
