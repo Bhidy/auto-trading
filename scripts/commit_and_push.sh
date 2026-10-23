@@ -237,6 +237,46 @@ def merge(base, ours, theirs):
     raise Conflict("scalar changed to different values on both sides")
 
 
+# P3 allocator state (event-driven-bot/data/allocator_state.json) is a
+# timestamped snapshot (newer wins whole), EXCEPT two sub-maps that are never
+# allowed to lose information to a racing/stale run:
+#   * "orders"      — key-wise union by client_order_id; on a shared key the
+#                     record that is booked (then final, then from the winning
+#                     document) is kept, so a booked flag is never un-booked;
+#   * "concurrency" — the stale-checkout detector's counter: max count, newest
+#                     last_at (a stale run writes it WITHOUT bumping
+#                     last_updated, so it never wins the snapshot itself).
+ALLOC_STATE = "allocator_state.json"
+_FINAL_ORDER = {"filled", "canceled", "expired", "rejected", "replaced"}
+
+
+def _order_rank(r):
+    r = r if isinstance(r, dict) else {}
+    return (bool(r.get("booked")), r.get("status") in _FINAL_ORDER)
+
+
+def allocator_state_merge(merged, ours, theirs):
+    out = dict(merged)
+    oo, ot = ours.get("orders") or {}, theirs.get("orders") or {}
+    if isinstance(oo, dict) and isinstance(ot, dict):
+        win = out.get("orders") or {}
+        orders = {}
+        for k in list(ot) + [k for k in oo if k not in ot]:
+            cands = [x for x in (oo.get(k), ot.get(k)) if x is not None]
+            best = max(cands, key=_order_rank)
+            if k in win and _order_rank(win[k]) >= _order_rank(best):
+                best = win[k]
+            orders[k] = best
+        out["orders"] = orders
+    co, ct = ours.get("concurrency"), theirs.get("concurrency")
+    if isinstance(co, dict) or isinstance(ct, dict):
+        co, ct = co or {}, ct or {}
+        newest = co if str(co.get("last_at") or "") >= str(ct.get("last_at") or "") else ct
+        out["concurrency"] = dict(newest, count=max(int(co.get("count") or 0),
+                                                    int(ct.get("count") or 0)))
+    return out
+
+
 try:
     base = load(base_p)
     ours = load(ours_p)
@@ -250,6 +290,9 @@ try:
             halt_guard(base, ours, theirs)
         print(f"  snapshot: {'ours' if merged is ours else 'remote'} is newer "
               f"(ours={to or 'none'}, remote={tt or 'none'})")
+        if NAME == ALLOC_STATE:
+            merged = allocator_state_merge(merged, ours, theirs)
+            print("  allocator_state: orders key-wise union, concurrency max")
     else:
         merged = merge(base, ours, theirs)
 except Conflict as e:

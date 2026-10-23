@@ -138,7 +138,8 @@ class FakeBroker:
         # "accepted": nothing fills
 
     def _fill(self, o, q, px, status):
-        o.update(status=status, filled_qty=str(q), filled_avg_price=str(px))
+        o.update(status=status, filled_qty=str(q), filled_avg_price=str(px),
+                 filled_at="2026-10-23T13:55:01.5Z")
         sign = 1 if o["side"] == "buy" else -1
         p = self.positions.setdefault(o["symbol"], {"symbol": o["symbol"], "qty": 0.0})
         p["qty"] = float(p["qty"]) + sign * q
@@ -216,7 +217,7 @@ def test_missing_controls_file_fails_closed(tmp_path):
     assert problems and "disabled" in problems[0]
 
 
-def test_valid_control_is_returned_and_live_file_has_no_block_yet():
+def test_valid_control_is_returned_and_live_file_keeps_a_bool_entries_flag():
     assert allocator_control("portfolio_3", controls=ENABLED)["strategy"] == "crisis_core_v1"
     # The lead adds the block by hand; code never writes it.
     live = json.load(open(os.path.join(REPO_ROOT, "config", "strategy_controls.json")))
@@ -479,8 +480,10 @@ def test_broker_orders_unknown_to_state_mean_a_stale_checkout_do_nothing(env):
     b.orders["prior-1"] = existing
     out = run(b, env)
     assert out["status"] == "concurrent_run_detected" and out["foreign"] == [coid]
-    assert b.placed == [] and not (env / "allocator_state.json").exists()
-    assert tlog(env) == []
+    assert b.placed == [] and tlog(env) == []
+    st = state(env)                       # only the race record — no snapshot stamp
+    assert st["concurrency"]["count"] == 1 and st["concurrency"]["last_session"] == "2026-10-23"
+    assert "last_updated" not in st and not st["orders"]
     assert not A.run_failed(out)
 
 
@@ -946,3 +949,245 @@ def test_guardian_p3_freshness_counts_legacy_session_orders_not_allocator_orders
         r = subprocess.run([sys.executable, str(script), "p3"], cwd=repo, env=env,
                            capture_output=True, text=True)
         assert r.returncode == expect, (coid, r.stdout + r.stderr)
+
+
+# ---------------------------------------------------------------------------
+# Parent-spec T-bill residual (amendment 2026-10-23, effective 2026-11 freeze)
+# ---------------------------------------------------------------------------
+
+def _core():
+    return A.scale_targets(A.spec_target_weights(set(A.UNIVERSE)), params())
+
+
+def test_residual_budget_is_bounded_by_gross_room_with_headroom():
+    core = _core()
+    # No legacy: min(1 - 66.67%, 80% - 1pp - 66.67%) = 12.33%
+    assert A.residual_budget(core, 0.0, params()) == pytest.approx(0.79 - 2 / 3)
+    # Legacy 5% of equity eats gross room one-for-one.
+    assert A.residual_budget(core, 0.05, params()) == pytest.approx(0.74 - 2 / 3)
+    # Today's book (~32% legacy): no room => no residual (pure cash, as before).
+    assert A.residual_budget(core, 0.32, params()) == 0.0
+
+
+def test_residual_fills_basket_in_priority_order_each_member_capped():
+    core = _core()
+    t, added = A.add_tbill_residual(core, A.residual_budget(core, 0.0, params()),
+                                    set(A.UNIVERSE), params())
+    assert t["BIL"] == pytest.approx(0.076)                  # topped up to the cap first
+    assert t["SHV"] == pytest.approx(0.076)
+    assert t["SGOV"] == pytest.approx(0.79 - 2 / 3 - (0.076 - core["BIL"]) - 0.076)
+    assert "USFR" not in t
+    assert sum(t.values()) == pytest.approx(0.79)
+    assert all(w <= 0.076 + 1e-12 for w in t.values())
+    assert {s: t[s] for s in core if s not in A.TBILL_BASKET} == \
+        {s: core[s] for s in core if s not in A.TBILL_BASKET}   # risky untouched
+
+
+def test_residual_beyond_basket_capacity_stays_cash_and_skips_unlisted():
+    p = A.build_params(P3_LIMITS)
+    p["max_gross"] = 1.5                                      # room never binds here
+    core = _core()
+    t, _ = A.add_tbill_residual(core, A.residual_budget(core, 0.0, p), set(A.UNIVERSE), p)
+    for s in A.TBILL_BASKET:
+        assert t[s] == pytest.approx(0.076)                  # basket full: 4 x 7.6%
+    assert 1 - sum(t.values()) == pytest.approx(1 - 8 * 0.076 - 4 * 0.076)   # 8.8% cash
+    t2, _ = A.add_tbill_residual(core, 0.10, set(A.UNIVERSE) - {"SHV"}, p)
+    assert "SHV" not in t2 and t2["SGOV"] == pytest.approx(0.076)
+
+
+def test_legacy_gross_weight_excludes_allocator_shares():
+    pos = [{"symbol": "ANET", "qty": "100", "market_value": "14000"},
+           {"symbol": "BIL", "qty": "46", "market_value": "4209"}]
+    assert A.legacy_gross_weight(pos, {"BIL": 46.0}, 100_000) == pytest.approx(0.14)
+
+
+def test_october_targets_are_not_changed_mid_month(env):
+    b = FakeBroker()
+    run(b, env)                                   # 2026-10 frozen under the old rule
+    before = state(env)["targets"]
+    assert "SHV" not in before and before["BIL"] == pytest.approx(0.088 * 0.076 / 0.114)
+    n = len(b.placed)
+    out = run(b, env, now=NEXT)                   # later October session
+    assert len(b.placed) == n and out["status"] in ("month_already_complete", "drift_check")
+    assert state(env)["targets"] == before
+
+
+def test_october_refreeze_still_uses_the_pre_amendment_rule(env):
+    b = FakeBroker()
+    run(b, env)
+    assert state(env)["residual_tbill"]["budget"] == 0.0
+    assert state(env)["targets"] == state(env)["targets_core"]
+
+
+def test_november_freeze_with_legacy_room_zero_changes_nothing(env):
+    # Today's shape: legacy ~32% + the sleeve => no gross room for the residual.
+    legacy = [{"symbol": "ANET", "qty": 120}, {"symbol": "KO", "qty": 216}]
+    b = FakeBroker(equity=99_155.66, cash=67_201.88, positions=legacy)
+    run(b, env)
+    n = len(b.placed)
+    run(b, env, now=NOV)
+    st = state(env)
+    assert st["targets_month"] == "2026-11" and st["residual_tbill"]["budget"] == 0.0
+    assert st["targets"] == st["targets_core"]
+    new = b.placed[n:]
+    assert all(o["side"] == "buy" for o in new)              # no churn / sells
+    assert not {o["symbol"] for o in new} & {"SHV", "SGOV", "USFR"}
+
+
+def test_november_freeze_adds_basket_only_within_gross_room(env):
+    b = FakeBroker()
+    run(b, env)                                   # October core build (no legacy)
+    n = len(b.placed)
+    out = run(b, env, now=NOV)
+    st = state(env)
+    assert st["residual_tbill"]["budget"] == pytest.approx(0.79 - 2 / 3, abs=1e-6)
+    new = b.placed[n:]
+    assert all(o["side"] == "buy" for o in new)
+    assert {o["symbol"] for o in new} <= {"BIL", "SHV", "SGOV"}
+    gross = sum(float(p["qty"]) * PRICES[s] for s, p in b.positions.items())
+    assert gross <= 0.80 * b.equity
+    for s, p in b.positions.items():
+        assert float(p["qty"]) * PRICES[s] <= 0.08 * b.equity
+    assert out["status"] in ("month_complete", "month_in_progress")
+
+
+def test_residual_with_some_legacy_is_reduced_one_for_one(env):
+    legacy = [{"symbol": "ANET", "qty": 50}]                 # 7% of equity
+    b = FakeBroker(positions=legacy, cash=100_000 - 50 * 140)
+    run(b, env)
+    run(b, env, now=NOV)
+    st = state(env)
+    assert st["residual_tbill"]["legacy_gross_w_at_freeze"] == pytest.approx(0.07, abs=1e-3)
+    assert st["residual_tbill"]["budget"] == pytest.approx(0.79 - 2 / 3 - 0.07, abs=1e-3)
+
+
+# ---------------------------------------------------------------------------
+# Engineering audit (M1 dust room, M2 buy cutoff, L1 race record, L2 fill time)
+# ---------------------------------------------------------------------------
+
+def test_low_room_skips_all_buys_and_does_not_keep_the_month_open(env):
+    assert params()["min_buy_room_pct"] == 0.02
+    # Legacy ~79% of equity: gross room ~ $1K < max($250, 2% x equity).
+    legacy = [{"symbol": "ANET", "qty": 300}, {"symbol": "KO", "qty": 528}]   # 42K + 36.96K
+    b = FakeBroker(cash=100_000 - 300 * 140 - 528 * 70, positions=legacy)
+    out = run(b, env)
+    assert b.placed == []
+    assert out["skipped_low_room"]["room"] < out["skipped_low_room"]["min_room"] == 2000
+    assert out["clipped"] == [] and out["status"] == "month_complete"
+    st = state(env)
+    assert st["cap_shortfall_pct"] > 60                    # underweight recorded for F1
+    assert st["session_targets"]["2026-10-23"]["skipped_low_room"] is True
+
+
+def test_buy_cutoff_defers_buys_but_trims_still_run(env):
+    late = datetime(2026, 10, 23, 19, 30, tzinfo=timezone.utc)      # 15:30 ET
+    lots = [{"symbol": "SPY", "side": "buy", "qty": 15.0, "entry_price": 500.0,
+             "status": "open", "tranche": A.TRANCHE, "order_id": "b0"}]
+    (env / "trade_log.json").write_text(json.dumps(lots))
+    b = FakeBroker(positions=[{"symbol": "SPY", "qty": 15.0}])      # 9% > cap
+    out = run(b, env, now=late)
+    assert [(o["symbol"], o["side"]) for o in b.placed] == [("SPY", "sell")]
+    assert out["status"] == "buy_cutoff" and out["buy_cutoff"] is True
+    assert "QQQ:buy" in out["deferred"]
+    assert state(env)["last_rebalance_month"] is None
+    out2 = run(b, env, now=NEXT)                                     # 10:00 ET next session
+    assert any(o["side"] == "buy" for o in b.placed[1:]) and out2["status"] == "month_complete"
+
+
+def test_buy_cutoff_boundary():
+    p = params()
+    et = lambda h, m: datetime(2026, 10, 23, h + 4, m, tzinfo=timezone.utc)   # EDT = UTC-4
+    assert not A.after_buy_cutoff(et(14, 59), p)
+    assert A.after_buy_cutoff(et(15, 0), p)
+
+
+def test_trade_rows_carry_the_broker_fill_time(env):
+    b = FakeBroker()
+    run(b, env, now=NOW + timedelta(hours=1))
+    rows = [r for r in tlog(env) if r.get("tranche") == A.TRANCHE]
+    assert rows and all(r["timestamp"] == "2026-10-23T13:55:01.5Z" for r in rows)
+
+
+def test_heartbeat_alerts_on_a_concurrent_run_today():
+    import heartbeat as HB
+    st = {"concurrency": {"count": 2, "last_at": "2026-10-23T18:50:00+00:00",
+                          "last_session": "2026-10-23", "last_foreign": ["p3alloc-x"]}}
+    alert, msg = HB.assess_allocator(st, "2026-10-23")
+    assert alert and "concurrent run" in msg
+    assert HB.assess_allocator(st, "2026-10-26")[0] is False
+    assert HB.assess_allocator(None, "2026-10-23")[0] is False
+
+
+def test_commit_merge_keeps_live_orders_and_the_race_record(tmp_path):
+    import subprocess
+    import test_audit_2026_10_23_p1 as G
+    if G.shutil.which("git") is None:
+        pytest.skip("git unavailable")
+    rel = "event-driven-bot/data/allocator_state.json"
+    base = {"last_updated": "2026-10-23T13:00:00+00:00", "orders": {}}
+    origin = G._origin(tmp_path, {rel: base})
+    stale = G._clone(tmp_path, origin, "stale")
+    live = {"last_updated": "2026-10-23T14:00:00+00:00", "last_trade_session": "2026-10-23",
+            "orders": {"p3alloc-20261023-SPY-buy": {"booked": True, "status": "filled"}}}
+    G._push(G._clone(tmp_path, origin, "live"), {rel: live})
+    # The stale run records only the race (no last_updated bump).
+    (stale / rel).write_text(json.dumps(dict(base, concurrency={
+        "count": 1, "last_at": "2026-10-23T14:05:00+00:00", "last_session": "2026-10-23"})))
+    r = subprocess.run(["bash", os.path.join(REPO_ROOT, "scripts", "commit_and_push.sh"),
+                        "P3: test", "event-driven-bot/data"], cwd=stale,
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    got = G._remote(tmp_path, origin, rel)
+    assert got["last_trade_session"] == "2026-10-23"                  # live doc won
+    assert got["orders"]["p3alloc-20261023-SPY-buy"]["booked"] is True
+    assert got["concurrency"]["count"] == 1                           # race kept
+
+
+def test_commit_merge_never_unbooks_or_drops_an_order_key(tmp_path):
+    import subprocess
+    import test_audit_2026_10_23_p1 as G
+    if G.shutil.which("git") is None:
+        pytest.skip("git unavailable")
+    rel = "event-driven-bot/data/allocator_state.json"
+    origin = G._origin(tmp_path, {rel: {"last_updated": "2026-10-23T13:00:00+00:00",
+                                        "orders": {"k1": {"booked": False, "status": "new"}}}})
+    ours = G._clone(tmp_path, origin, "ours")
+    G._push(G._clone(tmp_path, origin, "other"), {rel: {
+        "last_updated": "2026-10-23T14:00:00+00:00",
+        "orders": {"k1": {"booked": True, "status": "filled"}, "k2": {"booked": True}}}})
+    (ours / rel).write_text(json.dumps({"last_updated": "2026-10-23T15:00:00+00:00",
+                                        "orders": {"k1": {"booked": False, "status": "new"},
+                                                   "k3": {"booked": False}}}))
+    r = subprocess.run(["bash", os.path.join(REPO_ROOT, "scripts", "commit_and_push.sh"),
+                        "P3: test", "event-driven-bot/data"], cwd=ours,
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    got = G._remote(tmp_path, origin, rel)
+    assert got["last_updated"].startswith("2026-10-23T15")             # ours newer, wins
+    assert got["orders"]["k1"]["booked"] is True                      # never un-booked
+    assert set(got["orders"]) == {"k1", "k2", "k3"}                   # key-wise union
+
+
+def test_legacy_gross_weight_counts_shorts_at_abs_market_value():
+    pos = [{"symbol": "DDOG", "qty": "-14", "side": "short", "market_value": "-1680"},
+           {"symbol": "V", "qty": "10", "side": "short", "market_value": "-3000"},
+           {"symbol": "ANET", "qty": "100", "market_value": "14000"}]
+    assert A.legacy_gross_weight(pos, {}, 100_000) == pytest.approx(0.1868)
+
+
+def test_legacy_short_at_freeze_shrinks_residual_and_does_not_loop(env):
+    class ShortBroker(FakeBroker):
+        def get_positions(self):
+            out = super().get_positions()
+            out.append({"symbol": "DDOG", "qty": "-50", "side": "short",
+                        "current_price": "100", "market_value": "-5000"})
+            return out
+    b = ShortBroker()
+    run(b, env)                                         # October core build
+    out = run(b, env, now=NOV)
+    st = state(env)
+    assert st["residual_tbill"]["legacy_gross_w_at_freeze"] == pytest.approx(0.05, abs=1e-6)
+    assert st["residual_tbill"]["budget"] == pytest.approx(0.79 - 2 / 3 - 0.05, abs=1e-3)
+    # buy_room sees the same short, so the frozen residual fits: no clip, no retry loop.
+    assert out["clipped"] == [] and out.get("room", {}).get("factor", 1) == 1
+    assert out["status"] == "month_complete"

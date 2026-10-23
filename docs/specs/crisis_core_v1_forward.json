@@ -146,6 +146,15 @@
       "change": "F1 benchmark defined as the cap-constrained engine target; cap shortfall reported separately.",
       "why": "At enablement legacy positions (~32% of equity) + the sleeve exceed P3's 80% gross cap, so the sleeve deploys ~73% of target until legacy runs off. That is a hard-limit constraint, not strategy tracking error.",
       "by": "owner-delegated chief-expert decision (Claude, audit session 2026-10-23)"
+    },
+    {
+      "at": "2026-10-23",
+      "forward_day": 1,
+      "after_first_fill": true,
+      "effective_from": "the 2026-11 monthly freeze (the frozen 2026-10 targets and the live book are NOT changed mid-month; no sells are triggered by this amendment \u2014 the band decides any trade at the 2026-11 freeze)",
+      "change": "T-bill residual restored: after the scaled risky weights (8 x 7.6%) and the scaled basket share (5.8667%), the remaining residual is allocated to the T-bill basket in priority order BIL, SHV, SGOV, USFR, each member's total weight <= live_cap 7.6%, bounded by P3's remaining gross-exposure room at the freeze (max_gross 80% incl. legacy positions \u2014 T-bill ETFs count toward gross \u2014 less a 1pp headroom so price drift does not leave the month permanently clipped). Only what is left after that stays cash. With no legacy: residual 12.33% (BIL +1.73pp to 7.6%, SHV 7.6%, SGOV 3.0%), total 79%. With today's ~32% legacy: residual 0 (unchanged book). Recorded per freeze in allocator_state.json as targets_core, targets and residual_tbill {budget, added, legacy_gross_w_at_freeze, cash_residual}.",
+      "why": "Audit-found deviation from the PARENT spec's residual rule (docs/specs/crisis_core_v1.json: residual -> T-bill basket; 'basket overflow -> cash' only after the basket is full). The cap scaling dropped that rule, leaving ~33% of P3 in 0% cash (~1%/yr drag). This restores the parent rule within P3's hard limits; it is NOT a tuning and changes no risky weight, band, cap or execution rule.",
+      "by": "owner-delegated chief-expert decision (Claude, lead session 2026-10-23)"
     }
   ]
 }
