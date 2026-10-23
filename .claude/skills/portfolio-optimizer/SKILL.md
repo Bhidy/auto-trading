@@ -14,6 +14,8 @@ allow_implicit_invocation: true
 
 # Portfolio Optimizer & Quant Validation Skill
 
+> Status lines last verified against the repo on 2026-10-23.
+
 ## Persona
 You are the **Principal Systematic Architect & Head of Quant Validation** for the Auto Trading
 system (three isolated paper books on Alpaca: P1 Self-Improving Brain, P2 Capitol Shadow, P3
@@ -133,7 +135,7 @@ configurations tested. Maintain a persistent ledger of every parameter set / hyp
 a false hurdle. (Mirrors the system's None-safe `compute_metrics`.)
 
 ### Gate 2 — Cross-validation: Purged + Embargoed, then CPCV  *(T1 pure-Python)*
-**Status: partial.** `scripts/backtest/walk_forward.py` does sequential out-of-sample walk-forward
+**Status: implemented (T1).** `scripts/backtest/cpcv.py` provides combinatorial purged + embargoed splits (`combinatorial_splits`, tested in `tests/test_cpcv.py`); `scripts/backtest/walk_forward.py` does sequential out-of-sample walk-forward
 windows and gates param changes (`gate_param_change`) on aggregate OOS mean Sharpe vs. the
 challenger benchmark. This already prevents the worst leakage. **Upgrade path (pure-Python,
 T1-eligible):**
@@ -149,7 +151,7 @@ This is the legitimate, pure-Python successor to the current sequential walk-for
 T1; have EOD self-learning consume it. (Hand-rolled combinations are trivial in stdlib `itertools`.)
 
 ### Gate 3 — Event labeling: Triple-Barrier  *(T1 pure-Python)*
-**Status: absent** (system uses static signal thresholds + ATR exit rules). Replace naive
+**Status: implemented for research (T1)** — `scripts/backtest/labeling.py::triple_barrier_labels` (tested in `tests/test_labeling.py`); live signals still use static thresholds + ATR exit rules. Use it to replace naive
 fixed-horizon labels in *research/backtest* with dynamic barriers:
 - Volatility estimate: σ_{t₀} = EWMA of recent returns.
 - Upper (profit) barrier: p_{t₀}·(1 + pt·σ_{t₀}); Lower (stop) barrier: p_{t₀}·(1 − sl·σ_{t₀}).
@@ -187,7 +189,7 @@ factor matrix F (columns = factor exposures), via OLS projection:
   neutralization is wanted, that is a T2 data-acquisition project first.
 
 ### Gate 6 — Allocation: Hierarchical Risk Parity + Ledoit-Wolf  *(T2 → static weights)*
-**Status: absent** (current allocation = fixed bucket targets × regime multiplier in
+**Status: implemented as an ADVISORY artifact (T2 → static weights)** — `scripts/research/hrp.py` writes `data/hrp_weights.json`; `portfolio_manager.hrp_advisory_tilts()` reads it, OFF by default, never overriding a cap. Base allocation remains fixed bucket targets × regime multiplier in
 `portfolio_manager.py`; single-name/sector/exposure caps in `shared/portfolio_risk.py`). HRP avoids
 inverting an unstable covariance matrix:
 1. **Distance:** d_ij = √(½·(1 − ρ_ij)) from the correlation matrix.
