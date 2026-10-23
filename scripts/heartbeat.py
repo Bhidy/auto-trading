@@ -25,11 +25,21 @@ sys.path.insert(0, str(REPO_ROOT))  # allow importing shared.* (pure-Python) for
 
 # Each portfolio's freshest "activity" timestamp lives in a state file written
 # on every run. Map: label -> (relative path, timestamp field).
+#
+# P2 is measured from strategy_conformance.json, which ONLY the market-open
+# scan writes (audit 2026-10-23 D4). portfolio_state.json is also rewritten by
+# the hourly monitor, so it read "fresh" on days the scan itself never ran
+# (34 timed-out/cancelled scans went unnoticed).
 FRESHNESS_SOURCES = {
     "P1 Self Improving Brain": ("data/portfolio_state.json", "last_updated"),
-    "P2 Capitol Shadow": ("political-copy-bot/data/portfolio_state.json", "timestamp"),
+    "P2 Capitol Shadow": ("political-copy-bot/data/strategy_conformance.json", "timestamp"),
     "P3 Cautious Sniper": ("event-driven-bot/data/bot_state.json", "last_updated"),
 }
+
+# Hour (America/New_York) after which the current ET day's session counts as
+# complete for this post-close watchdog: the close is 16:00 and the last EOD
+# job runs ~16:20 ET.
+SESSION_COMPLETE_HOUR_ET = 17
 
 # Portfolios that run the EOD broker-vs-ledger reconciliation audit (P1 + P3;
 # P2 uses a working-orders report, not drift). If a report says in_sync=false,
@@ -48,6 +58,24 @@ def _date_of(ts):
     return ts[:10]
 
 
+def _et_date_of(ts):
+    """ET session date (YYYY-MM-DD) of an ISO timestamp, or None.
+
+    Writers stamp state in UTC (aware) or the runner's naive local clock (UTC
+    on GitHub Actions); a naive stamp is therefore read as UTC. Converting to
+    America/New_York keeps a post-8pm-ET write on the session it belongs to."""
+    if not ts or not isinstance(ts, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(ts.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return _date_of(ts)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    from zoneinfo import ZoneInfo
+    return dt.astimezone(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+
+
 def read_freshness(root: Path):
     """Return {label: date_string_or_None} for each portfolio."""
     out = {}
@@ -57,7 +85,7 @@ def read_freshness(root: Path):
         try:
             with open(path) as f:
                 data = json.load(f)
-            date = _date_of(data.get(field))
+            date = _et_date_of(data.get(field))
         except Exception:
             date = None
         out[label] = date
@@ -67,11 +95,16 @@ def read_freshness(root: Path):
 def assess(today: str, freshness: dict):
     """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
 
-    A portfolio is STALE if its freshest state timestamp is not today.
+    A portfolio is STALE only if its freshest activity is OLDER than the
+    session being verified. A date NEWER than ``today`` (e.g. a delayed
+    watchdog verifying yesterday after the portfolio already ran again) is
+    fresh — the old ``date == today`` test flagged it stale and opened a false
+    alert almost daily (audit 2026-10-23 D4). ISO dates compare correctly as
+    strings.
     """
     stale, ok = [], []
     for label, date in freshness.items():
-        if date == today:
+        if date and date >= today:
             ok.append(label)
         else:
             stale.append(f"{label} (last activity: {date or 'never'})")
@@ -231,13 +264,13 @@ def assess_integrity(reports: dict, today=None):
     for label, rep in reports.items():
         integ, conf, pre = rep.get("integrity"), rep.get("conformance"), rep.get("preflight")
         if (isinstance(integ, dict) and integ.get("anomalous")
-                and (today is None or _date_of(integ.get("timestamp")) == today)):
+                and (today is None or (_date_of(integ.get("timestamp")) or "") >= today)):
             issues.append(f"{label} — EXECUTION ANOMALY: {integ.get('anomaly_reason')}")
         if isinstance(pre, dict) and pre.get("ok") is False:
             hard = pre.get("hard_failures") or []
             issues.append(f"{label} — PREFLIGHT FAILED: {'; '.join(hard) or 'see report'}")
         if (isinstance(conf, dict) and conf.get("conformant") is False
-                and (today is None or _date_of(conf.get("timestamp")) == today)):
+                and (today is None or (_date_of(conf.get("timestamp")) or "") >= today)):
             viol = [v.get("name") for v in (conf.get("violations") or [])]
             issues.append(f"{label} — CONFORMANCE: {', '.join(viol)}")
     if issues:
@@ -377,8 +410,17 @@ def reference_session_date(now_utc):
     (post-close for both EDT and EST); otherwise verify the previous day. This
     can only remove false positives — an on-time 22:30/23:30 run is unchanged,
     and a delayed run still correctly verifies the session it was meant to.
+
+    The date is the America/New_York SESSION date (audit 2026-10-23 D4): a run
+    is verifying today's session once it is past ~17:00 ET (close + EOD),
+    otherwise the previous ET day. This is DST-correct, where the old fixed
+    21:00-UTC cut-over was an hour off all winter.
     """
-    ref = now_utc if now_utc.hour >= 21 else now_utc - timedelta(days=1)
+    from zoneinfo import ZoneInfo
+    if now_utc.tzinfo is None:
+        now_utc = now_utc.replace(tzinfo=timezone.utc)
+    now_et = now_utc.astimezone(ZoneInfo("America/New_York"))
+    ref = now_et if now_et.hour >= SESSION_COMPLETE_HOUR_ET else now_et - timedelta(days=1)
     return ref.strftime("%Y-%m-%d")
 
 

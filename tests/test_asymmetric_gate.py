@@ -35,7 +35,12 @@ def _seed_losing(tmp_path, monkeypatch):
     (tmp_path / "trade_log.json").write_text(json.dumps(log))
 
 
-def test_losing_book_derisks_and_sticks_even_when_gate_rejects(tmp_path, monkeypatch):
+def test_losing_book_flags_risk_off_but_gate_rejection_reverts_knobs(tmp_path, monkeypatch):
+    """Audit 2026-10-23 M4: knob changes in EITHER direction must pass the OOS gate.
+    The former 'de-risk sticks even when the gate rejects' path kept four
+    unapproved changes (threshold 0.5->0.7, stop 2.5->1.5 ATR, size 1.0->0.5)
+    that turned backtest Sharpe 0.13 into -1.43. A rejected change is reverted;
+    the risk-off FLAG (a state signal, not a knob) is still raised."""
     _seed_losing(tmp_path, monkeypatch)
     import backtest.walk_forward as wf
     monkeypatch.setattr(wf, "gate_param_change",
@@ -44,12 +49,11 @@ def test_losing_book_derisks_and_sticks_even_when_gate_rejects(tmp_path, monkeyp
     out = pt.adapt_parameters(validate_with_bars=({"AAA": []}, []))
     p = out["updated_params"]
     assert p["risk_off_active"] is True
-    assert p["position_size_multiplier"] < 1.0          # size cut (de-risk)
-    assert p["confidence_buy_threshold"] > 0.50          # entry bar raised (de-risk)
-    # De-risk PERSISTS to disk despite the rejecting gate.
+    assert p["position_size_multiplier"] == 1.0          # rejected -> reverted
+    assert p["confidence_buy_threshold"] == 0.50
     saved = json.loads((tmp_path / "strategy_params.json").read_text())
-    assert saved["position_size_multiplier"] < 1.0
-    assert saved["confidence_buy_threshold"] > 0.50
+    assert saved["position_size_multiplier"] == 1.0
+    assert saved["confidence_buy_threshold"] == 0.50
 
 
 def test_winning_book_does_not_flag_risk_off(tmp_path, monkeypatch):

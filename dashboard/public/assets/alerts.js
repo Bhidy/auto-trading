@@ -39,7 +39,7 @@
             label_type: 'Alert Type',
             label_val: 'Threshold Value',
             btn_deploy: 'Deploy Alert',
-            feed_title: 'Neural Signals Feed',
+            feed_title: 'Signal Engine Feed',
             live_label: 'LIVE STREAM',
             active_title: 'Active Tactical Alerts',
             col_sym: 'Symbol',
@@ -54,7 +54,7 @@
             opt_sentiment: 'AI news sentiment negative',
             opt_earnings: 'Earnings release announcement',
             opt_ma: 'Technical MA(20/50) crossover',
-            opt_ai_signal: 'AI Neural Buy/Sell Signal',
+            opt_ai_signal: 'Signal-engine Buy/Sell',
             
             // Types short texts
             type_price_gt: 'Price >',
@@ -63,7 +63,7 @@
             type_news_sentiment: 'Negative Sentiment',
             type_earnings: 'Earnings Announcement',
             type_technical_ma: 'MA(20/50) Crossover',
-            type_ai_signal: 'AI Neural Trade Signal'
+            type_ai_signal: 'Signal-engine Trade Signal'
         },
         ar: {
             nav_home: 'الرئيسية',
@@ -89,7 +89,7 @@
             label_type: 'نوع التنبيه',
             label_val: 'قيمة العتبة التنبيهية',
             btn_deploy: 'تفعيل التنبيه',
-            feed_title: 'ملخص الإشارات العصبية الحية',
+            feed_title: 'موجز محرك الإشارات',
             live_label: 'بث حي',
             active_title: 'التنبيهات التكتيكية النشطة',
             col_sym: 'رمز السهم',
@@ -104,7 +104,7 @@
             opt_sentiment: 'مشاعر الأخبار سلبية بالذكاء',
             opt_earnings: 'إعلان نتائج الأرباح الربعية',
             opt_ma: 'تقاطع المتوسطات المتحركة MA',
-            opt_ai_signal: 'إشارات البيع/الشراء العصبية',
+            opt_ai_signal: 'إشارة شراء/بيع من محرك الإشارات',
             
             // Types short texts
             type_price_gt: 'السعر أعلى من',
@@ -130,6 +130,7 @@
         }
         var src = '/assets/logos/' + logoFile + '.svg';
         var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        if (!ATFmt.hasLocalLogo(logoFile)) src = fallbackSrc;
         return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
             'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
             'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
@@ -289,7 +290,7 @@
             var isBuy = s.signal === 'BUY' || s.signal === 'STRONG_BUY';
             var cls = isBuy ? 'success' : (s.signal === 'SELL' || s.signal === 'SHORT' ? 'danger' : '');
             var typeText = s.signal + ' (Score: ' + (s.score || 0).toFixed(2) + ')';
-            var desc = (s.reasons || []).slice(0, 2).join('. ');
+            var desc = (s.reasons || []).slice(0, 2).map(ATFmt.reason).join('. ');
             var priceText = s.indicators && s.indicators.price ? ' — $' + s.indicators.price.toFixed(2) : '';
 
             var card = document.createElement('div');
@@ -342,7 +343,7 @@
                         var q = data[sym];
                         if (q) {
                             var sign = q.change >= 0 ? '▲' : '▼';
-                            var cls = q.change >= 0 ? 'pf-pos' : 'pf-neg';
+                            var cls = ATFmt.signClass(q.change);
                             html += `<div class="pf-ticker-item">
                                 <span class="sym">${sym}</span>
                                 <span class="price pf-num">$${q.price.toFixed(2)}</span>

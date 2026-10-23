@@ -53,7 +53,7 @@
 .pf-neg { color: var(--pf-red); }
 .pf-badge-pos { background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.18); padding: .15rem .55rem; border-radius: 999px; font-family: var(--pf-mono); font-size: .72rem; font-weight: 600; white-space: nowrap; }
 .pf-badge-neg { background: var(--pf-red-soft);   color: var(--pf-red);   border: 1px solid rgba(239,68,68,.18);  padding: .15rem .55rem; border-radius: 999px; font-family: var(--pf-mono); font-size: .72rem; font-weight: 600; white-space: nowrap; }
-.pf-badge-neu { background: rgba(148,163,184,.10); color: var(--muted);    border: 1px solid var(--line); padding: .15rem .55rem; border-radius: 999px; font-family: var(--pf-mono); font-size: .72rem; white-space: nowrap; }
+.pf-badge-neu { background: rgba(122,107,94,.10); color: var(--muted);    border: 1px solid var(--line); padding: .15rem .55rem; border-radius: 999px; font-family: var(--pf-mono); font-size: .72rem; white-space: nowrap; }
 .pf-num { font-family: var(--pf-mono); }
 
 .pf-card {
@@ -315,10 +315,10 @@
     background: var(--surface); transition: all 150ms;
     user-select: none;
 }
-.pf-benchmark-toggle.active { color: var(--ink); border-color: rgba(148,163,184,.4); }
+.pf-benchmark-toggle.active { color: var(--ink); border-color: rgba(122,107,94,.4); }
 .pf-benchmark-toggle .dot {
     width: .55rem; height: .55rem; border-radius: 50%;
-    background: #9ca6b5; border: 2px dashed #9ca6b5; background: transparent;
+    border: 2px dashed var(--muted); background: transparent;
 }
 
 .pf-chart-wrap { position: relative; height: 240px; margin-bottom: .75rem; }
@@ -415,7 +415,7 @@
 .pf-bench-insight svg { flex-shrink: 0; opacity: .9; }
 .pf-bench-insight.is-neg     { background: var(--pf-red-soft);   color: var(--pf-red);   border-color: rgba(239,68,68,.2); }
 .pf-bench-insight.is-pos     { background: var(--pf-green-soft); color: var(--pf-green); border-color: rgba(34,197,94,.2); }
-.pf-bench-insight.is-neutral { background: rgba(148,163,184,.1); color: var(--muted);    border-color: var(--line); }
+.pf-bench-insight.is-neutral { background: rgba(122,107,94,.1); color: var(--muted);    border-color: var(--line); }
 
 /* Fairness note */
 .pf-bench-note {
@@ -497,7 +497,7 @@
 .pf-insight {
     display: flex; gap: .65rem; align-items: flex-start;
     padding: .65rem .75rem; border-radius: var(--pf-radius-sm);
-    background: rgba(148,163,184,.05);
+    background: rgba(122,107,94,.05);
     border: 1px solid var(--line);
 }
 .pf-insight-icon {
@@ -514,7 +514,7 @@
 .pf-insights-beta {
     display: inline-flex; align-items: center; gap: .3rem;
     font-size: .68rem; background: var(--teal-soft); color: var(--teal-dark);
-    border: 1px solid rgba(139,92,246,.2); padding: .1rem .4rem; border-radius: 999px;
+    border: 1px solid rgba(229,90,31,.2); padding: .1rem .4rem; border-radius: 999px;
 }
 
 /* ─── AI Insights full-width ───────────────────────────────────────── */
@@ -545,7 +545,7 @@
     padding: 1.1rem 1.25rem;
     border-radius: var(--pf-radius-sm);
     border: 1px solid var(--line);
-    background: rgba(148,163,184,.04);
+    background: rgba(122,107,94,.04);
     display: flex; flex-direction: column; gap: .5rem;
     transition: border-color 150ms, background 150ms;
 }
@@ -658,7 +658,7 @@ th:hover .pf-th-sort { opacity: .55; }
 .pf-ai-table thead th:hover .pf-th-sort { opacity: .55; }
 .pf-table tbody tr { border-bottom: 1px solid var(--line); transition: background 150ms; }
 .pf-table tbody tr:last-child { border-bottom: none; }
-.pf-table tbody tr:hover { background: rgba(148,163,184,.05); }
+.pf-table tbody tr:hover { background: rgba(122,107,94,.05); }
 .pf-table td { padding: .75rem .85rem; white-space: nowrap; }
 .pf-table td.num { text-align: end; font-family: var(--pf-mono); }
 
@@ -1039,7 +1039,7 @@ html[dir="rtl"] .pf-selector {
 }
 .pf-import-table td {
     padding: .42rem .6rem;
-    border-bottom: 1px solid rgba(148,163,184,.08);
+    border-bottom: 1px solid rgba(122,107,94,.08);
     color: var(--ink);
 }
 .pf-sym-badge {
@@ -1519,7 +1519,7 @@ body {
     color: var(--pf-red);
 }
 .pf-heatmap-badge.neutral {
-    background: rgba(148, 163, 184, 0.1);
+    background: rgba(122,107,94, 0.1);
     color: var(--muted);
 }
 
@@ -1896,7 +1896,7 @@ body {
     font-size: .64rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em;
     background: var(--pf-green-soft); color: var(--pf-green); border: 1px solid rgba(34,197,94,.2); font-family: 'Manrope', sans-serif;
 }
-.pf-attr-status.is-idle { background: rgba(148,163,184,.1); color: var(--muted); border-color: var(--line); }
+.pf-attr-status.is-idle { background: rgba(122,107,94,.1); color: var(--muted); border-color: var(--line); }
 .pf-spark-svg { display: block; }
 
 /* ── 4) AI Decision Insights ─────────────────────────────────────────── */
@@ -2067,3 +2067,70 @@ html[dir="rtl"] .pf-attr-table thead th:not(:first-child) { text-align: end; }
 /* All Orders tab — hide horizontal scrollbar cross-browser */
 .ao-noscroll-wrap { overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
 .ao-noscroll-wrap::-webkit-scrollbar { display: none; }
+
+/* Local demo sandbox card — never reads as a real/paper book (audit D9). */
+.pf-demo-note {
+    margin: .35rem 0 .1rem; font-size: .7rem; line-height: 1.45; color: var(--muted);
+    border-inline-start: 2px solid var(--teal); padding-inline-start: .55rem;
+}
+
+/* Key-figure strip on phones: a 2-column grid instead of a clipped horizontal
+   scroller ("NET A $104" — audit D14). The header stops being sticky here so
+   four rows of figures don't cover the viewport. */
+@media (max-width: 720px) {
+    .pf-dash-header { position: static; }
+    .pf-dash-header-inner { flex-wrap: wrap; overflow-x: visible; padding: .75rem 1rem; gap: .75rem; }
+    .pf-selector-wrap { flex: 1 1 auto; min-width: 0; }
+    .pf-selector { max-width: 100%; }
+    .pf-dash-header-inner > .pf-kpi-strip {
+        order: 3; flex: 1 1 100%;
+        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0; overflow: visible;
+        -webkit-mask-image: none; mask-image: none;
+        border: 1px solid var(--line); border-radius: .85rem; background: var(--surface);
+    }
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi {
+        min-width: 0; padding: .6rem .8rem;
+        border-inline-end: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    }
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi:nth-child(2n) { border-inline-end: none; }
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi:nth-last-child(-n+2):nth-child(odd),
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi:last-child { border-bottom: none; }
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi__label { white-space: normal; line-height: 1.25; }
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi__value,
+    .pf-dash-header-inner > .pf-kpi-strip .pf-kpi__sub { overflow: hidden; text-overflow: ellipsis; }
+}
+
+.pf-portfolio-card .default-badge { white-space: nowrap; }
+
+/* Unverified halt (audit N6): amber, distinct from the red verified lockdown. */
+.pf-halt-unverified {
+    display: flex; align-items: flex-start; gap: .9rem;
+    margin-bottom: 1.25rem; padding: 1rem 1.25rem;
+    border-radius: var(--pf-radius, .85rem);
+    background: rgba(245, 158, 11, .10);
+    border: 1px solid rgba(245, 158, 11, .45);
+    color: #B45309;
+}
+[data-theme="dark"] .pf-halt-unverified { color: #FBBF24; background: rgba(245, 158, 11, .12); }
+.pf-halt-unverified__icon { flex-shrink: 0; margin-top: .1rem; }
+.pf-halt-unverified h4 { margin: 0 0 .25rem; font-size: .9rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+html[dir="rtl"] .pf-halt-unverified h4 { letter-spacing: 0; }
+.pf-halt-unverified p { margin: 0; font-size: .82rem; line-height: 1.5; color: var(--ink); opacity: .85; }
+.pf-halt-unverified p + p { margin-top: .3rem; }
+.pf-halt-unverified__meta { font-size: .74rem !important; color: var(--muted) !important; }
+
+/* Status KPI holds words, not figures: let it wrap instead of clipping
+   ("متوقف مؤ…" — audit N11). Amber = halt recorded but not verified. */
+.pf-kpi--status .pf-kpi__value,
+.pf-kpi--status .pf-kpi__sub { white-space: normal; overflow-wrap: anywhere; }
+.pf-kpi--status { min-width: 150px; }
+.pf-warn { color: #B45309; }
+[data-theme="dark"] .pf-warn { color: #FBBF24; }
+.pf-status-badge--unverified { background: rgba(245,158,11,.12); color: #B45309; border: 1px solid rgba(245,158,11,.35); padding: .1rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+[data-theme="dark"] .pf-status-badge--unverified { color: #FBBF24; }
+.pf-live-pill.is-offline { color: var(--muted); border-color: var(--line); }
+.pf-live-pill.is-offline .pf-live-dot { background: var(--muted); animation: none; }
+.pf-kpi--status .pf-kpi__value { font-family: inherit; font-weight: 700; }
+html[dir="rtl"] .pf-kpi--status .pf-kpi__value,
+html[dir="rtl"] .pf-kpi--status .pf-kpi__sub { unicode-bidi: normal; text-align: start; }

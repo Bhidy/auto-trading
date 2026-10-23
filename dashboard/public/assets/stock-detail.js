@@ -31,6 +31,7 @@
         }
         var src = '/assets/logos/' + logoFile + '.svg';
         var fallbackSrc = 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=32';
+        if (!ATFmt.hasLocalLogo(logoFile)) src = fallbackSrc;
         return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + ticker + '" ' +
             'style="width:' + size + 'px; height:' + size + 'px; border-radius:50%; object-fit:contain; background:rgba(255,255,255,0.04); border:1px solid var(--line); flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:0.45rem; transition: transform 0.2s;" ' +
             'onerror="this.onerror=null; this.src=\'' + fallbackSrc + '\';" ' +
@@ -60,14 +61,14 @@
             search_tag: 'Terminal Analysis',
             search_title: 'Institutional Quote Research',
             btn_search: 'Search',
-            realtime_label: 'REAL-TIME MULTI-TICK',
+            realtime_label: 'IEX FEED VIA ALPACA · MAY BE DELAYED',
             chart_title: 'Technical Intraday Curve',
             fundamentals_title: 'Fundamentals & Financial Key metrics',
             options_title: 'Derivative Options Chain (Call/Put Spreads)',
             sec_title: 'Regulatory SEC Filings',
-            ai_summary_title: 'AI Research Summary',
-            ai_score_label: 'Overall AI Catalyst Index',
-            ai_score_sub: 'Neural confidence index (Scale 1-10)',
+            ai_summary_title: 'Signal Engine Summary',
+            ai_score_label: 'Composite signal score',
+            ai_score_sub: 'Rule-based multi-factor score (−10 to +10)',
             l2_title: 'Level 2 Depth Order Book',
             l2_sub: 'Live depth ladders and liquid spreads (Bids / Asks)',
             consensus_title: 'Analyst Consensus Ratings',
@@ -115,14 +116,14 @@
             search_tag: 'تحليل المنصة الرقمية',
             search_title: 'أبحاث وتقارير الأسهم الفورية',
             btn_search: 'بحث',
-            realtime_label: 'بث حي - متعدد البيانات',
+            realtime_label: 'بيانات IEX عبر Alpaca · قد تكون متأخرة',
             chart_title: 'المنحنى الفني للأسعار',
             fundamentals_title: 'البيانات الأساسية والمالية الكبرى',
             options_title: 'سلسلة عقود الخيارات المشتقة (Calls/Puts)',
             sec_title: 'الإفصاحات والتقارير التنظيمية SEC',
-            ai_summary_title: 'ملخص أبحاث الذكاء الاصطناعي',
-            ai_score_label: 'مؤشر محفزات الذكاء الاصطناعي الإجمالي',
-            ai_score_sub: 'مؤشر الثقة العصبي (مقياس ١-١٠)',
+            ai_summary_title: 'ملخص محرك الإشارات',
+            ai_score_label: 'درجة الإشارة المركّبة',
+            ai_score_sub: 'درجة متعددة العوامل قائمة على قواعد (من −10 إلى +10)',
             l2_title: 'دفتر أوامر المستوى الثاني L2',
             l2_sub: 'عمق صانع السوق وفجوات السيولة الحية',
             consensus_title: 'توقعات وتوصيات المحللين',
@@ -178,8 +179,9 @@
         currentSymbol = symbol.trim().toUpperCase() || 'AAPL';
         
         fetch(`/api/stock/${currentSymbol}/details`)
-            .then(function(res) { return res.json(); })
+            .then(function(res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
             .then(function(data) {
+                if (!data.symbol) data.symbol = currentSymbol;
                 renderStockData(data);
             })
             .catch(function(err) {
@@ -196,7 +198,7 @@
         var logoEl = document.getElementById('stockDetailLogo');
         if (logoEl) {
             var logoFile = symbol.toUpperCase();
-            logoEl.src = '/assets/logos/' + logoFile + '.svg';
+            logoEl.src = ATFmt.hasLocalLogo(logoFile) ? '/assets/logos/' + logoFile + '.svg' : 'https://img.logo.dev/ticker/' + logoFile.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=128';
             logoEl.onerror = function() {
                 this.onerror = null;
                 this.src = 'https://img.logo.dev/ticker/' + logoFile + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
@@ -218,6 +220,7 @@
             pill.className = 'chg-pill';
             pill.style.color = 'var(--muted)';
             pill.textContent = (lang === 'ar' ? 'لا توجد بيانات لهذا الرمز' : 'Symbol not found / no data');
+            renderAIResearchSummary(symbol);   // signal panel is independent of the quote
             return;
         }
 
@@ -230,19 +233,20 @@
         heroEl.style.color = 'var(--ink)';
         heroEl.textContent = '$' + quote.price.toFixed(2);
 
-        // Change calculate
-        var prevClose = parseFloat(profile.prev || quote.price);
-        var change = quote.price - prevClose;
-        var changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
-        
+        // Change vs the PRIOR session close. No prior close → no change shown
+        // (never a fabricated "+0.00%").
+        var prevClose = parseFloat(profile.prev) || null;
         var changePill = document.getElementById('stockChangePill');
         changePill.style.color = '';
-        if (change >= 0) {
-            changePill.className = 'chg-pill pos';
-            changePill.textContent = '▲ +' + changePct.toFixed(2) + '%';
+        if (prevClose > 0) {
+            var changePct = (quote.price - prevClose) / prevClose * 100;
+            changePill.className = 'chg-pill ' + (changePct >= 0 ? 'pos' : 'neg');
+            changePill.textContent = (changePct >= 0 ? '▲ ' : '▼ ') + ATFmt.signedPct(changePct);
         } else {
-            changePill.className = 'chg-pill neg';
-            changePill.textContent = '▼ ' + changePct.toFixed(2) + '%';
+            changePill.className = 'chg-pill';
+            changePill.style.color = 'var(--muted)';
+            changePill.textContent = '—';
+            prevClose = quote.price;
         }
 
         // Render sections
@@ -354,7 +358,7 @@
 
                 if (matched) {
                     var score = (matched.score * 10).toFixed(1);
-                    var reasons = (matched.reasons || []).join('. ');
+                    var reasons = (matched.reasons || []).map(ATFmt.reason).join('. ');
                     var ind = matched.indicators || {};
                     var extra = '';
                     if (ind.rsi14) extra += 'RSI: ' + ind.rsi14.toFixed(1);
@@ -363,7 +367,7 @@
 
                     document.getElementById('aiCatalystText').textContent = matched.signal + ' signal — ' + reasons + (extra ? ' [' + extra + ']' : '');
                     document.getElementById('aiCatalystScoreRing').textContent = score;
-                    document.getElementById('aiCatalystScoreRing').style.setProperty('--score-fill', (parseFloat(score) * 10) + '%');
+                    document.getElementById('aiCatalystScoreRing').style.setProperty('--score-fill', Math.min(100, Math.abs(parseFloat(score)) * 10) + '%');
                 } else {
                     document.getElementById('aiCatalystText').textContent = 'No active AI signal for ' + symbol + '. Not in current trading watchlist.';
                     document.getElementById('aiCatalystScoreRing').textContent = 'N/A';
@@ -397,7 +401,7 @@
             { label: 'Gamma', val: greeks.gamma ? greeks.gamma.toFixed(4) : '—', color: '#E55A1F' },
             { label: 'Theta', val: greeks.theta ? greeks.theta.toFixed(4) : '—', color: 'var(--pf-red)' },
             { label: 'Vega', val: greeks.vega ? greeks.vega.toFixed(4) : '—', color: 'var(--pf-green)' },
-            { label: 'Rho', val: greeks.rho ? greeks.rho.toFixed(4) : '—', color: '#8b5cf6' },
+            { label: 'Rho', val: greeks.rho ? greeks.rho.toFixed(4) : '—', color: '#A33A14' },
             { label: 'IV', val: iv ? (iv * 100).toFixed(1) + '%' : '—', color: 'var(--teal)' }
         ];
         grid.innerHTML = '<div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">' + contractId.slice(0, 18) + '</div>' +
@@ -488,10 +492,10 @@
         if (!ctx) return;
 
         if (range === '1D') {
-            fetch('/api/market/bars/' + currentSymbol + '?timeframe=5Min&limit=78')
+            fetch('/api/market/bars/' + currentSymbol + '?timeframe=5Min&limit=200&start=' + ATFmt.intradayStart())
                 .then(function(r) { return r.ok ? r.json() : []; })
                 .then(function(bars) {
-                    renderChartFromBars(ctx, bars || []);
+                    renderChartFromBars(ctx, ATFmt.lastSession(bars || []));
                 })
                 .catch(function() {
                     renderChartFallback(ctx);
@@ -509,10 +513,11 @@
             return;
         }
 
+        // Intraday ticks in New York time (the exchange clock), marked ET (audit D6).
         var labels = slice.map(function(b) {
+            if (b.t && String(b.t).indexOf('T') >= 0) return ATFmt.etTime(b.t);
             var date = new Date(b.t);
-            if (b.t && b.t.includes('T')) return b.t.slice(11, 16);
-            return isNaN(date.getTime()) ? b.t : date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' });
+            return isNaN(date.getTime()) ? b.t : date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
         });
         var prices = slice.map(function(b) { return b.c; });
 
@@ -550,7 +555,8 @@
                 scales: {
                     x: {
                         grid: { color: gridColor },
-                        ticks: { color: inkColor, font: { size: isIntraday ? 8 : 10 }, maxTicksLimit: isIntraday ? 12 : 8, maxRotation: 0 }
+                        ticks: { color: inkColor, font: { size: isIntraday ? 8 : 10 }, maxTicksLimit: isIntraday ? 12 : 8, maxRotation: 0 },
+                        title: { display: isIntraday, text: lang === 'ar' ? 'التوقيت: نيويورك (ET)' : 'Time (ET, New York)', color: inkColor, font: { size: 10 } }
                     },
                     y: {
                         position: lang === 'ar' ? 'right' : 'left',
@@ -628,7 +634,7 @@
                         var q = data[sym];
                         if (q) {
                             var sign = q.change >= 0 ? '▲' : '▼';
-                            var cls = q.change >= 0 ? 'pf-pos' : 'pf-neg';
+                            var cls = ATFmt.signClass(q.change);
                             html += `<div class="pf-ticker-item">
                                 <span class="sym">${sym}</span>
                                 <span class="price pf-num">$${q.price.toFixed(2)}</span>

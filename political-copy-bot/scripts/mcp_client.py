@@ -10,7 +10,8 @@ import subprocess
 import time
 
 
-def call_mcp_tool(tool_name: str, arguments: dict, timeout: int = 120) -> dict:
+def call_mcp_tool(tool_name: str, arguments: dict, timeout: int = 120,
+                  max_attempts: int = 5) -> dict:
     """
     Call an mcp-capitol-trades tool via stdio JSON-RPC.
 
@@ -21,8 +22,14 @@ def call_mcp_tool(tool_name: str, arguments: dict, timeout: int = 120) -> dict:
     per-politician calls don't retry in lockstep. Other errors raise immediately.
     A scan still fully rate-limited after this fires the feed-dark conformance
     alarm (politician_bot.disclosure_feed_status).
+
+    ``max_attempts`` / ``timeout`` are caller-tunable so the scan can PROBE the
+    feed once, cheaply, before committing to the full per-politician sweep
+    (audit 2026-10-23 D2: 14 fetches x ~75 s of retries against a WAF-blocked
+    feed blew the 15-min job timeout every day). A subprocess timeout raises
+    ``subprocess.TimeoutExpired`` to the caller, which counts it as a failure.
     """
-    MAX_ATTEMPTS = 5
+    MAX_ATTEMPTS = max(1, int(max_attempts))
 
     for attempt in range(MAX_ATTEMPTS):
         if attempt:

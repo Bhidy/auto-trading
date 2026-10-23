@@ -53,6 +53,7 @@ on:
 
 permissions:
   contents: write
+  actions: read      # P1 freshness: is a p1-trading run for today still active?
 
 concurrency:
   group: guardian
@@ -61,9 +62,24 @@ concurrency:
 jobs:
   catchup:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
+
+      # D1 (audit 2026-10-23): a queued `repository_dispatch` checks out the
+      # commit from DISPATCH time. Back-to-back dispatches (the external
+      # scheduler fires several per morning) therefore ran their freshness gate
+      # against state from BEFORE the previous Guardian committed, re-ran P2,
+      # placed duplicate copy-sells (CB, HD) and the commit then overwrote newer
+      # trade_log rows. Sync to the latest main BEFORE any gate reads state.
+      - name: Sync to latest origin/main
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git reset --hard origin/main
+          echo "State base: $(git rev-parse --short HEAD)"
 
       - uses: actions/setup-python@v6
         with:
@@ -72,7 +88,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          npm install -g @anguslin/mcp-capitol-trades@1.0.1 || echo "P2 MCP install failed (P2 catch-up will no-op)"
+          npm install -g @anguslin/mcp-capitol-trades@1.0.1 || echo "P2 MCP install failed (P2 catch-up runs on the House index only)"
 
       - name: Create Alpaca configs (P1/P2/P3)
         run: |
@@ -102,64 +118,161 @@ jobs:
           }
           CONF
 
+      # One freshness rule, used by the initial assessment AND re-checked
+      # immediately before each portfolio runs. A portfolio is FRESH if its
+      # run-only artifact is dated the current ET session (or later) in EITHER
+      # the working tree or the LATEST origin/main (re-fetched on every check,
+      # so a native cron or another Guardian that committed while this job was
+      # running is seen). Exit 0 = fresh (skip), 1 = stale (run).
+      #   P1: data/signals.json            (written only by morning-research)
+      #       OR a P1 trading-session order (p1mom-/p1core-/p1-) at the BROKER
+      #       today (ground truth; survives a late/lost state commit) OR a
+      #       p1-trading run for today still queued/in progress (gh run list).
+      #   P2: strategy_conformance.json     (written only by a market-open scan;
+      #       portfolio_state.json is ALSO written by the hourly monitor, so it
+      #       read fresh on days the scan never ran)
+      #   P3: event-driven-bot signals.json (written only by morning-scan)
+      - name: Install freshness gate
+        run: |
+          cat > "$RUNNER_TEMP/guardian_fresh.py" << 'PY'
+          import datetime, json, os, subprocess, sys
+          from zoneinfo import ZoneInfo
+
+          SOURCES = {
+              "p1": ("data/signals.json", ("timestamp",)),
+              "p2": ("political-copy-bot/data/strategy_conformance.json", ("timestamp",)),
+              "p3": ("event-driven-bot/data/signals.json", ("timestamp", "generated_at")),
+          }
+          ET = ZoneInfo("America/New_York")
+
+          def et_date(ts):
+              try:
+                  dt = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+              except ValueError:
+                  return str(ts)[:10]
+              if dt.tzinfo is None:
+                  dt = dt.replace(tzinfo=datetime.timezone.utc)
+              return dt.astimezone(ET).strftime("%Y-%m-%d")
+
+          def stamp(text, keys):
+              try:
+                  d = json.loads(text)
+              except Exception:
+                  return ""
+              if not isinstance(d, dict):
+                  return ""
+              for k in keys:
+                  if d.get(k):
+                      return et_date(d[k])
+              return ""
+
+          P1_SESSION_PREFIXES = ("p1mom-", "p1core-", "p1-")   # trading-session orders only
+
+          def p1_broker_traded_today():
+              """GROUND TRUTH: did a P1 trading session place an order this ET
+              session? Reads the broker (cheap GET /v2/orders?after=ET-midnight).
+              Catches a native run that traded but whose state commit is late or
+              lost. Monitor exits (p1stop/p1tp/p1time/p1cap) do not count."""
+              try:
+                  import requests
+                  with open("config/alpaca_config.json") as f:
+                      cfg = json.load(f)
+              except Exception:
+                  return False                       # no creds here: signals rule only
+              start = (datetime.datetime.now(ET).replace(hour=0, minute=0, second=0, microsecond=0)
+                       .astimezone(datetime.timezone.utc).isoformat())
+              try:
+                  r = requests.get(cfg["base_url"] + "/v2/orders", timeout=15,
+                                   headers={"APCA-API-KEY-ID": cfg["api_key"],
+                                            "APCA-API-SECRET-KEY": cfg["api_secret"]},
+                                   params={"status": "all", "after": start, "limit": 500})
+                  r.raise_for_status()
+                  orders = r.json() or []
+              except Exception as e:
+                  print(f"P1 broker order check unavailable ({e}) — signals rule only")
+                  return False
+              hits = [o for o in orders
+                      if str(o.get("client_order_id") or "").startswith(P1_SESSION_PREFIXES)]
+              if hits:
+                  print(f"P1 broker: {len(hits)} trading-session order(s) today")
+              return bool(hits)
+
+          def p1_trading_run_active(today):
+              """A native p1-trading run created this ET session that is still
+              queued/in progress will trade itself — don't race it."""
+              if not os.environ.get("GH_TOKEN"):
+                  return False
+              try:
+                  r = subprocess.run(["gh", "run", "list", "--workflow", "p1-trading.yml",
+                                      "--limit", "10", "--json", "status,createdAt"],
+                                     capture_output=True, text=True, timeout=30, check=False)
+                  runs = json.loads(r.stdout or "[]") if r.returncode == 0 else []
+              except Exception:
+                  return False
+              live = [x for x in runs if x.get("status") in
+                      ("queued", "in_progress", "waiting", "pending", "requested")
+                      and et_date(x.get("createdAt")) == today]
+              if live:
+                  print(f"P1: {len(live)} p1-trading run(s) for today still active")
+              return bool(live)
+
+          pid = sys.argv[1]
+          path, keys = SOURCES[pid]
+          today = datetime.datetime.now(ET).strftime("%Y-%m-%d")
+          try:
+              local = stamp(open(path).read(), keys)
+          except OSError:
+              local = ""
+          subprocess.run(["git", "fetch", "-q", "--no-tags", "--depth=1", "origin", "main"],
+                         check=False, timeout=60)
+          r = subprocess.run(["git", "show", f"origin/main:{path}"],
+                             capture_output=True, text=True, check=False)
+          remote = stamp(r.stdout, keys) if r.returncode == 0 else ""
+          fresh = max(local, remote) >= today
+          if not fresh and pid == "p1":
+              fresh = p1_broker_traded_today() or p1_trading_run_active(today)
+          print(f"{pid.upper()} session={today} local={local or 'none'} "
+                f"origin/main={remote or 'none'} -> {'FRESH (skip)' if fresh else 'STALE (run)'}")
+          sys.exit(0 if fresh else 1)
+          PY
+
       - name: Assess market + per-portfolio freshness
         id: assess
         run: |
-          python3 << 'PY'
-          import json, os, datetime, requests
-
-          today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-
+          IS_OPEN=$(python3 - << 'PY'
+          import json, requests
           with open("config/alpaca_config.json") as f:
               cfg = json.load(f)
           h = {"APCA-API-KEY-ID": cfg["api_key"], "APCA-API-SECRET-KEY": cfg["api_secret"]}
           try:
               clock = requests.get("https://paper-api.alpaca.markets/v2/clock", headers=h, timeout=15).json()
-              is_open = bool(clock.get("is_open", False))
-          except Exception as e:
-              print(f"Clock check failed ({e}) — failing closed: treat market as CLOSED")
-              is_open = False
-
-          def date_in(path, *keys):
-              try:
-                  with open(path) as f:
-                      d = json.load(f)
-              except Exception:
-                  return ""
-              for k in keys:
-                  v = d.get(k)
-                  if v:
-                      return str(v)[:10]
-              return ""
-
-          p1_date = date_in("data/signals.json", "timestamp")
-          p3_date = date_in("event-driven-bot/data/signals.json", "timestamp", "generated_at")
-          p2_date = date_in("political-copy-bot/data/portfolio_state.json", "timestamp")
-
-          p1_stale = p1_date != today
-          p2_stale = p2_date != today
-          p3_stale = p3_date != today
-
-          print(f"today={today} market_open={is_open}")
-          print(f"P1 last={p1_date or 'none'} stale={p1_stale}")
-          print(f"P2 last={p2_date or 'none'} stale={p2_stale}")
-          print(f"P3 last={p3_date or 'none'} stale={p3_stale}")
-
-          out = os.environ["GITHUB_OUTPUT"]
-          with open(out, "a") as f:
-              f.write(f"is_open={str(is_open).lower()}\n")
-              f.write(f"p1_stale={str(p1_stale).lower()}\n")
-              f.write(f"p2_stale={str(p2_stale).lower()}\n")
-              f.write(f"p3_stale={str(p3_stale).lower()}\n")
+              print(str(bool(clock.get("is_open", False))).lower())
+          except Exception:
+              print("false")   # fail closed: treat market as CLOSED
           PY
+          )
+          echo "market_open=$IS_OPEN"
+          echo "is_open=$IS_OPEN" >> "$GITHUB_OUTPUT"
+          for P in p1 p2 p3; do
+            if python3 "$RUNNER_TEMP/guardian_fresh.py" "$P"; then
+              echo "${P}_stale=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "${P}_stale=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
 
+      # Each catch-up RE-CHECKS freshness against the latest origin/main right
+      # before running: the earlier assessment can be minutes old by now.
       - name: P1 catch-up (only if market open AND not run today)
         id: p1catch
         if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p1_stale == 'true'
         continue-on-error: true
         run: |
-          echo "::warning::P1 had not run today — Guardian running its morning session now."
           cd "$GITHUB_WORKSPACE"
+          if python3 "$RUNNER_TEMP/guardian_fresh.py" p1; then
+            echo "P1 became fresh since assessment — skipping."; exit 0
+          fi
+          echo "::warning::P1 had not run today — Guardian running its morning session now."
           export PYTHONPATH="$GITHUB_WORKSPACE/scripts"
           python3 scripts/autonomous_runner.py morning-research
           python3 scripts/autonomous_runner.py trading-session
@@ -169,10 +282,14 @@ jobs:
         if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p3_stale == 'true'
         continue-on-error: true
         run: |
+          cd "$GITHUB_WORKSPACE"
+          if python3 "$RUNNER_TEMP/guardian_fresh.py" p3; then
+            echo "P3 became fresh since assessment — skipping."; exit 0
+          fi
           echo "::warning::P3 had not run today — Guardian running its pipeline now."
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
-          DAY=$(date -u +%u)
+          DAY=$(TZ=America/New_York date +%u)
           if [ "$DAY" = "1" ]; then
             python3 scripts/event_driven_bot.py weekly-screen || true
           fi
@@ -185,6 +302,10 @@ jobs:
         if: steps.assess.outputs.is_open == 'true' && steps.assess.outputs.p2_stale == 'true'
         continue-on-error: true
         run: |
+          cd "$GITHUB_WORKSPACE"
+          if python3 "$RUNNER_TEMP/guardian_fresh.py" p2; then
+            echo "P2 became fresh since assessment — skipping."; exit 0
+          fi
           echo "::warning::P2 had not run today — Guardian running its scan now."
           cd "$GITHUB_WORKSPACE/political-copy-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/political-copy-bot/scripts"

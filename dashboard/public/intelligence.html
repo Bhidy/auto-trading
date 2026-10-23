@@ -111,7 +111,7 @@
                     <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
                     <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
                 </svg>
-                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                <span dir="ltr" class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
                     <span style="color: var(--ink);">Auto</span>
                     <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
                 </span>
@@ -145,23 +145,21 @@
                     <svg class="dark-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <svg class="light-icon" style="width:1.2rem;height:1.2rem;position:absolute;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
+                <button id="langToggle" class="lang-toggle display" type="button">AR</button>
             </div>
         </div>
     </nav>
 
     <div style="padding-top: 6rem; text-align: center; margin-bottom: 2rem;">
-        <span class="section-tag">Institutional Control Surface</span>
-        <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.25rem; color: var(--ink);">System Intelligence</h2>
-        <p style="color: var(--muted); max-width: 640px; margin: 0.5rem auto 0; font-size: 0.92rem;">
-            Execution quality, model validation, fee-aware accounting, cross-portfolio risk and
-            fully-automated governance — the evidence behind every autonomous decision.
-        </p>
+        <span class="section-tag" data-i18n="intel_tag">Institutional Control Surface</span>
+        <h2 style="font-family: 'DM Serif Display', serif; font-size: 2.25rem; color: var(--ink);" data-i18n="intel_title">System Intelligence</h2>
+        <p style="color: var(--muted); max-width: 640px; margin: 0.5rem auto 0; font-size: 0.92rem;" data-i18n="intel_sub">Execution quality, model validation, fee-aware accounting, cross-portfolio risk and fully-automated governance — the evidence behind every autonomous decision.</p>
     </div>
 
     <div class="intel-wrap">
         <div class="intel-toolbar">
             <div class="intel-selector" id="portfolioSelector">
-                <button class="intel-seg active" data-pf="all">All Books</button>
+                <button class="intel-seg active" data-pf="all" data-i18n="seg_all">All Books</button>
                 <button class="intel-seg" data-pf="portfolio_1">P1 · Self-Improving</button>
                 <button class="intel-seg" data-pf="portfolio_2">P2 · Capitol Shadow</button>
                 <button class="intel-seg" data-pf="portfolio_3">P3 · Cautious Sniper</button>
@@ -175,7 +173,7 @@
             <!-- Cross-portfolio concentration -->
             <div class="intel-card col-8" id="cardConcentration">
                 <div class="card-head">
-                    <div><div class="card-title">Cross-Portfolio Concentration</div>
+                    <div><div class="card-title" data-i18n="t_conc">Cross-Portfolio Concentration</div>
                         <div class="card-sub">Combined single-name &amp; sector exposure · R1</div></div>
                     <span class="pill pill-muted" id="concStatus">—</span>
                 </div>
@@ -185,7 +183,7 @@
             <!-- Validation / overfitting -->
             <div class="intel-card col-4" id="cardValidation">
                 <div class="card-head">
-                    <div><div class="card-title">Validation</div>
+                    <div><div class="card-title" data-i18n="t_val">Validation</div>
                         <div class="card-sub">Walk-forward · PBO · Deflated Sharpe</div></div>
                     <span class="pill pill-muted" id="valStatus">—</span>
                 </div>
@@ -195,7 +193,7 @@
             <!-- Execution quality -->
             <div class="intel-card col-6" id="cardExecution">
                 <div class="card-head">
-                    <div><div class="card-title">Execution Quality</div>
+                    <div><div class="card-title" data-i18n="t_exec">Execution Quality</div>
                         <div class="card-sub">Slippage · borrow · order state · C1/C2/D1</div></div>
                     <span class="pill pill-muted" id="execStatus">—</span>
                 </div>
@@ -205,7 +203,7 @@
             <!-- Accounting -->
             <div class="intel-card col-6" id="cardAccounting">
                 <div class="card-head">
-                    <div><div class="card-title">Fee-Aware Accounting</div>
+                    <div><div class="card-title" data-i18n="t_acct">Fee-Aware Accounting</div>
                         <div class="card-sub">Net-of-fee realized P&amp;L · C5</div></div>
                     <span class="pill pill-muted" id="acctStatus">—</span>
                 </div>
@@ -215,7 +213,7 @@
             <!-- Governance -->
             <div class="intel-card col-8" id="cardGovernance">
                 <div class="card-head">
-                    <div><div class="card-title">Automated Governance</div>
+                    <div><div class="card-title" data-i18n="t_gov">Automated Governance</div>
                         <div class="card-sub">Self-learning provenance &amp; auto-rollback · C4</div></div>
                     <span class="pill pill-muted" id="govStatus">—</span>
                 </div>
@@ -225,7 +223,7 @@
             <!-- Reconciliation -->
             <div class="intel-card col-4" id="cardReconcile">
                 <div class="card-head">
-                    <div><div class="card-title">Reconciliation</div>
+                    <div><div class="card-title" data-i18n="t_rec">Reconciliation</div>
                         <div class="card-sub">Broker ↔ ledger integrity · C6</div></div>
                     <span class="pill pill-muted" id="recStatus">—</span>
                 </div>

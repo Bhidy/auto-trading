@@ -6,6 +6,7 @@ Tracks every trade outcome, computes win rates, and adapts strategy parameters.
 import json
 import os
 import sys
+import uuid
 from datetime import datetime, timezone, timedelta
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -48,7 +49,10 @@ def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons,
     """
     log = load_json("trade_log.json", [])
     entry = {
-        "id": len(log) + 1,
+        # Globally unique (M4): ``len(log)+1`` collided when two runs appended
+        # concurrently and their logs were merged — close_trade matches by id,
+        # so a duplicate id closed the WRONG lot. Legacy int ids stay readable.
+        "id": uuid.uuid4().hex,
         "schema_version": SCHEMA_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "symbol": symbol,
@@ -166,6 +170,10 @@ def reduce_open_position(symbol, trim_qty, exit_price, reason="trim"):
                 "pnl": r["net_pnl"], "realized_pnl": r["net_pnl"],
                 "pnl_pct": round(r["net_pnl"] / notional * 100, 2),
                 "status": "closed", "exit_reason": reason,
+                # A partial slice is realized P&L, NOT an independent trade:
+                # counting it in win-rate inflates the sample and biases the
+                # self-learning loop (audit 2026-10-23, L3).
+                "partial_trim": True,
             })
             new_records.append(rec)
         remaining -= take
@@ -185,13 +193,27 @@ def find_open_trade(symbol):
 # PERFORMANCE METRICS
 # ---------------------------------------------------------------------------
 
+def is_partial_trim(trade):
+    """True for a FIFO partial-close slice (reduce_open_position). Older slices
+    pre-date the ``partial_trim`` flag and are recognised by their id."""
+    if not isinstance(trade, dict):
+        return False
+    return bool(trade.get("partial_trim")) or "-trim-" in str(trade.get("id", ""))
+
+
 def compute_metrics(lookback_days=None):
     log = load_json("trade_log.json", [])
-    closed = [t for t in log if t["status"] == "closed"]
+    realized = [t for t in log if t["status"] == "closed"]
 
     if lookback_days:
         cutoff = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat()
-        closed = [t for t in closed if t.get("exit_timestamp", "") >= cutoff]
+        realized = [t for t in realized if (t.get("exit_timestamp") or "") >= cutoff]
+
+    # Trade-count statistics (win rate, averages, per-trade Sharpe) use whole
+    # trades only; partial trims are slices of a still-open position (L3).
+    # Dollar totals (total_pnl, profit_factor) keep every realized record so no
+    # booked P&L disappears from the books.
+    closed = [t for t in realized if not is_partial_trim(t)]
 
     if not closed:
         return {
@@ -203,7 +225,7 @@ def compute_metrics(lookback_days=None):
             "win_loss_ratio": None,
             "max_win_pct": None,
             "max_loss_pct": None,
-            "total_pnl": 0,
+            "total_pnl": round(sum((t.get("pnl") or 0) for t in realized), 2),
             "profit_factor": None,
             "sharpe_estimate": None,
         }
@@ -216,8 +238,8 @@ def compute_metrics(lookback_days=None):
     avg_loss = sum(t["pnl_pct"] for t in losses) / len(losses) if losses else 0
     wl_ratio = abs(avg_win / avg_loss) if avg_loss != 0 else 1.0
 
-    gross_profit = sum(t["pnl"] for t in wins) if wins else 0
-    gross_loss = abs(sum(t["pnl"] for t in losses)) if losses else 1
+    gross_profit = sum((t.get("pnl") or 0) for t in realized if (t.get("pnl") or 0) > 0)
+    gross_loss = abs(sum((t.get("pnl") or 0) for t in realized if (t.get("pnl") or 0) <= 0)) or 1
     profit_factor = gross_profit / gross_loss if gross_loss > 0 else 1.0
 
     all_pnl_pcts = [t.get("pnl_pct", 0) for t in closed]
@@ -242,7 +264,8 @@ def compute_metrics(lookback_days=None):
         "win_loss_ratio": round(wl_ratio, 2),
         "max_win_pct": round(max(pnl_values), 2) if pnl_values else 0,
         "max_loss_pct": round(min(pnl_values), 2) if pnl_values else 0,
-        "total_pnl": round(sum(t.get("pnl", 0) for t in closed), 2),
+        "total_pnl": round(sum((t.get("pnl") or 0) for t in realized), 2),
+        "partial_trims_excluded": len(realized) - len(closed),
         "profit_factor": round(profit_factor, 2),
         # Per-trade dispersion ratio (NOT annualized). For the canonical,
         # annualized, equity-curve Sharpe/Sortino/Calmar use equity_curve_metrics()
@@ -267,7 +290,7 @@ def equity_curve_metrics(equity_series, risk_free_rate=0.0):
 
 def compute_metrics_by_bucket():
     log = load_json("trade_log.json", [])
-    closed = [t for t in log if t["status"] == "closed"]
+    closed = [t for t in log if t["status"] == "closed" and not is_partial_trim(t)]
     buckets = set(t.get("bucket", "unknown") for t in closed)
     result = {}
     for bucket in buckets:
@@ -285,7 +308,7 @@ def compute_metrics_by_bucket():
 
 def compute_metrics_by_symbol():
     log = load_json("trade_log.json", [])
-    closed = [t for t in log if t["status"] == "closed"]
+    closed = [t for t in log if t["status"] == "closed" and not is_partial_trim(t)]
     symbols = set(t["symbol"] for t in closed)
     result = {}
     for sym in symbols:
@@ -316,11 +339,10 @@ _GATED_KNOBS = (
 
 
 def _is_risk_increasing(knob, old, new):
-    """Direction of a proposed knob change. The committee principle: gate adding
-    risk; NEVER gate removing it. Risk-DECREASING moves (smaller size, more
-    selective entry, tighter stop) are capital preservation and apply immediately;
-    only risk-INCREASING moves need walk-forward proof. Unknown knobs are treated
-    conservatively as risk-increasing (so they stay gated)."""
+    """Direction of a proposed knob change — CLASSIFICATION ONLY (recorded in
+    the governance log). Since audit 2026-10-23 (M4) it no longer decides
+    whether a change is gated: every knob change, in either direction, must pass
+    the walk-forward gate. Unknown knobs classify as risk-increasing."""
     if old is None or new is None or new == old:
         return False
     if knob == "position_size_multiplier":
@@ -335,12 +357,11 @@ def _is_risk_increasing(knob, old, new):
 def adapt_parameters(validate_with_bars=None):
     """Adapt strategy parameters from rolling performance.
 
-    If `validate_with_bars=(symbol_bars, spy_bars)` is supplied, any change to
-    the strategy knobs must pass walk-forward out-of-sample validation against
-    the prior knobs; otherwise the knobs are reverted (fail-closed). This stops
-    the self-learning loop from tuning on live noise. Without bars, the existing
-    bounded + min-sample-size logic applies (knobs still move, but only within
-    hard bounds and after >=5/10 closed trades).
+    Every proposed change to the strategy knobs (``_GATED_KNOBS``) — in either
+    direction — must pass walk-forward out-of-sample validation against the
+    prior knobs (``validate_with_bars=(symbol_bars, spy_bars)``). Rejected,
+    un-validatable, or bar-less runs revert ALL proposed knob changes (fail
+    CLOSED). Observability fields (win rates, risk_off_active) always refresh.
     """
     import copy
 
@@ -396,10 +417,10 @@ def adapt_parameters(validate_with_bars=None):
             params["confidence_buy_threshold"] = min(params["confidence_buy_threshold"] + 0.02, 0.70)
 
     # Losing-state risk-off (committee rule: "when losing, reduce risk"). When the
-    # 30-day profit factor is below break-even on a non-trivial sample, force a
-    # de-risk step — smaller size + a more selective entry bar. This is capital
-    # preservation, so it is applied UNGATED (see the asymmetric gate below); it
-    # never requires out-of-sample proof the way ADDING risk does.
+    # 30-day profit factor is below break-even on a non-trivial sample, PROPOSE a
+    # de-risk step — smaller size + a more selective entry bar. Like every other
+    # knob move it is applied only if the walk-forward gate approves (M4); the
+    # flag itself always refreshes so the dashboard shows the losing state.
     params["risk_off_active"] = bool(metrics_30d["total_trades"] >= 5 and pf_30d < 1.0)
     if params["risk_off_active"]:
         params["position_size_multiplier"] = max(params["position_size_multiplier"] * 0.85, 0.5)
@@ -408,60 +429,87 @@ def adapt_parameters(validate_with_bars=None):
     gate_detail = None
     approved = None
     friction_bps = None
-    # Asymmetric gate: only RISK-INCREASING knob moves require validation. Any
-    # risk-decreasing move (the lines above) is kept regardless of the gate.
-    risk_on_changed = any(_is_risk_increasing(k, original.get(k), params.get(k))
-                          for k in _GATED_KNOBS)
-    if validate_with_bars is not None and risk_on_changed:
-        # Deflate the gate's Sharpe against the CUMULATIVE trial history (not just
-        # this run's windows), so multiple-testing selection bias is corrected.
-        try:
-            from shared.trial_ledger import historical_oos_sharpes
-            hist_sharpes = historical_oos_sharpes(DATA_DIR)
-        except Exception:
-            hist_sharpes = []
-        try:
-            from backtest.walk_forward import gate_param_change
-            from backtest.friction import load_friction
-            # Validate the candidate under CALIBRATED friction (advisory; floored
-            # at the documented default so favorable PAPER fills can never make a
-            # change look better than a flat 5bps assumption). Static artifact
-            # produced offline by scripts/research/calibrate_friction.py; absent or
-            # below-sample-floor -> documented default (refuse-on-small-N).
-            fric_cost_bps, fric_slip_bps = load_friction("portfolio_1", data_dir=DATA_DIR)
-            friction_bps = {"cost_bps": fric_cost_bps, "slippage_bps": fric_slip_bps}
-            symbol_bars, spy_bars = validate_with_bars
-            approved, gate_detail = gate_param_change(
-                original, params, symbol_bars, spy_bars,
-                extra_trial_sharpes=hist_sharpes,
-                cost_bps=fric_cost_bps, slippage_bps=fric_slip_bps)
-            if not approved:
-                # Revert ONLY risk-INCREASING knobs; de-risk moves stay (ungated).
-                for k in _GATED_KNOBS:
-                    if k in original and _is_risk_increasing(k, original[k], params[k]):
-                        params[k] = original[k]
-        except Exception as e:
-            # Fail closed: an un-validatable risk INCREASE is not applied. De-risk stays.
+    # EVERY knob change is gated — risk-increasing AND "de-risk" alike, and the
+    # gate fails CLOSED (audit 2026-10-23, M4). The former asymmetric gate let
+    # "de-risk" moves through unvalidated: threshold 0.50->0.70, stop 2.5->1.5
+    # ATR and size 1.0->0.5 were each logged approved:false yet KEPT, and
+    # together turned the strategy's backtest Sharpe from +0.13 into -1.43. A
+    # tighter stop / higher bar is not automatically safer — it is a different
+    # strategy and needs the same out-of-sample proof. Hard capital protection
+    # lives in config/risk_limits.json (daily/weekly/kill-switch), never here.
+    proposed = {k: {"from": original.get(k), "to": params.get(k),
+                    "risk_increasing": _is_risk_increasing(k, original.get(k), params.get(k))}
+                for k in _GATED_KNOBS
+                if k in original and original.get(k) != params.get(k)}
+
+    decision_note = None
+
+    def _revert_all():
+        for k in proposed:
+            params[k] = original[k]
+
+    if proposed:
+        if validate_with_bars is None:
+            # No bars -> no out-of-sample evidence -> nothing changes (fail CLOSED).
             approved = False
-            gate_detail = {"error": str(e)}
-            for k in _GATED_KNOBS:
-                if k in original and _is_risk_increasing(k, original[k], params[k]):
-                    params[k] = original[k]
-        # Record this evaluation in the persistent trial ledger (best-effort) so a
-        # future DSR deflates against a truthful N. Never breaks the trading loop.
-        try:
-            from shared.trial_ledger import record_trial
-            gd = gate_detail or {}
-            record_trial(DATA_DIR, {
-                "knobs": {k: params.get(k) for k in _GATED_KNOBS},
-                "n_obs": gd.get("n_windows"),
-                "oos_sharpe": gd.get("candidate_oos_sharpe"),
-                "dsr": gd.get("deflated_sharpe"),
-                "pbo": gd.get("pbo"),
-                "approved": approved,
-            })
-        except Exception:
-            pass
+            decision_note = ("walk-forward validation unavailable (no cached bars) "
+                             "— knob changes not applied (fail closed)")
+            _revert_all()
+        else:
+            # Deflate the gate's Sharpe against the CUMULATIVE trial history (not
+            # just this run's windows), so multiple-testing bias is corrected.
+            try:
+                from shared.trial_ledger import historical_oos_sharpes
+                hist_sharpes = historical_oos_sharpes(DATA_DIR)
+            except Exception:
+                hist_sharpes = []
+            try:
+                from backtest.walk_forward import gate_param_change
+                from backtest.friction import load_friction
+                # Validate under CALIBRATED friction (floored at the documented
+                # default so favorable PAPER fills never flatter a change).
+                fric_cost_bps, fric_slip_bps = load_friction("portfolio_1", data_dir=DATA_DIR)
+                friction_bps = {"cost_bps": fric_cost_bps, "slippage_bps": fric_slip_bps}
+                symbol_bars, spy_bars = validate_with_bars
+                approved, gate_detail = gate_param_change(
+                    original, params, symbol_bars, spy_bars,
+                    extra_trial_sharpes=hist_sharpes,
+                    cost_bps=fric_cost_bps, slippage_bps=fric_slip_bps)
+                approved = bool(approved)
+                if not approved:
+                    _revert_all()
+            except Exception as e:
+                # Fail closed: an un-validatable change is not applied.
+                approved = False
+                gate_detail = {"error": str(e)}
+                _revert_all()
+            # Record this evaluation in the persistent trial ledger (best-effort)
+            # so a future DSR deflates against a truthful N.
+            try:
+                from shared.trial_ledger import record_trial
+                gd = gate_detail if isinstance(gate_detail, dict) else {}
+                record_trial(DATA_DIR, {
+                    "knobs": {k: v["to"] for k, v in proposed.items()},
+                    "n_obs": gd.get("n_windows"),
+                    "oos_sharpe": gd.get("candidate_oos_sharpe"),
+                    "dsr": gd.get("deflated_sharpe"),
+                    "pbo": gd.get("pbo"),
+                    "approved": approved,
+                })
+            except Exception:
+                pass
+    else:
+        approved = True                     # nothing proposed -> nothing to gate
+
+    # The governance log must say what HAPPENED: what was proposed, the gate's
+    # evidence, and whether it was kept. A change is kept iff approved is True.
+    param_decision = {
+        "approved": bool(approved),
+        "kept": bool(approved) and bool(proposed),
+        "proposed_changes": proposed,
+        "gate": gate_detail,
+        "note": decision_note,
+    }
 
     save_json("strategy_params.json", params)
 
@@ -470,8 +518,8 @@ def adapt_parameters(validate_with_bars=None):
     # the loop — the walk-forward + overfitting gate is the deterministic approver.
     try:
         from shared.governance import record_param_change
-        record_param_change(DATA_DIR, original, params, gate_detail,
-                            gated_knobs=_GATED_KNOBS)
+        record_param_change(DATA_DIR, original, params, param_decision,
+                            gated_knobs=_GATED_KNOBS, approved=bool(approved))
     except Exception:
         pass  # provenance must never break the trading loop
 
@@ -481,6 +529,7 @@ def adapt_parameters(validate_with_bars=None):
         "metrics_all": metrics_all,
         "updated_params": params,
         "walk_forward_gate": gate_detail,
+        "param_decision": param_decision,
         "friction_bps": friction_bps,
     }
 

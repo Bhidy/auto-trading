@@ -170,6 +170,14 @@ def test_clean_book_places_a_bounded_trade(harness):
     assert executed[0]["trade_value"] == 8000
 
 
+def test_quarantine_blocks_all_new_entries(harness, monkeypatch):
+    monkeypatch.setattr("shared.strategy_controls.entries_enabled",
+                        lambda pid, **kw: (False, "QUARANTINED by human control"))
+    executed, alpaca, _ = harness([_signal("RTX", "Industrials")])
+    assert alpaca.placed == []
+    assert executed == []
+
+
 def test_gross_cap_blocks_when_book_full(harness):
     pos = _positions([("AAPL", 15000), ("JPM", 15000), ("XOM", 15000),
                       ("UNH", 15000), ("PG", 20000)])       # 80,000 = 80% gross

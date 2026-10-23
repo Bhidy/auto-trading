@@ -54,9 +54,9 @@ def test_gate_approval_keeps_knob(tmp_path, monkeypatch):
     assert out["updated_params"]["confidence_buy_threshold"] == 0.48
 
 
-def test_no_bars_preserves_legacy_behavior(tmp_path, monkeypatch):
+def test_no_bars_fails_closed(tmp_path, monkeypatch):
     _seed(tmp_path, monkeypatch)
-    # Without bars, no gating: the knob change applies (bounded legacy path).
+    # Audit 2026-10-23 M4: without bars the OOS gate cannot run, so the knob
+    # change is REVERTED (fail closed), never applied on live noise.
     out = pt.adapt_parameters()
-    assert out["updated_params"]["confidence_buy_threshold"] == 0.48
-    assert out["walk_forward_gate"] is None
+    assert out["updated_params"]["confidence_buy_threshold"] == 0.50

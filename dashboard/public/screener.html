@@ -37,7 +37,7 @@
         .scr-badge--yes { background: var(--pf-green-soft); color: var(--pf-green); }
         .scr-badge--no { background: var(--pf-red-soft); color: var(--pf-red); }
         .scr-badge--active { background: var(--teal-soft); color: var(--teal-dark); }
-        .scr-badge--inactive { background: rgba(148,163,184,.12); color: var(--muted); }
+        .scr-badge--inactive { background: rgba(122,107,94,.12); color: var(--muted); }
         .scr-table-scroll { max-height: 70vh; overflow-y: auto; }
         .scr-empty { text-align: center; padding: 3rem; color: var(--muted); }
         .scr-load { text-align: center; padding: 2rem; color: var(--muted); font-size: .85rem; }
@@ -50,6 +50,22 @@
         .scr-wl-name { font-weight: 700; font-size: .92rem; margin-bottom: .5rem; }
         .scr-wl-symbols { font-family: var(--pf-mono); font-size: .75rem; color: var(--muted); }
         .scr-wl-actions { display: flex; gap: .45rem; margin-top: .65rem; }
+        /* Watchlist header wraps on phones instead of overflowing (audit N9) */
+        .scr-wl-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .65rem; margin-bottom: .5rem; }
+        .scr-wl-controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+        .scr-wl-controls select { min-width: 180px; max-width: 100%; }
+        @media (max-width: 560px) {
+            .scr-wl-controls { flex: 1 1 100%; }
+            .scr-wl-controls select { flex: 1 1 0; min-width: 0; }
+            .scr-search { min-width: 0; width: 100%; }
+        }
+        /* Create-watchlist dialog — shared pf-modal / pf-field system (audit D11) */
+        .scr-wl-modal { max-width: 440px; }
+        .scr-wl-modal__title { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.35rem; letter-spacing: -0.01em; }
+        .scr-wl-symbols-input { font-family: var(--pf-mono) !important; text-transform: uppercase; letter-spacing: .02em; }
+        .scr-wl-modal__actions { display: flex; gap: .65rem; justify-content: flex-end; margin-top: .25rem; }
+        .scr-wl-error { margin: 0; font-size: .75rem; color: var(--pf-red); }
+        html[dir="rtl"] .scr-wl-modal__title { font-family: "IBM Plex Sans Arabic", sans-serif; font-weight: 600; letter-spacing: 0; }
     </style>
 </head>
 <body>
@@ -66,7 +82,7 @@
                     <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/><rect x="335" y="552" width="280" height="54" fill="#FFC396"/><ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
                     <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/><rect x="375" y="454" width="240" height="46" fill="#FFC396"/><ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
                 </svg>
-                <span style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                <span dir="ltr" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
                     <span style="color: var(--ink);">Auto</span><span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
                 </span>
             </a>
@@ -169,10 +185,10 @@
 
         <!-- Watchlists Section -->
         <div class="scr-wl-section">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+            <div class="scr-wl-head">
                 <h2 style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;margin:0;" data-key="wl_title">Alpaca Watchlists</h2>
-                <div style="display:flex;gap:.5rem;align-items:center;">
-                    <select id="wlPortfolio" aria-label="Select portfolio for watchlist" class="scr-filter" style="min-width:180px;"></select>
+                <div class="scr-wl-controls">
+                    <select id="wlPortfolio" aria-label="Select portfolio for watchlist" class="scr-filter"></select>
                     <button class="pf-btn pf-btn--sm pf-btn--primary" id="btnNewWl" data-key="btn_new_wl">+ New Watchlist</button>
                 </div>
             </div>
@@ -182,21 +198,27 @@
         </div>
 
         <!-- New Watchlist Modal -->
-        <div class="ord-modal-bg" id="wlModal">
-            <div class="ord-modal" style="max-width:420px;">
-                <h3 style="font-family:'DM Serif Display',serif;font-weight:400;margin:0 0 1rem;" data-key="wl_create">Create Watchlist</h3>
-                <div class="ord-form-row">
-                    <label class="ord-form-label" data-key="wl_name">Name</label>
-                    <input type="text" id="wlName" class="ord-form-input" placeholder="My Watchlist">
+        <div class="pf-modal-overlay" id="wlModal" role="dialog" aria-modal="true" aria-labelledby="wlModalTitle">
+            <div class="pf-modal scr-wl-modal">
+                <div class="pf-modal-head">
+                    <h3 id="wlModalTitle" class="scr-wl-modal__title" data-key="wl_create">Create Watchlist</h3>
+                    <button type="button" class="pf-modal-close" id="btnCloseWl" aria-label="Close">✕</button>
                 </div>
-                <div class="ord-form-row">
-                    <label class="ord-form-label" data-key="wl_symbols">Symbols (comma separated)</label>
-                    <input type="text" id="wlSymbols" class="ord-form-input" placeholder="AAPL, MSFT, NVDA" style="text-transform:uppercase;">
-                </div>
-                <div style="display:flex;gap:.65rem;justify-content:flex-end;margin-top:1rem;">
-                    <button class="pf-btn" id="btnCancelWl" data-key="btn_cancel">Cancel</button>
-                    <button class="pf-btn pf-btn--primary" id="btnCreateWl" data-key="btn_create">Create</button>
-                </div>
+                <form class="pf-form" id="wlForm" novalidate>
+                    <div class="pf-field">
+                        <label for="wlName" data-key="wl_name">Name</label>
+                        <input type="text" id="wlName" placeholder="My Watchlist" autocomplete="off" required maxlength="64">
+                    </div>
+                    <div class="pf-field">
+                        <label for="wlSymbols" data-key="wl_symbols">Symbols (comma separated)</label>
+                        <input type="text" id="wlSymbols" class="scr-wl-symbols-input" placeholder="AAPL, MSFT, NVDA" autocomplete="off" spellcheck="false">
+                    </div>
+                    <p class="scr-wl-error" id="wlError" role="alert" hidden></p>
+                    <div class="scr-wl-modal__actions">
+                        <button type="button" class="pf-btn" id="btnCancelWl" data-key="btn_cancel">Cancel</button>
+                        <button type="submit" class="pf-btn pf-btn--primary" id="btnCreateWl" data-key="btn_create">Create</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

@@ -26,16 +26,16 @@
             nav_options: 'Options Lab',
             nav_screener: 'Screener',
             nav_history: 'Account History',
-            research_tag: 'Neural Quant Intelligence',
+            research_tag: 'Quant Signal Research',
             research_title: 'AI Research & Insights',
-            box_title: 'Neural Stock Analyst',
-            box_sub: 'Input asset symbol and run deep neural analysis for detailed catalysts splits, risk gauges, and target score.',
+            box_title: 'Signal Engine Lookup',
+            box_sub: 'Enter a symbol to see the rule-based multi-factor score, the reasons behind it, and its risk factors.',
             btn_analyze: 'Analyze',
-            out_confidence: 'NEURAL CONFIDENCE',
+            out_confidence: 'COMPOSITE SCORE (−10 TO +10)',
             out_catalysts: 'Growth Catalysts',
             out_risks: 'Identified Risk Indexes',
             strat_title: 'Active Bot Allocations Explanation',
-            strat1_name: 'Improving Brain (Quant Neural)',
+            strat1_name: 'Improving Brain (Multi-factor Quant)',
             strat1_style: 'CONVEX GROWTH',
             strat1_desc: 'Holds high-liquidity indexes and dominant tech shares (SPY, NVDA, AAPL). Automatically rotates allocations into cash or safe-havens upon detecting high-frequency market volume drop patterns.',
             strat2_name: 'Capitol Shadow (Legislative Copy)',
@@ -68,16 +68,16 @@
             nav_options: 'مختبر الخيارات',
             nav_screener: 'فلتر الأسهم',
             nav_history: 'سجل الحساب',
-            research_tag: 'الذكاء الكمي الاصطناعي',
+            research_tag: 'أبحاث الإشارات الكمية',
             research_title: 'الأبحاث والذكاء الاصطناعي',
-            box_title: 'محلل الأسهم العصبي الذكي',
-            box_sub: 'أدخل رمز السهم لتشغيل تحليل الشبكة العصبية الشامل لكشف المحفزات الماليّة، مؤشرات المخاطر، ودرجة تقييم السهم الفورية.',
+            box_title: 'استعلام محرك الإشارات',
+            box_sub: 'أدخل رمز السهم لعرض الدرجة متعددة العوامل القائمة على قواعد، وأسبابها، وعوامل المخاطر.',
             btn_analyze: 'حلل الآن',
-            out_confidence: 'مؤشر ثقة الشبكة العصبية',
+            out_confidence: 'الدرجة المركّبة (من −10 إلى +10)',
             out_catalysts: 'محفزات وعوامل النمو الرئيسية',
             out_risks: 'مؤشرات المخاطر التي تم رصدها',
             strat_title: 'تفسير وتبرير توزيع البوتات الحالي',
-            strat1_name: 'الدماغ ذاتي التحسين (الكمي العصبي)',
+            strat1_name: 'الدماغ ذاتي التحسين (كمي متعدد العوامل)',
             strat1_style: 'نمو محدب للأسهم الكبرى',
             strat1_desc: 'يحتفظ بالمؤشرات عالية السيولة والأسهم التكنولوجية المهيمنة (SPY, NVDA, AAPL). يدير المحفظة بالتحول للنقدية تلقائياً عند استشعار انخفاضات السيولة.',
             strat2_name: 'بوت ظل الكابيتول (نسخ صفقات الكونجرس)',
@@ -148,16 +148,17 @@
 
             if (matched) {
                 var scoreVal = ((matched.score || 0) * 10).toFixed(1);
-                document.getElementById('outScore').textContent = scoreVal + ' / 10';
-                var catalysts = (matched.reasons || []).filter(function(r) {
+                document.getElementById('outScore').textContent = (scoreVal > 0 ? '+' : '') + scoreVal;
+                var reasonsH = (matched.reasons || []).map(ATFmt.reason);
+                var catalysts = reasonsH.filter(function(r) {
                     return r.toLowerCase().indexOf('bullish') !== -1 || r.toLowerCase().indexOf('uptrend') !== -1 || r.toLowerCase().indexOf('positive') !== -1 || r.toLowerCase().indexOf('above') !== -1;
                 });
-                var risks = (matched.reasons || []).filter(function(r) {
+                var risks = reasonsH.filter(function(r) {
                     return r.toLowerCase().indexOf('bearish') !== -1 || r.toLowerCase().indexOf('overbought') !== -1 || r.toLowerCase().indexOf('negative') !== -1 || r.toLowerCase().indexOf('below') !== -1;
                 });
                 if (catalysts.length === 0 && risks.length === 0) {
-                    catalysts = matched.reasons.slice(0, Math.ceil(matched.reasons.length / 2));
-                    risks = matched.reasons.slice(Math.ceil(matched.reasons.length / 2));
+                    catalysts = reasonsH.slice(0, Math.ceil(reasonsH.length / 2));
+                    risks = reasonsH.slice(Math.ceil(reasonsH.length / 2));
                 }
                 document.getElementById('outCatalystsText').innerHTML = catalysts.map(function(c, i) { return (i + 1) + '. ' + c; }).join('<br>') || 'No bullish catalysts detected.';
                 document.getElementById('outRisksText').innerHTML = risks.map(function(r, i) { return (i + 1) + '. ' + r; }).join('<br>') || 'No bearish risks detected.';
@@ -223,7 +224,7 @@
                         var q = data[sym];
                         if (q) {
                             var sign = q.change >= 0 ? '▲' : '▼';
-                            var cls = q.change >= 0 ? 'pf-pos' : 'pf-neg';
+                            var cls = ATFmt.signClass(q.change);
                             html += `<div class="pf-ticker-item">
                                 <span class="sym">${sym}</span>
                                 <span class="price pf-num">$${q.price.toFixed(2)}</span>

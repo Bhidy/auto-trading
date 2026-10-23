@@ -11,48 +11,51 @@
     // Cache for server fetched portfolios
     var serverCache = {};
 
+    // Categorical colours come ONLY from the brand solar ramp + muted brown
+    // (audit 2026-10-23 D12: no cold blues/purples, and never the gain/loss
+    // green/red, which carry P&L meaning).
     var SYMBOLS = {
-        AAPL: { name: 'Apple Inc.', nameAr: 'أبل', sector: 'Tech', color: '#a3a3a3' },
-        AMZN: { name: 'Amazon.com Inc.', nameAr: 'أمازون دوت كوم', sector: 'Tech', color: '#f59e0b' },
-        BIL:  { name: 'SPDR Barclays 1-3 Month T-Bill ETF', nameAr: 'سندات الخزانة الأمريكية قصيرة الأجل', sector: 'Defensive', color: '#475569' },
-        DIA:  { name: 'SPDR Dow Jones Industrial Average ETF', nameAr: 'مؤشر داو جونز الصناعي', sector: 'Core Equity', color: '#8b5cf6' },
-        GOOGL: { name: 'Alphabet Inc.', nameAr: 'ألفابت (جوجل)', sector: 'Tech', color: '#0ea5e9' },
-        IWM:  { name: 'iShares Russell 2000 ETF', nameAr: 'مؤشر راسل 2000 للشركات الصغيرة', sector: 'Core Equity', color: '#ec4899' },
-        QQQ:  { name: 'Invesco QQQ Trust Series 1', nameAr: 'مؤشر ناسداك 100', sector: 'Core Equity', color: '#14b8a6' },
-        SPY:  { name: 'SPDR S&P 500 ETF Trust', nameAr: 'مؤشر إس أند بي 500', sector: 'Core Equity', color: '#22c55e' },
-        TSLA: { name: 'Tesla Inc.', nameAr: 'تسلا للسيارات الكهربائية', sector: 'Tech', color: '#ef4444' },
-        XLI:  { name: 'Industrial Select Sector SPDR Fund', nameAr: 'قطاع الصناعات الأمريكي', sector: 'Sector Momentum', color: '#3b82f6' },
-        XLK:  { name: 'Technology Select Sector SPDR Fund', nameAr: 'قطاع التكنولوجيا الأمريكي', sector: 'Sector Momentum', color: '#10b981' },
-        XLY:  { name: 'Consumer Discretionary Select Sector SPDR Fund', nameAr: 'قطاع الاستهلاك الكمالي الأمريكي', sector: 'Sector Momentum', color: '#a855f7' },
-        INTU: { name: 'Intuit Inc.', nameAr: 'إنتويت للبرمجيات', sector: 'Gov Copy', color: '#06b6d4' },
-        PG:   { name: 'Procter & Gamble Co.', nameAr: 'بروكتل آند غامبل الاستهلاكية', sector: 'Gov Copy', color: '#f97316' },
-        TER:  { name: 'Teradyne Inc.', nameAr: 'تيرادين للإلكترونيات', sector: 'Gov Copy', color: '#84cc16' },
-        WDAY: { name: 'Workday Inc.', nameAr: 'ورك داي لبرمجيات الموارد', sector: 'Gov Copy', color: '#0ea5e9' },
-        CSCO: { name: 'Cisco Systems Inc.', nameAr: 'سيسكو لنظم الشبكات', sector: 'Event Tech', color: '#14b8a6' },
-        META: { name: 'Meta Platforms Inc.', nameAr: 'ميتا بلاتفورمز', sector: 'Tech', color: '#1877f2' },
-        MS:   { name: 'Morgan Stanley', nameAr: 'مورجان ستانلي للخدمات المالية', sector: 'Event Tech', color: '#3b82f6' },
-        MSFT: { name: 'Microsoft Corp.', nameAr: 'مايكروسوفت', sector: 'Tech', color: '#00a4ef' },
-        NVDA: { name: 'NVIDIA Corp.', nameAr: 'إنفيديا', sector: 'Tech', color: '#76b900' },
-        PANW: { name: 'Palo Alto Networks Inc.', nameAr: 'بالو ألتو لشبكات الأمان', sector: 'Event Tech', color: '#ec4899' },
+        AAPL: { name: 'Apple Inc.', nameAr: 'أبل', sector: 'Tech', color: '#E55A1F' },
+        AMZN: { name: 'Amazon.com Inc.', nameAr: 'أمازون دوت كوم', sector: 'Tech', color: '#FF8A3D' },
+        BIL:  { name: 'SPDR Barclays 1-3 Month T-Bill ETF', nameAr: 'سندات الخزانة الأمريكية قصيرة الأجل', sector: 'Defensive', color: '#C9461A' },
+        DIA:  { name: 'SPDR Dow Jones Industrial Average ETF', nameAr: 'مؤشر داو جونز الصناعي', sector: 'Core Equity', color: '#FFA86A' },
+        GOOGL: { name: 'Alphabet Inc.', nameAr: 'ألفابت (جوجل)', sector: 'Tech', color: '#A33A14' },
+        IWM:  { name: 'iShares Russell 2000 ETF', nameAr: 'مؤشر راسل 2000 للشركات الصغيرة', sector: 'Core Equity', color: '#F26B1F' },
+        QQQ:  { name: 'Invesco QQQ Trust Series 1', nameAr: 'مؤشر ناسداك 100', sector: 'Core Equity', color: '#FFC396' },
+        SPY:  { name: 'SPDR S&P 500 ETF Trust', nameAr: 'مؤشر إس أند بي 500', sector: 'Core Equity', color: '#6A220A' },
+        TSLA: { name: 'Tesla Inc.', nameAr: 'تسلا للسيارات الكهربائية', sector: 'Tech', color: '#7A6B5E' },
+        XLI:  { name: 'Industrial Select Sector SPDR Fund', nameAr: 'قطاع الصناعات الأمريكي', sector: 'Sector Momentum', color: '#E55A1F' },
+        XLK:  { name: 'Technology Select Sector SPDR Fund', nameAr: 'قطاع التكنولوجيا الأمريكي', sector: 'Sector Momentum', color: '#FF8A3D' },
+        XLY:  { name: 'Consumer Discretionary Select Sector SPDR Fund', nameAr: 'قطاع الاستهلاك الكمالي الأمريكي', sector: 'Sector Momentum', color: '#C9461A' },
+        INTU: { name: 'Intuit Inc.', nameAr: 'إنتويت للبرمجيات', sector: 'Gov Copy', color: '#FFA86A' },
+        PG:   { name: 'Procter & Gamble Co.', nameAr: 'بروكتل آند غامبل الاستهلاكية', sector: 'Gov Copy', color: '#A33A14' },
+        TER:  { name: 'Teradyne Inc.', nameAr: 'تيرادين للإلكترونيات', sector: 'Gov Copy', color: '#F26B1F' },
+        WDAY: { name: 'Workday Inc.', nameAr: 'ورك داي لبرمجيات الموارد', sector: 'Gov Copy', color: '#FFC396' },
+        CSCO: { name: 'Cisco Systems Inc.', nameAr: 'سيسكو لنظم الشبكات', sector: 'Event Tech', color: '#6A220A' },
+        META: { name: 'Meta Platforms Inc.', nameAr: 'ميتا بلاتفورمز', sector: 'Tech', color: '#7A6B5E' },
+        MS:   { name: 'Morgan Stanley', nameAr: 'مورجان ستانلي للخدمات المالية', sector: 'Event Tech', color: '#E55A1F' },
+        MSFT: { name: 'Microsoft Corp.', nameAr: 'مايكروسوفت', sector: 'Tech', color: '#FF8A3D' },
+        NVDA: { name: 'NVIDIA Corp.', nameAr: 'إنفيديا', sector: 'Tech', color: '#C9461A' },
+        PANW: { name: 'Palo Alto Networks Inc.', nameAr: 'بالو ألتو لشبكات الأمان', sector: 'Event Tech', color: '#FFA86A' },
         // Sector ETFs — belong to the Sector Momentum sleeve alongside XLK/XLI/XLY.
-        XLE:  { name: 'Energy Select Sector SPDR Fund', nameAr: 'قطاع الطاقة الأمريكي', sector: 'Sector Momentum', color: '#f97316' },
-        XLF:  { name: 'Financial Select Sector SPDR Fund', nameAr: 'قطاع المال الأمريكي', sector: 'Sector Momentum', color: '#2563eb' },
-        XLV:  { name: 'Health Care Select Sector SPDR Fund', nameAr: 'قطاع الرعاية الصحية الأمريكي', sector: 'Sector Momentum', color: '#14b8a6' },
+        XLE:  { name: 'Energy Select Sector SPDR Fund', nameAr: 'قطاع الطاقة الأمريكي', sector: 'Sector Momentum', color: '#A33A14' },
+        XLF:  { name: 'Financial Select Sector SPDR Fund', nameAr: 'قطاع المال الأمريكي', sector: 'Sector Momentum', color: '#F26B1F' },
+        XLV:  { name: 'Health Care Select Sector SPDR Fund', nameAr: 'قطاع الرعاية الصحية الأمريكي', sector: 'Sector Momentum', color: '#FFC396' },
         // Single names held by P2 (Capitol Shadow) / P3 (Cautious Sniper) — real GICS sectors.
-        MPC:  { name: 'Marathon Petroleum Corp.', nameAr: 'ماراثون بتروليوم', sector: 'Energy', color: '#e11d48' },
-        VLO:  { name: 'Valero Energy Corp.', nameAr: 'فاليرو للطاقة', sector: 'Energy', color: '#be123c' },
-        EOG:  { name: 'EOG Resources Inc.', nameAr: 'إي أو جي ريسورسز', sector: 'Energy', color: '#dc2626' },
-        WMT:  { name: 'Walmart Inc.', nameAr: 'وول مارت', sector: 'Consumer Staples', color: '#0071ce' },
-        HD:   { name: 'The Home Depot Inc.', nameAr: 'هوم ديبوت', sector: 'Consumer Disc.', color: '#f96302' },
-        T:    { name: 'AT&T Inc.', nameAr: 'إيه تي آند تي', sector: 'Comm. Services', color: '#00a8e0' },
-        MEDP: { name: 'Medpace Holdings Inc.', nameAr: 'ميدبيس القابضة', sector: 'Health Care', color: '#0ea5e9' },
-        PH:   { name: 'Parker-Hannifin Corp.', nameAr: 'باركر هانيفين', sector: 'Industrials', color: '#475569' }
+        MPC:  { name: 'Marathon Petroleum Corp.', nameAr: 'ماراثون بتروليوم', sector: 'Energy', color: '#6A220A' },
+        VLO:  { name: 'Valero Energy Corp.', nameAr: 'فاليرو للطاقة', sector: 'Energy', color: '#7A6B5E' },
+        EOG:  { name: 'EOG Resources Inc.', nameAr: 'إي أو جي ريسورسز', sector: 'Energy', color: '#E55A1F' },
+        WMT:  { name: 'Walmart Inc.', nameAr: 'وول مارت', sector: 'Consumer Staples', color: '#FF8A3D' },
+        HD:   { name: 'The Home Depot Inc.', nameAr: 'هوم ديبوت', sector: 'Consumer Disc.', color: '#C9461A' },
+        T:    { name: 'AT&T Inc.', nameAr: 'إيه تي آند تي', sector: 'Comm. Services', color: '#FFA86A' },
+        MEDP: { name: 'Medpace Holdings Inc.', nameAr: 'ميدبيس القابضة', sector: 'Health Care', color: '#A33A14' },
+        PH:   { name: 'Parker-Hannifin Corp.', nameAr: 'باركر هانيفين', sector: 'Industrials', color: '#F26B1F' }
     };
 
     function symMeta(sym) {
-        if (!sym) return { name: 'Other', nameAr: 'أخرى', sector: 'Other', color: '#9ca6b5' };
+        if (!sym) return { name: 'Other', nameAr: 'أخرى', sector: 'Other', color: '#7A6B5E' };
         var cleanSym = String(sym).trim().toUpperCase();
-        return SYMBOLS[cleanSym] || { name: cleanSym, nameAr: cleanSym, sector: 'Other', color: '#9ca6b5' };
+        return SYMBOLS[cleanSym] || { name: cleanSym, nameAr: cleanSym, sector: 'Other', color: '#7A6B5E' };
     }
 
     /* ─── Fetch Portfolio from Local Express Server ──────────────────────── */
@@ -99,6 +102,9 @@
                     liveConnected: data.live_connected,
                     halted: data.halted,
                     haltReason: data.halt_reason,
+                    haltVerified: data.halt_verified === undefined ? null : data.halt_verified,
+                    haltMeasuredDrawdownPct: data.halt_measured_drawdown_pct === undefined ? null : data.halt_measured_drawdown_pct,
+                    haltNote: data.halt_note || null,
                     isAggregated: data.is_aggregated || false,
                     transactions: (data.trade_log || []).map(function(t, idx) {
                         return {
@@ -122,6 +128,18 @@
             });
     }
 
+    // True only for a real intraday series: not flagged unavailable, not a
+    // journal/daily fallback, timestamps carry a time, and it spans ≤ 2 days.
+    function isIntradaySeries(data) {
+        if (!data || data.unavailable || !Array.isArray(data.history) || data.history.length < 2) return false;
+        if (/journal|daily|supabase/i.test(String(data.source || '')) && !/^alpaca_live$/.test(String(data.source))) return false;
+        var h = data.history;
+        var first = String(h[0].date || h[0].timestamp || ''), last = String(h[h.length - 1].date || h[h.length - 1].timestamp || '');
+        if (first.indexOf('T') < 0 && first.indexOf(' ') < 0) return false;
+        var span = (new Date(last).getTime() - new Date(first).getTime()) / 86400000;
+        return isFinite(span) && span <= 2;
+    }
+
     // Compiles historical equity list for charts
     function loadEquityHistory(id, period) {
         if (!SERVER_PORTFOLIOS.includes(id)) {
@@ -139,6 +157,12 @@
                 return res.json();
             })
             .then(function (data) {
+                // 1D must be genuinely intraday. A journal/daily fallback (months of
+                // daily closes) must never be plotted under "Today vs previous
+                // close" (audit N3) — report it as unavailable instead.
+                if (p === '1D' && !isIntradaySeries(data)) {
+                    return { source: (data && data.source) || 'unavailable', unavailable: true, base_value: (data && data.base_value) || 100000, history: [] };
+                }
                 if (data && data.history && data.history.length > 0) {
                     return data;
                 }
@@ -478,6 +502,9 @@
                 liveConnected: data.live_connected,
                 halted: data.halted,
                 haltReason: data.halt_reason,
+                haltVerified: data.halt_verified === undefined ? null : data.halt_verified,
+                haltMeasuredDrawdownPct: data.halt_measured_drawdown_pct === undefined ? null : data.halt_measured_drawdown_pct,
+                haltNote: data.halt_note || null,
                 isAggregated: data.is_aggregated || false,
                 transactions: []
             };

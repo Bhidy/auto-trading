@@ -57,6 +57,8 @@
             renameTitle: 'Rename Sandbox', renameLabel: 'New name', renameSave: 'Save',
             deleteTitle: 'Delete Sandbox',
             deleteConfirm: 'Permanently delete sandbox {name}? This cannot be undone.',
+            demoNote: 'Local demo on this device — hypothetical holdings, not a trading account and not included in any paper totals.',
+            hypoReturn: 'Hypothetical return',
         },
         ar: {
             title: 'ذكاء المحافظ الاستثمارية المستقلة',
@@ -94,6 +96,8 @@
             renameTitle: 'إعادة تسمية المحفظة', renameLabel: 'الاسم الجديد', renameSave: 'حفظ',
             deleteTitle: 'حذف المحفظة',
             deleteConfirm: 'هل تريد حذف المحفظة الافتراضية {name} نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+            demoNote: 'عرض محلي على هذا الجهاز — مراكز افتراضية، ليست حساب تداول ولا تدخل في أي إجماليات ورقية.',
+            hypoReturn: 'عائد افتراضي',
         }
     };
 
@@ -110,7 +114,7 @@
             // Triple clone the indices for seamless looping marquee scroll
             for (var k = 0; k < 3; k++) {
                 Object.entries(indices).forEach(function ([sym, ind]) {
-                    var cls = ind.change_pct >= 0 ? 'pf-pos' : 'pf-neg';
+                    var cls = ATFmt.signClass(ind.change_pct);
                     var arrow = ind.change_pct >= 0 ? '▲' : '▼';
                     var sign = ind.change_pct >= 0 ? '+' : '';
                     itemsHtml += '<div class="pf-ticker-item">' +
@@ -161,8 +165,9 @@
                     '</div>' +
                 '</div>' +
                 '<div class="card-value pf-num" id="val-' + cardId + '"><span class="pf-loading-spinner"></span></div>' +
+                (isServer ? '' : '<p class="pf-demo-note">' + t('demoNote') + '</p>') +
                 '<div class="card-meta">' +
-                    kv(t('totalReturn'), '<span id="ret-' + cardId + '" class="pf-num"><span class="pf-loading-spinner"></span></span>') +
+                    kv(isServer ? t('totalReturn') : t('hypoReturn'), '<span id="ret-' + cardId + '" class="pf-num"><span class="pf-loading-spinner"></span></span>') +
                     kv(t('holdings'), '<span id="qty-' + cardId + '" class="pf-num"><span class="pf-loading-spinner"></span></span>') +
                     kv(t('currency'), p.currency) +
                     kv(t('benchmark'), p.benchmark) +
@@ -250,23 +255,28 @@
                     var totalReturn = ((data.equity - initialCapital) / initialCapital) * 100;
                     
                     retEl.textContent = pct(totalReturn);
-                    retEl.className = totalReturn >= 0 ? 'pf-pos pf-num' : 'pf-neg pf-num';
+                    retEl.className = (ATFmt.signClass(totalReturn) + ' pf-num').trim();
                     
                     qtyEl.textContent = data.positions_count;
                     
-                    if (data.halted) {
+                    if (data.halted && data.halt_verified === false) {
+                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--unverified" title="${escHtml(data.halt_note || '')}">${lang === 'ar' ? 'متوقف · غير مُتحقق' : 'Halted · unverified'}</span>`;
+                    } else if (data.halted) {
                         statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--halted">${lang === 'ar' ? 'متوقف' : 'Halted'}</span>`;
                     } else if (data.live_connected) {
-                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--live">${lang === 'ar' ? 'متصل' : 'Active (Live)'}</span>`;
+                        // PAPER accounts: "live" would read as real money (audit D9).
+                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--live">${lang === 'ar' ? 'نشط · ورقي' : 'Active · Paper'}</span>`;
                     } else {
-                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--offline">${lang === 'ar' ? 'أوفلاين' : 'Active (Offline)'}</span>`;
+                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--offline">${lang === 'ar' ? 'ورقي · غير متصل' : 'Paper · Offline'}</span>`;
                     }
                 })
                 .catch(() => {
-                    valEl.textContent = '$100,000.00';
-                    retEl.textContent = '0.00%';
+                    // Unreachable → say so; never show a made-up $100,000 / 0.00%.
+                    valEl.textContent = '—';
+                    retEl.textContent = '—';
+                    retEl.className = 'pf-num';
                     qtyEl.textContent = '—';
-                    statusEl.textContent = 'Offline';
+                    statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--offline">${lang === 'ar' ? 'غير متاح' : 'Unavailable'}</span>`;
                 });
         } else {
             var holdings = (portfolio.transactions || []).filter(function(t) { return t.type === 'buy' || t.type === 'sell'; });
@@ -275,9 +285,9 @@
                 var m = PFStore.computeMetrics(portfolio);
                 valEl.textContent = '$' + fmt(m.totalValue, 2);
                 retEl.textContent = pct(m.totalReturn);
-                retEl.className = m.totalReturn >= 0 ? 'pf-pos pf-num' : 'pf-neg pf-num';
+                retEl.className = (ATFmt.signClass(m.totalReturn) + ' pf-num').trim();
                 qtyEl.textContent = m.holdingsCount;
-                statusEl.innerHTML = `<span class="pf-status-badge">${lang === 'ar' ? 'تجريبي' : 'Sandbox'}</span>`;
+                statusEl.innerHTML = `<span class="pf-status-badge">${lang === 'ar' ? 'عرض محلي' : 'Local demo'}</span>`;
             });
         }
     }

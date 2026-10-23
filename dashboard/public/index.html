@@ -5,7 +5,7 @@
     <script>if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('has-motion');}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Trading — Autonomous Quant Intelligence, Live on Alpaca</title>
+    <title>Auto Trading — Autonomous Quant Intelligence, Paper-Trading on Alpaca</title>
     <meta name="description" content="Three self-improving quant portfolios trade a $300,000 book on Alpaca, fully autonomous. Multi-factor signals, congressional copy-trades, and event-driven snipes, every market day.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,7 +49,7 @@
                     <rect x="375" y="454" width="240" height="46" fill="#FFC396"/>
                     <ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
                 </svg>
-                <span class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                <span dir="ltr" class="brand-name-rw" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
                     <span style="color: var(--ink);">Auto</span>
                     <span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
                 </span>
@@ -108,7 +108,7 @@
             <div class="home-live-strip" data-reveal="up">
                 <div class="home-stat">
                     <span class="home-stat__val" id="stat-equity">—</span>
-                    <span class="home-stat__label" data-key="stat_aum">Under management</span>
+                    <span class="home-stat__label" data-key="stat_aum">Paper capital</span>
                 </div>
                 <div class="home-stat">
                     <span class="home-stat__val" id="stat-return">—</span>
@@ -135,7 +135,7 @@
         <div class="home-wrap">
             <span class="home-kicker" data-reveal="up" data-key="proof_kicker">The system, live</span>
             <h2 class="home-h2" data-reveal="up" data-key="proof_title">Three minds, <em>one book.</em></h2>
-            <p class="home-lead" data-reveal="up" data-key="proof_lead">Separate strategies, separate accounts, separate risk. Figures pulled live.</p>
+            <p class="home-lead" data-reveal="up"><span data-key="proof_lead">Separate strategies, separate accounts, separate risk.</span> <span id="proofFeed"></span></p>
 
             <div class="pf-bento">
                 <a class="pf-tile pf-tile--feature" data-reveal="up" href="/portfolio-detail.html?id=portfolio_1" data-portfolio="portfolio_1">
@@ -340,7 +340,7 @@
     <footer class="home-footer">
         <div class="home-footer__inner">
             <div class="home-footer__brand">
-                <span class="home-foot-word"><span class="a">Auto</span><span class="b">Trading.</span></span>
+                <span dir="ltr" class="home-foot-word"><span class="a">Auto</span><span class="b">Trading.</span></span>
                 <p data-key="foot_tag">Autonomous, self-improving quant portfolios, in real time.</p>
             </div>
             <div class="home-footer__col">
@@ -377,14 +377,15 @@
                 nav_trading: 'Trading', nav_orders: 'Orders', nav_crypto: 'Crypto Terminal',
                 nav_options: 'Options Lab', nav_screener: 'Screener', nav_history: 'Account History',
                 nav_alerts: 'Alerts', nav_intelligence: 'Intelligence', nav_research: 'Research & AI', nav_settings: 'Settings',
-                hero_eyebrow: 'Live on Alpaca · three autonomous portfolios',
+                hero_eyebrow: 'Paper-trading on Alpaca · three autonomous portfolios',
                 hero_title: '<span class="line">Institutional intelligence.</span><span class="line">Automated strategies.</span><span class="line accent">Real-time edge.</span>',
                 hero_sub: 'Three self-improving quant portfolios trading a $300,000 book on Alpaca, fully autonomous.',
                 hero_cta1: 'Explore the portfolios', hero_cta2: 'Open Market Pulse',
-                stat_aum: 'Under management', stat_return: 'Total return', stat_positions: 'Open positions', stat_portfolios: 'Autonomous portfolios',
+                stat_aum: 'Paper capital', stat_return: 'Total return', stat_positions: 'Open positions', stat_portfolios: 'Autonomous portfolios',
                 scroll_cue: 'Scroll',
                 proof_kicker: 'The system, live', proof_title: 'Three minds, <em>one book.</em>',
-                proof_lead: 'Separate strategies, separate accounts, separate risk. Figures pulled live.',
+                proof_lead: 'Separate strategies, separate accounts, separate risk.',
+                proof_feed_live: 'Figures pulled live from the paper broker accounts.', proof_feed_offline: 'Broker feed offline — figures are the last committed state.', proof_feed_mixed: 'Some books are offline — their figures are the last committed state.',
                 p1_strat: 'Multi-factor quant with regime detection and nightly walk-forward self-learning.',
                 p2_strat: 'Mirrors disclosed US congressional trades, filtered for high-impact sectors.',
                 p3_strat: 'Fundamental screen, technical breakout, news sentiment. Tight bracket orders.',
@@ -418,14 +419,15 @@
                 nav_trading: 'التداول', nav_orders: 'الأوامر', nav_crypto: 'منصة الكريبتو',
                 nav_options: 'مختبر الخيارات', nav_screener: 'الماسح', nav_history: 'سجل الحساب',
                 nav_alerts: 'التنبيهات', nav_intelligence: 'الذكاء', nav_research: 'الأبحاث والذكاء', nav_settings: 'الإعدادات',
-                hero_eyebrow: 'مباشر على Alpaca · ثلاث محافظ ذاتية القيادة',
+                hero_eyebrow: 'تداول ورقي على Alpaca · ثلاث محافظ ذاتية القيادة',
                 hero_title: '<span class="line">الذكاء المؤسسي.</span><span class="line">استراتيجيات مؤتمتة.</span><span class="line accent">تفوّق فوري.</span>',
                 hero_sub: 'ثلاث محافظ كمية ذاتية التحسين تدير دفتراً بقيمة 300,000 دولار على Alpaca، باستقلال تام.',
                 hero_cta1: 'استكشف المحافظ', hero_cta2: 'افتح نبض السوق',
-                stat_aum: 'تحت الإدارة', stat_return: 'العائد الكلي', stat_positions: 'المراكز المفتوحة', stat_portfolios: 'محافظ مستقلة',
+                stat_aum: 'رأس المال الورقي', stat_return: 'العائد الكلي', stat_positions: 'المراكز المفتوحة', stat_portfolios: 'محافظ مستقلة',
                 scroll_cue: 'انزل',
                 proof_kicker: 'النظام، مباشرةً', proof_title: 'ثلاثة عقول، <em>دفتر واحد.</em>',
-                proof_lead: 'استراتيجيات منفصلة، حسابات منفصلة، مخاطر منفصلة. أرقام مباشرة.',
+                proof_lead: 'استراتيجيات منفصلة، حسابات منفصلة، مخاطر منفصلة.',
+                proof_feed_live: 'الأرقام مباشرة من حسابات الوسيط الورقية.', proof_feed_offline: 'تغذية الوسيط غير متصلة — الأرقام من آخر حالة محفوظة.', proof_feed_mixed: 'بعض المحافظ غير متصلة — أرقامها من آخر حالة محفوظة.',
                 p1_strat: 'محفظة كمية متعددة العوامل مع كشف الأنظمة وتعلّم ذاتي ليلي.',
                 p2_strat: 'تنسخ صفقات الكونغرس المُفصح عنها، مُرشّحة للقطاعات عالية التأثير.',
                 p3_strat: 'فحص أساسي، اختراق فني، ومشاعر إخبارية. أوامر محكمة.',
@@ -468,6 +470,15 @@
                 var k = el.getAttribute('data-key');
                 if (dict[k] != null) el.innerHTML = dict[k];
             });
+            paintProofFeed();
+        }
+        // "Figures pulled live" only when the broker feed really is connected (audit N7).
+        var _feedState = null;   // 'live' | 'offline' | 'mixed' | null (unknown)
+        function paintProofFeed() {
+            var el = document.getElementById('proofFeed');
+            if (!el) return;
+            var dict = T[lang] || T.en;
+            el.textContent = _feedState ? dict['proof_feed_' + _feedState] : '';
         }
         document.getElementById('langToggle').addEventListener('click', function () {
             apply(lang === 'ar' ? 'en' : 'ar');
@@ -507,6 +518,9 @@
         /* ---------- per-portfolio bento (real) ---------- */
         fetch('/api/portfolios/overview').then(function (r) { return r.json(); }).then(function (list) {
             if (!Array.isArray(list)) return;
+            var nLive = list.filter(function (p) { return p.liveConnected === true; }).length;
+            _feedState = !list.length ? null : (nLive === list.length ? 'live' : (nLive === 0 ? 'offline' : 'mixed'));
+            paintProofFeed();
             list.forEach(function (p) {
                 var tile = document.querySelector('[data-portfolio="' + p.id + '"]');
                 if (!tile) return;
@@ -518,8 +532,8 @@
                 var live = tile.querySelector('[data-live]');
                 if (live) {
                     var txt = live.querySelector('[data-live-text]');
-                    if (p.liveConnected) { live.classList.remove('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'مباشر' : 'Live'); }
-                    else { live.classList.add('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'مزامنة' : 'Synced'); }
+                    if (p.liveConnected) { live.classList.remove('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · متصل' : 'Paper · Connected'); }
+                    else { live.classList.add('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · مزامنة' : 'Paper · Synced'); }
                 }
             });
         }).catch(function () {});
@@ -552,6 +566,7 @@
             if (t.indexOf('BTC') > -1) f = 'BTC_USD'; else if (t.indexOf('ETH') > -1) f = 'ETH_USD'; else f = f.replace('/', '-');
             var src = '/assets/logos/' + f + '.svg';
             var fb = 'https://img.logo.dev/ticker/' + f.replace('_', '-') + '?token=pk_XldCCgGITcKAcfCcVh8lXg&size=64';
+            if (!ATFmt.hasLocalLogo(f)) src = fb;
             return '<img src="' + src + '" width="' + size + '" height="' + size + '" alt="' + t + '" onerror="this.onerror=null;this.src=\'' + fb + '\'">';
         }
         var MKT_SYMS = ['SPY', 'QQQ', 'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'XLK', 'XLE', 'BTC/USD', 'ETH/USD'];

@@ -1,5 +1,6 @@
 """Shared pytest fixtures. Makes the P1 `scripts/` package importable and
 provides canonical risk-limit and portfolio fixtures mirroring production."""
+import json
 import os
 import sys
 
@@ -10,6 +11,25 @@ SCRIPTS_DIR = os.path.join(REPO_ROOT, "scripts")
 for _p in (REPO_ROOT, SCRIPTS_DIR):
     if _p not in sys.path:
         sys.path.insert(0, _p)
+
+
+@pytest.fixture(autouse=True)
+def _hermetic_strategy_controls(tmp_path, monkeypatch):
+    """Isolate every test from the live, human-owned config/strategy_controls.json.
+
+    That file is governance state (e.g. P3 quarantined 2026-10-03). Reading it from
+    tests made the suite's verdict depend on today's quarantine flags, which left
+    main red after a config-only commit. Tests that exercise quarantine pass
+    ``controls=`` explicitly or patch ``entries_enabled``.
+    """
+    import shared.strategy_controls as sc
+    path = tmp_path / "strategy_controls.json"
+    path.write_text(json.dumps({
+        pid: {"new_entries_enabled": True, "reason": None,
+              "changed_at": None, "changed_by": None}
+        for pid in ("portfolio_1", "portfolio_2", "portfolio_3")
+    }))
+    monkeypatch.setattr(sc, "CONTROLS_FILE", path)
 
 
 @pytest.fixture

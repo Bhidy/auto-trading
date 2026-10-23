@@ -405,6 +405,82 @@ def active_sleeve_exit_triggers(stops, open_trades, max_loss_pct=4.0,
     return triggers
 
 
+DEFAULT_MOMENTUM_DISASTER_STOP_PCT = 25.0
+
+
+def schedule_managed_disaster_triggers(positions, open_trades, params=None,
+                                       sleeve_symbols=None):
+    """Catastrophe exit for the STOP-EXEMPT rebalanced sleeves (audit 2026-10-23, H1).
+
+    Momentum / passive-core lots are deliberately exempt from intraday trailing
+    and active stops (an intraday stop churns a monthly book). But "exempt from
+    stops" must not mean "no floor at all": while P1 sat halted, CAT rode to
+    -28.5% with nothing able to sell it. This is a WIDE disaster stop — it fires
+    only when a schedule-managed long is down at least
+    ``strategy_params.momentum_disaster_stop_pct`` (default 25%) from its
+    average entry. Risk-REDUCING, longs only, and it runs even when the book is
+    halted (exits are never suppressed). A non-positive/invalid param falls back
+    to the safe default; it can never disable the floor.
+
+    Coverage is by HELD symbol, not only by logged lot: a name is covered when
+    its open lot is schedule-managed, when it is in ``sleeve_symbols`` (the
+    momentum targets / core basket / pending late-fill entries), or when it has
+    NO open lot at all (a fill that landed after the confirm window). Only a
+    name whose open lot is an ACTIVE trade — which has its own tighter stops —
+    is left to those stops.
+    """
+    pct = _pnum(params, "momentum_disaster_stop_pct", DEFAULT_MOMENTUM_DISASTER_STOP_PCT)
+    if pct <= 0:
+        pct = DEFAULT_MOMENTUM_DISASTER_STOP_PCT
+    active_on = bool((params or {}).get("active_entries_enabled"))
+    open_lots = [t for t in (open_trades or [])
+                 if isinstance(t, dict) and t.get("status") == "open" and t.get("symbol")]
+    managed = {t["symbol"] for t in open_lots if is_schedule_managed(t, active_on)}
+    active = {t["symbol"] for t in open_lots} - managed
+    sleeve = set(sleeve_symbols or ())
+    triggers = []
+    for p in positions or []:
+        sym = p.get("symbol")
+        # managed lot, a sleeve name (even alongside an active lot — the floor
+        # is far below any active stop, so it never fires first), or no lot.
+        covered = sym in managed or sym in sleeve or sym not in active
+        if not covered or p.get("side", "long") != "long":
+            continue
+        try:
+            qty = float(p.get("qty", 0) or 0)
+            entry = float(p.get("avg_entry_price", 0) or 0)
+            cur = float(p.get("current_price", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+        if qty <= 0 or cur <= 0:
+            continue                       # never act on an unpriced mark
+        # Evaluate PER LOT at the lot's own entry price: the broker's blended
+        # average is diluted by any later add (a rebalance buying 4 more CAT
+        # moved the blended loss from -28.6% to ~-18%, hiding the breach).
+        # The worst lot decides; with no lot, fall back to the broker average.
+        lot_entries = []
+        for t in open_lots:
+            if t["symbol"] != sym:
+                continue
+            try:
+                le = float(t.get("entry_price") or 0)
+            except (TypeError, ValueError):
+                le = 0.0
+            if le > 0:
+                lot_entries.append(le)
+        basis = max(lot_entries) if lot_entries else entry
+        if basis <= 0:
+            continue
+        pnl = (cur - basis) / basis * 100
+        if pnl <= -pct:
+            triggers.append({
+                "symbol": sym, "action": "DISASTER_STOP_SELL",
+                "current_price": cur, "pnl_pct": round(pnl, 2), "basis_price": basis,
+                "reason": (f"schedule-managed disaster stop: worst lot {pnl:.1f}% "
+                           f"(entry ${basis:,.2f}) <= -{pct:.1f}%")})
+    return triggers
+
+
 def regime_gate_active_entries(approved, signals_data, params=None):
     """Block NEW active BUY entries when the short-horizon market is adverse.
 
@@ -715,8 +791,11 @@ def hrp_advisory_tilts(*, enabled=None, hrp_path=None, limits=None):
 
 def portfolio_health_check(account_info, positions):
     equity = float(account_info.get("equity", 100000))
-    starting = float(account_info.get("last_equity", equity))
     portfolio_state = load_json(os.path.join(DATA_DIR, "portfolio_state.json"))
+    # Daily P&L anchors on day_start_equity (CLAUDE.md invariant), not the
+    # broker's last_equity; last_equity is only the fallback.
+    starting = float(portfolio_state.get("day_start_equity")
+                     or account_info.get("last_equity", equity) or equity)
     limits = load_risk_limits(CONFIG_DIR)
 
     long_mv = sum(float(p.get("market_value", 0)) for p in positions if p.get("side") == "long")
@@ -725,7 +804,10 @@ def portfolio_health_check(account_info, positions):
     daily_pnl_pct = (equity - starting) / starting * 100 if starting > 0 else 0
     week_start = portfolio_state.get("week_start_equity", starting)
     weekly_pnl_pct = (equity - week_start) / week_start * 100 if week_start > 0 else 0
-    max_dd = (portfolio_state.get("starting_equity", 100000) - equity) / portfolio_state.get("starting_equity", 100000) * 100
+    # Drawdown from the confirmed high-water mark (M5), the same reference the
+    # kill switch uses — not from the fixed $100K start.
+    from risk_officer import drawdown_pct_from_peak
+    max_dd = drawdown_pct_from_peak(portfolio_state, equity)
 
     health = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
