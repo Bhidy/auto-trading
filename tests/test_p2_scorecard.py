@@ -162,3 +162,18 @@ def test_run_end_to_end_splits_cohorts(tmp_path):
     assert out["lot_counts"]["OPEN"] == 1
     assert out["book_beta_diagnostic"]["beta"] is None
     assert os.path.exists(str(out_file) + ".provenance.json")
+
+
+def test_backfilled_row_without_true_exit_date_is_excluded_not_mis_dated():
+    import research.p2_scorecard as S
+    spy = {"2026-05-27": 100.0, "2026-06-01": 101.0, "2026-06-18": 105.0}
+    dates = sorted(spy)
+    row = {"symbol": "P", "status": "closed", "date": "2026-05-27", "qty": 10,
+           "entry_price": 70.0, "exit_price": 76.07, "pnl": 60.7,
+           "exit_timestamp": "2026-06-18T17:43:16+00:00",
+           "pnl_backfill": "broker_fifo_backfill_2026-07-04"}
+    rec, why = S.score_lot([row], spy, dates)
+    assert rec is None and why == "exit_date_unknown_backfill"
+    row["exit_fill_date"] = "2026-06-01"
+    rec, why = S.score_lot([row], spy, dates)
+    assert rec is not None
