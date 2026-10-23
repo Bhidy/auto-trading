@@ -1,0 +1,215 @@
+{
+  "artifact": "data/strategy_lab_results.json",
+  "source": "scripts/research/strategy_lab.py",
+  "fingerprint": {
+    "as_of": "2026-10-23T11:21:54.990006+00:00",
+    "inputs": [
+      {
+        "path": "data/research_cache/adj10y_sip/BIL.json",
+        "exists": true,
+        "sha256": "068ba2350a8963bb29353200cc803428b2d6b0b69e7678c3404a24aae46758d4",
+        "bytes": 218313
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/DBC.json",
+        "exists": true,
+        "sha256": "e4c661025f9762a84d19669b9c08ad32262eb3687d03f1407279ccf86a2cec3e",
+        "bytes": 218166
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/EEM.json",
+        "exists": true,
+        "sha256": "5d7098db62072461dc7e6bce8703c336a0c70fb4a5ee34a15cdd35d499f3fcda",
+        "bytes": 221715
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/EFA.json",
+        "exists": true,
+        "sha256": "716aa929b7c52ef078a25a6c386d49e048c2151eb0f8d1e91a4caeb0e4252ecc",
+        "bytes": 221986
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/GLD.json",
+        "exists": true,
+        "sha256": "763ffe5ad0477d2980f0b91b59c634df0aa330e50d15c952e13f72ff6f33c1dc",
+        "bytes": 231849
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/IEF.json",
+        "exists": true,
+        "sha256": "31667dbe04d3325d1901f8ca5bbc5aee33190395899fdb699119ad10c22dea32",
+        "bytes": 220337
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/IWM.json",
+        "exists": true,
+        "sha256": "5e3bb5fa69eeaf20457d2edb9a6c74463d1ca6bd913b09117c2e942c47bd5527",
+        "bytes": 231934
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/QQQ.json",
+        "exists": true,
+        "sha256": "788b283f8d7c812ecab0bdcb8f719b46d80a1be9ad8c4020a43c36fbc4daa7a9",
+        "bytes": 232085
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/SPY.json",
+        "exists": true,
+        "sha256": "e93c8c343af16c0928fa82092ec94b22472966ff92fb02690938eeb048034d57",
+        "bytes": 232889
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/TIP.json",
+        "exists": true,
+        "sha256": "8c0b07b14b031b14e90741147455ae25a4dfd2f6e3c487cc1fe0d2a73ac01eb3",
+        "bytes": 222290
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/TLT.json",
+        "exists": true,
+        "sha256": "ff336136828c7a1cd1a0516e8d000a5f1783f506741bac9417bf6168789e369c",
+        "bytes": 224113
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/VNQ.json",
+        "exists": true,
+        "sha256": "23bd855573d98852249a78e7bb75ae7055735b7f13dd6da1468fbd4897f1bc73",
+        "bytes": 218913
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLB.json",
+        "exists": true,
+        "sha256": "9478b192b8bb332460aa942161c6554584d9fceb3461312693f545318e56f1b5",
+        "bytes": 220423
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLC.json",
+        "exists": true,
+        "sha256": "d74b91d4987f970dcbc8c15511c5dea350d3b4ffe5de81be0902ad5f9a2dd2a1",
+        "bytes": 170494
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLE.json",
+        "exists": true,
+        "sha256": "ffd230e9063025cf30efcfc1ea43c08467ad70f9ff7a05b949a7881594bc6513",
+        "bytes": 221584
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLF.json",
+        "exists": true,
+        "sha256": "d6dc3f82147e1504b4a6644b92b5d9222b57dbf2c4f9b56a8220876a4f36de0f",
+        "bytes": 221741
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLI.json",
+        "exists": true,
+        "sha256": "a59c48836305873216497afd4886f7dc34238c641db267e2d85feba0be7f4baa",
+        "bytes": 223452
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLK.json",
+        "exists": true,
+        "sha256": "f65355b861044039ee1121181df7630c46107a9726b09b594f48a3bb6c4254f0",
+        "bytes": 223694
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLP.json",
+        "exists": true,
+        "sha256": "a6edd3f1e4372e9799f1698a6e3885d58018436888137011bb29a93581fe1533",
+        "bytes": 220615
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLRE.json",
+        "exists": true,
+        "sha256": "90ff59ce17d8d026668e8b64eaad4a35361b1ad7c399950a767cadb0e5849301",
+        "bytes": 218476
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLU.json",
+        "exists": true,
+        "sha256": "6fb7b80919f6eea8321bb84ee37c35013bddaf72907e2eca8fd3f21c01a2a7ba",
+        "bytes": 221498
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLV.json",
+        "exists": true,
+        "sha256": "beee88ca7a36099e8f623b4d7c4e8433185e43398124de485b16b5b829b9a4e6",
+        "bytes": 225836
+      },
+      {
+        "path": "data/research_cache/adj10y_sip/XLY.json",
+        "exists": true,
+        "sha256": "c149951cae03fc12dfa25148f29fc3b60be85491adbd4d57fb17f6aa1fa832ad",
+        "bytes": 221729
+      },
+      {
+        "path": "data/research_cache/adj10y_sip_ext/CTA.json",
+        "exists": true,
+        "sha256": "e6a781d7fc1fb4ff96682ef708c58c068bfcf4c142cf26793f95aa934cceb903",
+        "bytes": 91982
+      },
+      {
+        "path": "data/research_cache/adj10y_sip_ext/DBMF.json",
+        "exists": true,
+        "sha256": "c19da06a0904cde1fe3bf03d5a81046528e1d23fb9b72e8e108d31a169c61ce4",
+        "bytes": 147631
+      },
+      {
+        "path": "data/research_cache/adj10y_sip_ext/KMLM.json",
+        "exists": true,
+        "sha256": "f125a9bb88f7d9ea1d28e0bfbf7a5bfe11dff1818625b8045a04b6d75514078b",
+        "bytes": 115987
+      },
+      {
+        "path": "data/research_cache/adj10y_sip_ext/SGOV.json",
+        "exists": true,
+        "sha256": "a6766a9e858323cda9fddfde94be823d55bea20b0e9e61516b93f3786f24dcad",
+        "bytes": 129007
+      },
+      {
+        "path": "data/research_cache/adj10y_sip_ext/SHV.json",
+        "exists": true,
+        "sha256": "c9724b66f1a8df3186a30e12cec17d05bf78d947c8ff371666dfb310f82ef087",
+        "bytes": 220871
+      },
+      {
+        "path": "data/research_cache/adj10y_sip_ext/USFR.json",
+        "exists": true,
+        "sha256": "3260c8dc235d87b6a2ce640284c913fa6d6fae2507f6ced4ab192e7a4d3ab641",
+        "bytes": 214649
+      },
+      {
+        "path": "docs/specs/matf_v1.json",
+        "exists": true,
+        "sha256": "765f4e8c7303fba4850b5128ab7148a84bc5601b07d10a039d304f61ec6f8714",
+        "bytes": 12709
+      },
+      {
+        "path": "docs/specs/secmom_v1.json",
+        "exists": true,
+        "sha256": "b7b443fd4620d29d83e216e5c3d7aea9b18e798c90af88f4bb6ef83f7e84e712",
+        "bytes": 13558
+      },
+      {
+        "path": "docs/specs/crisis_core_v1.json",
+        "exists": true,
+        "sha256": "12b81284c4e68ed3d8affcc99834dd1b7cd3f8597ae0b827e4de37632825bf12",
+        "bytes": 11180
+      }
+    ],
+    "combined_sha256": "f3a58f7b72b1213b85d06d43702d20e4e07910c4d931f45dd9eec0301725dc7d",
+    "meta": {
+      "spec_sha256": {
+        "matf-v1": "765f4e8c7303fba4850b5128ab7148a84bc5601b07d10a039d304f61ec6f8714",
+        "secmom-v1": "b7b443fd4620d29d83e216e5c3d7aea9b18e798c90af88f4bb6ef83f7e84e712",
+        "crisis-core-v1": "12b81284c4e68ed3d8affcc99834dd1b7cd3f8597ae0b827e4de37632825bf12"
+      }
+    }
+  },
+  "warnings": [
+    "In-sample confirmation test (specs written knowing 2016-2026).",
+    "S3 holds no managed futures before 2019-05-08; all three MF ETFs only from 2022-03-08.",
+    "Uninvested cash above T-bill basket capacity earns 0%."
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}

@@ -1,0 +1,224 @@
+{
+  "spec_id": "crisis-core-v1",
+  "portfolio": "portfolio_2",
+  "candidate_book": "P2 base/ballast (candidate; congress satellite, if kept, is a separate <=25% sleeve and NOT part of this test)",
+  "universe": "Equity SPY QQQ IWM EFA; managed futures DBMF KMLM CTA; IEF; T-bill basket (BIL SHV SGOV USFR)",
+  "symbols": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "EFA",
+    "DBMF",
+    "KMLM",
+    "CTA",
+    "IEF",
+    "BIL",
+    "SHV",
+    "SGOV",
+    "USFR"
+  ],
+  "indicators": [
+    {
+      "name": "CALENDAR_REBALANCE",
+      "params": {
+        "frequency": "monthly",
+        "snapshot": "close of the last session of the month",
+        "execution": "open of the first session of the next month"
+      }
+    },
+    {
+      "name": "STATIC_WEIGHTS",
+      "params": {
+        "SPY": 0.114,
+        "QQQ": 0.114,
+        "IWM": 0.114,
+        "EFA": 0.114,
+        "DBMF": 0.114,
+        "KMLM": 0.114,
+        "CTA": 0.114,
+        "IEF": 0.114,
+        "tbill_basket": 0.088
+      }
+    }
+  ],
+  "sizing": "Equity 45.6% (4 x 11.4%); managed futures 11.4% for EACH MF ETF that has a bar at the snapshot close (DBMF from 2019-05-08, KMLM from 2020-12-02, CTA from 2022-03-08); the MF share of an unlisted fund goes to the T-bill basket (NOT to IEF: IEF is already at the 11.4% cap \u2014 this replaces the evidence doc's 'remainder to IEF', which is infeasible under the cap); IEF 11.4%; T-bill basket 8.8% + unlisted MF share; basket overflow -> cash 0%.",
+  "entry_rule": "Monthly: target computed at the last close of each month, traded at the next session's open with a 2.0% band. No tranching (static weights).",
+  "exit_rule": "No discretionary exits; band, drift guard, and cap rules only.",
+  "rebalance": {
+    "frequency": "monthly",
+    "tranches": 1,
+    "band": 0.02
+  },
+  "params": {
+    "band": 0.02,
+    "cap": 0.114,
+    "tranches": 1,
+    "rebalance_offset": 0
+  },
+  "neighbourhood_variants": [
+    {
+      "id": "band_0.015",
+      "params": {
+        "band": 0.015
+      }
+    },
+    {
+      "id": "band_0.025",
+      "params": {
+        "band": 0.025
+      }
+    }
+  ],
+  "neighbourhood_rule": "S3 has no lookbacks or vol target; C5 is evaluated on the only free parameter (band) at +/-25%.",
+  "history_caveat": "Before 2019-05-08 S3 holds NO managed futures (34.2% sits in bills/cash); full 3-fund MF sleeve only from 2022-03-08. A 2022-03-08 -> end sub-period is reported as information only.",
+  "not_run": "The optional trend-wrapped-equity variant in the evidence doc is NOT registered here and is NOT run.",
+  "n_trials": 4,
+  "expected_est": "CAGR 5-8%, vol 8-11%, Sharpe 0.4-0.7, MaxDD 12-20%",
+  "known_biases": [
+    "MF ETF expense ratios (~0.85-0.95%) are inside the adjusted prices (correct).",
+    "Short MF history: ~3.4y with all three funds."
+  ],
+  "pre_registered_at": "2026-10-23T11:16Z",
+  "pre_registration_note": "Written BEFORE scripts/research/strategy_lab.py or scripts/backtest/allocators.py existed and before any backtest of this spec family was run on any data. Any edit after the first run voids the results; amendments must be appended to 'amendments' with date + reason and re-counted as trials.",
+  "prior_knowledge_disclosure": "NOT a blind test. Specs were written knowing the 2016-2026 path (2018Q4, 2020 crash, 2022 inflation bear, Apr-2025), the passive-core-ew8 v1/v2 results (FAIL C1) and the literature in docs/research/STRATEGY_EVIDENCE_2026-10.md. This is a pre-registered CONFIRMATION test on in-sample history, not out-of-sample evidence.",
+  "timeframe": "1Day",
+  "data": {
+    "dataset": "dividend-adjusted (adjustment=all) SIP daily bars, data/research_cache/adj10y_sip/{SYM}.json + data/research_cache/adj10y_sip_ext/{SYM}.json (DBMF, KMLM, CTA, SHV, SGOV, USFR) \u2014 gitignored; MANIFEST.json + QUALITY.md in each dir",
+    "calendar": "SPY's sessions (2717 NYSE sessions 2016-01-04..2026-10-22)",
+    "warmup_start": "2016-01-04",
+    "eval_start": "2017-06-01 (session open; index 355 \u2014 every registered variant incl. +25% lookbacks is fully warmed up)",
+    "eval_end": "2026-10-22 (close)",
+    "listing_rule": "A symbol is unavailable (cannot be targeted) before its first bar. No backfill, no proxy splicing.",
+    "missing_bar_rule": "No missing sessions in QUALITY.md; if a symbol has no bar on a session it is not tradable that session and is valued at its last close."
+  },
+  "signal_bar": "close of session t (signal functions receive only closes[0..t])",
+  "fill": {
+    "model": "next_open",
+    "bar": "open of session t+1",
+    "look_ahead_ack": false
+  },
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "friction_source": "scripts/backtest/friction.py load_friction('<portfolio>') => (5 bps cost, 5 bps slippage) per side = 10 bps per side on traded notional (repo floor).",
+  "friction_stress": {
+    "total_bps_per_side": 20.0,
+    "note": "20 bps per side all-in (10 cost + 10 slippage). Counted as a separate trial."
+  },
+  "tbill_basket": {
+    "rule": "LEAD DECISION 2026-10-23 (not a cap change): the defensive asset is a T-bill basket filled in priority order BIL, SHV, SGOV, USFR, each <= 11.4%. Anything above basket capacity is uninvested broker cash earning 0%. An ETF that has not listed yet (SGOV before 2020-05-28) is simply unavailable \u2014 no backfill.",
+    "symbols_priority": [
+      "BIL",
+      "SHV",
+      "SGOV",
+      "USFR"
+    ],
+    "max_weight_each": 0.114
+  },
+  "caps": {
+    "max_weight_after_rebalance": 0.114,
+    "hard_cap_reference": "config/risk_limits.json max single ETF 12% (NOT modified). 11.4% = 12% x 0.95 drift headroom.",
+    "drift_guard": "If any weight > 12.0% at a session close, it is trimmed to min(book target, 11.4%) at the next open (counts against the 12-order limit). Any position above 11.4% at a rebalance is traded regardless of the band.",
+    "leverage": "none: sum of weights <= 100%; buys are scaled down pro rata if cash would go negative after costs",
+    "shorts": "none (long-only)"
+  },
+  "execution": {
+    "no_trade_band": "per-strategy (see sizing). |target - current| < band (fraction of equity, valued at the trade open) => no trade, except (a) target == 0 and current > 0 => sell to zero, (b) current > 11.4% => trade to target.",
+    "order_limit": "max 12 orders per session (config/risk_limits.json max trades/day). Sells first, then buys by |delta w| descending; the rest is queued and re-evaluated against the same book target (with band) at the next session's open.",
+    "fractional_shares": true,
+    "cash_yield": 0.0
+  },
+  "benchmark": "SPY buy & hold (dividend-adjusted), 100% invested at the 2017-06-01 open with the same 10 bps entry friction",
+  "metrics": {
+    "sharpe_definition": "annualized (x sqrt 252) Sharpe of daily returns IN EXCESS of BIL's daily total return (scripts/backtest/metrics.sharpe_ratio on excess returns, rf=0). The rf=0 raw Sharpe is also reported but is NOT the criterion metric.",
+    "dsr": "Deflated Sharpe (Bailey & Lopez de Prado; same null as scripts/backtest/metrics.deflated_sharpe_ratio): PSR of this candidate's per-period excess Sharpe vs SR0 = sqrt(var(all lab trial per-period Sharpes)) x ((1-gamma) Z(1-1/N) + gamma Z(1-1/(N e))), N = honest lab trial count, with the candidate's own skew/kurtosis.",
+    "calmar": "scripts/backtest/metrics.calmar_ratio (CAGR / max drawdown) on the daily close equity curve.",
+    "calendar_year_return": "last close of prior year -> last close of year",
+    "cpcv": "scripts/backtest/cpcv.combinatorial_splits(n_obs, n_groups=6, n_test_groups=2, label_horizon=0, embargo_pct=0.01) over daily excess returns; distribution of test-set annualized Sharpe (no fitting occurs, so this is a path-stability diagnostic)",
+    "turnover": "one-way turnover per year = sum |traded notional| / equity at trade / 2, annualized",
+    "risk_limit_replay": "flags: any close-to-close daily return <= -4% (daily loss halt), drawdown from peak >= 18% (kill switch), any rolling 5-session return <= -8% (weekly halt). Informational, the backtest does not halt."
+  },
+  "acceptance": {
+    "scope": "Evaluated on the eval span, net of base friction. A candidate PASSES only if ALL of C1..C6 pass.",
+    "C1_max_drawdown": {
+      "metric": "max drawdown of daily close equity",
+      "op": "<=",
+      "threshold": 0.12
+    },
+    "C2_calmar_vs_spy": {
+      "metric": "Calmar",
+      "op": ">=",
+      "threshold": "SPY Calmar on the same span"
+    },
+    "C3_sharpe_and_dsr": {
+      "metric": "excess Sharpe and DSR at honest N",
+      "rule": "Sharpe >= 0.50 AND DSR >= 0.95"
+    },
+    "C4_2022": {
+      "metric": "calendar-2022 return",
+      "op": ">=",
+      "threshold": "SPY 2022 return + 0.08"
+    },
+    "C5_neighbourhood": {
+      "metric": "|Sharpe(variant) - Sharpe(main)| for every registered neighbourhood variant",
+      "op": "<",
+      "threshold": 0.25
+    },
+    "C6_cost_stress": {
+      "metric": "excess Sharpe at 20 bps per side",
+      "op": ">=",
+      "threshold": 0.4
+    },
+    "not_criteria": [
+      "beating SPY CAGR or Sharpe on 2017-2026",
+      "CAGR",
+      "vol",
+      "Sortino",
+      "2018/2020 returns",
+      "turnover",
+      "time in cash",
+      "CPCV distribution",
+      "risk-limit replay flags"
+    ],
+    "promotion": "PASS => eligible for >= 90 days of PAPER forward test only (docs/LIVE_READINESS.md). FAIL => record, do not tune."
+  },
+  "trial_plan": {
+    "lab_total_trials": 38,
+    "breakdown": {
+      "matf-v1": "1 main + 10 neighbours + 1 cost stress = 12",
+      "secmom-v1": "1 main + 16 neighbours + 1 cost stress = 18",
+      "crisis-core-v1": "1 main + 2 neighbours + 1 cost stress = 4",
+      "combinations": "2 combos + 2 combo cost stresses = 4"
+    },
+    "prior_related_families": "passive-core-ew8 v1+v2 (2 trials, same ETF-allocation family, data/passive_core_validation*.json). DSR is reported at N=38 (criterion) and N=40 (incl. passive-core) for transparency. Unrelated ledgers noted but not pooled: data/trial_ledger.json (60 P1 self-learning knob trials), data/p2_scorecard.json (34 P2 trials), momentum_selector research.",
+    "rule": "Every run in this list is executed exactly once with the registered parameters. Any additional run increments N and must be appended here before it is run."
+  },
+  "registered_combinations": {
+    "construction": "Separate $100K books, equal initial capital, NO cross-book rebalancing (each book is a separate Alpaca account): combined equity = sum of the books' equity curves. Each combo is a trial; its 20 bps stress (blend of the components' stress curves) is a trial.",
+    "COMBO_A": {
+      "id": "combo-s1s2-5050",
+      "components": [
+        "matf-v1",
+        "secmom-v1"
+      ],
+      "weights": [
+        0.5,
+        0.5
+      ]
+    },
+    "COMBO_B": {
+      "id": "combo-s1s2s3-thirds",
+      "components": [
+        "matf-v1",
+        "secmom-v1",
+        "crisis-core-v1"
+      ],
+      "weights": [
+        0.3333333333,
+        0.3333333333,
+        0.3333333334
+      ]
+    },
+    "acceptance": "Same C1..C6. C5 for a combo: each component neighbourhood variant substituted for its component (others at main) must keep |dSharpe| < 0.25 (derived blends, no new runs)."
+  },
+  "amendments": []
+}

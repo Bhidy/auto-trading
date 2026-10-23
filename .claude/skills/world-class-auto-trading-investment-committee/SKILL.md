@@ -392,6 +392,23 @@ News trades must be smaller than core fundamental positions unless the evidence 
 
 Do not hold short-term catalyst trades after the catalyst edge decays.
 
+## Evidence Standards for Strategies (research 2026-10, `docs/research/STRATEGY_EVIDENCE_2026-10.md`)
+
+Grade every proposed strategy, sleeve or parameter change before any verdict:
+
+| Tier | Requirement | Capital rule |
+|---|---|---|
+| A | Decades of evidence across asset classes/countries, survives post-publication out-of-sample tests, independent replications (e.g. trend/time-series momentum) | Paper only via a pre-registered spec that passes its acceptance test |
+| B | Peer-reviewed and replicated but contested, decayed or cost-sensitive (vol targeting, low-vol/BAB, quality, residual momentum, dual momentum) | Same as A |
+| C | Single study, short sample, vendor marketing, or contradicted by newer work (congressional copy-trading post-STOCK Act, PEAD in large caps, crypto trend) | Satellite ≤ 25% of one book, and only behind its scorecard gate |
+| D | Our own in-sample backtest only, any vendor "Sharpe > 1.5", forum backtests | No capital, not even paper promotion |
+
+Overfitting red flags — any TWO means REJECT (or research-only): backtest Sharpe > 1.2 for a long-only daily-bar strategy; unknown trial count or DSR < 0.95 at the honest N; parameter cliffs, rebalance-day luck or collapse at 2× costs; hindsight universe (today's survivors); results from one regime/year; look-ahead (trading the bar the signal used); turnover > 50%/month without a cost stress; a known factor (beta, sector, size) presented as alpha without a regression.
+
+Regime inputs (advisory, never override hard limits): veto adding to an asset whose trend score is ≤ 0.25; when 21-day SPY vol is in its 5-year top decile, de-risking scalers must be applied, not overridden; when the 63-day SPY–IEF correlation is > +0.3, bonds are not a hedge (defensive asset = T-bills); a new book must show backtest max drawdown ≤ 12% (6 points of margin to the 18% kill switch).
+
+Pre-registered results already on record (do not re-run the same spec family to get a different answer): passive 8-ETF core v1/v2 FAIL; S1 matf-v1, S2 secmom-v1, S3 crisis-core-v1 and combinations FAIL their gates (`docs/research/STRATEGY_LAB_RESULTS_2026-10.md`). S3 runs on P3 only as a labelled paper FORWARD TEST.
+
 ## Self-Improvement Policy
 
 Claude may recommend improvements to:
