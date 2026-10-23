@@ -272,6 +272,16 @@
         ${h.observations_count ? `<div class="mono" style="margin-top:.35rem">${h.observations_count} later breach observation${h.observations_count > 1 ? 's' : ''} recorded against this halt</div>` : ''}
       </div>` : '';
 
+    // Exit fills larger than the logged lots: a reconciliation item until a lot
+    // exists to book the remainder against (never booked at a guessed price).
+    const um = sf.unmatched_exits || { count: 0, rows: [] };
+    const unmatchedNote = um.count ? `<div class="safe-note">
+        <strong>${um.count} exit fill${um.count > 1 ? 's' : ''} awaiting reconciliation</strong>
+        <div style="margin-top:.35rem">${(um.rows || []).slice(0, 6).map(u =>
+          `${esc(u.symbol || '—')} <span class="mono">${ATFmt.ltr(fmtNum(u.unmatched_qty, u.unmatched_qty % 1 ? 2 : 0))} sh · ${esc(etStamp(u.at))}</span>`).join(' · ')}</div>
+        <div style="margin-top:.35rem">Shares sold beyond the lots in the trade log; booked automatically once the matching lot is logged.</div>
+      </div>` : '';
+
     const rows = (pend.orders || []).map(o => `<tr>
         <td><span style="display:inline-flex;align-items:center">${getLogoHtml(o.symbol, 16)}<strong>${esc(o.symbol || '—')}</strong></span></td>
         <td><span class="pill ${o.kind === 'exit' ? 'pill-warn' : 'pill-muted'}">${o.kind === 'exit' ? 'exit' : 'entry'}</span></td>
@@ -311,6 +321,7 @@
           <div class="mono" style="font-size:.62rem;color:var(--muted);margin-top:.3rem">${fills.latest && fills.latest.length ? 'last ' + esc(etStamp(fills.latest[0].at)) : (files.booked_fills ? 'none yet' : 'ledger not written yet')}</div></div>
       </div>
       ${haltNote}
+      ${unmatchedNote}
       <div class="safe-split">
         <div><div class="card-sub" style="margin-bottom:.6rem">Pending orders · awaiting EOD settlement</div>${pendingBlock}</div>
         <div><div class="card-sub" style="margin-bottom:.6rem">Last governed halt clear</div>${clearBlock}</div>
