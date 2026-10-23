@@ -1,0 +1,76 @@
+[
+  {
+    "date": "2026-10-23",
+    "timestamp": "2026-10-23T00:04:44.281720+00:00",
+    "audit": {
+      "equity": 99113.4,
+      "cash": 67201.88,
+      "daily_pnl": -102.63,
+      "daily_pnl_pct": -0.103,
+      "total_open_exposure": 31911.52,
+      "exposure_pct": 32.2,
+      "position_count": 5,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 12254.69,
+        "Consumer": 11656.27,
+        "Healthcare": 8000.56
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "170.1472",
+        "market_value": "7316.3296",
+        "unrealized_pl": "-51.2904",
+        "pnl_pct": -0.7,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "140",
+        "market_value": "6020",
+        "unrealized_pl": "543.52",
+        "pnl_pct": 9.93,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "95.53",
+        "market_value": "5636.27",
+        "unrealized_pl": "461.97",
+        "pnl_pct": 8.93,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "148.1585",
+        "market_value": "8000.559",
+        "unrealized_pl": "132.309018",
+        "pnl_pct": 1.68,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "352.74",
+        "market_value": "4938.36",
+        "unrealized_pl": "-404.04",
+        "pnl_pct": -7.56,
+        "sector": "Tech"
+      }
+    ],
+    "trades": []
+  }
+]
