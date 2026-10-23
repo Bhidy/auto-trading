@@ -47,10 +47,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install dashboard dependencies (lockfile)
         working-directory: dashboard
         run: npm ci --omit=dev
@@ -63,11 +63,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version: "20"
+          node-version: "22"
 
       # PINNED. Unpinned `vercel@latest` shipped a broken build (54.7.0,
       # 2026-06-01) whose `@vercel/build-utils` threw "Named export
@@ -165,16 +164,28 @@ jobs:
               print('FAIL: live state overlay not serving fresh state'); sys.exit(1)
           " || FAILURES=$((FAILURES + 1))
 
-          echo "--- Mutation auth gate (no token => 401/503 before routing) ---"
-          # Zero-risk probe: these paths match NO handler, so even if the gate
-          # ever regressed nothing could execute — the request would just 404,
-          # which this check treats as a FAILURE (the gate must answer first).
-          # Never probe real order/close endpoints from CI.
-          for P in /api/__auth_probe__ /API/__auth_probe__ /Api/portfolio/__auth_probe__/x; do
-            CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$PROD_URL$P" -H 'content-type: application/json' -d '{}')
-            echo "POST $P -> $CODE"
-            case "$CODE" in 401|503) ;; *) echo "FAIL: auth gate did not reject $P first ($CODE)"; FAILURES=$((FAILURES + 1));; esac
-          done
+          echo "--- Mutation auth gate (no token => never reaches a handler) ---"
+          # Zero-risk probes: none of these paths has a handler, so even a
+          # regressed gate could execute nothing. Accepted answers:
+          #   401/503 from the app's gate, or
+          #   404 from Vercel's EDGE (x-vercel-error: NOT_FOUND) — the
+          #   case-sensitive /api rewrite never forwards mixed-case paths.
+          # An APP-level 404 means the request reached routing past the gate: FAIL.
+          probe() {  # $1 = path, $2 = extra curl flag (e.g. --path-as-is)
+            HDRS=$(curl -s $2 -o /dev/null -D - -X POST "$PROD_URL$1" -H 'content-type: application/json' -d '{}')
+            CODE=$(printf '%s' "$HDRS" | awk 'toupper($1) ~ /^HTTP/ {c=$2} END {print c}')
+            EDGE=$(printf '%s' "$HDRS" | grep -ic '^x-vercel-error: *NOT_FOUND' || true)
+            echo "POST $1 -> $CODE (edge404=$EDGE)"
+            case "$CODE" in
+              401|503) ;;
+              404) [ "$EDGE" -gt 0 ] || { echo "FAIL: app-level 404 for $1 — request bypassed the auth gate"; FAILURES=$((FAILURES + 1)); } ;;
+              *) echo "FAIL: auth gate did not reject $1 ($CODE)"; FAILURES=$((FAILURES + 1)) ;;
+            esac
+          }
+          probe /api/__auth_probe__
+          probe /API/__auth_probe__
+          probe /Api/portfolio/__auth_probe__/x
+          probe /api/../API/__auth_probe__ --path-as-is
 
           echo "=== SMOKE TEST: $FAILURES failures ==="
           if [ "$FAILURES" -gt 0 ]; then

@@ -1,0 +1,56 @@
+name: "CodeQL — Security Scan"
+
+# Static security analysis for the Python trading engines and the JS dashboard.
+# Restored 2026-10-23: it was removed (9e8edd19) only because CodeQL needed
+# GitHub Advanced Security while the repo was private; the repo is now public,
+# where code scanning is free. Code paths only — the bots' many data commits
+# must not trigger 20-minute scans.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "shared/**"
+      - "event-driven-bot/scripts/**"
+      - "political-copy-bot/scripts/**"
+      - "dashboard/server.js"
+      - "dashboard/api/**"
+      - "dashboard/public/**/*.js"
+      - ".github/workflows/codeql.yml"
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"   # weekly Monday sweep
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["python", "javascript-typescript"]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          category: "/language:${{ matrix.language }}"

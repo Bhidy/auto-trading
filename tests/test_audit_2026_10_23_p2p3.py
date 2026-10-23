@@ -619,3 +619,45 @@ def test_d1_back_to_back_dispatch_sees_fresh_p2_on_origin_main(tmp_path):
     r = subprocess.run([sys.executable, str(script), "p1"], cwd=second,
                        capture_output=True, text=True)
     assert r.returncode == 1                               # P1 artifact absent -> STALE
+
+
+# ── Heartbeat: phantom-halt + stuck-exit visibility (follow-up 2026-10-23) ──────
+def _hb():
+    import importlib
+    import heartbeat
+    return importlib.reload(heartbeat)
+
+
+def test_heartbeat_flags_halt_without_evidence_as_unverified():
+    hb = _hb()
+    alert, summary = hb.assess_safety_state({"P1 Self Improving Brain": {
+        "state": {"halted": True, "halt_reason": "Kill switch: 73.94% drawdown"}, "recon": None}})
+    assert alert is True
+    assert "UNVERIFIED HALT" in summary and "halt_clear" in summary
+
+
+def test_heartbeat_evidenced_halt_is_plain_halt_with_age():
+    hb = _hb()
+    alert, summary = hb.assess_safety_state({"P1 Self Improving Brain": {
+        "state": {"halted": True, "halt_reason": "Kill switch: 19.0% drawdown",
+                  "halt_set_at": "2026-01-02T15:00:00+00:00", "halt_verified": True,
+                  "halt_evidence": {"equity": 81000, "independent_equity": 81010}},
+        "recon": None}})
+    assert alert is True
+    assert "UNVERIFIED" not in summary and "d old" in summary
+
+
+def test_heartbeat_flags_exits_unsettled_from_prior_session():
+    hb = _hb()
+    alert, summary = hb.assess_safety_state({"P1 Self Improving Brain": {
+        "state": {"halted": False}, "recon": None,
+        "pending_exits": [{"symbol": "CAT", "submitted_at": "2020-01-02T15:00:00+00:00"},
+                          {"symbol": "C", "submitted_at": "2999-01-01T00:00:00+00:00"}]}})
+    assert alert is True and "1 exit order(s)" in summary and summary.rstrip().endswith(": CAT")
+
+
+def test_heartbeat_clean_book_no_alert():
+    hb = _hb()
+    alert, _ = hb.assess_safety_state({"P1 Self Improving Brain": {
+        "state": {"halted": False}, "recon": None, "pending_exits": []}})
+    assert alert is False
