@@ -709,6 +709,29 @@ def test_predictable_cs_holds_its_level_through_a_volatility_jump():
     assert false_go <= 1
 
 
+# --- chart series (readiness page draws these; it computes nothing itself) -----
+
+def test_cs_path_ends_at_the_decision_bounds_and_uses_only_the_past():
+    y, x, _ = _series(200, 0.0004, seed=5)
+    th = R.THRESHOLDS
+    full = R.predictable_cs(y, x, 252, 0.05, path=True)
+    assert full["path"], "a path is recorded"
+    t_last, lo, hi, pt = full["path"][-1]
+    assert t_last == len(y) - 1 and lo == full["lower"] and hi == full["upper"] and pt == full["point"]
+    # Every path point equals the decision the engine would have made stopping there.
+    for t, lo_t, hi_t, _pt in full["path"][::37]:
+        pre = R.predictable_cs(y[:t + 1], x[:t + 1], 252, 0.05)
+        assert abs(pre["lower"] - lo_t) < 1e-12 and abs(pre["upper"] - hi_t) < 1e-12
+    assert th["cs_burn_in"] == 20
+
+
+def test_chart_series_compounds_and_drawdown_is_peak_relative():
+    s = R.chart_series(["d1", "d2", "d3"], [0.10, -0.10, 0.05], {"d1": 0.01, "d3": 0.02})
+    assert s["cum_return"] == [0.1, round(1.1 * 0.9 - 1, 5), round(1.1 * 0.9 * 1.05 - 1, 5)]
+    assert s["drawdown"][0] == 0.0 and s["drawdown"][1] == round(0.99 / 1.1 - 1, 5)
+    # Benchmark compounded over the SAME dates; a missing day contributes 0.
+    assert s["benchmark_cum"] == [0.01, 0.01, round(1.01 * 1.02 - 1, 5)]
+
 # --- review round 2 (Codex on PR #105) -----------------------------------------
 
 def test_near_flat_burn_in_cannot_give_one_return_unbounded_weight():
@@ -732,3 +755,11 @@ def test_status_less_legacy_lot_counts_as_open_exposure():
     assert E.exposure_end(leg, rows, "2026-10-30") == "2026-10-30"
     marker = [{"symbol": "KO", "side": "sell", "timestamp": "2026-09-30T14:00:00Z"}]  # P2-style exit marker
     assert E.exposure_end(leg, marker, "2026-10-30") == "2026-10-03"
+
+
+def test_edge_eta_scale_respects_the_decision_floor():
+    # Tiny residual vol: the ETA must project on the FLOORED scale the test uses.
+    y, x, f = _series(80, 0.0001, noise=0.0001, seed=9)
+    e = R.edge_test(y, x, f, 1)
+    assert e["sigma_eff_daily"] >= R.THRESHOLDS["cs_sigma_floor_daily"]
+    assert R.METHODOLOGY_VERSION == "2.3.0"

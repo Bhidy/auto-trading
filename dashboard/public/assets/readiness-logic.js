@@ -109,9 +109,37 @@
         return (m || p) ? { median: m, pessimistic: p } : null;
     }
 
+    /** Sleeves whose verdict is exactly "GO" (the only verdict ever counted). */
+    function clearedCount(report) {
+        var sl = (report && Array.isArray(report.sleeves)) ? report.sleeves : [];
+        return { cleared: sl.filter(function (s) { return s && s.verdict === 'GO'; }).length, total: sl.length };
+    }
+
+    function edgePoints(s) {
+        var e = s && s.series && s.series.edge;
+        return e && Array.isArray(e.dates) ? e.dates.length : 0;
+    }
+
+    /** The furthest-along live edge test: a sleeve still accruing evidence
+        (active / forward_test) that claims an edge and OWNS its series, with the
+        most always-valid bound points; ties -> more gates passed. A selection for
+        display only — it never implies the sleeve is close to GO. null if none. */
+    function leadSleeve(report) {
+        var sl = (report && Array.isArray(report.sleeves)) ? report.sleeves : [];
+        var c = sl.filter(function (s) {
+            return s && (s.status === 'active' || s.status === 'forward_test') && s.claims_edge !== false &&
+                s.owns_edge_test !== false && edgePoints(s) >= 2;
+        });
+        c.sort(function (a, b) {
+            return (edgePoints(b) - edgePoints(a)) || ((b.gates_passed || 0) - (a.gates_passed || 0));
+        });
+        return c[0] || null;
+    }
+
     return {
         KNOWN_VERDICTS: KNOWN_VERDICTS, verdictInfo: verdictInfo, gateStatusKnown: gateStatusKnown,
         edgeStatus: edgeStatus, edgeQualifier: edgeQualifier, alphaDisplay: alphaDisplay,
-        confidenceBound: confidenceBound, etaRange: etaRange
+        confidenceBound: confidenceBound, etaRange: etaRange, clearedCount: clearedCount,
+        leadSleeve: leadSleeve, edgePoints: edgePoints
     };
 });

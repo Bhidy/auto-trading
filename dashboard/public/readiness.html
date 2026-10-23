@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live-Readiness | Auto Trading</title>
-    <meta name="description" content="Per strategy-version go-live verdicts from the Readiness Engine: every hard gate, the binding gate and an honest ETA. Paper only.">
+    <meta name="description" content="Which strategy versions have earned live capital: the evidence band behind each verdict, every gate, every strategy. Paper only.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,258 +13,262 @@
     <link rel="stylesheet" href="/assets/news-public.css">
     <link rel="stylesheet" href="/assets/portfolio.css">
     <style>
-        /* ── Readiness tokens — every value derives from the RiseWealth brand tokens
-           (news-public.css) or the shared gain/loss tokens (portfolio.css). ── */
-        :root {
-            --rd-pass: var(--pf-green);
-            --rd-pass-bg: var(--pf-green-soft);
-            --rd-fail: var(--pf-red);
-            --rd-fail-bg: var(--pf-red-soft);
-            --rd-pass-ink: #166534;                /* chip text: same hue, one step deeper for AA on the soft fill */
-            --rd-fail-ink: #B91C1C;
-            --rd-wait: #A33A14;                    /* solar ramp step 9 — AA on light surfaces */
-            --rd-wait-bg: rgba(229, 90, 31, 0.10);
-            --rd-sunk: color-mix(in srgb, var(--page) 70%, var(--surface));
-            --rd-line-strong: rgba(26, 15, 8, 0.12);
-            --rd-mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
-            --rd-serif: 'DM Serif Display', Georgia, serif;
-            --rd-ui: 'Manrope', system-ui, sans-serif;
-            --rd-sh: 0 1px 2px rgba(26, 15, 8, 0.04), 0 6px 14px rgba(26, 15, 8, 0.05);
-            --rd-gap: clamp(0.85rem, 2vw, 1.25rem);
+        /* Live-Readiness — "Verdict Room". Every colour derives from a RiseWealth
+           token (news-public.css / portfolio.css). The hero is a brand-ink band in
+           BOTH themes (colour-blocking); everything below follows the theme. */
+        .rx {
+            --rx-serif: 'DM Serif Display', Georgia, serif;
+            --rx-ui: 'Manrope', system-ui, sans-serif;
+            --rx-mono: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+            --rx-pos: var(--pf-green);
+            --rx-neg: var(--pf-red);
+            --rx-wait: #A33A14;                       /* solar ramp 9 — AA on light */
+            --rx-wait-soft: rgba(229, 90, 31, 0.10);
+            --rx-card: var(--surface);
+            --rx-sunk: color-mix(in srgb, var(--page) 55%, var(--surface));
+            --rx-line-strong: rgba(26, 15, 8, 0.13);
+            --rx-sh: 0 1px 2px rgba(26, 15, 8, 0.04), 0 10px 28px rgba(122, 107, 94, 0.10);
+            --rx-ease: cubic-bezier(.23, 1, .32, 1);
+            --rx-acc-ink: var(--teal-dark);           /* small accent TEXT: AA 4.5:1 on light grounds */
+            /* chart palette (body) */
+            --c-ink: var(--ink); --c-muted: var(--muted); --c-line: rgba(26, 15, 8, 0.12);
+            --c-acc: var(--teal); --c-acc-ink: var(--teal-dark); --c-pos: var(--pf-green); --c-neg: var(--pf-red); --c-wait: #A33A14; --c-bg: var(--surface);
+            font-family: var(--rx-ui); color: var(--ink); background: var(--page);
         }
-        [data-theme="dark"] {
-            --rd-pass-ink: var(--pf-green);
-            --rd-fail-ink: var(--pf-red);
-            --rd-wait: #FFA86A;
-            --rd-wait-bg: rgba(255, 138, 61, 0.14);
-            --rd-line-strong: rgba(255, 255, 255, 0.14);
-            --rd-sh: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 18px rgba(0, 0, 0, 0.28);
+        [data-theme="dark"] .rx {
+            --rx-wait: #FFA86A; --rx-wait-soft: rgba(255, 138, 61, 0.14);
+            --rx-line-strong: rgba(255, 255, 255, 0.14);
+            --rx-sh: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 30px rgba(0, 0, 0, 0.32);
+            --c-line: rgba(255, 255, 255, 0.12); --c-wait: #FFA86A; --c-pos: #22c55e; --c-neg: #ef4444;
+            --rx-acc-ink: var(--teal); --c-acc-ink: var(--teal);
         }
+        .rx-wrap { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 3.2vw, 40px); box-sizing: border-box; }
+        .rx .num, .rx .mono { font-family: var(--rx-mono); font-variant-numeric: tabular-nums; }
+        .rx h1, .rx h2, .rx h3 { font-family: var(--rx-serif); font-weight: 400; margin: 0; text-wrap: balance; }
+        [dir="rtl"] .rx h1, [dir="rtl"] .rx h2, [dir="rtl"] .rx h3 { font-family: 'IBM Plex Sans Arabic', var(--rx-ui); font-weight: 700; letter-spacing: 0; }
+        .rx p { text-wrap: pretty; }
+        .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-        .rd { max-width: 1240px; margin: 0 auto; padding: 6.25rem clamp(1rem, 3vw, 1.5rem) 4rem; font-family: var(--rd-ui); color: var(--ink); }
-        .rd *, .rd *::before, .rd *::after { box-sizing: border-box; }
-        /* Mono is for numerals/codes only (bdi.at-num); words — esp. Arabic — never set in mono. */
-        .rd .at-num { font-family: var(--rd-mono); font-variant-numeric: tabular-nums; }
-        .en { font-family: var(--rd-ui); }
+        /* ── Hero: brand ink band ── */
+        .rx-hero {
+            --h-bg: #0E0805; --h-card: #1A0F08; --h-ink: #FFF1E8; --h-muted: #A39A92; --h-line: rgba(255, 255, 255, 0.08);
+            --c-ink: #FFF1E8; --c-muted: #A39A92; --c-line: rgba(255, 255, 255, 0.12); --c-acc: #FF8A3D;
+            --c-pos: #22c55e; --c-neg: #ef4444; --c-wait: #FFA86A; --c-bg: #1A0F08; --c-acc-ink: #FF8A3D;
+            background: var(--h-bg); color: var(--h-ink); padding: clamp(96px, 11vw, 132px) 0 clamp(40px, 6vw, 72px);
+        }
+        [data-theme="dark"] .rx-hero { --h-bg: #140C07; border-bottom: 1px solid var(--h-line); }
+        .rx-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--rx-mono); font-size: 12px; color: var(--h-muted); }
+        .rx-paper { border: 1px solid rgba(255, 138, 61, 0.5); color: #FF8A3D; border-radius: 999px; padding: 4px 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+        .rx-top { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 48px); align-items: end; margin-top: 28px; }
+        .rx-top h1 { font-size: clamp(2.6rem, 6vw, 4.5rem); line-height: 1.04; letter-spacing: -0.02em; }
+        .rx-lede { margin: 18px 0 0; max-width: 34rem; font-size: clamp(1rem, 1.4vw, 1.15rem); line-height: 1.55; color: var(--h-muted); }
+        .rx-count { display: flex; align-items: flex-end; gap: 18px; justify-content: flex-end; }
+        .rx-count .big { font-family: var(--rx-serif); font-size: clamp(6rem, 13vw, 10.5rem); line-height: .9; color: #FF8A3D; }
+        .rx-count .big.go { color: #22c55e; }
+        .rx-count .of { font-family: var(--rx-serif); font-size: clamp(2.4rem, 4.5vw, 3.5rem); color: #6B5F55; }
+        .rx-count p { margin: 0 0 14px; max-width: 12rem; font-size: 15px; line-height: 1.45; }
+        .rx-lead { margin-top: clamp(32px, 5vw, 52px); background: var(--h-card); border: 1px solid var(--h-line); border-radius: 18px; padding: clamp(18px, 2.4vw, 28px); }
+        .rx-lead-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px 28px; }
+        .rx-cap { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--h-muted); }
+        [dir="rtl"] .rx-cap, [dir="rtl"] .rx-kick { letter-spacing: 0; }
+        .rx-lead h2 { margin-top: 8px; font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -0.01em; }
+        .rx-lead h2 .mono { font-size: 13px; color: var(--h-muted); margin-inline-start: 8px; }
+        .rx-stats { display: flex; flex-wrap: wrap; gap: 14px 30px; }
+        .rx-stats dt { font-size: 12px; color: var(--h-muted); }
+        .rx-stats dd { margin: 4px 0 0; font-family: var(--rx-mono); font-size: 22px; font-weight: 600; }
+        .rx-stats dd small { font-size: 12px; color: var(--h-muted); font-weight: 500; }
+        .rx-stats dd.acc { color: #FF8A3D; }
+        .rx-chart { position: relative; margin-top: 18px; min-height: 120px; outline: none; }
+        .rx-chart:focus-visible { box-shadow: 0 0 0 2px var(--c-acc); border-radius: 8px; }
+        .rx-note { margin: 12px 0 0; font-size: 14px; color: var(--h-muted); }
+        .rx-empty-chart { display: grid; place-items: center; min-height: 160px; border: 1px dashed var(--c-line); border-radius: 12px; color: var(--c-muted); font-size: 14px; text-align: center; padding: 16px; }
 
-        /* ── Head ── */
-        .rd-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem 2.5rem; align-items: end; margin-bottom: 1.25rem; }
-        .rd-head h1 { font-family: var(--rd-serif); font-weight: 400; font-size: clamp(1.9rem, 4.2vw, 2.75rem); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 .5rem; text-wrap: balance; }
-        .rd-lede { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.6; max-width: 60ch; text-wrap: pretty; }
-        .rd-meta { display: grid; grid-template-columns: auto auto; gap: .3rem 1rem; margin: 0; font-size: .78rem; align-content: end; }
-        .rd-meta dt { color: var(--muted); }
-        .rd-meta dd { margin: 0; font-weight: 600; color: var(--ink); text-align: end; }
+        /* ── Sections ── */
+        .rx-sec { margin-top: clamp(48px, 7vw, 80px); }
+        .rx-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px 24px; }
+        .rx-sec-head h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); letter-spacing: -0.01em; }
+        .rx-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--muted); }
+        .rx-legend span { display: inline-flex; align-items: center; gap: 7px; }
+        #alerts:not(:empty) { margin-top: 24px; display: grid; gap: 10px; }
+        .rd-alert { border-radius: 12px; padding: .8rem 1rem; border: 1px solid var(--rx-neg); background: var(--pf-red-soft); font-size: .88rem; line-height: 1.55; }
+        .rd-alert.warn { border-color: var(--rx-wait); background: var(--rx-wait-soft); }
+        .rd-alert.note { background: transparent; border-style: dashed; border-color: var(--rx-line-strong); color: var(--muted); font-size: .8rem; }
 
-        .rd-paper { display: flex; gap: .75rem; align-items: flex-start; padding: .85rem 1.1rem; margin-bottom: 1rem;
-            border: 1px solid var(--line); border-inline-start: 3px solid var(--teal); border-radius: .85rem; background: var(--teal-soft); font-size: .88rem; line-height: 1.6; }
-        .rd-paper svg { flex-shrink: 0; color: var(--teal-dark); margin-top: .2rem; }
-        .rd-paper b { font-weight: 800; }
+        /* status glyphs: shape AND colour (colour-blind safe) */
+        .gl { display: inline-block; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; vertical-align: middle; }
+        .gl-pass { background: var(--rx-pos); }
+        .gl-insufficient { border: 1.5px solid var(--c-acc); background: linear-gradient(90deg, var(--c-acc) 50%, transparent 50%); }
+        [dir="rtl"] .gl-insufficient { background: linear-gradient(270deg, var(--c-acc) 50%, transparent 50%); }
+        .gl-fail { border-radius: 2px; background: var(--rx-neg); }
+        .gl-not_measured { border: 1.5px dashed var(--muted); }
+        .gl-not_applicable { width: 4px; height: 4px; background: var(--rx-line-strong); }
+        .gl-unknown { border: 1.5px solid var(--ink); }
+        .gl-soft { opacity: .38; }
 
-        .rd-alert { display: flex; gap: .7rem; align-items: flex-start; padding: .8rem 1.05rem; margin-bottom: 1rem; border-radius: .85rem;
-            border: 1px solid var(--rd-fail); background: var(--rd-fail-bg); font-size: .88rem; line-height: 1.55; }
-        .rd-alert.warn { border-color: var(--rd-wait); background: var(--rd-wait-bg); }
-        .rd-alert.note { background: transparent; border-style: dashed; color: var(--muted); font-size: .82rem; padding: .55rem .9rem; }
-        .rd-alert b { font-weight: 800; }
+        /* ── Matrix ── */
+        .mx-box { margin-top: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--rx-card); box-shadow: var(--rx-sh); overflow-x: auto; position: relative; }
+        .mx { width: 100%; min-width: 1060px; border-collapse: collapse; font-size: 13px; }
+        .mx th { font-weight: 500; color: var(--muted); }
+        .mx .grp th { font-family: var(--rx-ui); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-align: start; padding: 16px 8px 4px; }
+        [dir="rtl"] .mx .grp th { letter-spacing: 0; }
+        .mx .cols th { font-family: var(--rx-mono); font-size: 10px; padding: 0 3px 12px; text-align: center; white-space: nowrap; }
+        .mx .cols th:first-child, .mx td:first-child { text-align: start; padding-inline: 20px 12px; }
+        .mx .sep { border-inline-start: 1px solid var(--line); }
+        .mx tbody tr { border-top: 1px solid var(--line); transition: background .2s var(--rx-ease); }
+        .mx tbody tr:hover { background: var(--rx-sunk); }
+        .mx td { padding: 10px 3px; text-align: center; }
+        .mx td:first-child { position: sticky; inset-inline-start: 0; background: var(--rx-card); z-index: 1; white-space: nowrap; }
+        .mx tbody tr:hover td:first-child { background: var(--rx-sunk); }
+        .mx .bk { font-family: var(--rx-mono); font-size: 11px; color: var(--muted); margin-inline-end: 10px; }
+        .mx .nm { font-weight: 650; }
+        .mx-c { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+        .mx-c:hover, .mx-c:focus-visible { background: var(--rx-wait-soft); outline: none; }
+        .mx td.vd { text-align: end; padding-inline: 12px 20px; white-space: nowrap; }
+        .mx td.vd .mono { font-size: 11px; color: var(--muted); margin-inline-end: 10px; }
+        .vp { display: inline-block; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid transparent; }
+        [dir="rtl"] .vp { letter-spacing: 0; }
+        .vp-GO { background: var(--pf-green-soft); color: var(--rx-pos); border-color: var(--rx-pos); }
+        .vp-NOT_READY { background: var(--rx-wait-soft); color: var(--rx-wait); }
+        .vp-NOT_ELIGIBLE { border-color: var(--rx-line-strong); color: var(--muted); }
+        .vp-BETA_SLEEVE { border-color: var(--ink); color: var(--ink); }
+        .vp-FORWARD_TEST_PASS { border-color: var(--rx-pos); color: var(--rx-pos); }
+        .vp-UNKNOWN { border: 1px dashed var(--ink); color: var(--ink); }
+        .mx-tip { position: absolute; z-index: 5; max-width: 300px; background: var(--ink); color: var(--page); border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 1.45; box-shadow: var(--rx-sh); pointer-events: none; }
+        .mx-tip b { display: block; font-size: 13px; margin-bottom: 2px; }
+        .mx-tip .mono { opacity: .8; }
 
-        /* ── Book tabs ── */
-        .rd-books { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; margin: 1.5rem 0 1.25rem; }
-        .rd-book { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: .2rem; padding: .8rem 1rem; min-height: 44px;
-            background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; transition: border-color .15s, box-shadow .15s; }
-        .rd-book:hover { border-color: var(--rd-line-strong); box-shadow: var(--rd-sh); }
-        .rd-book:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-        .rd-book[aria-selected="true"] { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal) inset, var(--rd-sh); }
-        .rd-book .b-top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
-        .rd-book .b-id { font-family: var(--rd-mono); font-size: .7rem; color: var(--muted); letter-spacing: .06em; }
-        .rd-book .b-sum { font-size: .7rem; color: var(--muted); white-space: nowrap; }
-        .rd-book .b-nm { font-weight: 700; font-size: .95rem; }
-        .rd-book .b-eq { font-size: .8rem; color: var(--muted); }
-        .rd-book .b-eq .pf-pos, .rd-book .b-eq .pf-neg { font-weight: 600; }
+        /* ── Book ── */
+        .seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--rx-card); border: 1px solid var(--line); box-shadow: var(--rx-sh); }
+        .seg button { font: 650 13px var(--rx-ui); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 10px 18px; min-height: 44px; cursor: pointer; transition: background .25s var(--rx-ease), color .25s var(--rx-ease); }
+        .seg button[aria-selected="true"] { background: var(--rx-acc-ink); color: #fff; }
+        [data-theme="dark"] .seg button[aria-selected="true"] { background: var(--teal); color: #0E0805; }
+        .seg button:focus-visible { outline: 2px solid var(--rx-acc-ink); outline-offset: 2px; }
+        .kpis { margin-top: 22px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+        .kpis > div { background: var(--rx-card); padding: 16px 20px; }
+        .kpis dt { font-size: 12px; color: var(--muted); }
+        .kpis dd { margin: 6px 0 0; font-family: var(--rx-mono); font-size: clamp(18px, 2vw, 22px); font-weight: 600; }
+        .up { color: var(--rx-pos); } .down { color: var(--rx-neg); }
+        .g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+        .panel { background: var(--rx-card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px 14px; box-shadow: var(--rx-sh); min-width: 0; }
+        .panel h3 { font-family: var(--rx-ui); font-size: 13px; font-weight: 700; }
+        [dir="rtl"] .panel h3 { font-family: 'IBM Plex Sans Arabic', var(--rx-ui); }
+        .panel .rx-chart { margin-top: 10px; }
 
-        /* ── Book header ── */
-        .bk-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .4rem 1.5rem; margin: 0 0 .9rem; }
-        .bk-head h2 { font-family: var(--rd-serif); font-weight: 400; font-size: clamp(1.35rem, 2.6vw, 1.7rem); letter-spacing: -0.015em; line-height: 1.15; margin: 0; }
-        .bk-head p { margin: 0; color: var(--muted); font-size: .8rem; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: var(--rx-card); border: 1px solid var(--line); border-radius: 18px; padding: clamp(18px, 2.2vw, 26px); box-shadow: var(--rx-sh); display: flex; flex-direction: column; gap: 18px; min-width: 0; transition: border-color .3s var(--rx-ease), box-shadow .3s var(--rx-ease); }
+        .card:hover { border-color: var(--rx-line-strong); }
+        .card-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .card-h h3 { font-size: clamp(1.35rem, 2vw, 1.65rem); line-height: 1.15; }
+        .card-h .ver { margin: 6px 0 0; font-family: var(--rx-mono); font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+        .st { flex: none; border: 1px solid var(--rx-line-strong); border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        [dir="rtl"] .st { letter-spacing: 0; }
+        .vrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+        .vword { font-family: var(--rx-serif); font-size: clamp(2rem, 3.4vw, 2.6rem); line-height: 1; }
+        [dir="rtl"] .vword { font-family: 'IBM Plex Sans Arabic', var(--rx-ui); font-weight: 700; }
+        .vw-GO { color: var(--rx-pos); } .vw-NOT_READY { color: var(--teal); } .vw-NOT_ELIGIBLE { color: var(--muted); }
+        .vw-BETA_SLEEVE { color: var(--ink); } .vw-FORWARD_TEST_PASS { color: var(--rx-pos); } .vw-UNKNOWN { color: var(--ink); }
+        .vrow .bind { font-size: 14px; color: var(--muted); }
+        .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .trio .lab { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
+        .trio .v { margin: 0; font-family: var(--rx-mono); font-size: 16px; font-weight: 600; }
+        .ringrow { display: flex; align-items: center; gap: 12px; }
+        .rc-ring-bg { fill: none; stroke: var(--rx-line-strong); }
+        .rc-ring-fg { fill: none; stroke: var(--teal); stroke-linecap: round; }
+        .rc-ring-fg.done { stroke: var(--rx-pos); }
+        .segs { display: flex; gap: 3px; margin-top: 8px; }
+        .segs i { flex: 1; height: 6px; border-radius: 2px; background: var(--rx-line-strong); }
+        .segs i.on { background: var(--teal); }
+        .etav { margin: 0; font-size: 13px; font-weight: 650; line-height: 1.35; }
+        .meter { position: relative; height: 8px; border-radius: 4px; background: var(--rx-line-strong); overflow: hidden; margin-top: 10px; }
+        .meter i { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 4px; background: var(--teal); }
+        .tag { display: inline-block; font-size: 11px; color: var(--muted); border: 1px dashed var(--rx-line-strong); border-radius: 999px; padding: 3px 9px; }
+        .noteline { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+        .noteline b { color: var(--ink); font-weight: 650; }
+        details.dl { border-top: 1px solid var(--line); padding-top: 12px; }
+        details.dl > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; font-weight: 700; color: var(--rx-acc-ink); }
+        details.dl > summary::-webkit-details-marker { display: none; }
+        details.dl > summary .caret { width: 10px; height: 10px; transition: transform .25s var(--rx-ease); }
+        details.dl[open] > summary .caret { transform: rotate(90deg); }
+        [dir="rtl"] details.dl > summary .caret { transform: scaleX(-1); }
+        [dir="rtl"] details.dl[open] > summary .caret { transform: rotate(90deg); }
+        .ledger { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+        .ledger th { text-align: start; font-size: 11px; font-weight: 700; color: var(--muted); padding: 8px 6px; border-bottom: 1px solid var(--line); }
+        .ledger td { padding: 9px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+        .ledger td.s { white-space: nowrap; }
+        .ledger .gd { display: block; margin-top: 3px; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+        .ledger .thv { font-family: var(--rx-mono); font-size: 11px; color: var(--muted); }
+        .ledger tr.soft { opacity: .62; }
+        .ledger tr.bind td:first-child { box-shadow: inset 3px 0 0 var(--teal); }
+        [dir="rtl"] .ledger tr.bind td:first-child { box-shadow: inset -3px 0 0 var(--teal); }
+        .narr p { margin: 8px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+        .q { color: var(--muted); font-weight: 500; }
 
-        /* ── Sleeve card ── */
-        .slv { background: var(--surface); border: 1px solid var(--line); border-inline-start: 3px solid var(--rd-line-strong);
-            border-radius: .85rem; box-shadow: var(--rd-sh); margin-bottom: var(--rd-gap); overflow: hidden; }
-        .slv.v-GO { border-inline-start-color: var(--rd-pass); }
-        .slv.v-NOT_READY { border-inline-start-color: var(--teal); }
-        .slv-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1.1rem 1.25rem .9rem; }
-        .slv-name { font-family: var(--rd-serif); font-weight: 400; font-size: clamp(1.25rem, 2.4vw, 1.5rem); line-height: 1.15; letter-spacing: -0.015em; margin: 0 0 .25rem; }
-        .slv-ver { margin: 0; font-family: var(--rd-mono); font-size: .74rem; color: var(--muted); line-height: 1.5; }
-        .slv-id { font-family: var(--rd-mono); font-size: .7rem; color: var(--muted); }
+        /* ── Footer ── */
+        .rx-foot { margin-top: clamp(56px, 7vw, 88px); padding: 22px 0 64px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; font-size: 12px; color: var(--muted); line-height: 1.55; }
+        .rx-foot code { font-family: var(--rx-mono); font-size: 11.5px; }
 
-        .chip { display: inline-flex; align-items: center; gap: .35rem; padding: .22rem .62rem; border-radius: 999px; white-space: nowrap;
-            font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; line-height: 1.4; border: 1px solid transparent; }
-        .chip i { font-style: normal; font-family: var(--rd-mono); letter-spacing: 0; }
-        .st-active { background: var(--rd-pass-bg); color: var(--rd-pass-ink); }
-        .st-forward_test { background: var(--rd-wait-bg); color: var(--rd-wait); }
-        .st-exits_only { background: transparent; color: var(--ink); border-color: var(--rd-line-strong); }
-        .st-quarantined { background: transparent; color: var(--muted); border-color: var(--rd-line-strong); border-style: dashed; }
-        .g-pass { background: var(--rd-pass-bg); color: var(--rd-pass-ink); }
-        .g-fail { background: var(--rd-fail-bg); color: var(--rd-fail-ink); }
-        .g-insufficient { background: var(--rd-wait-bg); color: var(--rd-wait); }
-        .g-not_measured { background: transparent; color: var(--muted); border: 1px dashed currentColor; }
-        .g-not_applicable { background: transparent; color: var(--muted); border-color: var(--line); }
+        /* ── Charts (geometry from assets/readiness-charts.js; colours from tokens) ── */
+        .rc { display: block; overflow: visible; font-family: var(--rx-ui); }
+        .rc-gozone { fill: var(--c-pos); fill-opacity: .07; }
+        .rc-grid, .rc-zero-soft { stroke: var(--c-line); stroke-width: 1; stroke-dasharray: 3 4; }
+        .rc-tick { stroke: var(--c-line); }
+        .rc-axis { fill: var(--c-muted); font-family: var(--rx-mono); font-size: 11px; }
+        .rc-band { fill: var(--c-acc); fill-opacity: .17; }
+        .rc-band-edge { fill: none; stroke: var(--c-acc); stroke-width: 1.25; }
+        .rc-halo { fill: none; stroke: var(--c-bg); stroke-width: 5; stroke-linejoin: round; }
+        .rc-est { fill: none; stroke: var(--c-ink); stroke-width: 1.75; stroke-linejoin: round; }
+        .rc-zero { stroke: var(--c-pos); stroke-width: 1.5; stroke-dasharray: 6 4; }
+        .rc-zero-lab { fill: var(--c-pos); font-family: var(--rx-mono); font-size: 11px; font-weight: 600; }
+        .rc-end { fill: var(--c-acc); } .rc-end-pos { fill: var(--c-pos); } .rc-end-neg { fill: var(--c-neg); }
+        .rc-lab { font-size: 12px; font-weight: 700; fill: var(--c-ink); }
+        .rc-lab, .rc-zero-lab, .rc-off { paint-order: stroke; stroke: var(--c-bg); stroke-width: 4px; stroke-linejoin: round; }
+        .rc-lab-band, .rc-l-book { fill: var(--c-acc-ink); } .rc-lab-pos { fill: var(--c-pos); } .rc-lab-neg { fill: var(--c-neg); }
+        .rc-lab-wait { fill: var(--c-wait); } .rc-lab-ink { fill: var(--c-ink); }
+        text.rc-l-spy { fill: var(--c-muted); }
+        .rc-line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+        .rc-line.rc-l-book { stroke: var(--c-acc); fill: none; }
+        .rc-line.rc-l-spy { stroke: var(--c-muted); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+        .rc-dd { fill: var(--c-neg); fill-opacity: .13; }
+        .rc-dd-edge { fill: none; stroke: var(--c-neg); stroke-width: 1.5; }
+        .rc-limit { stroke: var(--c-wait); stroke-width: 1.25; stroke-dasharray: 4 3; }
+        .rc-limit.rc-lab-neg { stroke: var(--c-neg); fill: none; }
+        .rc-limit.rc-lab-wait { fill: none; }
+        .rc-hit { fill: transparent; cursor: crosshair; }
+        .rc-rule { stroke: var(--c-muted); stroke-width: 1; stroke-dasharray: 2 3; pointer-events: none; }
+        .rc-tip { position: absolute; z-index: 4; background: var(--c-ink); color: var(--c-bg); border-radius: 8px; padding: 7px 10px; font-size: 12px; line-height: 1.45; white-space: nowrap; pointer-events: none; font-family: var(--rx-mono); }
+        .rc-tip b { font-family: var(--rx-ui); }
 
-        /* Key strip: verdict → binding gate → ETA → gates passed */
-        .slv-key { display: grid; grid-template-columns: 1.05fr 1.6fr 1.35fr 1fr; border-block: 1px solid var(--line); background: var(--rd-sunk); }
-        .k { padding: .9rem 1.25rem 1rem; display: grid; align-content: start; gap: .3rem; min-width: 0; }
-        .k + .k { border-inline-start: 1px solid var(--line); }
-        .k-l { font-size: .68rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-        .k-v { font-weight: 700; font-size: .98rem; line-height: 1.3; overflow-wrap: anywhere; }
-        .k-s { font-size: .8rem; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
-        .verdict { font-family: var(--rd-serif); font-weight: 400; font-size: clamp(1.45rem, 2.6vw, 1.8rem); line-height: 1.1; letter-spacing: -0.01em; }
-        .vd-GO { color: var(--rd-pass); }
-        .vd-NOT_READY { color: var(--rd-wait); }
-        .vd-NOT_ELIGIBLE { color: var(--muted); }
-        .vd-BETA_SLEEVE, .vd-FORWARD_TEST_PASS { color: var(--ink); }
-        .g-unknown { background: transparent; color: var(--ink); border-color: var(--rd-line-strong); text-transform: none; letter-spacing: 0; font-family: var(--rd-mono); }
-        .q { font-weight: 500; color: var(--muted); }
-        .k-bind .k-row { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .5rem; }
-        .k-gates .k-v { font-size: 1.05rem; }
-
-        /* Gate map: one cell per hard gate, in gate order — a status map, never a fill bar */
-        .pips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: .2rem; }
-        .pip { width: 11px; height: 11px; border-radius: 3px; background: var(--line); }
-        .pip.p-pass { background: var(--rd-pass); }
-        .pip.p-fail { background: var(--rd-fail); border-radius: 50%; }   /* shape, not only colour, separates fail from pass */
-        .pip.p-insufficient { background: transparent; box-shadow: inset 0 0 0 2px var(--rd-wait); }
-        .pip.p-not_measured { background: transparent; box-shadow: inset 0 0 0 1px var(--muted); background-image: linear-gradient(135deg, transparent 45%, var(--muted) 45%, var(--muted) 55%, transparent 55%); }
-        .pip-legend { display: flex; flex-wrap: wrap; gap: .25rem .75rem; font-size: .7rem; color: var(--muted); margin-top: .25rem; }
-        .pip-legend span { display: inline-flex; align-items: center; gap: .3rem; }
-        .pip-legend .pip { width: 9px; height: 9px; }
-
-        .slv-win { display: flex; flex-wrap: wrap; gap: .35rem 1.4rem; padding: .8rem 1.25rem; font-size: .8rem; border-bottom: 1px solid var(--line); }
-        .slv-win div { display: flex; gap: .4rem; align-items: baseline; min-width: 0; max-width: 100%; }
-        .slv-win dt { color: var(--muted); white-space: nowrap; }
-        .slv-win dd { margin: 0; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
-        .slv-attr { margin: 0; padding: .6rem 1.25rem; font-size: .78rem; color: var(--muted); border-bottom: 1px solid var(--line); line-height: 1.5; }
-        .slv-attr b { color: var(--ink); font-weight: 700; }
-
-        .edge { padding: .95rem 1.25rem 1rem; border-bottom: 1px solid var(--line); }
-        .sub-h { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin: 0 0 .7rem; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
-        .edge dl { margin: 0; display: grid; grid-template-columns: repeat(var(--n, 7), minmax(0, 1fr)); gap: 0; font-size: .82rem; }
-        .edge dl > div { display: grid; align-content: start; gap: .2rem; padding: .1rem .9rem; min-width: 0; }
-        .edge dl > div:first-child { padding-inline-start: 0; }
-        .edge dl > div + div { border-inline-start: 1px solid var(--line); }
-        .edge dt { color: var(--muted); font-size: .72rem; line-height: 1.35; }
-        .edge dd { margin: 0; font-weight: 600; font-size: .98rem; }
-        .edge dd small { display: block; font-weight: 500; color: var(--muted); font-size: .7rem; margin-top: .1rem; font-family: var(--rd-ui); }
-        .edge dd small.none { font-size: .76rem; margin: 0; }
-        .edge .alpha { font-size: 1.15rem; }
-        .edge .alpha.neutral { color: var(--ink); }
-        .edge .rf { margin: .7rem 0 0; font-size: .72rem; color: var(--muted); line-height: 1.5; }
-
-        details.ledger { min-width: 0; }
-        details.ledger > summary, details.narr > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .5rem; min-height: 44px;
-            padding: .65rem 1.25rem; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-        details > summary::-webkit-details-marker { display: none; }
-        details > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
-        .caret { width: 10px; height: 10px; transition: transform .15s; flex-shrink: 0; color: var(--muted); }
-        details[open] > summary .caret { transform: rotate(90deg); }
-        html[dir="rtl"] .caret { transform: scaleX(-1); }
-        html[dir="rtl"] details[open] > summary .caret { transform: rotate(90deg); }
-        .sum-note { margin-inline-start: auto; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); font-size: .76rem; }
-
-        table.gates { width: 100%; border-collapse: collapse; font-size: .82rem; }
-        table.gates th { text-align: start; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
-            padding: .45rem .75rem; border-bottom: 1px solid var(--line); background: var(--rd-sunk); }
-        table.gates th:first-child, table.gates td:first-child { padding-inline-start: 1.25rem; }
-        table.gates th:last-child, table.gates td:last-child { padding-inline-end: 1.25rem; }
-        table.gates td { padding: .62rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-        table.gates tr:last-child td { border-bottom: 0; }
-        table.gates .gn { font-weight: 700; line-height: 1.35; }
-        table.gates .gd { display: block; margin-top: .2rem; color: var(--muted); font-size: .76rem; font-weight: 500; line-height: 1.45; }
-        table.gates .ms-v { white-space: nowrap; }
-        table.gates .th-v { font-family: var(--rd-mono); color: var(--muted); font-size: .76rem; }
-        table.gates .ms-v { font-weight: 600; }
-        table.gates td.stc { white-space: nowrap; text-align: end; }
-        table.gates .eta-s { display: block; margin-top: .25rem; font-size: .7rem; color: var(--muted); }
-        table.gates tr.is-binding td { background: color-mix(in srgb, var(--teal-soft) 55%, transparent); }
-        table.gates tr.is-binding .gn::after { content: attr(data-bind); margin-inline-start: .45rem; font-size: .62rem; font-weight: 800; letter-spacing: .06em;
-            text-transform: uppercase; color: var(--teal-dark); }
-        table.gates tr.soft td { color: var(--muted); }
-        table.gates tr.soft .gn { font-weight: 600; }
-
-        .slv-gaps { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .5rem; padding: .7rem 1.25rem; border-top: 1px solid var(--line); font-size: .8rem; }
-        .slv-gaps b { font-weight: 700; margin-inline-end: .25rem; }
-        details.narr { border-top: 1px solid var(--line); }
-        details.narr p { margin: 0; padding: 0 1.25rem 1rem; font-size: .84rem; line-height: 1.65; color: var(--ink); max-width: 95ch; text-wrap: pretty; }
-        .en-note { font-size: .72rem; color: var(--muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
-
-        .rd-empty { padding: 2.5rem 1.5rem; text-align: center; color: var(--muted); border: 1px dashed var(--rd-line-strong); border-radius: .85rem; background: var(--surface); }
-        .rd-empty b { display: block; font-family: var(--rd-serif); font-weight: 400; font-size: 1.35rem; color: var(--ink); margin-bottom: .35rem; }
-
-        .rd-foot { margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem 2rem; font-size: .78rem; color: var(--muted); line-height: 1.6; }
-        .rd-foot h3 { margin: 0 0 .3rem; font-size: .7rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--ink); }
-        .rd-foot p { margin: 0; }
-        .rd-foot code { font-family: var(--rd-mono); font-size: .74rem; overflow-wrap: anywhere; }
-
-        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+        /* ── Motion: one engine (CSS), once, off under reduced motion ── */
+        @media (prefers-reduced-motion: no-preference) {
+            .rx:not(.rx-settled) .rx-chart svg.rc { animation: rx-wipe 1.1s var(--rx-ease) both; }
+            .rx:not(.rx-settled) .rx-count .big { animation: rx-rise .9s var(--rx-ease) both; }
+            .rx:not(.rx-settled) .card, .rx:not(.rx-settled) .panel { animation: rx-rise .7s var(--rx-ease) both; }
+        }
+        @keyframes rx-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+        @keyframes rx-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
         /* ── Responsive ── */
-        @media (max-width: 1080px) {
-            .edge dl { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: .8rem; }
-            .edge dl > div:nth-child(4n+1) { padding-inline-start: 0; border-inline-start: 0; }
+        @media (max-width: 860px) {
+            .rx-top { grid-template-columns: minmax(0, 1fr); }
+            .rx-count { justify-content: flex-start; }
+            .g2 { grid-template-columns: minmax(0, 1fr); }
+            .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
-        @media (max-width: 900px) {
-            .slv-key { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .k:nth-child(3) { border-inline-start: 0; }
-            .k:nth-child(n+3) { border-top: 1px solid var(--line); }
+        @media (max-width: 520px) {
+            .trio { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .trio > :last-child { grid-column: 1 / -1; }
+            .rx-stats dd { font-size: 19px; }
+            .seg button { padding: 10px 12px; }
+            .rc-lab { font-size: 11px; }
+            .seg .sn { display: none; }
+            .seg button { min-width: 64px; }
+            .ledger thead { display: none; }
+            .ledger tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+            .ledger td { border: 0; padding: 0; }
+            .ledger td:first-child { grid-column: 1 / -1; }
         }
-        @media (max-width: 720px) {
-            .rd { padding-top: 5.25rem; }
-            .rd-head { grid-template-columns: minmax(0, 1fr); }
-            .rd-meta dd { text-align: start; }
-            .rd-meta { grid-template-columns: auto minmax(0, 1fr); }
-            .rd-books { grid-template-columns: minmax(0, 1fr); gap: .45rem; }
-            .rd-book { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: .75rem; padding: .6rem .85rem; }
-            .rd-book .b-top { display: contents; }
-            .rd-book .b-id { grid-column: 1; grid-row: 1 / span 2; }
-            .rd-book .b-nm { grid-column: 2; grid-row: 1; }
-            .rd-book .b-eq { grid-column: 2; grid-row: 2; }
-            .rd-book .b-sum { grid-column: 3; grid-row: 1 / span 2; }
-            .slv-head { padding: 1rem 1rem .8rem; }
-            .k { padding: .8rem 1rem .9rem; }
-            .slv-key { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "v g" "b b" "e e"; }
-            .k-verdict { grid-area: v; } .k-gates { grid-area: g; } .k-bind { grid-area: b; } .k-eta { grid-area: e; }
-            .k-bind, .k-eta { border-inline-start: 0 !important; border-top: 1px solid var(--line); }
-            .k-gates { border-inline-start: 1px solid var(--line) !important; border-top: 0 !important; }
-            .slv-win, .slv-attr, .slv-gaps { padding-inline: 1rem; }
-            .edge { padding: .9rem 1rem 1rem; }
-            .edge dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .edge dl > div { padding-inline: .75rem; }
-            .edge dl > div:nth-child(odd) { padding-inline-start: 0; border-inline-start: 0; }
-            .edge dl > div:nth-child(even) { border-inline-start: 1px solid var(--line); }
-            details.ledger > summary, details.narr > summary { padding-inline: 1rem; }
-            details.narr p { padding-inline: 1rem; }
-            table.gates thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-            table.gates, table.gates tbody { display: block; }
-            table.gates tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n s" "t t" "m m"; gap: .3rem .75rem;
-                padding: .7rem 1rem; border-bottom: 1px solid var(--line); }
-            table.gates tr:last-child { border-bottom: 0; }
-            table.gates td { display: block; padding: 0 !important; border: 0; background: none !important; }
-            table.gates tr.is-binding { background: color-mix(in srgb, var(--teal-soft) 55%, transparent); }
-            table.gates td.gnc { grid-area: n; } table.gates td.stc { grid-area: s; }
-            table.gates td.thc { grid-area: t; } table.gates td.msc { grid-area: m; }
-            table.gates td.thc::before, table.gates td.msc::before { content: attr(data-label); font-family: var(--rd-ui); font-size: .68rem; font-weight: 700;
-                letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-inline-end: .5rem; }
-            table.gates .ms-v { white-space: normal; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .rd-book, .caret { transition: none; }
-        }
-
-        /* ── Arabic ── zero negative tracking; Arabic face for UI and display */
-        html[dir="rtl"] .rd, html[dir="rtl"] .rd-book .b-nm, html[dir="rtl"] .k-v, html[dir="rtl"] table.gates .gn { font-family: 'IBM Plex Sans Arabic', var(--rd-ui); }
-        html[dir="rtl"] .rd-head h1, html[dir="rtl"] .bk-head h2, html[dir="rtl"] .slv-name, html[dir="rtl"] .verdict, html[dir="rtl"] .rd-empty b {
-            font-family: 'IBM Plex Sans Arabic', var(--rd-ui); font-weight: 700; letter-spacing: 0; line-height: 1.35; }
-        html[dir="rtl"] .k-l, html[dir="rtl"] .sub-h, html[dir="rtl"] .chip, html[dir="rtl"] table.gates th, html[dir="rtl"] .rd-foot h3,
-        html[dir="rtl"] details > summary { letter-spacing: 0; }
-        html[dir="rtl"] [lang="en"] { font-family: var(--rd-ui); }
     </style>
+
 </head>
 <body>
     <div class="backdrop"></div>
@@ -324,32 +328,47 @@
         </div>
     </nav>
 
-    <main class="rd">
-        <header class="rd-head">
-            <div>
-                <h1 data-key="hero_title">Live-Readiness</h1>
-                <p class="rd-lede" data-key="hero_desc">Go-live verdicts per strategy version, computed daily by the Readiness Engine from broker data. GO only when every hard gate passes — there is no percentage score.</p>
+    <main class="rx" id="rx">
+        <section class="rx-hero" aria-labelledby="rx-title">
+            <div class="rx-wrap">
+                <div class="rx-meta"><span class="rx-paper" data-key="paper_chip">Paper only</span><span id="meta"></span></div>
+                <div class="rx-top">
+                    <div>
+                        <h1 id="rx-title" data-key="hero_title">Live-Readiness</h1>
+                        <p class="rx-lede" data-key="hero_lede">Which strategies have earned real capital — and the one thing still standing in the way of each.</p>
+                    </div>
+                    <div class="rx-count" id="count" aria-live="polite"></div>
+                </div>
+                <div class="rx-lead" id="lead" aria-live="polite"></div>
             </div>
-            <dl class="rd-meta" id="meta" aria-live="polite"></dl>
-        </header>
-
-        <div class="rd-paper" role="note">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r="0.6" fill="currentColor"/></svg>
-            <div data-key-html="paper_banner"><b>Paper only.</b> No portfolio trades real money. A GO verdict makes a sleeve eligible for a human fractional-live review — it never deploys capital by itself.</div>
-        </div>
-
-        <div id="alerts"></div>
-
-        <div class="rd-books" id="tabs" role="tablist" aria-label="Portfolios"></div>
-
-        <section id="book" aria-live="polite">
-            <div class="rd-empty"><b data-key="loading_t">Loading the readiness report…</b></div>
         </section>
 
-        <footer class="rd-foot" id="foot"></footer>
+        <div class="rx-wrap">
+            <div id="alerts"></div>
+
+            <section class="rx-sec" aria-labelledby="mx-h">
+                <div class="rx-sec-head">
+                    <h2 id="mx-h" data-key="mx_h">Every gate, every strategy</h2>
+                    <div class="rx-legend" id="legend"></div>
+                </div>
+                <div class="mx-box" id="mxBox"></div>
+            </section>
+
+            <section class="rx-sec" aria-labelledby="bk-h">
+                <div class="rx-sec-head">
+                    <h2 id="bk-h"></h2>
+                    <div class="seg" id="tabs" role="tablist"></div>
+                </div>
+                <div id="book" role="tabpanel"></div>
+            </section>
+
+            <footer class="rx-foot" id="foot"></footer>
+        </div>
     </main>
 
     <script src="/assets/readiness-logic.js"></script>
+    <script src="/assets/readiness-charts.js"></script>
+
     <script>
     (function () {
         'use strict';
@@ -606,12 +625,12 @@
         function statusLabel(status) { return RL.gateStatusKnown(status) ? t('gs_' + status) : String(status); }
 
         // ── ETA (verbatim engine state; the page never projects anything itself) ──
-        function etaBlock(s) {
+        function etaBlock(s, brief) {
             var eta = s.eta || {}, ov = eta.overall || {}, ed = eta.edge || {}, th = (report && report.thresholds) || {};
             if (s.verdict === 'GO') return { v: t('eta_go_t'), s: '' };
             if (s.verdict === 'NOT_ELIGIBLE') return { v: t('eta_none_t'), s: t('eta_inactive_s') };
             if (s.verdict === 'FORWARD_TEST_PASS') return { v: t('eta_none_t'), s: t('eta_ftp_s') };
-            var excl = (ov.excludes_measurement_gaps || []).length
+            var excl = !brief && (ov.excludes_measurement_gaps || []).length
                 ? ' ' + tm('eta_excl', { g: ov.excludes_measurement_gaps.map(function (id) { return esc(gateName({ id: id })); }).join(', ') }) : '';
             var rg = RL.etaRange(ov);
             if (rg) {
@@ -646,173 +665,6 @@
             return open == null ? '' : tm('vs_NOT_READY', { n: L(open) });
         }
 
-        function sleeveCard(s, wide, openState) {
-            var gates = s.gates || [], hard = gates.filter(function (g) { return g.hard !== false; });
-            var bind = null;
-            for (var i = 0; i < gates.length; i++) if (gates[i].id === s.binding_gate) bind = gates[i];
-            var eta = etaBlock(s), e = s.edge || {}, th = report.thresholds || {}, w = s.window || {};
-            // The ledger opens by default only for versions still accruing evidence, on
-            // wide screens; inactive versions and phones lead with the summary strip.
-            var accruing = s.status === 'active' || s.status === 'forward_test';
-            var ledgerOpen = openState['ledger:' + s.id] != null ? openState['ledger:' + s.id] : (wide && accruing);
-            var narrOpen = openState['narr:' + s.id] != null ? openState['narr:' + s.id] : false;
-
-            var pips = hard.map(function (g) {
-                return '<span class="pip p-' + esc(g.status) + '" title="' + esc(gateName(g) + ' — ' + statusLabel(g.status)) + '"></span>';
-            }).join('');
-
-            var rows = gates.map(function (g) {
-                var isBind = bind && g.id === bind.id, soft = g.hard === false;
-                var etaS = (g.status === 'insufficient' && num(g.eta_sessions) && g.eta_sessions > 0)
-                    ? '<span class="eta-s">' + tm('eta_sessions', { n: grouped(g.eta_sessions) }) + '</span>' : '';
-                return '<tr class="' + (isBind ? 'is-binding ' : '') + (soft ? 'soft' : '') + '">' +
-                    '<td class="gnc"><span class="gn"' + (isBind ? ' data-bind="' + esc(t('bind_tag')) + '"' : '') + '>' + esc(gateName(g)) + '</span>' +
-                        (soft ? ' <span class="en-note">(' + t('soft_tag') + ')</span>' : '') +
-                        (g.detail ? EN(g.detail, 'span').replace('<span ', '<span class="gd" ') : '') + '</td>' +
-                    '<td class="thc" data-label="' + esc(t('th_thr')) + '"><span class="th-v" dir="ltr" lang="en">' + esc(sym(g.threshold)) + '</span></td>' +
-                    '<td class="msc" data-label="' + esc(t('th_val')) + '"><span class="ms-v">' + gateValue(g) + '</span></td>' +
-                    '<td class="stc">' + gateChip(g.status) + etaS + '</td></tr>';
-            }).join('');
-
-            var gaps = (s.measurement_gaps || []);
-            var vi = RL.verdictInfo(s.verdict);
-            var ad = RL.alphaDisplay(s), cb = RL.confidenceBound(e);
-            var alphaCls = ad.show && ad.signColored ? ATFmt.signClass(e.alpha * 100, 2) : 'neutral';
-            var alphaQ = !ad.show || !ad.qualifier ? '' : '<small>' + (ad.qualifier === 'not_significant'
-                ? (ad.t != null ? tm('q_ns', { t: L(fix(ad.t, 2)) }) : t('qs_ns'))
-                : ad.qualifier === 'insufficient' ? (ad.n != null ? tm('q_ins', { n: L(ad.n) }) : t('qs_ins')) : t('q_na')) + '</small>';
-            var csStat = !cb ? '' : '<div><dt>' + t('e_cs') + '</dt><dd class="' + alphaCls + '">' + L(spct(cb.lower)) +
-                '<small>' + [cb.level != null ? tm('e_cs_s', { lvl: L(Math.round(cb.level * 1000) / 10 + '%') }) : '',
-                             cb.upper != null ? tm('e_cs_up', { u: L(spct(cb.upper)) }) : '',
-                             cb.k != null ? tm('e_cs_k', { k: L(cb.k) }) : ''].filter(Boolean).join(' · ') + '</small></dd></div>';
-            var none = '<small class="none">' + t('e_none') + '</small>';
-            function stat(label, val, cls) { return '<div><dt>' + label + '</dt><dd' + (cls ? ' class="' + cls + '"' : '') + '>' + val + '</dd></div>'; }
-
-            return '<article class="slv v-' + vi.cls + '" id="sl-' + esc(s.id) + '" aria-labelledby="h-' + esc(s.id) + '">' +
-                '<header class="slv-head"><div>' +
-                    '<h3 class="slv-name" id="h-' + esc(s.id) + '">' + esc(key('sl_', s.sleeve)) + '</h3>' +
-                    '<p class="slv-ver" dir="ltr" lang="en">' + esc(s.version || '') + ' · <span class="slv-id">' + esc(s.id) + '</span></p>' +
-                '</div>' + chip('st-' + esc(s.status), key('st_', s.status)) + '</header>' +
-
-                '<div class="slv-key">' +
-                    '<div class="k k-verdict"><span class="k-l">' + t('k_verdict') + '</span>' +
-                        (vi.known ? '<strong class="verdict vd-' + vi.cls + '">' + esc(t('vd_' + vi.cls)) + '</strong>'
-                                  : '<span class="k-row">' + chip('g-unknown', esc(vi.raw || '—')) + '</span>') +
-                        '<span class="k-s">' + verdictSub(s) + '</span></div>' +
-                    '<div class="k k-bind"><span class="k-l">' + t('k_bind') + '</span>' +
-                        (bind ? '<span class="k-v">' + esc(gateName(bind)) + '</span><span class="k-row">' + gateChip(bind.status) +
-                            ' <span class="k-s ms-v">' + gateValue(bind) + '</span></span>'
-                              : '<span class="k-v">—</span>') + '</div>' +
-                    '<div class="k k-eta"><span class="k-l">' + t('k_eta') + '</span><span class="k-v">' + eta.v + '</span>' +
-                        (eta.s ? '<span class="k-s">' + eta.s + '</span>' : '') + '</div>' +
-                    '<div class="k k-gates"><span class="k-l">' + t('k_gates') + '</span>' +
-                        '<span class="k-v">' + tm('of', { a: L(s.gates_passed), b: L(s.gates_total) }) + '</span>' +
-                        '<span class="pips" role="img" aria-label="' + esc(tm('gates_aria', { a: s.gates_passed, b: s.gates_total })) + '">' + pips + '</span></div>' +
-                '</div>' +
-
-                '<dl class="slv-win">' +
-                    '<div><dt>' + t('w_window') + '</dt><dd>' + (w.trading_days === 0
-                        ? tm('w_none', { d: L(w.start || s.start_date || '—') })
-                        : L((w.start || s.start_date || '—') + ' → ' + (w.end || '—'))) + '</dd></div>' +
-                    '<div><dt>' + t('w_days') + '</dt><dd>' + L(w.trading_days != null ? w.trading_days : '—') + '</dd></div>' +
-                    '<div><dt>' + t('w_basis') + '</dt><dd>' + esc(key('basis_', s.evidence_basis)) + '</dd></div>' +
-                    '<div><dt>' + t('w_bench') + '</dt><dd>' + L(s.benchmark || '—') + '</dd></div>' +
-                    '<div><dt>' + t('w_trials') + '</dt><dd>' + L(s.trial_count != null ? s.trial_count : '—') + '</dd></div>' +
-                    (s.path ? '<div><dt>' + t('w_path') + '</dt><dd>' + esc(key('path_', s.path)) + '</dd></div>' : '') +
-                    (s.spec ? '<div><dt>' + t('w_spec') + '</dt><dd>' + L(s.spec) + '</dd></div>' : '') +
-                '</dl>' +
-                (s.attribution === 'book_level' ? '<p class="slv-attr">' + t('attr_book') + '</p>' : '') +
-
-                '<div class="slv-body">' +
-                    '<section class="edge" aria-label="' + esc(tm('edge_h', { b: s.benchmark || 'SPY' })) + '">' +
-                        '<h4 class="sub-h"><span>' + tm('edge_h', { b: L(s.benchmark || 'SPY') }) + '</span>' + (RL.edgeStatus(s) ? gateChip(RL.edgeStatus(s)) : '') + '</h4>' +
-                        '<dl style="--n:' + (cb ? 8 : 7) + '">' +
-                            stat(t('e_alpha'), num(e.alpha) ? L(spct(e.alpha)) + alphaQ : none, 'alpha ' + alphaCls) + csStat +
-                            stat(t('e_t'), (num(e.t_hac) ? L(fix(e.t_hac, 2)) : '—') + '<small>' + tm('e_req', { z: L(fix(e.z_required, 2)) }) + '</small>') +
-                            stat(t('e_dsr'), (num(e.dsr) ? L(fix(e.dsr, 3)) : '—') + '<small>' + tm('e_dsr_s', { min: L(fix(th.dsr_min, 2)), n: L(e.trial_count != null ? e.trial_count : s.trial_count) }) + '</small>') +
-                            stat(t('e_beta'), num(e.beta) ? L(fix(e.beta, 2)) : none) +
-                            stat(t('e_psr'), num(e.psr) ? L(fix(e.psr, 3)) : none) +
-                            stat(t('e_ir'), num(e.ir) ? L(fix(e.ir, 2)) : none) +
-                            stat(t('e_n'), L(e.n != null ? e.n : '—')) +
-                        '</dl>' +
-                        (e.rf_source ? '<p class="rf">' + tm('e_rf', { rf: EN(e.rf_source) }) + '</p>' : '') +
-                    '</section>' +
-                    '<details class="ledger" data-k="ledger:' + esc(s.id) + '"' + (ledgerOpen ? ' open' : '') + '>' +
-                        '<summary>' + CARET + '<span>' + t('ledger_h') + '</span><span class="sum-note">' + tm('of', { a: L(s.gates_passed), b: L(s.gates_total) }) + '</span></summary>' +
-                        '<table class="gates"><colgroup><col style="width:36%"><col style="width:24%"><col style="width:24%"><col style="width:16%"></colgroup><thead><tr><th scope="col">' + t('th_gate') + '</th><th scope="col">' + t('th_thr') + '</th>' +
-                        '<th scope="col">' + t('th_val') + '</th><th scope="col" style="text-align:end">' + t('th_st') + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-                    '</details>' +
-                '</div>' +
-
-                (gaps.length ? '<div class="slv-gaps"><b>' + t('gaps_h') + '</b>' + gaps.map(function (id) { return chip('g-not_measured', esc(gateName({ id: id })), '∅'); }).join('') + '</div>' : '') +
-                (s.narrative ? '<details class="narr" data-k="narr:' + esc(s.id) + '"' + (narrOpen ? ' open' : '') + '><summary>' + CARET + '<span>' + t('narr_h') + '</span>' +
-                    (t('en_note') ? '<span class="en-note">· ' + t('en_note') + '</span>' : '') + '</summary>' + EN(s.narrative, 'p') + '</details>' : '') +
-            '</article>';
-        }
-
-        function sinceInception(id) {
-            var d = details[id] || {}, a = d.account || {};
-            var eq = a.equity != null ? Number(a.equity) : null;
-            // Configured starting capital from /api/portfolios (the same basis the portfolio
-            // pages use); unknown capital ⇒ no return shown, never an assumed $100K.
-            var cap = Number((cfg[id] && cfg[id].initial_capital) || 0);
-            return { eq: (eq != null && isFinite(eq)) ? eq : null, ret: (eq != null && cap > 0) ? (eq / cap - 1) * 100 : null, live: d.live_connected === true };
-        }
-
-        function renderTabs() {
-            var books = (report && report.books) || {};
-            var el = document.getElementById('tabs');
-            el.setAttribute('aria-label', t('tabs_label'));
-            el.innerHTML = BOOKS.map(function (id) {
-                var b = books[id] || {}, vs = b.verdicts || {}, ids = Object.keys(vs);
-                var go = ids.filter(function (k) { return vs[k] === 'GO'; }).length;
-                var q = sinceInception(id);
-                var eq = q.eq != null
-                    ? L(ATFmt.money(q.eq, 0)) + (q.ret != null ? ' <span class="' + ATFmt.signClass(q.ret, 1) + '">' + L(ATFmt.signedPct(q.ret, 1)) + '</span>' : '') +
-                      (q.live ? '' : ' · ' + t('b_snapshot'))
-                    : '—';
-                return '<button type="button" class="rd-book" role="tab" id="tab-' + id + '" aria-controls="book" aria-selected="' + (id === current) + '" tabindex="' + (id === current ? 0 : -1) + '" data-pf="' + id + '">' +
-                    '<span class="b-top"><span class="b-id">' + id.replace('portfolio_', 'P') + '</span>' +
-                    (report ? '<span class="b-sum">' + tm('b_sum', { go: L(go), n: L(ids.length) }) + '</span>' : '') + '</span>' +
-                    '<span class="b-nm">' + t('pf_' + id) + '</span><span class="b-eq">' + eq + '</span></button>';
-            }).join('');
-        }
-
-        function openStates() {
-            var m = {};
-            document.querySelectorAll('#book details[data-k]').forEach(function (d) { m[d.getAttribute('data-k')] = d.open; });
-            return m;
-        }
-
-        function renderBook(keepOpen) {
-            var host = document.getElementById('book');
-            host.setAttribute('aria-labelledby', 'tab-' + current);
-            if (!report) {
-                        host.innerHTML = reportErr ? '<div class="rd-empty"><b>' + esc(t('pf_' + current)) + '</b>' + t('no_verdict') + '</div>'
-                                           : '<div class="rd-empty"><b>' + t('loading_t') + '</b></div>';
-                return;
-            }
-            var state = keepOpen ? openStates() : {};
-            var wide = window.matchMedia('(min-width: 721px)').matches;
-            var b = (report.books || {})[current] || {};
-            var sl = report.sleeves.filter(function (s) { return s.book === current; }).sort(function (x, y) {
-                var a = STATUS_ORDER[x.status], c = STATUS_ORDER[y.status];
-                return (a == null ? 9 : a) - (c == null ? 9 : c);
-            });
-            var head = '<div class="bk-head"><h2>' + esc(t('pf_' + current)) + '</h2>' +
-                (b.equity_source ? '<p>' + tm('bk_source', { src: EN(b.equity_source), pts: L(b.equity_points != null ? b.equity_points : '—'), last: L(b.last_date || '—') }) + '</p>' : '') + '</div>';
-            host.innerHTML = head + (sl.length ? sl.map(function (s) { return sleeveCard(s, wide, state); }).join('')
-                                               : '<div class="rd-empty">' + t('no_sleeves') + '</div>');
-        }
-
-        function renderMeta() {
-            var m = document.getElementById('meta');
-            if (!report) { m.innerHTML = ''; return; }
-            m.innerHTML = '<dt>' + t('m_method') + '</dt><dd>' + L('v' + (report.methodology_version || '—')) + '</dd>' +
-                '<dt>' + t('m_asof') + '</dt><dd>' + L(report.as_of_session || '—') + '</dd>' +
-                '<dt>' + t('m_generated') + '</dt><dd>' + L(ATFmt.etDateTime(report.generated_at)) + '</dd>';
-        }
-
         function renderAlerts() {
             var out = [];
             if (report) {
@@ -836,26 +688,356 @@
             document.getElementById('alerts').innerHTML = out.join('');
         }
 
-        function renderFoot() {
-            var f = document.getElementById('foot');
-            var r = report || {}, ds = r.data_sources || {}, pv = r.provenance || {};
-            var src = [ds.calendar && ('calendar: ' + ds.calendar), ds.bars && ('bars: ' + ds.bars)].filter(Boolean).join(' · ');
-            f.innerHTML =
-                '<div><h3>' + t('f_rule') + '</h3><p>' + t('f_rule_t') + '</p></div>' +
-                '<div><h3>' + t('f_method') + '</h3><p>' + (r.methodology_doc ? '<code dir="ltr">' + esc(r.methodology_doc) + '</code>' : '—') +
-                    (r.methodology_version ? ' · ' + L('v' + r.methodology_version) : '') + '</p>' +
-                    (src ? '<h3 style="margin-top:.7rem">' + t('f_sources') + '</h3><p>' + EN(src) + '</p>' : '') + '</div>' +
-                '<div><h3>' + t('f_disc') + '</h3><p>' + t('f_disc_t') + '</p>' +
-                    (pv.combined_sha256 ? '<p style="margin-top:.5rem">' + tm('f_prov', { h: L(String(pv.combined_sha256).slice(0, 12)), e: L((pv.meta && pv.meta.engine) || '—') }) + '</p>' : '') + '</div>';
+
+        // ── Verdict Room (2026-10-23): new copy, merged over the table above ──
+        var RC = window.ReadinessCharts;
+        var X = {
+            en: {
+                paper_chip: 'Paper only',
+                hero_lede: 'Which strategies have earned real capital — and the one thing still standing in the way of each.',
+                meta_line: 'Methodology {v} · Session {d} · Broker data, refreshed daily',
+                count_l: 'strategy versions cleared for live capital',
+                lead_cap: 'Furthest-along edge test', lead_none: 'No strategy is accruing live edge evidence yet.',
+                lead_note: 'Edge is proven when the lower bound clears the GO line. Today the band still spans zero.',
+                lead_note_go: 'The lower bound has cleared the GO line.',
+                st_alpha: 'Alpha estimate', st_lower: 'Lower bound', st_sessions: 'Sessions', per_yr: '/yr',
+                ch_upper: 'Upper', ch_lower: 'Lower', ch_est: 'Midpoint', ch_zero: 'GO line · 0%', ch_off: 'Earlier bounds off-scale',
+                ch_book: '{b}', ch_dd_gate: 'DD gate', ch_kill: 'Kill',
+                ch_aria_funnel: 'Always-valid confidence band on {s} alpha over {n} sessions: lower {lo}, midpoint {pt}, upper {hi} a year.',
+                ch_aria_lines: '{b} cumulative return {r} against SPY {s} over the same {n} sessions.',
+                ch_aria_dd: '{b} drawdown, worst {w}, against the {g} gate and the {k} kill switch.',
+                tip_band: 'lower {lo} · mid {pt} · upper {hi}',
+                mx_h: 'Every gate, every strategy', mx_strategy: 'Strategy', mx_verdict: 'Verdict',
+                grp_evidence: 'Evidence', grp_risk: 'Risk', grp_ops: 'Operations',
+                lg_pass: 'Pass', lg_insufficient: 'Accruing', lg_fail: 'Fail', lg_not_measured: 'Not measured', lg_soft: 'Informational',
+                c_track_record: 'TRACK', c_edge: 'EDGE', c_research: 'RSRCH', c_incubation_consistency: 'INCUB', c_sample: 'TRADES', c_profit_factor: 'PF',
+                c_max_drawdown: 'MAX DD', c_kill_switch_headroom: 'KILL', c_worst_day: 'WORST', c_cvar95: 'CVAR', c_regime_coverage: 'REGIME',
+                c_reconciliation: 'RECON', c_duplicate_orders: 'DUPES', c_slippage: 'SLIP', c_data_freshness: 'FRESH', c_exception_free: 'RUNS',
+                tip_thr: 'Threshold', tip_val: 'Measured', tip_soft: 'informational — does not count toward GO',
+                k_equity: 'Equity', k_ret: 'Return since {d}', k_spy: 'SPY, same sessions', k_dd: 'Max drawdown',
+                p_ret: 'Return vs SPY', p_dd: 'Drawdown vs limits', p_none: 'No equity series in the report yet.',
+                c_track: 'sessions · {n} needed', c_gates: 'hard gates', c_edge_n: 'edge returns · {n} needed',
+                c_ledger: 'Gate ledger', c_narr: 'Engine narrative', c_bind: 'Binding: {g}',
+                c_book_tag: 'Book-level series', c_shared_tag: 'Book-level, not credited',
+                c_no_edge: 'No edge claimed — readiness covers risk and operations only.',
+                c_edge_wait: '{n} of {m} returns before an edge verdict',
+                c_band_above: 'Edge band today: {lo} to {hi} a year — the full trajectory is the chart above.',
+                f_rule_s: 'GO only when every hard gate passes. Real capital remains a human decision.',
+                f_disc_s: 'Paper-trading evidence for internal model-risk use — not investment advice.'
+            },
+            ar: {
+                paper_chip: 'تداول ورقي فقط',
+                hero_lede: 'أي الاستراتيجيات استحقت رأس مال حقيقي — وما الشرط الوحيد الذي ما زال يعترض كل واحدة منها.',
+                meta_line: 'المنهجية {v} · جلسة {d} · بيانات الوسيط، تُحدَّث يومياً',
+                count_l: 'إصدارات استراتيجيات مؤهلة لرأس مال حقيقي',
+                lead_cap: 'أبعد اختبار تفوق تقدماً', lead_none: 'لا توجد استراتيجية تجمع أدلة تفوق حية بعد.',
+                lead_note: 'يثبت التفوق عندما يتجاوز الحد الأدنى خط «جاهز». ما زال النطاق اليوم يشمل الصفر.',
+                lead_note_go: 'تجاوز الحد الأدنى خط «جاهز».',
+                st_alpha: 'تقدير ألفا', st_lower: 'الحد الأدنى', st_sessions: 'الجلسات', per_yr: '/سنة',
+                ch_upper: 'الأعلى', ch_lower: 'الأدنى', ch_est: 'المنتصف', ch_zero: 'خط الجاهزية · \u20660%\u2069', ch_off: 'الحدود الأقدم خارج النطاق',
+                ch_book: '{b}', ch_dd_gate: 'حد التراجع', ch_kill: 'الإيقاف',
+                ch_aria_funnel: 'نطاق ثقة صالح دائماً لألفا {s} عبر {n} جلسة: الأدنى {lo}، المنتصف {pt}، الأعلى {hi} سنوياً.',
+                ch_aria_lines: 'العائد التراكمي لـ {b} {r} مقابل SPY {s} عبر نفس الـ {n} جلسة.',
+                ch_aria_dd: 'تراجع {b}، الأسوأ {w}، مقابل حد {g} ومفتاح الإيقاف {k}.',
+                tip_band: 'الأدنى {lo} · المنتصف {pt} · الأعلى {hi}',
+                mx_h: 'كل الشروط، لكل استراتيجية', mx_strategy: 'الاستراتيجية', mx_verdict: 'الحكم',
+                grp_evidence: 'الأدلة', grp_risk: 'المخاطر', grp_ops: 'التشغيل',
+                lg_pass: 'ناجح', lg_insufficient: 'قيد التجميع', lg_fail: 'راسب', lg_not_measured: 'غير مقاس', lg_soft: 'للعلم فقط',
+                c_track_record: 'السجل', c_edge: 'التفوق', c_research: 'البحث', c_incubation_consistency: 'الحضانة', c_sample: 'الصفقات', c_profit_factor: 'م.الربح',
+                c_max_drawdown: 'التراجع', c_kill_switch_headroom: 'الإيقاف', c_worst_day: 'أسوأ يوم', c_cvar95: 'CVaR', c_regime_coverage: 'الأنظمة',
+                c_reconciliation: 'المطابقة', c_duplicate_orders: 'التكرار', c_slippage: 'الانزلاق', c_data_freshness: 'الحداثة', c_exception_free: 'التشغيلات',
+                tip_thr: 'الحد', tip_val: 'المقاس', tip_soft: 'للعلم فقط — لا يُحتسب ضمن «جاهز»',
+                k_equity: 'رأس المال', k_ret: 'العائد منذ {d}', k_spy: 'SPY، نفس الجلسات', k_dd: 'أقصى تراجع',
+                p_ret: 'العائد مقابل SPY', p_dd: 'التراجع مقابل الحدود', p_none: 'لا توجد سلسلة رأس مال في التقرير بعد.',
+                c_track: 'جلسة · المطلوب {n}', c_gates: 'شروط إلزامية', c_edge_n: 'عائد للتفوق · المطلوب {n}',
+                c_ledger: 'سجل الشروط', c_narr: 'سرد المحرك', c_bind: 'الحاسم: {g}',
+                c_book_tag: 'سلسلة على مستوى المحفظة', c_shared_tag: 'على مستوى المحفظة، غير محتسبة',
+                c_no_edge: 'لا ادعاء بالتفوق — الجاهزية تغطي المخاطر والتشغيل فقط.',
+                c_edge_wait: '{n} من {m} عائداً قبل حكم التفوق',
+                c_band_above: 'نطاق التفوق اليوم: من {lo} إلى {hi} سنوياً — المسار الكامل في الرسم أعلاه.',
+                f_rule_s: '«جاهز» فقط عندما تنجح كل الشروط الإلزامية. يبقى رأس المال الحقيقي قراراً بشرياً.',
+                f_disc_s: 'أدلة تداول ورقي لإدارة مخاطر النماذج داخلياً — ليست نصيحة استثمارية.'
+            }
+        };
+        Object.keys(X).forEach(function (lg) { Object.keys(X[lg]).forEach(function (k) { T[lg][k] = X[lg][k]; }); });
+
+        var GATE_COLS = ['track_record', 'edge', 'research', 'incubation_consistency', 'sample', 'profit_factor',
+                         'max_drawdown', 'kill_switch_headroom', 'worst_day', 'cvar95', 'regime_coverage',
+                         'reconciliation', 'duplicate_orders', 'slippage', 'data_freshness', 'exception_free'];
+        var GROUPS = [['grp_evidence', 6], ['grp_risk', 5], ['grp_ops', 5]];
+        var GROUP_START = { 0: true, 6: true, 11: true };
+        var MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        var charts = [];          // { host, build } — re-drawn at the host's real width
+        var lastW = {};
+
+        function months() { return lang === 'ar' ? MONTHS_AR : null; }
+        function sleeveName(s) { return key('sl_', s.sleeve); }
+        function bookTag(id) { return String(id || '').replace('portfolio_', 'P'); }
+        function gateOf(s, id) { var g = s.gates || []; for (var i = 0; i < g.length; i++) if (g[i] && g[i].id === id) return g[i]; return null; }
+        function glyph(g) {
+            if (!g) return '<span class="gl gl-not_applicable" aria-hidden="true"></span>';
+            var st = RL.gateStatusKnown(g.status) ? g.status : 'unknown';
+            return '<span class="gl gl-' + st + (g.hard === false && st !== 'not_applicable' ? ' gl-soft' : '') + '" aria-hidden="true"></span>';
+        }
+        function signCls(v) { return num(v) ? (v > 0 ? 'up' : (v < 0 ? 'down' : '')) : ''; }
+        function sortSleeves(list) {
+            return list.slice().sort(function (x, y) {
+                var a = STATUS_ORDER[x.status], c = STATUS_ORDER[y.status];
+                return (a == null ? 9 : a) - (c == null ? 9 : c);
+            });
         }
 
-        function renderAll(keepOpen) { renderMeta(); renderAlerts(); renderTabs(); renderBook(keepOpen); renderFoot(); }
+        // ── Hero ──
+        function renderHero() {
+            var meta = document.getElementById('meta'), count = document.getElementById('count'), lead = document.getElementById('lead');
+            if (!report) {
+                meta.textContent = '';
+                count.innerHTML = '';
+                lead.innerHTML = '<div class="rx-empty-chart">' + (reportErr ? t('no_verdict') : t('loading_t')) + '</div>';
+                return;
+            }
+            meta.innerHTML = tm('meta_line', { v: L('v' + (report.methodology_version || '—')), d: dateLabel(report.as_of_session) });
+            var cc = RL.clearedCount(report);
+            count.innerHTML = '<span dir="ltr" style="display:flex;align-items:baseline"><span class="big' + (cc.cleared > 0 ? ' go' : '') + '">' + esc(cc.cleared) + '</span><span class="of">/' + esc(cc.total) + '</span></span>' +
+                '<p>' + t('count_l') + '</p>';
+            var s = RL.leadSleeve(report);
+            if (!s) { lead.innerHTML = '<p class="rx-cap">' + t('lead_cap') + '</p><div class="rx-empty-chart" style="margin-top:14px">' + t('lead_none') + '</div>'; return; }
+            var e = s.edge || {}, ad = RL.alphaDisplay(s), w = s.window || {};
+            var aCls = ad.show && ad.signColored ? signCls(e.alpha) : '';
+            var cleared = num(e.cs_lower) && e.cs_lower > 0;
+            lead.innerHTML =
+                '<div class="rx-lead-head"><div><p class="rx-cap">' + t('lead_cap') + '</p>' +
+                    '<h2>' + esc(sleeveName(s)) + '<span class="mono" dir="ltr">' + esc(bookTag(s.book)) + ' · ' + esc(s.id) + '</span></h2></div>' +
+                    '<dl class="rx-stats">' +
+                        '<div><dt>' + t('st_alpha') + '</dt><dd class="' + aCls + '">' + L(spct(e.alpha, 1)) + '<small>' + t('per_yr') + '</small></dd></div>' +
+                        '<div><dt>' + t('st_lower') + '</dt><dd class="' + (cleared ? 'up' : 'acc') + '">' + L(spct(e.cs_lower, 1)) + '</dd></div>' +
+                        '<div><dt>' + t('st_sessions') + '</dt><dd>' + L(w.active_trading_days != null ? w.active_trading_days : '—') + '</dd></div>' +
+                    '</dl></div>' +
+                '<div class="rx-chart" id="ch-lead" tabindex="0" dir="ltr"></div>' +
+                '<p class="rx-note">' + t(cleared ? 'lead_note_go' : 'lead_note') + '</p>';
+            charts.push({ host: 'ch-lead', build: function (width) { return funnelFor(s, width, width < 560 ? 220 : 300, 'lead'); } });
+        }
+
+        function funnelFor(s, width, height, id) {
+            var ser = (s.series && s.series.edge) || {};
+            var r = RC.funnel(ser, { width: width, height: height, id: 'fn-' + id, months: months(),
+                labels: { upper: t('ch_upper'), lower: t('ch_lower'), estimate: t('ch_est'), zero: t('ch_zero'), offscale: t('ch_off') },
+                aria: tm('ch_aria_funnel', { s: sleeveName(s), n: (ser.dates || []).length,
+                    lo: RC.pct(ser.lower && ser.lower[ser.lower.length - 1], 1), pt: RC.pct(ser.point && ser.point[ser.point.length - 1], 1),
+                    hi: RC.pct(ser.upper && ser.upper[ser.upper.length - 1], 1) }) });
+            r.describe = function (i) {
+                var p = r.model.points[i] || {};
+                return '<b>' + esc(dateLabel(p.date)) + '</b><br>' + esc(tm('tip_band', { lo: RC.pct(p.lower, 1), pt: RC.pct(p.point, 1), hi: RC.pct(p.upper, 1) }));
+            };
+            return r;
+        }
+
+        // ── Matrix ──
+        function renderLegend() {
+            document.getElementById('legend').innerHTML = [['pass', 'lg_pass'], ['insufficient', 'lg_insufficient'], ['fail', 'lg_fail'], ['not_measured', 'lg_not_measured']]
+                .map(function (x) { return '<span><span class="gl gl-' + x[0] + '" aria-hidden="true"></span>' + t(x[1]) + '</span>'; }).join('') +
+                '<span><span class="gl gl-insufficient gl-soft" aria-hidden="true"></span>' + t('lg_soft') + '</span>';
+        }
+        function renderMatrix() {
+            var box = document.getElementById('mxBox');
+            if (!report) { box.innerHTML = ''; return; }
+            var head = '<thead><tr class="grp"><th></th>' + GROUPS.map(function (g) {
+                    return '<th colspan="' + g[1] + '" class="sep">' + t(g[0]) + '</th>';
+                }).join('') + '<th class="sep"></th></tr>' +
+                '<tr class="cols"><th scope="col">' + t('mx_strategy') + '</th>' + GATE_COLS.map(function (id, i) {
+                    return '<th scope="col" class="' + (GROUP_START[i] ? 'sep' : '') + '" title="' + esc(gateName({ id: id })) + '">' + esc(t('c_' + id)) + '</th>';
+                }).join('') + '<th scope="col" class="sep" style="text-align:end;padding-inline-end:20px">' + t('mx_verdict') + '</th></tr></thead>';
+            var body = sortSleeves(report.sleeves).map(function (s) {
+                var vi = RL.verdictInfo(s.verdict);
+                return '<tr><th scope="row" style="font-weight:inherit;text-align:start;padding:10px 12px 10px 20px;position:sticky;inset-inline-start:0;background:var(--rx-card);z-index:1;white-space:nowrap">' +
+                    '<span class="bk">' + esc(bookTag(s.book)) + '</span><span class="nm">' + esc(sleeveName(s)) + '</span></th>' +
+                    GATE_COLS.map(function (id, i) {
+                        var g = gateOf(s, id);
+                        var label = gateName({ id: id }) + ' — ' + (g ? statusLabel(g.status) : t('gs_not_applicable'));
+                        return '<td class="' + (GROUP_START[i] ? 'sep' : '') + '"><button type="button" class="mx-c" data-s="' + esc(s.id) + '" data-g="' + esc(id) + '" aria-label="' +
+                            esc(sleeveName(s) + ': ' + label) + '">' + glyph(g) + '</button></td>';
+                    }).join('') +
+                    '<td class="vd sep"><span class="mono">' + L(s.gates_passed + '/' + s.gates_total) + '</span><span class="vp vp-' + vi.cls + '">' +
+                    (vi.known ? esc(t('vd_' + vi.cls)) : esc(vi.raw || '—')) + '</span></td></tr>';
+            }).join('');
+            box.innerHTML = '<table class="mx">' + head + '<tbody>' + body + '</tbody></table><div class="mx-tip" id="mxTip" role="tooltip" hidden></div>';
+        }
+        function showTip(btn) {
+            var tip = document.getElementById('mxTip'), box = document.getElementById('mxBox');
+            if (!tip || !btn || !report) return;
+            var s = report.sleeves.filter(function (x) { return x.id === btn.getAttribute('data-s'); })[0];
+            var g = s && gateOf(s, btn.getAttribute('data-g'));
+            var html = '<b>' + esc(gateName({ id: btn.getAttribute('data-g') })) + '</b>' + esc(s ? sleeveName(s) : '') + ' · ' + (g ? statusLabel(g.status) : t('gs_not_applicable'));
+            if (g) {
+                html += '<br><span class="mono">' + t('tip_val') + ': ' + gateValue(g) + '</span>';
+                if (g.threshold) html += '<br><span class="mono">' + t('tip_thr') + ': ' + EN(sym(g.threshold)) + '</span>';
+                if (g.hard === false) html += '<br><em>' + t('tip_soft') + '</em>';
+            }
+            tip.innerHTML = html; tip.hidden = false;
+            var b = btn.getBoundingClientRect(), o = box.getBoundingClientRect();
+            var left = b.left - o.left + box.scrollLeft + b.width / 2 - tip.offsetWidth / 2;
+            left = Math.max(box.scrollLeft + 8, Math.min(left, box.scrollLeft + box.clientWidth - tip.offsetWidth - 8));
+            tip.style.left = left + 'px';
+            tip.style.top = (b.bottom - o.top + 6) + 'px';
+        }
+        function hideTip() { var tip = document.getElementById('mxTip'); if (tip) tip.hidden = true; }
+        var mxBox = document.getElementById('mxBox');
+        ['pointerover', 'focusin', 'click'].forEach(function (ev) {
+            mxBox.addEventListener(ev, function (e) { var b = e.target.closest('.mx-c'); if (b) showTip(b); });
+        });
+        mxBox.addEventListener('pointerleave', hideTip);
+        mxBox.addEventListener('focusout', function (e) { if (!mxBox.contains(e.relatedTarget)) hideTip(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideTip(); });
+
+        // ── Book ──
+        function renderTabs() {
+            var el = document.getElementById('tabs');
+            el.setAttribute('aria-label', t('tabs_label'));
+            el.innerHTML = BOOKS.map(function (id) {
+                return '<button type="button" role="tab" id="tab-' + id + '" aria-controls="book" aria-selected="' + (id === current) + '" tabindex="' + (id === current ? 0 : -1) +
+                    '" data-pf="' + id + '" aria-label="' + esc(bookTag(id) + ' · ' + t('pf_' + id)) + '">' + esc(bookTag(id)) + '<span class="sn"> · ' + esc(t('pf_' + id)) + '</span></button>';
+            }).join('');
+            document.getElementById('bk-h').textContent = t('pf_' + current);
+        }
+
+        function ledger(s, openState) {
+            var gates = s.gates || [], bind = s.binding_gate;
+            var rows = gates.map(function (g) {
+                return '<tr class="' + (g.id === bind ? 'bind ' : '') + (g.hard === false ? 'soft' : '') + '"><td>' + esc(gateName(g)) +
+                    (g.detail ? EN(g.detail, 'span').replace('<span ', '<span class="gd" ') : '') + '</td>' +
+                    '<td><span class="thv" dir="ltr" lang="en">' + esc(sym(g.threshold)) + '</span></td><td>' + gateValue(g) + '</td>' +
+                    '<td class="s">' + glyph(g) + ' ' + esc(statusLabel(g.status)) + '</td></tr>';
+            }).join('');
+            var k = 'ledger:' + s.id;
+            return '<details class="dl" data-k="' + esc(k) + '"' + (openState[k] ? ' open' : '') + '><summary>' + CARET + t('c_ledger') +
+                ' <span class="mono q">' + L(s.gates_passed + '/' + s.gates_total) + '</span></summary>' +
+                '<div style="overflow-x:auto"><table class="ledger"><thead><tr><th>' + t('th_gate') + '</th><th>' + t('th_thr') + '</th><th>' + t('th_val') + '</th><th>' + t('th_st') +
+                '</th></tr></thead><tbody>' + rows + '</tbody></table></div></details>' +
+                (s.narrative ? '<details class="dl narr" data-k="narr:' + esc(s.id) + '"' + (openState['narr:' + s.id] ? ' open' : '') + '><summary>' + CARET + t('c_narr') +
+                    '</summary>' + EN(s.narrative, 'p') + '</details>' : '');
+        }
+
+        function card(s, openState) {
+            var vi = RL.verdictInfo(s.verdict), w = s.window || {}, th = report.thresholds || {};
+            var bind = gateOf(s, s.binding_gate), eta = etaBlock(s, true);
+            var trackNeed = th.min_track_sessions || 90, edgeNeed = th.min_edge_sessions || 60;
+            var hard = (s.gates || []).filter(function (g) { return g.hard !== false && g.status !== 'not_applicable'; });
+            var segs = hard.map(function (g) { return '<i class="' + (g.status === 'pass' ? 'on' : '') + '"></i>'; }).join('');
+            var edgeN = RL.edgePoints(s);
+            var evidence;
+            var lead = RL.leadSleeve(report), e = s.edge || {};
+            if (s.claims_edge === false) evidence = '<p class="noteline">' + t('c_no_edge') + '</p>';
+            else if (lead && lead.id === s.id && edgeN >= 2) evidence = '<p class="noteline">' + tm('c_band_above', { lo: '<b>' + L(spct(e.cs_lower, 1)) + '</b>', hi: '<b>' + L(spct(e.cs_upper, 1)) + '</b>' }) + '</p>';
+            else if (edgeN >= 2) evidence = '<div class="rx-chart" id="ch-' + esc(s.id) + '" tabindex="0" dir="ltr"></div>';
+            else {
+                var n = w.edge_returns || 0;
+                evidence = '<div><p class="etav">' + tm('c_edge_wait', { n: L(n), m: L(edgeNeed) }) + '</p><div class="meter"><i style="width:' +
+                    Math.min(100, Math.round(n / edgeNeed * 100)) + '%"></i></div></div>';
+            }
+            var tags = s.attribution === 'book_level_shared' ? '<span class="tag">' + t('c_shared_tag') + '</span>'
+                     : (s.attribution === 'book_level' && s.claims_edge !== false ? '<span class="tag">' + t('c_book_tag') + '</span>' : '');
+            if (edgeN >= 2 && s.claims_edge !== false && !(lead && lead.id === s.id)) charts.push({ host: 'ch-' + s.id, build: function (width) { return funnelFor(s, width, 200, s.id); } });
+            return '<article class="card" aria-labelledby="h-' + esc(s.id) + '">' +
+                '<div class="card-h"><div><h3 id="h-' + esc(s.id) + '">' + esc(sleeveName(s)) + '</h3><p class="ver" dir="ltr" lang="en">' + esc(s.version || s.id) + '</p></div>' +
+                    '<span class="st">' + esc(key('st_', s.status)) + '</span></div>' +
+                '<div class="vrow"><span class="vword vw-' + vi.cls + '">' + (vi.known ? esc(t('vd_' + vi.cls)) : esc(vi.raw || '—')) + '</span>' +
+                    (bind ? '<span class="bind">' + tm('c_bind', { g: esc(gateName(bind)) }) + '</span>' : '') + '</div>' +
+                '<div class="trio">' +
+                    '<div class="ringrow">' + RC.ring(w.active_trading_days || 0, trackNeed, { size: 52, stroke: 5 }) +
+                        '<div><p class="v">' + L((w.active_trading_days != null ? w.active_trading_days : '—') + '/' + trackNeed) + '</p><p class="lab">' + tm('c_track', { n: L(trackNeed) }) + '</p></div></div>' +
+                    '<div><p class="v">' + L(s.gates_passed + '/' + s.gates_total) + '</p><div class="segs" aria-hidden="true">' + segs + '</div><p class="lab">' + t('c_gates') + '</p></div>' +
+                    '<div><p class="etav">' + eta.v + '</p>' + (eta.s ? '<p class="lab">' + eta.s + '</p>' : '') + '</div>' +
+                '</div>' + evidence + (tags ? '<div>' + tags + '</div>' : '') + ledger(s, openState) +
+            '</article>';
+        }
+
+        function openStates() {
+            var m = {};
+            document.querySelectorAll('#book details[data-k]').forEach(function (d) { m[d.getAttribute('data-k')] = d.open; });
+            return m;
+        }
+
+        function renderBook(keepOpen) {
+            var host = document.getElementById('book');
+            host.setAttribute('aria-labelledby', 'tab-' + current);
+            if (!report) { host.innerHTML = ''; return; }
+            var state = keepOpen ? openStates() : {};
+            var b = (report.books || {})[current] || {}, ser = b.series || {};
+            var n = (ser.dates || []).length, ret = n ? ser.cum_return[n - 1] : null, spy = n && ser.benchmark_cum ? ser.benchmark_cum[n - 1] : null;
+            var dd = num(b.max_drawdown_paper_period) ? -b.max_drawdown_paper_period : null;
+            var kill = (b.kill_switch || {}).kill_drawdown;
+            var kpis = '<dl class="kpis">' +
+                '<div><dt>' + t('k_equity') + '</dt><dd>' + (num(b.last_equity) ? L(ATFmt.money(b.last_equity, 0)) : '—') + '</dd></div>' +
+                '<div><dt>' + tm('k_ret', { d: n ? dateLabel(ser.dates[0]) : '—' }) + '</dt><dd class="' + signCls(ret) + '">' + L(spct(ret, 2)) + '</dd></div>' +
+                '<div><dt>' + t('k_spy') + '</dt><dd class="' + signCls(spy) + '">' + L(spct(spy, 2)) + '</dd></div>' +
+                '<div><dt>' + t('k_dd') + '</dt><dd class="' + signCls(dd) + '">' + L(spct(dd, 1)) + '</dd></div></dl>';
+            var panels = n >= 2
+                ? '<div class="g2"><div class="panel"><h3>' + t('p_ret') + '</h3><div class="rx-chart" id="ch-ret" tabindex="0" dir="ltr"></div></div>' +
+                  '<div class="panel"><h3>' + t('p_dd') + '</h3><div class="rx-chart" id="ch-dd" tabindex="0" dir="ltr"></div></div></div>'
+                : '<div class="g2"><div class="rx-empty-chart">' + t('p_none') + '</div></div>';
+            var tag = bookTag(current), gateDD = (report.thresholds || {}).max_drawdown || 0.15;
+            if (n >= 2) {
+                charts.push({ host: 'ch-ret', build: function (width) {
+                    var r = RC.lines(ser.dates, [{ key: 'book', label: tag, values: ser.cum_return, cls: 'rc-l-book' },
+                                                 { key: 'spy', label: 'SPY', values: ser.benchmark_cum, cls: 'rc-l-spy' }],
+                        { width: width, height: width < 520 ? 160 : 190, months: months(),
+                          aria: tm('ch_aria_lines', { b: tag, r: RC.pct(ret, 1), s: RC.pct(spy, 1), n: n }) });
+                    r.describe = function (i) {
+                        return '<b>' + esc(dateLabel(ser.dates[i])) + '</b><br>' + esc(tag) + ' ' + esc(RC.pct(ser.cum_return[i], 2)) + ' · SPY ' + esc(RC.pct(ser.benchmark_cum[i], 2));
+                    };
+                    return r;
+                } });
+                charts.push({ host: 'ch-dd', build: function (width) {
+                    var lim = [{ value: -gateDD, label: t('ch_dd_gate'), cls: 'rc-lab-wait' }];
+                    if (num(kill)) lim.push({ value: -kill, label: t('ch_kill'), cls: 'rc-lab-neg' });
+                    var r = RC.underwater(ser.dates, ser.drawdown, lim, { width: width, height: width < 520 ? 160 : 190, months: months(),
+                        aria: tm('ch_aria_dd', { b: tag, w: RC.pct(dd, 1), g: RC.pct(-gateDD, 0), k: RC.pct(num(kill) ? -kill : null, 0) }) });
+                    r.describe = function (i) { return '<b>' + esc(dateLabel(ser.dates[i])) + '</b><br>' + esc(RC.pct(ser.drawdown[i], 2)); };
+                    return r;
+                } });
+            }
+            var sl = sortSleeves(report.sleeves.filter(function (s) { return s.book === current; }));
+            host.innerHTML = kpis + panels + '<div class="cards">' + (sl.length ? sl.map(function (s) { return card(s, state); }).join('')
+                                                                       : '<div class="rx-empty-chart">' + t('no_sleeves') + '</div>') + '</div>';
+        }
+
+        // ── Charts: drawn at each host's real width, re-drawn when it changes ──
+        function drawCharts(force) {
+            charts.forEach(function (c) {
+                var host = document.getElementById(c.host);
+                if (!host) return;
+                var width = Math.floor(host.clientWidth);
+                if (!width || (!force && lastW[c.host] === width)) return;
+                lastW[c.host] = width;
+                var r = c.build(width);
+                if (!r || !r.svg) { host.innerHTML = '<div class="rx-empty-chart">' + t('p_none') + '</div>'; return; }
+                host.innerHTML = r.svg;
+                if (r.describe) RC.attachHover(host, r.model, r.describe);
+            });
+        }
+        var rzT = null;
+        window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(function () { drawCharts(false); }, 120); });
+
+        function renderFoot() {
+            var f = document.getElementById('foot'), r = report || {}, pv = r.provenance || {};
+            f.innerHTML = '<span>' + t('f_rule_s') + '</span>' +
+                '<span>' + (r.methodology_doc ? '<code dir="ltr">' + esc(r.methodology_doc) + '</code>' : '') +
+                    (pv.combined_sha256 ? ' · ' + L(String(pv.combined_sha256).slice(0, 12)) : '') + '</span>' +
+                '<span>' + t('f_disc_s') + '</span>';
+        }
+
+        function renderAll(keepOpen) {
+            charts = []; lastW = {};
+            renderHero(); renderAlerts(); renderLegend(); renderMatrix(); renderTabs(); renderBook(keepOpen); renderFoot();
+            drawCharts(true);
+        }
 
         function select(id, focus) {
             if (BOOKS.indexOf(id) < 0 || id === current) return;
             current = id;
             try { var u = new URL(location.href); u.searchParams.set('book', id); history.replaceState(null, '', u); } catch (e) {}
-            renderTabs(); renderBook(false);
+            charts = charts.filter(function (c) { return c.host === 'ch-lead'; });
+            renderTabs(); renderBook(false); drawCharts(true);
             if (focus) { var el = document.getElementById('tab-' + id); if (el) el.focus(); }
         }
         document.getElementById('tabs').addEventListener('click', function (ev) {
@@ -873,11 +1055,6 @@
             document.documentElement.lang = lang;
             document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.querySelectorAll('[data-key]').forEach(function (el) { el.textContent = t(el.getAttribute('data-key')); });
-            // HTML only from the static table, looked up by a fixed allow-list (never DOM text as markup).
-            document.querySelectorAll('[data-key-html]').forEach(function (el) {
-                var k = HTML_KEYS[el.getAttribute('data-key-html')];
-                if (k) el.innerHTML = t(k);
-            });
             var tg = document.getElementById('langToggle');
             if (tg) tg.textContent = lang === 'ar' ? 'EN' : 'AR';
             renderAll(true);
@@ -895,14 +1072,6 @@
                 });
             }).catch(function () { if (!report) reportErr = 'network'; });
         }
-        function loadEquity() {
-            var c = Object.keys(cfg).length ? Promise.resolve() : fetch('/api/portfolios').then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (d) { if (d && typeof d === 'object') cfg = d; }).catch(function () {});
-            return Promise.all([c].concat(BOOKS.map(function (id) {
-                return fetch('/api/portfolio/' + id + '/details', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; })
-                    .then(function (d) { if (d) details[id] = d; }).catch(function () {});
-            })));
-        }
 
         var tg = document.getElementById('langToggle');
         if (tg) tg.addEventListener('click', function () {
@@ -912,9 +1081,12 @@
         });
 
         applyLang();
-        loadReport().then(function () { renderAll(false); });
-        loadEquity().then(function () { renderTabs(); });
-        setInterval(function () { Promise.all([loadReport(), loadEquity()]).then(function () { renderAll(true); }); }, 60000);
+        loadReport().then(function () {
+            renderAll(false);
+            // One entrance only: later refreshes and resizes never re-animate.
+            setTimeout(function () { document.getElementById('rx').classList.add('rx-settled'); }, 1400);
+        });
+        setInterval(function () { loadReport().then(function () { renderAll(true); }); }, 60000);
     })();
     </script>
 </body>
