@@ -1,10 +1,10 @@
 {
   "_doc": "HUMAN-OWNED. Never written by code. Gates NEW ENTRIES only \u2014 exits, stops, exit-order hygiene and reconciliation always run. Missing/malformed = no new entries (fail closed). Read by shared/strategy_controls.py. Change only with a recorded reason, date and owner.",
   "portfolio_1": {
-    "new_entries_enabled": true,
-    "reason": null,
-    "changed_at": null,
-    "changed_by": null,
+    "new_entries_enabled": false,
+    "reason": "Investment committee 2026-10-23: REJECT new P1 momentum-sleeve BUYS (exits/risk-reduction stay approved). Two overfitting red flags under the committee evidence standard: DSR 0.63-0.74 < 0.95 at the honest trial count, and a hindsight (today's survivors) large-cap universe; selection excess over equal-weight +2.9%/yr t=0.38. Risk: the sleeve's backtest max drawdown (~24%) exceeds the 18% kill switch, so a bear market would likely force liquidation near the bottom. P1 runs exits-only (momentum sells, 25% disaster floor) until a survivorship-free, pre-registered momentum spec passes its gate. The governed halt_clear is unaffected.",
+    "changed_at": "2026-10-23",
+    "changed_by": "owner-delegated chief-expert decision (Claude, investment committee, audit session 2026-10-23)",
     "halt_clear": {
       "halt_reason_match": "Kill switch: 73.94% drawdown",
       "reason": "Phantom latch: set 2026-07-07 from a bad $26,060.51 equity read (equity==cash, positions unvalued). Broker-verified equity 2026-10-22 = $97,263.53 vs $100,000 start = 2.74% drawdown, far below the 18% kill threshold. P1 positions reconcile exactly with the trade log. Investment committee (audit 2026-10-23, C1): APPROVE governed clear; the runner applies it only after two consistent live equity reads + independent valuation confirm drawdown < 18%. Effect once applied: the P1 momentum sleeve resumes its monthly rebalance (paper only, 90% target) \u2014 ramped by the hard 12-orders/day cap and frozen monthly targets, with the 25% disaster floor checked before any buy; the active multi-factor satellite stays disabled (active_entries_enabled=false). Rationale: 64% idle cash is the largest measured drag vs SPY; the sleeve is market exposure inside the hard caps, not a claimed edge.",
