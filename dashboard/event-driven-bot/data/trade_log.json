@@ -2324,7 +2324,14 @@
       "Above EMA50 & EMA200"
     ],
     "signal_type": "BUY",
-    "status": "open"
+    "status": "closed",
+    "reconciled": true,
+    "reconcile_reason": "orphan_no_live_position",
+    "exit_timestamp": "2026-10-22T23:26:08.456083+00:00",
+    "exit_price": 626.18,
+    "pnl": 252.24,
+    "realized_pnl": 252.24,
+    "pnl_pct": 11.2
   },
   {
     "timestamp": "2026-08-14T14:06:14.041811+00:00",
