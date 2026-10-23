@@ -242,6 +242,80 @@
       ${block('Cost-basis drift', r.cost_basis_drift)}`;
   }
 
+  // ---- Engine safety: halt latch, governed clears, EOD settlement, fill ledger ----
+  const etStamp = (v) => {
+    if (!v) return '—';
+    const d = ATFmt.toDate(v);
+    if (isNaN(d.getTime())) return '—';
+    return ATFmt.etDate(d) + ' · ' + ATFmt.etTime(d) + ' ET';
+  };
+  function renderSafety(sf) {
+    const status = $('safeStatus');
+    if (!sf) {
+      setPill(status, 'muted', 'n/a');
+      $('safeBody').innerHTML = '<div class="empty-note">No safety state available.</div>';
+      return;
+    }
+    const h = sf.halt || {};
+    const pend = sf.pending || { total: 0, exits: 0, entries: 0, orders: [] };
+    const fills = sf.booked_fills || { count: 0, latest: [] };
+    const files = sf.files || {};
+    if (h.halted) setPill(status, 'warn', h.verified === false ? 'halt unverified' : 'halted');
+    else setPill(status, 'ok', 'trading enabled');
+
+    const peak = sf.peak_equity;
+    const haltNote = h.halted ? `<div class="safe-note">
+        <strong>${esc(h.reason || 'Halted')}</strong>
+        ${h.set_at ? `<span class="mono"> · latched ${esc(etStamp(h.set_at))}</span>` : ''}
+        ${h.verified === false ? `<div style="margin-top:.35rem">${esc(h.unverified_reason || 'No recorded evidence.')}</div>` : ''}
+        ${h.observations_count ? `<div class="mono" style="margin-top:.35rem">${h.observations_count} later breach observation${h.observations_count > 1 ? 's' : ''} recorded against this halt</div>` : ''}
+      </div>` : '';
+
+    const rows = (pend.orders || []).map(o => `<tr>
+        <td><span style="display:inline-flex;align-items:center">${getLogoHtml(o.symbol, 16)}<strong>${esc(o.symbol || '—')}</strong></span></td>
+        <td><span class="pill ${o.kind === 'exit' ? 'pill-warn' : 'pill-muted'}">${o.kind === 'exit' ? 'exit' : 'entry'}</span></td>
+        <td class="mono">${o.qty === null ? '—' : ATFmt.ltr(fmtNum(o.qty, o.qty % 1 ? 2 : 0))}</td>
+        <td class="mono" style="font-size:.72rem">${esc(o.reason || '—')}</td>
+        <td class="mono" style="font-size:.72rem">${esc(etStamp(o.submitted_at))}</td></tr>`).join('');
+    const pendingBlock = rows
+      ? `<div class="safe-scroll"><table class="intel-table"><thead><tr><th>Symbol</th><th>Side</th><th>Qty</th><th>Reason</th><th>Submitted</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="empty-note">${(files.pending_exits || files.pending_entries)
+          ? 'No orders awaiting end-of-day settlement — every placed order was confirmed at its real fill.'
+          : sf.engine_managed
+            ? 'No settlement queue recorded yet. An order not fully filled inside its confirmation window is queued here by order id and booked at its real fill at EOD — never at a placeholder price.'
+            : 'This book confirms fills inline and keeps no EOD settlement queue.'}</div>`;
+
+    const c = (sf.halt_governance || {}).last_clear;
+    const ddText = c && c.drawdown_pct_from_peak !== null ? pct(c.drawdown_pct_from_peak) : '—';
+    const clearBlock = c ? `<dl class="kv">
+        <dt>Cleared</dt><dd class="mono">${esc(etStamp(c.applied_at))}</dd>
+        <dt>Reason</dt><dd>${esc(c.reason || '—')}</dd>
+        <dt>Approved by</dt><dd>${esc(c.changed_by || '—')}</dd>
+        <dt>Verified equity</dt><dd class="mono">${ATFmt.ltr(ATFmt.money(c.verified_equity))}</dd>
+        <dt>DD from peak</dt><dd class="mono">${ATFmt.ltr(ddText)}${c.kill_switch_drawdown_pct !== null ? ` <span style="color:var(--muted)">vs ${fmtNum(c.kill_switch_drawdown_pct, 0)}% kill</span>` : ''}</dd>
+        ${c.cleared_halt_reason ? `<dt>Cleared halt</dt><dd>${esc(c.cleared_halt_reason)}</dd>` : ''}
+      </dl>`
+      : `<div class="empty-note">${sf.engine_managed
+          ? 'No governed halt clear recorded yet. A clear applies only on a fresh cross-checked equity read below the kill threshold, and is logged here with its evidence.'
+          : 'This book has no governed halt-clear process.'}</div>`;
+
+    $('safeBody').innerHTML = `
+      <div class="metric-row">
+        <div class="metric"><div class="label">Halt latch</div><div class="value state ${h.halted ? 'neg' : 'pos'}">${h.halted ? (h.verified === false ? 'Halted · unverified' : 'Halted') : 'Clear'}</div></div>
+        <div class="metric"><div class="label">Confirmed peak equity</div><div class="value">${peak ? ATFmt.ltr(fmtMoney(peak.value)) : '—'}</div>
+          <div class="mono" style="font-size:.62rem;color:var(--muted);margin-top:.3rem">${peak ? esc(etStamp(peak.at)) : 'no cross-checked peak yet'}</div></div>
+        <div class="metric"><div class="label">Awaiting EOD settlement</div><div class="value">${pend.total}</div>
+          <div class="mono" style="font-size:.62rem;color:var(--muted);margin-top:.3rem">${pend.exits} exit · ${pend.entries} entry</div></div>
+        <div class="metric"><div class="label">Fills booked (ledger)</div><div class="value">${fills.count}</div>
+          <div class="mono" style="font-size:.62rem;color:var(--muted);margin-top:.3rem">${fills.latest && fills.latest.length ? 'last ' + esc(etStamp(fills.latest[0].at)) : (files.booked_fills ? 'none yet' : 'ledger not written yet')}</div></div>
+      </div>
+      ${haltNote}
+      <div class="safe-split">
+        <div><div class="card-sub" style="margin-bottom:.6rem">Pending orders · awaiting EOD settlement</div>${pendingBlock}</div>
+        <div><div class="card-sub" style="margin-bottom:.6rem">Last governed halt clear</div>${clearBlock}</div>
+      </div>`;
+  }
+
   async function loadAll() {
     $('lastUpdated').textContent = I18N[lang].refreshing;
     try {
@@ -257,7 +331,7 @@
     if (scopeNote) {
       if (currentPf === 'all') {
         scopeNote.style.display = 'block';
-        scopeNote.innerHTML = 'Concentration above is aggregated across all books. The per-book engine panels below (Validation, Execution, Accounting, Governance, Reconciliation) reflect <strong>P1 · Self-Improving</strong> — select a specific book for P2/P3.';
+        scopeNote.innerHTML = 'Concentration above is aggregated across all books. The per-book engine panels below (Validation, Engine Safety, Execution, Accounting, Governance, Reconciliation) reflect <strong>P1 · Self-Improving</strong> — select a specific book for P2/P3.';
       } else {
         scopeNote.style.display = 'none';
       }
@@ -269,8 +343,10 @@
       renderAccounting(intel.execution);
       renderGovernance(intel.governance, intel.validation && intel.validation.self_learning);
       renderReconcile(intel.reconciliation);
+      renderSafety(intel.safety);
     } catch (e) {
-      ['valBody', 'execBody', 'acctBody', 'govBody', 'recBody'].forEach(b => {
+      setPill($('safeStatus'), 'muted', 'n/a');
+      ['safeBody', 'valBody', 'execBody', 'acctBody', 'govBody', 'recBody'].forEach(b => {
         $(b).innerHTML = '<div class="empty-note">Unavailable.</div>';
       });
     }
@@ -300,6 +376,7 @@
       intel_sub: 'Execution quality, model validation, fee-aware accounting, cross-portfolio risk and fully-automated governance — the evidence behind every autonomous decision.',
       seg_all: 'All Books', t_conc: 'Cross-Portfolio Concentration', t_val: 'Validation', t_exec: 'Execution Quality',
       t_acct: 'Fee-Aware Accounting', t_gov: 'Automated Governance', t_rec: 'Reconciliation',
+      t_safe: 'Engine Safety',
       refreshing: 'Refreshing…', updated: 'Updated'
     },
     ar: {
@@ -310,6 +387,7 @@
       intel_sub: 'جودة التنفيذ، والتحقق من النماذج، والمحاسبة بعد الرسوم، ومخاطر المحافظ مجتمعة، والحوكمة الآلية — الأدلة وراء كل قرار آلي.',
       seg_all: 'كل المحافظ', t_conc: 'التركّز عبر المحافظ', t_val: 'التحقق', t_exec: 'جودة التنفيذ',
       t_acct: 'المحاسبة بعد الرسوم', t_gov: 'الحوكمة الآلية', t_rec: 'المطابقة',
+      t_safe: 'سلامة المحرك',
       refreshing: 'جارٍ التحديث…', updated: 'آخر تحديث'
     }
   };

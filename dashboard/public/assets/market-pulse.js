@@ -1280,20 +1280,18 @@
 
     /* ─── Sparkline Intraday Data Loader ──────────────────────────────── */
     async function loadSparklineData(symbols) {
-        var syms = symbols || watchlistSymbols;
-        var promises = syms.map(function(sym) {
-            return apiFetch('/api/market/bars/' + sym + '?timeframe=5Min&limit=200&start=' + ATFmt.intradayStart())
-                .then(function(bars) {
-                    bars = ATFmt.lastSession(bars);
-                    if (bars && bars.length > 0) {
-                        var db = stockPriceDatabase[sym] || {};
-                        db._sparkData = bars.map(function(b) { return parseFloat(b.c); });
-                        stockPriceDatabase[sym] = db;
-                    }
-                })
-                .catch(function() {});
+        var syms = (symbols || watchlistSymbols).slice(0, 50);
+        // ONE request for every watchlist series (was one per symbol, ~29 on a cold load).
+        var batch = await apiFetch('/api/market/bars-batch?symbols=' + encodeURIComponent(syms.join(',')) +
+            '&timeframe=5Min&limit=200&start=' + ATFmt.intradayStart());
+        syms.forEach(function(sym) {
+            var bars = ATFmt.lastSession(batch && batch[sym]);
+            if (bars && bars.length > 0) {
+                var db = stockPriceDatabase[sym] || {};
+                db._sparkData = bars.map(function(b) { return parseFloat(b.c); });
+                stockPriceDatabase[sym] = db;
+            }
         });
-        await Promise.all(promises);
         // Patch sparklines in place (no full rebuild → no flicker on refresh).
         if (document.getElementById('watchlistContainer') && document.querySelector('#watchlistContainer .mp-list-item')) {
             updateWatchlistSparklines();

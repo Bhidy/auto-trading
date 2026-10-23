@@ -92,6 +92,18 @@
             margin: 0.15rem 0.25rem 0.15rem 0; }
         .legend { font-size: 0.68rem; color: var(--muted); font-family: var(--pf-mono); margin-top: 0.75rem; }
         html[dir="rtl"] .intel-table th { text-align: right; }
+        .safe-split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.5rem; margin-top: 1.25rem; }
+        @media(max-width: 1000px) { .safe-split { grid-template-columns: minmax(0, 1fr); } }
+        .safe-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .safe-scroll .intel-table { min-width: 520px; }
+        .safe-note { font-size: 0.8rem; color: var(--ink); line-height: 1.5; margin-top: 1rem;
+            padding: 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--teal-soft); }
+        .safe-note .mono { font-size: 0.7rem; color: var(--muted); }
+        .kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.45rem 1rem; font-size: 0.82rem; }
+        .kv dt { font-family: var(--pf-mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--muted); padding-top: 0.15rem; }
+        .kv dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+        .metric .value.state { font-size: 1.35rem; }
     </style>
 </head>
 <body>
@@ -188,6 +200,16 @@
                     <span class="pill pill-muted" id="valStatus">—</span>
                 </div>
                 <div id="valBody"><div class="empty-note">Loading…</div></div>
+            </div>
+
+            <!-- Engine safety: halt latch, EOD settlement queue, fill ledger -->
+            <div class="intel-card col-12" id="cardSafety">
+                <div class="card-head">
+                    <div><div class="card-title" data-i18n="t_safe">Engine Safety</div>
+                        <div class="card-sub">Halt latch · governed clears · EOD settlement · fill ledger</div></div>
+                    <span class="pill pill-muted" id="safeStatus">—</span>
+                </div>
+                <div id="safeBody"><div class="empty-note">Loading…</div></div>
             </div>
 
             <!-- Execution quality -->

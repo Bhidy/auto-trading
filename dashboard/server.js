@@ -71,6 +71,16 @@ const ACCESS_TOKEN = process.env.DASHBOARD_ACCESS_TOKEN || '';
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 
+// Constant-time secret comparison that is also length-safe: both sides are
+// hashed to fixed-length digests first, so timingSafeEqual never throws on a
+// length mismatch and the response time does not reveal the secret's length.
+function secretMatches(provided, secret) {
+    if (!secret) return false;
+    const a = crypto.createHash('sha256').update(String(provided)).digest();
+    const b = crypto.createHash('sha256').update(String(secret)).digest();
+    return crypto.timingSafeEqual(a, b);
+}
+
 function tokenMatches(provided) {
     const a = Buffer.from(String(provided));
     const b = Buffer.from(ACCESS_TOKEN);
@@ -104,16 +114,53 @@ app.use((req, res, next) => {
 // Strict input validation for every route (audit 2026-10-23, D6/D7). Values are
 // interpolated into upstream Alpaca URLs, so each must be a plain token: no dot
 // segments, no `&`/`?`/`#` smuggling, no arrays/objects from qs bracket syntax.
-const SAFE_VALUE = /^[A-Za-z0-9 ._:,+=\-\/]{0,200}$/;
-function unsafeValue(v) {
+const SAFE_VALUE = /^[A-Za-z0-9 ._:,+=\-\/]*$/;
+// A symbol list (`symbols=A,B,...`, up to 50 tickers for bars-batch) needs more
+// room than a single token; every other value stays capped at 200 characters.
+const MAX_VALUE_LEN = { symbols: 600 };
+function unsafeValue(v, maxLen = 200) {
     if (Array.isArray(v) || (v !== null && typeof v === 'object')) return true;
     const str = String(v);
-    return !SAFE_VALUE.test(str) || /(^|\/)\.\.?(\/|$)/.test(str);
+    return str.length > maxLen || !SAFE_VALUE.test(str) || /(^|\/)\.\.?(\/|$)/.test(str);
 }
 app.use('/api', (req, res, next) => {
     for (const [k, v] of Object.entries(req.query || {})) {
-        if (unsafeValue(v)) return res.status(400).json({ error: `Invalid query parameter: ${k}` });
+        if (unsafeValue(v, MAX_VALUE_LEN[k] || 200)) return res.status(400).json({ error: `Invalid query parameter: ${k}` });
     }
+    return next();
+});
+
+// CDN caching (audit 2026-10-23 follow-up). Pure market-data GETs are identical
+// for every viewer and IEX data is 15-min delayed, so a 15 s edge cache removes
+// most duplicate Alpaca calls. Everything else under /api — portfolio, account,
+// orders, positions, health, intelligence, state — is per-book truth and is
+// explicitly `no-store`. The cache header is applied only to a 200 response, so
+// an upstream error is never pinned at the edge. The crypto order book (5 s
+// depth refresh) is deliberately NOT cached.
+const MARKET_CACHE_CONTROL = 'public, s-maxage=15, stale-while-revalidate=30';
+const MARKET_CACHE_ROUTES = [
+    /^\/api\/market\/bars\/[^/]+$/,
+    /^\/api\/market\/bars-batch$/,
+    /^\/api\/market\/(quotes|sectors|movers|most-active)$/,
+    /^\/api\/market-(indices|news)$/,
+    /^\/api\/stock\/[^/]+\/(details|trades|quotes)$/,
+    /^\/api\/crypto\/(bars|snapshot|quotes|trades)\/.+$/,
+    /^\/api\/supabase\/market$/,
+];
+function isMarketDataRoute(method, urlPath) {
+    return (method === 'GET' || method === 'HEAD') && MARKET_CACHE_ROUTES.some(re => re.test(urlPath));
+}
+app.use('/api', (req, res, next) => {
+    const urlPath = req.originalUrl.split('?')[0];
+    if (!isMarketDataRoute(req.method, urlPath)) {
+        res.setHeader('Cache-Control', 'no-store');
+        return next();
+    }
+    const writeHead = res.writeHead;
+    res.writeHead = function (statusCode, ...rest) {
+        this.setHeader('Cache-Control', statusCode === 200 ? MARKET_CACHE_CONTROL : 'no-store');
+        return writeHead.call(this, statusCode, ...rest);
+    };
     return next();
 });
 for (const name of ['id', 'order_id', 'client_id', 'symbol', 'type', 'underlying', 'wl_id']) {
@@ -316,9 +363,9 @@ function overlayKey(filePath) {
     return rel.split(path.sep).join('/');
 }
 
-function fetchRawJson(rel, timeoutMs = 2500) {
+function fetchRawJson(rel, timeoutMs = 2500, base = STATE_RAW_BASE) {
     return new Promise((resolve, reject) => {
-        const req = https.get(STATE_RAW_BASE + rel.split('/').map(encodeURIComponent).join('/'),
+        const req = https.get(base + rel.split('/').map(encodeURIComponent).join('/'),
             { timeout: timeoutMs, headers: { 'User-Agent': 'auto-trading-dashboard' } }, (r) => {
                 if (r.statusCode !== 200) { r.resume(); return reject(new Error(`HTTP ${r.statusCode}`)); }
                 let body = '';
@@ -352,6 +399,79 @@ async function refreshStateOverlay() {
     return stateMeta.inflight;
 }
 
+// ── Journal overlay (audit 2026-10-23 follow-up). Journal directories were
+// listed from the deployed bundle (readdirSync), so a day journaled after the
+// last code deploy never appeared in prod. For each journal directory a route
+// actually reads, the last JOURNAL_LOOKBACK_DAYS ET calendar days are fetched
+// by exact filename (`YYYY-MM-DD.json`) from the repo's raw files — no GitHub
+// API listing calls, so no unauthenticated rate limit. 404 = that day has no
+// journal; any failure leaves the bundled copy as the fallback. Journals are
+// fetched from the REPO ROOT layout (journal/, event-driven-bot/journal/, ...),
+// which is where the bots commit them and which the dashboard bundle mirrors.
+const JOURNAL_RAW_BASE = (process.env.DASHBOARD_JOURNAL_RAW_BASE
+    || STATE_RAW_BASE.replace(/dashboard\/$/, '')).replace(/\/?$/, '/');
+const JOURNAL_LOOKBACK_DAYS = 10;
+const JOURNAL_TTL_MS = Number(process.env.DASHBOARD_JOURNAL_TTL_MS || 5 * 60000);
+const journalOverlay = new Map();    // abs journal file -> parsed JSON from latest main
+const journalDirMeta = new Map();    // abs journal dir -> { lastRefresh, inflight }
+
+// The last `n` ET calendar dates, newest first (calendar arithmetic, not 24 h
+// steps, so a DST transition can never skip or repeat a day).
+function recentEtDates(n, now = Date.now()) {
+    const [y, m, d] = etDate(now).split('-').map(Number);
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(new Date(Date.UTC(y, m - 1, d - i)).toISOString().slice(0, 10));
+    return out;
+}
+
+function journalRepoRel(dir) {
+    const rel = path.relative(ROOT_DIR, path.resolve(dir));
+    if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
+    const posix = rel.split(path.sep).join('/');
+    return /(^|\/)journal$/.test(posix) ? posix : null;
+}
+
+function refreshJournalDir(dir) {
+    const rel = journalRepoRel(dir);
+    if (!LIVE_STATE || !rel) return null;
+    const abs = path.resolve(dir);
+    let meta = journalDirMeta.get(abs);
+    if (!meta) { meta = { lastRefresh: 0, inflight: null }; journalDirMeta.set(abs, meta); }
+    if (meta.inflight) return meta.inflight;
+    if (Date.now() - meta.lastRefresh < JOURNAL_TTL_MS) return null;
+    meta.inflight = (async () => {
+        const dates = recentEtDates(JOURNAL_LOOKBACK_DAYS);
+        const results = await Promise.allSettled(dates.map(dt =>
+            fetchRawJson(`${rel}/${dt}.json`, 2500, JOURNAL_RAW_BASE)));
+        results.forEach((r, i) => {
+            if (r.status === 'fulfilled') journalOverlay.set(path.join(abs, `${dates[i]}.json`), r.value);
+        });
+        meta.lastRefresh = Date.now();
+    })().finally(() => { meta.inflight = null; });
+    return meta.inflight;
+}
+
+// Journal filenames for a directory: the bundle's listing merged with the
+// recent days fetched from main, deduplicated by filename, sorted. Only a
+// directory with nothing fetched yet waits for its first refresh.
+async function listJournalFiles(dir) {
+    const abs = path.resolve(dir);
+    const inDir = (k) => path.dirname(k) === abs;
+    const p = refreshJournalDir(abs);
+    if (p) {
+        if (![...journalOverlay.keys()].some(inDir)) await p.catch(() => {});
+        else p.catch(() => {});
+    }
+    const names = new Set();
+    try {
+        if (fs.existsSync(abs)) fs.readdirSync(abs).filter(f => f.endsWith('.json')).forEach(f => names.add(f));
+    } catch (e) {
+        console.error(`Error listing journal dir ${abs}:`, e.message);
+    }
+    for (const k of journalOverlay.keys()) if (inDir(k)) names.add(path.basename(k));
+    return [...names].sort();
+}
+
 // Stale-while-revalidate: only a cold instance (empty overlay) waits for the
 // first refresh; afterwards requests are served immediately from the current
 // overlay while the next refresh runs in the background (after-audit N8).
@@ -364,6 +484,10 @@ app.use('/api', (req, res, next) => {
 
 // Helper to read JSON files safely (latest committed state first, bundle second)
 function readJsonFile(filePath, defaultValue = {}) {
+    if (journalOverlay.size) {
+        const abs = path.resolve(filePath);
+        if (journalOverlay.has(abs)) return journalOverlay.get(abs);
+    }
     if (LIVE_STATE && overlayKey(filePath)) {
         const abs = path.resolve(filePath);
         if (!hotStatePaths.has(abs)) hotStatePaths.add(abs);   // joins the next scheduled refresh
@@ -400,6 +524,8 @@ app.get('/api/health', (req, res) => {
         enabled: LIVE_STATE, source: STATE_RAW_BASE, tracked: hotStatePaths.size,
         overlaid: stateOverlay.size, lastRefresh: stateMeta.lastRefresh ? new Date(stateMeta.lastRefresh).toISOString() : null,
         lastOk: stateMeta.lastOk ? new Date(stateMeta.lastOk).toISOString() : null, errors: stateMeta.errors,
+        journals: { source: JOURNAL_RAW_BASE, lookbackDays: JOURNAL_LOOKBACK_DAYS,
+            dirs: journalDirMeta.size, files: journalOverlay.size },
     };
     res.json(info);
 });
@@ -440,6 +566,9 @@ function getPortfolioPaths(id) {
 }
 
 
+// Engine safety ledgers surfaced by the intelligence endpoint (see getIntelligencePaths).
+const SAFETY_FILES = ['haltGovernance', 'pendingExits', 'pendingEntries', 'bookedFills'];
+
 // Seed the live-state overlay with every per-portfolio file so even the first
 // request after a cold start serves the latest committed state.
 (function seedHotStatePaths() {
@@ -451,6 +580,9 @@ function getPortfolioPaths(id) {
         }
     }
     hotStatePaths.add(path.resolve(ROOT_DIR, 'data', 'momentum_readiness.json'));
+    // P1 engine safety ledgers — fresh on the first request after a cold start.
+    const p1 = getIntelligencePaths('portfolio_1');
+    if (p1) for (const k of SAFETY_FILES) if (overlayKey(p1[k])) hotStatePaths.add(path.resolve(p1[k]));
 })();
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -471,6 +603,109 @@ function getIntelligencePaths(id) {
         paramChangeLog: d('param_change_log.json'),
         governanceAudit: d('governance_audit.json'),
         lastGood: d('strategy_params.last_good.json'),
+        // Engine safety ledgers (P1 runner, audit 2026-10-23): governed halt
+        // clears, orders awaiting EOD settlement, and the booked-fill ledger.
+        haltGovernance: d('halt_governance.json'),
+        pendingExits: d('pending_exits.json'),
+        pendingEntries: d('pending_entries.json'),
+        bookedFills: d('booked_fills.json'),
+    };
+}
+
+
+// Engine safety state for one book: halt latch + its evidence, confirmed peak
+// equity, the last governed halt clear, orders awaiting EOD settlement and the
+// fill ledger. Every value is read from committed state; a file the engine has
+// not written yet is reported absent (`files.*=false`), never filled in.
+function buildSafetyState(id, paths) {
+    const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v))) ? null : Number(v);
+    const str = (v) => (v === null || v === undefined || v === '') ? null : String(v);
+    const rows = (v) => Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : [];
+    const state = readJsonFile(paths.state, {}) || {};
+    const gov = readJsonFile(paths.haltGovernance, null);
+    const exits = readJsonFile(paths.pendingExits, null);
+    const entries = readJsonFile(paths.pendingEntries, null);
+    const fills = readJsonFile(paths.bookedFills, null);
+
+    const pendingRow = (p, kind) => ({
+        kind, order_id: str(p.order_id), symbol: str(p.symbol), qty: num(p.qty),
+        reason: str(p.reason), source: str(p.source), submitted_at: str(p.submitted_at),
+        intended_price: num(p.intended_price),
+    });
+    const pending = [...rows(exits).map(p => pendingRow(p, 'exit')), ...rows(entries).map(p => pendingRow(p, 'entry'))]
+        .sort((a, b) => String(b.submitted_at || '').localeCompare(String(a.submitted_at || '')));
+
+    const clears = rows(gov).filter(r => r.type === 'halt_clear')
+        .sort((a, b) => String(a.applied_at || '').localeCompare(String(b.applied_at || '')));
+    const g = clears[clears.length - 1];
+    let lastClear = null;
+    if (g) {
+        const reqd = (g.request && typeof g.request === 'object') ? g.request : {};
+        const ver = (g.verification && typeof g.verification === 'object') ? g.verification : {};
+        const cleared = (g.cleared_halt && typeof g.cleared_halt === 'object') ? g.cleared_halt : {};
+        lastClear = {
+            record: 'halt_governance', applied_at: str(g.applied_at), source: str(g.source),
+            clear_key: str(g.clear_key), reason: str(reqd.reason), changed_by: str(reqd.changed_by),
+            verified_equity: num(g.verified_equity), drawdown_pct_from_peak: num(ver.drawdown_pct_from_peak),
+            kill_switch_drawdown_pct: num(g.kill_switch_drawdown_pct),
+            cleared_halt_reason: str(cleared.halt_reason), cleared_halt_set_at: str(cleared.halt_set_at),
+        };
+    } else if (state.last_halt_clear && typeof state.last_halt_clear === 'object') {
+        const c = state.last_halt_clear;
+        lastClear = {
+            record: 'portfolio_state', applied_at: str(c.applied_at), source: null, clear_key: str(c.clear_key),
+            reason: null, changed_by: str(c.changed_by), verified_equity: num(c.verified_equity),
+            drawdown_pct_from_peak: num(c.drawdown_pct_from_peak), kill_switch_drawdown_pct: null,
+            cleared_halt_reason: null, cleared_halt_set_at: null,
+        };
+    }
+    const attempt = state.halt_clear_last_attempt && typeof state.halt_clear_last_attempt === 'object'
+        ? { at: str(state.halt_clear_last_attempt.at), applied: !!state.halt_clear_last_attempt.applied,
+            source: str(state.halt_clear_last_attempt.source) } : null;
+
+    const fillRows = (fills && typeof fills === 'object' && !Array.isArray(fills))
+        ? Object.entries(fills).filter(([, v]) => v && typeof v === 'object') : [];
+    const latestFills = fillRows
+        .map(([oid, v]) => ({ order_id: oid, symbol: str(v.symbol), kind: str(v.kind), qty: num(v.qty), price: num(v.px), at: str(v.at) }))
+        .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+
+    const obs = rows(state.halt_observations);
+    const halted = !!state.halted;
+    const evidence = (state.halt_evidence && typeof state.halt_evidence === 'object') ? state.halt_evidence : null;
+    // Same rule as the engine's annotate_halt_verification: a halt is verified
+    // only when it carries timestamped equity evidence. A legacy halt latched
+    // before stamping (no halt_verified field) is therefore unverified.
+    let verified = null, unverifiedReason = null;
+    if (halted) {
+        verified = typeof state.halt_verified === 'boolean' ? state.halt_verified
+            : !!(evidence && evidence.at && evidence.equity !== null && evidence.equity !== undefined);
+        unverifiedReason = verified ? null : (str(state.halt_unverified_reason)
+            || 'Latched with no recorded evidence (no equity reads or timestamp); cleared only by a governed halt_clear.');
+    }
+    return {
+        engine_managed: id === 'portfolio_1',
+        files: { halt_governance: gov !== null, pending_exits: exits !== null,
+            pending_entries: entries !== null, booked_fills: fills !== null },
+        halt: {
+            halted,
+            reason: halted ? str(state.halt_reason) : null,
+            kind: halted ? str(state.halt_kind) : null,
+            verified,
+            unverified_reason: unverifiedReason,
+            set_at: str(state.halt_set_at),
+            until: str(state.halt_until),
+            evidence,
+            observations_count: obs.length,
+            last_observation: obs.length ? obs[obs.length - 1] : null,
+        },
+        peak_equity: num(state.peak_equity) === null ? null
+            : { value: num(state.peak_equity), at: str(state.peak_equity_at) },
+        halt_governance: { total_clears: clears.length, last_clear: lastClear, last_attempt: attempt },
+        pending: {
+            exits: rows(exits).length, entries: rows(entries).length,
+            total: pending.length, orders: pending.slice(0, 25),
+        },
+        booked_fills: { count: fillRows.length, latest: latestFills.slice(0, 5) },
     };
 }
 
@@ -585,6 +820,7 @@ app.get('/api/portfolio/:id/intelligence', (req, res) => {
         },
         strategy_params: strategyParams,
         learning_report: learningReport,
+        safety: buildSafetyState(id, paths),
     });
 });
 
@@ -1248,11 +1484,9 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
             // Read from latest journal for details if bot_state doesn't list full pos
             let journals = [];
             try {
-                if (fs.existsSync(paths.journalDir)) {
-                    const files = fs.readdirSync(paths.journalDir).filter(f => f.endsWith('.json')).sort();
-                    if (files.length > 0) {
-                        journals = readJsonFile(path.join(paths.journalDir, files[files.length - 1]), []);
-                    }
+                const files = await listJournalFiles(paths.journalDir);
+                if (files.length > 0) {
+                    journals = readJsonFile(path.join(paths.journalDir, files[files.length - 1]), []);
                 }
             } catch (e) {
                 console.error("Error reading portfolio_3 journal files:", e);
@@ -1496,10 +1730,8 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
     }
     const history = [];
     try {
-        if (fs.existsSync(paths.journalDir)) {
-            const files = fs.readdirSync(paths.journalDir)
-                .filter(file => file.endsWith('.json'))
-                .sort();
+        {
+            const files = await listJournalFiles(paths.journalDir);
 
             for (const file of files) {
                 const filePath = path.join(paths.journalDir, file);
@@ -1895,6 +2127,72 @@ app.get('/api/market/bars/:symbol', async (req, res) => {
     }
 
     res.json([]);
+});
+
+// 11a. Multi-symbol bars in ONE request (market-pulse sparklines fired ~29
+// single-symbol calls on a cold load). Same validation as the single-symbol
+// route; `limit` is PER SYMBOL. Alpaca's multi-symbol endpoint applies `limit`
+// to the whole page, so pages are walked (sort=desc => newest first within each
+// symbol) until every symbol has `limit` bars or the data runs out, then each
+// series is returned chronologically. Offline/upstream failure => {} (never
+// fabricated bars).
+const BATCH_SYMBOL = /^[A-Z][A-Z0-9.\-]{0,9}$/;
+const BARS_BATCH_MAX_SYMBOLS = 50;
+const BARS_BATCH_PAGE_LIMIT = 10000;
+const BARS_BATCH_MAX_PAGES = 10;
+
+app.get('/api/market/bars-batch', async (req, res) => {
+    const symbols = [...new Set(String(req.query.symbols || '').split(',')
+        .map(s => s.trim().toUpperCase()).filter(Boolean))];
+    if (!symbols.length) return res.status(400).json({ error: 'symbols is required.' });
+    if (symbols.length > BARS_BATCH_MAX_SYMBOLS) {
+        return res.status(400).json({ error: `At most ${BARS_BATCH_MAX_SYMBOLS} symbols per request.` });
+    }
+    const bad = symbols.find(s => !BATCH_SYMBOL.test(s));
+    if (bad) return res.status(400).json({ error: `Invalid symbol: ${bad}` });
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit || '30', 10) || 30));
+    const timeframe = req.query.timeframe || '1Day';
+    if (!BAR_TIMEFRAMES.test(timeframe)) return res.status(400).json({ error: 'Invalid timeframe.' });
+    for (const k of ['start', 'end']) {
+        if (req.query[k] && (!ISO_DATE.test(req.query[k]) || isNaN(Date.parse(req.query[k])))) {
+            return res.status(400).json({ error: `Invalid ${k} date.` });
+        }
+    }
+    const start = req.query.start || defaultBarsStart(timeframe, limit);
+    const end = req.query.end || '';
+    loadConfig();
+    const cfg = Object.values(portfoliosConfig)[0];
+    const out = {};
+    if (!(cfg && cfg.api_key && !cfg.api_key.includes('REDACTED') && cfg.api_key !== 'MOCK_KEY_ID_REDACTED')) {
+        return res.json(out);
+    }
+    const want = new Set(symbols);
+    const collected = Object.fromEntries(symbols.map(s => [s, []]));
+    const full = () => symbols.every(s => collected[s].length >= limit);
+    let pageToken = '';
+    try {
+        for (let page = 0; page < BARS_BATCH_MAX_PAGES; page++) {
+            let url = `${cfg.data_url}/v2/stocks/bars?symbols=${symbols.map(encodeURIComponent).join(',')}`
+                + `&timeframe=${timeframe}&limit=${BARS_BATCH_PAGE_LIMIT}&feed=iex&sort=desc`
+                + `&start=${encodeURIComponent(start)}`;
+            if (end) url += `&end=${encodeURIComponent(end)}`;
+            if (pageToken) url += `&page_token=${encodeURIComponent(pageToken)}`;
+            const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
+            for (const [sym, bars] of Object.entries((data && data.bars) || {})) {
+                if (!want.has(sym) || !Array.isArray(bars)) continue;
+                const room = limit - collected[sym].length;
+                if (room > 0) collected[sym].push(...bars.slice(0, room));
+            }
+            pageToken = data && data.next_page_token;
+            if (!pageToken || full()) break;
+        }
+    } catch (e) {
+        console.warn('[bars-batch] upstream error:', e.message);
+    }
+    for (const sym of symbols) {
+        if (collected[sym].length) out[sym] = collected[sym].slice().reverse();
+    }
+    res.json(out);
 });
 
 // ── Supabase historical data endpoints ──────────────────────────────────────
@@ -2899,24 +3197,47 @@ app.get('/api/portfolio/:id/activities/:type', async (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────
 
 // I1. Corporate action announcements
+const CORP_ACTIONS_DEFAULT_LIMIT = 100;
+const CORP_ACTIONS_MAX_LIMIT = 500;
+const encodeCorpActionsToken = (offset) => Buffer.from(`o:${offset}`).toString('base64url');
+function decodeCorpActionsToken(token) {
+    const m = /^o:(\d{1,7})$/.exec(Buffer.from(String(token), 'base64url').toString('utf8'));
+    return m ? Number(m[1]) : null;
+}
 app.get('/api/corporate-actions', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
     const { ca_types, since, until: untilDate, symbol, cusip, date_type } = req.query;
+    // The unfiltered announcement list was ~1.0 MB. Alpaca's announcements
+    // endpoint has no server-side paging, so pages are cut here: `limit`
+    // (default 100, max 500) and an opaque `page_token` (returned in the
+    // X-Next-Page-Token header) select a window; the body stays a plain array.
+    const limit = Math.min(CORP_ACTIONS_MAX_LIMIT,
+        Math.max(1, parseInt(req.query.limit || String(CORP_ACTIONS_DEFAULT_LIMIT), 10) || CORP_ACTIONS_DEFAULT_LIMIT));
+    let offset = 0;
+    if (req.query.page_token) {
+        offset = decodeCorpActionsToken(req.query.page_token);
+        if (offset === null) return res.status(400).json({ error: 'Invalid page_token.' });
+    }
     let url = `${cfg.base_url}/v2/corporate_actions/announcements?`;
-    if (ca_types) url += `ca_types=${ca_types}&`;
-    if (since) url += `since=${since}&`;
-    if (untilDate) url += `until=${untilDate}&`;
-    if (symbol) url += `symbol=${symbol}&`;
-    if (cusip) url += `cusip=${cusip}&`;
-    if (date_type) url += `date_type=${date_type}&`;
+    if (ca_types) url += `ca_types=${encodeURIComponent(ca_types)}&`;
+    if (since) url += `since=${encodeURIComponent(since)}&`;
+    if (untilDate) url += `until=${encodeURIComponent(untilDate)}&`;
+    if (symbol) url += `symbol=${encodeURIComponent(symbol)}&`;
+    if (cusip) url += `cusip=${encodeURIComponent(cusip)}&`;
+    if (date_type) url += `date_type=${encodeURIComponent(date_type)}&`;
+    let all = [];
     try {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
-        res.json(data);
+        all = Array.isArray(data) ? data : [];
     } catch (e) {
-        res.json([]);
+        console.warn('[corporate-actions]', e.message);
     }
+    const page = all.slice(offset, offset + limit);
+    res.setHeader('X-Total-Count', String(all.length));
+    if (offset + limit < all.length) res.setHeader('X-Next-Page-Token', encodeCorpActionsToken(offset + limit));
+    res.json(page);
 });
 
 // I2. Single corporate action
@@ -3012,9 +3333,10 @@ app.get('/api/guardian-trigger', async (req, res) => {
         });
     }
 
-    // Vercel cron requests carry Authorization: Bearer ${CRON_SECRET}
-    const authHeader = req.headers['authorization'] || '';
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    // Vercel cron requests carry Authorization: Bearer ${CRON_SECRET}. Compared in
+    // constant time over fixed-length digests, so neither content nor length leaks.
+    const authHeader = String(req.headers['authorization'] || '');
+    if (!secretMatches(authHeader, `Bearer ${CRON_SECRET}`)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized.' });
     }
 
@@ -3043,6 +3365,7 @@ app.get('/api/guardian-trigger', async (req, res) => {
                 r.on('data', d => body += d);
                 r.on('end', () => resolve({ status: r.statusCode, body }));
             });
+            r2.setTimeout(10000, () => r2.destroy(new Error('timeout')));
             r2.on('error', reject);
             r2.write(payload);
             r2.end();
@@ -3052,11 +3375,12 @@ app.get('/api/guardian-trigger', async (req, res) => {
             console.log(`[guardian-trigger] repository_dispatch OK at ${new Date().toISOString()}`);
             return res.json({ ok: true, dispatched: true, at: new Date().toISOString() });
         }
-        console.error(`[guardian-trigger] GitHub returned ${result.status}: ${result.body}`);
-        return res.status(502).json({ ok: false, github_status: result.status, body: result.body });
+        // GitHub's error body (token scopes, repo internals) stays in server logs.
+        console.error(`[guardian-trigger] GitHub returned ${result.status}: ${String(result.body).slice(0, 500)}`);
+        return res.status(502).json({ ok: false, error: 'Dispatch failed.' });
     } catch (e) {
         console.error(`[guardian-trigger] dispatch error: ${e.message}`);
-        return res.status(500).json({ ok: false, error: e.message });
+        return res.status(502).json({ ok: false, error: 'Dispatch failed.' });
     }
 });
 
