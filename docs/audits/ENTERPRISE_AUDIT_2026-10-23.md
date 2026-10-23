@@ -95,3 +95,13 @@ P1/P3 active: not before a redesign + 90 days paper.
 - P2 is House-only while Capitol Trades stays WAF-blocked (Senate disclosures not covered).
 - Statistical confidence: confirming Sharpe 1.0 at 95% needs ~2.7 years of data; passing the
   90-day gate is necessary, not sufficient.
+
+## 9. Phase 2 results (pre-registered, research lane)
+
+| Test | Spec | Result |
+|---|---|---|
+| Passive core v1 (price-only bars) | `docs/specs/passive_core.json` | C1 Sharpe FAIL on both spans (−0.209 / −0.288 vs ≥ −0.15); C2 drawdown PASS (9.25% vs 18.98%). |
+| Passive core v2 (dividend-adjusted, 2nd and final look) | `docs/specs/passive_core_v2.json` | C1 PASS 2023→ (−0.067) but FAIL 2021→ incl. 2022 (−0.181) ⇒ **FAIL overall**; C2 PASS both (8.94% vs 18.74%, 17.69% vs 24.51%); C3 live tracking PENDING. |
+| P2 satellite scorecard | `docs/specs/p2_satellite.json` | **INSUFFICIENT_N** — 3 round trips since 2026-07-04 vs 50 required (honest trial count 34). |
+
+**Decision:** the 8-ETF passive core is NOT promoted to paper allocation — it halves drawdown and volatility but does not retain enough of SPY's risk-adjusted return through 2022. No v3 on the same basket (a third look would be fitting to the data); a different construction needs a new hypothesis and a new pre-registered spec. P2 keeps trading on paper and is re-scored as round trips accumulate (`scripts/research/p2_scorecard.py`).

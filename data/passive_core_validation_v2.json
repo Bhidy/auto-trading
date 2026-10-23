@@ -1,0 +1,763 @@
+{
+  "spec_id": "passive-core-ew8-v2-total-return",
+  "spec_hash": "c8d2c75e3117d5820003a1827586b5e3e07eddf81af21809c2ed7399d7823467",
+  "generated_at": "2026-10-23T09:45:55.795055+00:00",
+  "friction_bps_per_side": {
+    "cost": 5.0,
+    "slippage": 5.0
+  },
+  "bar_adjustment": "all (splits + dividends), Alpaca IEX feed",
+  "bars_dir_override": null,
+  "data_span": {
+    "committed_span": [
+      "2023-06-16",
+      "2026-10-13"
+    ],
+    "extended_5y_span": [
+      "2021-06-14",
+      "2026-10-13"
+    ]
+  },
+  "datasets": {
+    "committed_span": {
+      "n_bars": 834,
+      "data_span": [
+        "2023-06-16",
+        "2026-10-13"
+      ],
+      "dropped_dates": 0,
+      "n_windows": 13,
+      "status": "EVALUATED",
+      "windows": [
+        {
+          "start": "2023-07-11",
+          "end": "2023-10-06",
+          "core": {
+            "sharpe": -1.8254,
+            "max_drawdown": 0.0652,
+            "cagr": -0.1225,
+            "total_return": -0.0322
+          },
+          "spy": {
+            "sharpe": -0.6459,
+            "max_drawdown": 0.0757,
+            "cagr": -0.0768,
+            "total_return": -0.0198
+          }
+        },
+        {
+          "start": "2023-10-09",
+          "end": "2024-01-08",
+          "core": {
+            "sharpe": 4.383,
+            "max_drawdown": 0.0247,
+            "cagr": 0.4209,
+            "total_return": 0.0918
+          },
+          "spy": {
+            "sharpe": 3.5217,
+            "max_drawdown": 0.0586,
+            "cagr": 0.5152,
+            "total_return": 0.1095
+          }
+        },
+        {
+          "start": "2024-01-09",
+          "end": "2024-04-09",
+          "core": {
+            "sharpe": 2.722,
+            "max_drawdown": 0.0136,
+            "cagr": 0.1982,
+            "total_return": 0.0462
+          },
+          "spy": {
+            "sharpe": 3.5164,
+            "max_drawdown": 0.0191,
+            "cagr": 0.4526,
+            "total_return": 0.0978
+          }
+        },
+        {
+          "start": "2024-04-10",
+          "end": "2024-07-10",
+          "core": {
+            "sharpe": 1.9392,
+            "max_drawdown": 0.0246,
+            "cagr": 0.1384,
+            "total_return": 0.0329
+          },
+          "spy": {
+            "sharpe": 3.2504,
+            "max_drawdown": 0.0465,
+            "cagr": 0.3817,
+            "total_return": 0.0842
+          }
+        },
+        {
+          "start": "2024-07-11",
+          "end": "2024-10-08",
+          "core": {
+            "sharpe": 1.6275,
+            "max_drawdown": 0.0412,
+            "cagr": 0.1487,
+            "total_return": 0.0353
+          },
+          "spy": {
+            "sharpe": 0.6843,
+            "max_drawdown": 0.084,
+            "cagr": 0.1014,
+            "total_return": 0.0244
+          }
+        },
+        {
+          "start": "2024-10-09",
+          "end": "2025-01-08",
+          "core": {
+            "sharpe": 0.5097,
+            "max_drawdown": 0.0314,
+            "cagr": 0.0364,
+            "total_return": 0.009
+          },
+          "spy": {
+            "sharpe": 1.0187,
+            "max_drawdown": 0.0358,
+            "cagr": 0.1326,
+            "total_return": 0.0316
+          }
+        },
+        {
+          "start": "2025-01-10",
+          "end": "2025-04-10",
+          "core": {
+            "sharpe": -0.8457,
+            "max_drawdown": 0.0894,
+            "cagr": -0.1225,
+            "total_return": -0.0322
+          },
+          "spy": {
+            "sharpe": -1.3873,
+            "max_drawdown": 0.1874,
+            "cagr": -0.3644,
+            "total_return": -0.1071
+          }
+        },
+        {
+          "start": "2025-04-11",
+          "end": "2025-07-14",
+          "core": {
+            "sharpe": 5.4544,
+            "max_drawdown": 0.0145,
+            "cagr": 0.4446,
+            "total_return": 0.0963
+          },
+          "spy": {
+            "sharpe": 4.6678,
+            "max_drawdown": 0.0464,
+            "cagr": 1.0342,
+            "total_return": 0.1943
+          }
+        },
+        {
+          "start": "2025-07-15",
+          "end": "2025-10-10",
+          "core": {
+            "sharpe": 3.8642,
+            "max_drawdown": 0.0134,
+            "cagr": 0.2452,
+            "total_return": 0.0564
+          },
+          "spy": {
+            "sharpe": 1.9255,
+            "max_drawdown": 0.0294,
+            "cagr": 0.2092,
+            "total_return": 0.0486
+          }
+        },
+        {
+          "start": "2025-10-13",
+          "end": "2026-01-12",
+          "core": {
+            "sharpe": 2.7767,
+            "max_drawdown": 0.0285,
+            "cagr": 0.2299,
+            "total_return": 0.0531
+          },
+          "spy": {
+            "sharpe": 2.3478,
+            "max_drawdown": 0.0508,
+            "cagr": 0.2977,
+            "total_return": 0.0673
+          }
+        },
+        {
+          "start": "2026-01-13",
+          "end": "2026-04-14",
+          "core": {
+            "sharpe": 0.5504,
+            "max_drawdown": 0.0594,
+            "cagr": 0.053,
+            "total_return": 0.013
+          },
+          "spy": {
+            "sharpe": 0.1163,
+            "max_drawdown": 0.0888,
+            "cagr": 0.0063,
+            "total_return": 0.0016
+          }
+        },
+        {
+          "start": "2026-04-15",
+          "end": "2026-07-15",
+          "core": {
+            "sharpe": 1.1274,
+            "max_drawdown": 0.0313,
+            "cagr": 0.1099,
+            "total_return": 0.0264
+          },
+          "spy": {
+            "sharpe": 2.7505,
+            "max_drawdown": 0.0446,
+            "cagr": 0.4106,
+            "total_return": 0.0898
+          }
+        },
+        {
+          "start": "2026-07-16",
+          "end": "2026-10-13",
+          "core": {
+            "sharpe": -0.1187,
+            "max_drawdown": 0.0303,
+            "cagr": -0.0121,
+            "total_return": -0.003
+          },
+          "spy": {
+            "sharpe": 1.2644,
+            "max_drawdown": 0.0334,
+            "cagr": 0.1403,
+            "total_return": 0.0334
+          }
+        }
+      ],
+      "summary": {
+        "mean_window_sharpe_core": 1.705,
+        "mean_window_sharpe_spy": 1.7716,
+        "windows_core_sharpe_ge_spy_minus_0_15": 7,
+        "windows_core_dd_le_spy_dd": 13,
+        "full_span_core": {
+          "sharpe": 1.3557,
+          "max_drawdown": 0.0894,
+          "cagr": 0.1174,
+          "total_return": 0.4439,
+          "annual_volatility": 0.0845
+        },
+        "full_span_spy": {
+          "sharpe": 1.3236,
+          "max_drawdown": 0.1874,
+          "cagr": 0.1994,
+          "total_return": 0.8254,
+          "annual_volatility": 0.1454
+        },
+        "implementation": {
+          "n_rebalances": 41,
+          "n_cap_trims": 33,
+          "max_post_trade_weight": 0.1193,
+          "max_close_weight_before_trim": 0.12388,
+          "turnover_x_initial": 2.0949,
+          "costs_x_initial": 0.002095
+        }
+      },
+      "cpcv": {
+        "n_splits": 15,
+        "n_paths": 5,
+        "core_sharpe": {
+          "min": 0.9879,
+          "median": 1.403,
+          "max": 1.9655
+        },
+        "spy_sharpe": {
+          "min": 0.536,
+          "median": 1.3865,
+          "max": 2.4794
+        },
+        "diff_sharpe": {
+          "min": -0.9197,
+          "median": 0.032,
+          "max": 0.5795
+        },
+        "frac_core_sharpe_gt_0": 1.0,
+        "frac_diff_ge_minus_0_15": 0.6,
+        "note": "Zero fitted parameters, so there is no training set: CPCV here is a combinatorial subsample-robustness check of the same path, not independent OOS paths. Informational; not an acceptance criterion."
+      },
+      "psr_dsr": {
+        "n_obs": 834,
+        "per_period_sharpe": 0.0854,
+        "skew": 0.2866,
+        "kurtosis": 9.7863,
+        "n_trials": 2,
+        "psr_vs_0": 0.9933,
+        "dsr": 0.9746,
+        "psr_vs_spy_observed_sharpe": 0.5234,
+        "note": "DSR with N=1 equals PSR vs 0 (no fitted parameters). psr_vs_spy treats SPY's observed Sharpe as a fixed benchmark (ignores its own sampling error)."
+      },
+      "criteria": {
+        "C1_sharpe_vs_spy": {
+          "value": -0.0666,
+          "threshold": -0.15,
+          "result": "PASS"
+        },
+        "C2_drawdown_vs_spy": {
+          "core_mdd": 0.0894,
+          "spy_mdd": 0.1874,
+          "result": "PASS"
+        }
+      },
+      "sources_present": [
+        "data/research_cache/adj_bars"
+      ],
+      "splice_checks": []
+    },
+    "extended_5y_span": {
+      "n_bars": 1333,
+      "data_span": [
+        "2021-06-14",
+        "2026-10-13"
+      ],
+      "dropped_dates": 7,
+      "n_windows": 21,
+      "status": "EVALUATED",
+      "windows": [
+        {
+          "start": "2021-06-30",
+          "end": "2021-10-04",
+          "core": {
+            "sharpe": -0.1119,
+            "max_drawdown": 0.0298,
+            "cagr": -0.0084,
+            "total_return": -0.0021
+          },
+          "spy": {
+            "sharpe": 0.2309,
+            "max_drawdown": 0.0515,
+            "cagr": 0.0206,
+            "total_return": 0.0051
+          }
+        },
+        {
+          "start": "2021-10-05",
+          "end": "2022-01-04",
+          "core": {
+            "sharpe": 2.5213,
+            "max_drawdown": 0.0299,
+            "cagr": 0.1773,
+            "total_return": 0.0417
+          },
+          "spy": {
+            "sharpe": 3.4038,
+            "max_drawdown": 0.041,
+            "cagr": 0.5634,
+            "total_return": 0.1182
+          }
+        },
+        {
+          "start": "2022-01-05",
+          "end": "2022-04-05",
+          "core": {
+            "sharpe": -1.5806,
+            "max_drawdown": 0.0692,
+            "cagr": -0.1525,
+            "total_return": -0.0405
+          },
+          "spy": {
+            "sharpe": -0.8919,
+            "max_drawdown": 0.1281,
+            "cagr": -0.1925,
+            "total_return": -0.052
+          }
+        },
+        {
+          "start": "2022-04-06",
+          "end": "2022-07-07",
+          "core": {
+            "sharpe": -2.4972,
+            "max_drawdown": 0.1077,
+            "cagr": -0.2975,
+            "total_return": -0.0845
+          },
+          "spy": {
+            "sharpe": -1.8951,
+            "max_drawdown": 0.1865,
+            "cagr": -0.4389,
+            "total_return": -0.1345
+          }
+        },
+        {
+          "start": "2022-07-08",
+          "end": "2022-10-05",
+          "core": {
+            "sharpe": -0.6773,
+            "max_drawdown": 0.1022,
+            "cagr": -0.0895,
+            "total_return": -0.0232
+          },
+          "spy": {
+            "sharpe": -0.3518,
+            "max_drawdown": 0.1653,
+            "cagr": -0.0999,
+            "total_return": -0.026
+          }
+        },
+        {
+          "start": "2022-10-06",
+          "end": "2023-01-05",
+          "core": {
+            "sharpe": 0.5436,
+            "max_drawdown": 0.0423,
+            "cagr": 0.0656,
+            "total_return": 0.016
+          },
+          "spy": {
+            "sharpe": 0.2885,
+            "max_drawdown": 0.0712,
+            "cagr": 0.0419,
+            "total_return": 0.0103
+          }
+        },
+        {
+          "start": "2023-01-06",
+          "end": "2023-04-06",
+          "core": {
+            "sharpe": 2.7062,
+            "max_drawdown": 0.0421,
+            "cagr": 0.2532,
+            "total_return": 0.0581
+          },
+          "spy": {
+            "sharpe": 2.0221,
+            "max_drawdown": 0.0753,
+            "cagr": 0.3751,
+            "total_return": 0.0829
+          }
+        },
+        {
+          "start": "2023-04-10",
+          "end": "2023-07-10",
+          "core": {
+            "sharpe": 1.5915,
+            "max_drawdown": 0.0148,
+            "cagr": 0.0969,
+            "total_return": 0.0234
+          },
+          "spy": {
+            "sharpe": 2.6245,
+            "max_drawdown": 0.0263,
+            "cagr": 0.3522,
+            "total_return": 0.0784
+          }
+        },
+        {
+          "start": "2023-07-11",
+          "end": "2023-10-06",
+          "core": {
+            "sharpe": -1.8253,
+            "max_drawdown": 0.0652,
+            "cagr": -0.1225,
+            "total_return": -0.0322
+          },
+          "spy": {
+            "sharpe": -0.6459,
+            "max_drawdown": 0.0757,
+            "cagr": -0.0768,
+            "total_return": -0.0198
+          }
+        },
+        {
+          "start": "2023-10-09",
+          "end": "2024-01-08",
+          "core": {
+            "sharpe": 4.383,
+            "max_drawdown": 0.0247,
+            "cagr": 0.4209,
+            "total_return": 0.0918
+          },
+          "spy": {
+            "sharpe": 3.5217,
+            "max_drawdown": 0.0586,
+            "cagr": 0.5152,
+            "total_return": 0.1095
+          }
+        },
+        {
+          "start": "2024-01-09",
+          "end": "2024-04-09",
+          "core": {
+            "sharpe": 2.722,
+            "max_drawdown": 0.0136,
+            "cagr": 0.1982,
+            "total_return": 0.0462
+          },
+          "spy": {
+            "sharpe": 3.5164,
+            "max_drawdown": 0.0191,
+            "cagr": 0.4526,
+            "total_return": 0.0978
+          }
+        },
+        {
+          "start": "2024-04-10",
+          "end": "2024-07-10",
+          "core": {
+            "sharpe": 1.9392,
+            "max_drawdown": 0.0246,
+            "cagr": 0.1384,
+            "total_return": 0.0329
+          },
+          "spy": {
+            "sharpe": 3.2504,
+            "max_drawdown": 0.0465,
+            "cagr": 0.3817,
+            "total_return": 0.0842
+          }
+        },
+        {
+          "start": "2024-07-11",
+          "end": "2024-10-08",
+          "core": {
+            "sharpe": 1.6275,
+            "max_drawdown": 0.0412,
+            "cagr": 0.1487,
+            "total_return": 0.0353
+          },
+          "spy": {
+            "sharpe": 0.6843,
+            "max_drawdown": 0.084,
+            "cagr": 0.1014,
+            "total_return": 0.0244
+          }
+        },
+        {
+          "start": "2024-10-09",
+          "end": "2025-01-08",
+          "core": {
+            "sharpe": 0.5097,
+            "max_drawdown": 0.0314,
+            "cagr": 0.0364,
+            "total_return": 0.009
+          },
+          "spy": {
+            "sharpe": 1.0187,
+            "max_drawdown": 0.0358,
+            "cagr": 0.1326,
+            "total_return": 0.0316
+          }
+        },
+        {
+          "start": "2025-01-10",
+          "end": "2025-04-10",
+          "core": {
+            "sharpe": -0.8457,
+            "max_drawdown": 0.0894,
+            "cagr": -0.1225,
+            "total_return": -0.0322
+          },
+          "spy": {
+            "sharpe": -1.3873,
+            "max_drawdown": 0.1874,
+            "cagr": -0.3644,
+            "total_return": -0.1071
+          }
+        },
+        {
+          "start": "2025-04-11",
+          "end": "2025-07-14",
+          "core": {
+            "sharpe": 5.4544,
+            "max_drawdown": 0.0145,
+            "cagr": 0.4446,
+            "total_return": 0.0963
+          },
+          "spy": {
+            "sharpe": 4.6678,
+            "max_drawdown": 0.0464,
+            "cagr": 1.0342,
+            "total_return": 0.1943
+          }
+        },
+        {
+          "start": "2025-07-15",
+          "end": "2025-10-10",
+          "core": {
+            "sharpe": 3.8642,
+            "max_drawdown": 0.0134,
+            "cagr": 0.2452,
+            "total_return": 0.0564
+          },
+          "spy": {
+            "sharpe": 1.9255,
+            "max_drawdown": 0.0294,
+            "cagr": 0.2092,
+            "total_return": 0.0486
+          }
+        },
+        {
+          "start": "2025-10-13",
+          "end": "2026-01-12",
+          "core": {
+            "sharpe": 2.7767,
+            "max_drawdown": 0.0285,
+            "cagr": 0.2299,
+            "total_return": 0.0531
+          },
+          "spy": {
+            "sharpe": 2.3478,
+            "max_drawdown": 0.0508,
+            "cagr": 0.2977,
+            "total_return": 0.0673
+          }
+        },
+        {
+          "start": "2026-01-13",
+          "end": "2026-04-14",
+          "core": {
+            "sharpe": 0.5504,
+            "max_drawdown": 0.0594,
+            "cagr": 0.053,
+            "total_return": 0.013
+          },
+          "spy": {
+            "sharpe": 0.1163,
+            "max_drawdown": 0.0888,
+            "cagr": 0.0063,
+            "total_return": 0.0016
+          }
+        },
+        {
+          "start": "2026-04-15",
+          "end": "2026-07-15",
+          "core": {
+            "sharpe": 1.1274,
+            "max_drawdown": 0.0313,
+            "cagr": 0.1099,
+            "total_return": 0.0264
+          },
+          "spy": {
+            "sharpe": 2.7505,
+            "max_drawdown": 0.0446,
+            "cagr": 0.4106,
+            "total_return": 0.0898
+          }
+        },
+        {
+          "start": "2026-07-16",
+          "end": "2026-10-13",
+          "core": {
+            "sharpe": -0.1187,
+            "max_drawdown": 0.0303,
+            "cagr": -0.0121,
+            "total_return": -0.003
+          },
+          "spy": {
+            "sharpe": 1.2644,
+            "max_drawdown": 0.0334,
+            "cagr": 0.1403,
+            "total_return": 0.0334
+          }
+        }
+      ],
+      "summary": {
+        "mean_window_sharpe_core": 1.1743,
+        "mean_window_sharpe_spy": 1.3553,
+        "windows_core_sharpe_ge_spy_minus_0_15": 9,
+        "windows_core_dd_le_spy_dd": 21,
+        "full_span_core": {
+          "sharpe": 0.7884,
+          "max_drawdown": 0.1769,
+          "cagr": 0.07,
+          "total_return": 0.4302,
+          "annual_volatility": 0.0911
+        },
+        "full_span_spy": {
+          "sharpe": 0.8554,
+          "max_drawdown": 0.2451,
+          "cagr": 0.1368,
+          "total_return": 0.9708,
+          "annual_volatility": 0.1661
+        },
+        "implementation": {
+          "n_rebalances": 65,
+          "n_cap_trims": 55,
+          "max_post_trade_weight": 0.11981,
+          "max_close_weight_before_trim": 0.12388,
+          "turnover_x_initial": 2.7188,
+          "costs_x_initial": 0.002719
+        }
+      },
+      "cpcv": {
+        "n_splits": 15,
+        "n_paths": 5,
+        "core_sharpe": {
+          "min": -0.256,
+          "median": 0.7846,
+          "max": 1.7177
+        },
+        "spy_sharpe": {
+          "min": 0.0259,
+          "median": 0.7755,
+          "max": 1.9953
+        },
+        "diff_sharpe": {
+          "min": -0.6009,
+          "median": -0.0954,
+          "max": 0.4185
+        },
+        "frac_core_sharpe_gt_0": 0.9333,
+        "frac_diff_ge_minus_0_15": 0.5333,
+        "note": "Zero fitted parameters, so there is no training set: CPCV here is a combinatorial subsample-robustness check of the same path, not independent OOS paths. Informational; not an acceptance criterion."
+      },
+      "psr_dsr": {
+        "n_obs": 1333,
+        "per_period_sharpe": 0.04966,
+        "skew": 0.1268,
+        "kurtosis": 7.4024,
+        "n_trials": 2,
+        "psr_vs_0": 0.9652,
+        "dsr": 0.9022,
+        "psr_vs_spy_observed_sharpe": 0.4387,
+        "note": "DSR with N=1 equals PSR vs 0 (no fitted parameters). psr_vs_spy treats SPY's observed Sharpe as a fixed benchmark (ignores its own sampling error)."
+      },
+      "criteria": {
+        "C1_sharpe_vs_spy": {
+          "value": -0.181,
+          "threshold": -0.15,
+          "result": "FAIL"
+        },
+        "C2_drawdown_vs_spy": {
+          "core_mdd": 0.1769,
+          "spy_mdd": 0.2451,
+          "result": "PASS"
+        }
+      },
+      "sources_present": [
+        "data/research_cache/adj_bars"
+      ],
+      "splice_checks": []
+    }
+  },
+  "acceptance": {
+    "C1_sharpe_vs_spy": "FAIL",
+    "C2_drawdown_vs_spy": "PASS",
+    "C3_live_tracking_error": "PENDING_LIVE",
+    "overall": "FAIL"
+  },
+  "caveats": [
+    "Cash remainder earns 0% (conservative).",
+    "IEX-feed closes (free tier) differ slightly from consolidated closes; thin ETFs (BIL, SHY) occasionally miss IEX bars and those dates are dropped from the common axis.",
+    "Total-return bars reinvest distributions on the ex-date at zero cost (no withholding tax), slightly flattering both core and SPY.",
+    "Alpaca's dividend adjustment back-scales historical prices; levels differ from v1 but daily returns are what is evaluated.",
+    "Not a blind test: data/core_satellite_backtest_5y.json (2026-06-18) already evaluated this same 8-ETF basket on overlapping 5y data. The basket was not fitted (no tunable parameters), but its selection was informed by that study, so this is a pre-registered CONFIRMATION on overlapping history, not a fresh out-of-sample test.",
+    "v1 FAILED C1. This is a deliberate SECOND test of the same spec family, motivated by v1's known price-only bias against the income-heavy sleeve. Two looks at the same hypothesis => n_trials=2 for DSR; v2 may PASS or FAIL, and a v2 PASS does not erase that v1 was run first.",
+    "Regime coverage: the mid-2023-onward span is a predominantly rising-equity regime; only the 2021-06-onward span includes the 2022 joint bond+equity drawdown.",
+    "Survivorship: the universe is 8 large, long-lived ETFs chosen today; no delisting risk modeled.",
+    "Backtest is simulation (hypothetical, paper) \u2014 not live performance."
+  ],
+  "disclosure": "Hypothetical/paper research for internal model-risk use \u2014 not investment advice."
+}
