@@ -170,6 +170,9 @@ def reduce_open_position(symbol, trim_qty, exit_price, reason="trim"):
                 "pnl": r["net_pnl"], "realized_pnl": r["net_pnl"],
                 "pnl_pct": round(r["net_pnl"] / notional * 100, 2),
                 "status": "closed", "exit_reason": reason,
+                # Link to the parent lot so metrics can rebuild the WHOLE trade
+                # (all slices + the final close) — audit 2026-10-23 Codex #3.
+                "parent_id": trade.get("id"),
                 # A partial slice is realized P&L, NOT an independent trade:
                 # counting it in win-rate inflates the sample and biases the
                 # self-learning loop (audit 2026-10-23, L3).
@@ -201,19 +204,110 @@ def is_partial_trim(trade):
     return bool(trade.get("partial_trim")) or "-trim-" in str(trade.get("id", ""))
 
 
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _parent_ref(slice_rec):
+    pid = slice_rec.get("parent_id")
+    if pid is None and "-trim-" in str(slice_rec.get("id", "")):
+        pid = str(slice_rec["id"]).split("-trim-")[0]
+    return None if pid in (None, "None") else str(pid)
+
+
+def _aggregate(records, parent=None):
+    """One WHOLE trade from its records: P&L = sum of every realized slice plus
+    the final close; return on the ORIGINAL cost basis (all slices' entry x qty)."""
+    pnl = sum(_num(r.get("pnl")) for r in records)
+    cost = sum(abs(_num(r.get("entry_price")) * _num(r.get("qty"))) for r in records)
+    if len(records) == 1:
+        pct = _num(records[0].get("pnl_pct"))
+    elif cost > 0:
+        pct = pnl / cost * 100
+    else:
+        pct = sum(_num(r.get("pnl_pct")) for r in records)
+    head = parent or records[0]
+    return {"symbol": head.get("symbol"), "bucket": head.get("bucket", "unknown"),
+            "pnl": pnl, "pnl_pct": pct, "cost_basis": cost, "n_slices": len(records) - 1,
+            "exit_timestamp": max((r.get("exit_timestamp") or "") for r in records)}
+
+
+def whole_trades(log, cutoff=None):
+    """Rebuild WHOLE trades from the trade log (audit 2026-10-23, Codex #3).
+
+    A partial take-profit/trim is booked as a closed slice while the lot stays
+    open; counting slices — or dropping them — misstates trades (a +$100 trim
+    followed by a -$50 final exit is ONE winning trade, not one loss). Slices
+    join their parent lot by ``parent_id``, by the legacy ``<id>-trim-`` id, or
+    — for rows with neither — by symbol + entry timestamp + entry price.
+
+    Returns ``(completed, partial_units)``:
+      * completed — whole trades whose parent lot is CLOSED (or orphan slice
+        groups with no parent row), filtered by their FINAL exit >= cutoff;
+      * partial_units — the realized slices of still-open (or unpriced
+        reconciled) lots, summed per lot, filtered per slice by exit >= cutoff.
+    completed + partial_units together hold every realized dollar exactly once.
+    """
+    rows = [t for t in (log or []) if isinstance(t, dict)]
+    parents = [t for t in rows if not is_partial_trim(t)]
+    slices = [t for t in rows if is_partial_trim(t) and t.get("status") == "closed"]
+    by_id, by_key = {}, {}
+    for i, t in enumerate(parents):
+        if t.get("id") is not None:
+            by_id.setdefault(str(t["id"]), i)
+        by_key.setdefault((t.get("symbol"), t.get("timestamp"), t.get("entry_price")), i)
+    attached = {i: [] for i in range(len(parents))}
+    orphans = {}
+    for sl in slices:
+        ref = _parent_ref(sl)
+        i = by_id.get(ref) if ref is not None else None
+        if i is None:
+            i = by_key.get((sl.get("symbol"), sl.get("timestamp"), sl.get("entry_price")))
+        if i is None:
+            orphans.setdefault((sl.get("symbol"), sl.get("timestamp"), sl.get("entry_price"),
+                                ref), []).append(sl)
+        else:
+            attached[i].append(sl)
+
+    def _in(ts):
+        return cutoff is None or (ts or "") >= cutoff
+
+    completed, partial_units = [], []
+    for i, p in enumerate(parents):
+        sl = attached[i]
+        if p.get("status") == "closed":
+            w = _aggregate([p] + sl, parent=p)
+            if _in(w["exit_timestamp"]):
+                completed.append(w)
+        elif sl:
+            kept = [x for x in sl if _in(x.get("exit_timestamp"))]
+            if kept:
+                partial_units.append(_aggregate(kept, parent=p))
+    for group in orphans.values():
+        w = _aggregate(group)
+        if _in(w["exit_timestamp"]):
+            completed.append(w)
+    return completed, partial_units
+
+
 def compute_metrics(lookback_days=None):
     log = load_json("trade_log.json", [])
-    realized = [t for t in log if t["status"] == "closed"]
-
+    cutoff = None
     if lookback_days:
         cutoff = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat()
-        realized = [t for t in realized if (t.get("exit_timestamp") or "") >= cutoff]
 
-    # Trade-count statistics (win rate, averages, per-trade Sharpe) use whole
-    # trades only; partial trims are slices of a still-open position (L3).
-    # Dollar totals (total_pnl, profit_factor) keep every realized record so no
-    # booked P&L disappears from the books.
-    closed = [t for t in realized if not is_partial_trim(t)]
+    # Trade-count statistics (win rate, averages, expectancy, per-trade Sharpe)
+    # are computed on WHOLE trades — every partial slice summed with its final
+    # close, return on the original cost basis (L3 + Codex #3). Dollar totals
+    # (total_pnl, profit_factor) use the same units PLUS the realized slices of
+    # still-open lots, so every booked dollar is counted exactly once.
+    closed, partial_units = whole_trades(log, cutoff)
+    units = closed + partial_units
+    total_pnl = round(sum(u["pnl"] for u in units), 2)
+    merged = sum(u["n_slices"] for u in closed) + sum(u["n_slices"] + 1 for u in partial_units)
 
     if not closed:
         return {
@@ -225,33 +319,32 @@ def compute_metrics(lookback_days=None):
             "win_loss_ratio": None,
             "max_win_pct": None,
             "max_loss_pct": None,
-            "total_pnl": round(sum((t.get("pnl") or 0) for t in realized), 2),
+            "total_pnl": total_pnl,
             "profit_factor": None,
             "sharpe_estimate": None,
+            "expectancy": None,
         }
 
-    wins = [t for t in closed if (t.get("pnl") or 0) > 0]
-    losses = [t for t in closed if (t.get("pnl") or 0) <= 0]
-    win_rate = len(wins) / len(closed) if closed else 0.5
+    wins = [t for t in closed if t["pnl"] > 0]
+    losses = [t for t in closed if t["pnl"] <= 0]
+    win_rate = len(wins) / len(closed)
 
     avg_win = sum(t["pnl_pct"] for t in wins) / len(wins) if wins else 0
     avg_loss = sum(t["pnl_pct"] for t in losses) / len(losses) if losses else 0
     wl_ratio = abs(avg_win / avg_loss) if avg_loss != 0 else 1.0
 
-    gross_profit = sum((t.get("pnl") or 0) for t in realized if (t.get("pnl") or 0) > 0)
-    gross_loss = abs(sum((t.get("pnl") or 0) for t in realized if (t.get("pnl") or 0) <= 0)) or 1
+    gross_profit = sum(u["pnl"] for u in units if u["pnl"] > 0)
+    gross_loss = abs(sum(u["pnl"] for u in units if u["pnl"] <= 0)) or 1
     profit_factor = gross_profit / gross_loss if gross_loss > 0 else 1.0
 
-    all_pnl_pcts = [t.get("pnl_pct", 0) for t in closed]
-    mean_pnl = sum(all_pnl_pcts) / len(all_pnl_pcts) if all_pnl_pcts else 0
+    all_pnl_pcts = [t["pnl_pct"] for t in closed]
+    mean_pnl = sum(all_pnl_pcts) / len(all_pnl_pcts)
     if len(all_pnl_pcts) > 1:
         variance = sum((p - mean_pnl) ** 2 for p in all_pnl_pcts) / (len(all_pnl_pcts) - 1)
         std = variance ** 0.5
         sharpe = (mean_pnl / std) if std > 0 else 0
     else:
         sharpe = 0
-
-    pnl_values = [t.get("pnl_pct", 0) for t in closed]
 
     return {
         "total_trades": len(closed),
@@ -262,10 +355,12 @@ def compute_metrics(lookback_days=None):
         "avg_win_pct": round(avg_win, 2),
         "avg_loss_pct": round(avg_loss, 2),
         "win_loss_ratio": round(wl_ratio, 2),
-        "max_win_pct": round(max(pnl_values), 2) if pnl_values else 0,
-        "max_loss_pct": round(min(pnl_values), 2) if pnl_values else 0,
-        "total_pnl": round(sum((t.get("pnl") or 0) for t in realized), 2),
-        "partial_trims_excluded": len(realized) - len(closed),
+        "max_win_pct": round(max(all_pnl_pcts), 2),
+        "max_loss_pct": round(min(all_pnl_pcts), 2),
+        # Expectancy in $ per WHOLE trade.
+        "expectancy": round(sum(t["pnl"] for t in closed) / len(closed), 2),
+        "total_pnl": total_pnl,
+        "partial_trims_excluded": merged,   # slices merged into whole trades / open lots
         "profit_factor": round(profit_factor, 2),
         # Per-trade dispersion ratio (NOT annualized). For the canonical,
         # annualized, equity-curve Sharpe/Sortino/Calmar use equity_curve_metrics()
@@ -288,40 +383,29 @@ def equity_curve_metrics(equity_series, risk_free_rate=0.0):
     from backtest.metrics import summary
     return summary(series, risk_free_rate=risk_free_rate)
 
+def _group_stats(trades):
+    wins = [t for t in trades if t["pnl"] > 0]
+    return {
+        "trades": len(trades),
+        "win_rate": round(len(wins) / len(trades), 3) if trades else 0,
+        "total_pnl": round(sum(t["pnl"] for t in trades), 2),
+        "avg_pnl_pct": round(sum(t["pnl_pct"] for t in trades) / len(trades), 2),
+    }
+
+
 def compute_metrics_by_bucket():
-    log = load_json("trade_log.json", [])
-    closed = [t for t in log if t["status"] == "closed" and not is_partial_trim(t)]
-    buckets = set(t.get("bucket", "unknown") for t in closed)
+    closed, _ = whole_trades(load_json("trade_log.json", []))
     result = {}
-    for bucket in buckets:
-        bucket_trades = [t for t in closed if t.get("bucket") == bucket]
-        if not bucket_trades:
-            continue
-        wins = [t for t in bucket_trades if (t.get("pnl") or 0) > 0]
-        result[bucket] = {
-            "trades": len(bucket_trades),
-            "win_rate": round(len(wins) / len(bucket_trades), 3) if bucket_trades else 0,
-            "total_pnl": round(sum(t.get("pnl", 0) for t in bucket_trades), 2),
-            "avg_pnl_pct": round(sum(t.get("pnl_pct", 0) for t in bucket_trades) / len(bucket_trades), 2),
-        }
+    for bucket in set(t.get("bucket", "unknown") for t in closed):
+        result[bucket] = _group_stats([t for t in closed if t.get("bucket") == bucket])
     return result
 
+
 def compute_metrics_by_symbol():
-    log = load_json("trade_log.json", [])
-    closed = [t for t in log if t["status"] == "closed" and not is_partial_trim(t)]
-    symbols = set(t["symbol"] for t in closed)
+    closed, _ = whole_trades(load_json("trade_log.json", []))
     result = {}
-    for sym in symbols:
-        sym_trades = [t for t in closed if t["symbol"] == sym]
-        if not sym_trades:
-            continue
-        wins = [t for t in sym_trades if (t.get("pnl") or 0) > 0]
-        result[sym] = {
-            "trades": len(sym_trades),
-            "win_rate": round(len(wins) / len(sym_trades), 3),
-            "total_pnl": round(sum(t.get("pnl", 0) for t in sym_trades), 2),
-            "avg_pnl_pct": round(sum(t.get("pnl_pct", 0) for t in sym_trades) / len(sym_trades), 2),
-        }
+    for sym in set(t["symbol"] for t in closed):
+        result[sym] = _group_stats([t for t in closed if t["symbol"] == sym])
     return result
 
 # ---------------------------------------------------------------------------

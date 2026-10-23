@@ -525,21 +525,101 @@ def test_peak_raised_only_on_cross_checked_read(data):
 # L3 — partial trims excluded from win-rate
 # ---------------------------------------------------------------------------
 
-def test_partial_trims_excluded_from_win_rate(tmp_path, monkeypatch):
+def test_partial_tp_then_smaller_losing_exit_is_one_winning_whole_trade(tmp_path, monkeypatch):
+    """Codex #3 exact example: +$100 partial TP (5 @ $120 from $100), then the
+    final 5 exit at $90 (-$50). ONE trade, net about +$50 on $1,000 cost -> a WIN."""
     monkeypatch.setattr(pt, "DATA_DIR", str(tmp_path))
     _write(tmp_path / "trade_log.json", [
         {"id": 1, "symbol": "AAA", "status": "open", "qty": 10, "entry_price": 100.0,
-         "side": "buy", "timestamp": "2026-10-01T14:00:00+00:00"}])
+         "side": "buy", "timestamp": "2026-10-01T14:00:00+00:00", "bucket": "momentum"}])
     pt.reduce_open_position("AAA", 5, 120.0, reason="take_profit")
     log = _read(tmp_path / "trade_log.json")
-    assert log[-1]["partial_trim"] is True
-    log[0].update(status="closed", exit_price=90.0, pnl=-50.0, pnl_pct=-10.0,
-                  exit_timestamp=datetime.now(timezone.utc).isoformat())
-    _write(tmp_path / "trade_log.json", log)
+    assert log[-1]["partial_trim"] is True and log[-1]["parent_id"] == 1
+    m_open = pt.compute_metrics()
+    assert m_open["total_trades"] == 0                               # lot still open
+    assert m_open["total_pnl"] == pytest.approx(log[-1]["pnl"])      # trim P&L still booked
+    pt.reduce_open_position("AAA", 5, 90.0, reason="stop")
+    log = _read(tmp_path / "trade_log.json")
+    whole = log[-1]["pnl"] + log[0]["pnl"]
     m = pt.compute_metrics()
-    assert m["total_trades"] == 1 and m["win_rate"] == 0.0           # the trim is not a "win"
-    assert m["partial_trims_excluded"] == 1
-    assert m["total_pnl"] == pytest.approx(-50.0 + log[-1]["pnl"])   # but its P&L is booked
+    assert m["total_trades"] == 1 and m["wins"] == 1 and m["win_rate"] == 1.0
+    assert m["avg_pnl_pct"] == pytest.approx(whole / 1000.0 * 100, abs=0.01)  # original basis
+    assert m["expectancy"] == pytest.approx(whole, abs=0.01)
+    assert m["total_pnl"] == pytest.approx(whole, abs=0.01)
+    assert pt.compute_metrics_by_bucket()["momentum"]["win_rate"] == 1.0
+
+
+def test_whole_trade_links_legacy_slices_by_id_and_by_entry_key():
+    parent = {"id": 7, "symbol": "B", "status": "closed", "qty": 5, "entry_price": 10.0,
+              "timestamp": "t0", "pnl": -5.0, "exit_timestamp": "2026-10-20"}
+    by_id = dict(parent, id="7-trim-x", qty=5, pnl=20.0, status="closed",
+                 exit_timestamp="2026-10-10")                       # legacy: no flag/parent_id
+    p2 = {"id": None, "symbol": "C", "status": "closed", "qty": 2, "entry_price": 50.0,
+          "timestamp": "t1", "pnl": -1.0, "exit_timestamp": "2026-10-21"}
+    by_key = dict(p2, id="x", partial_trim=True, pnl=6.0, exit_timestamp="2026-10-11")
+    done, partial = pt.whole_trades([parent, by_id, p2, by_key])
+    got = {w["symbol"]: round(w["pnl"], 2) for w in done}
+    assert got == {"B": 15.0, "C": 5.0} and partial == []
+    # Window by FINAL exit: both trades end inside it even though a slice is older.
+    assert len(pt.whole_trades([parent, by_id], cutoff="2026-10-15")[0]) == 1
+
+
+def test_codex1_exit_beyond_logged_lots_keeps_unmatched_remainder(data):
+    _write(data / "trade_log.json", [_two_lots()[0]])                # only 6 sh logged
+    assert ar.book_exit_fill("e1", "XYZ", 10, 95.0, "stop_loss") == 6.0
+    assert _read(data / "booked_fills.json")["e1"]["qty"] == 6.0     # ledger = booked only
+    um = _read(data / "unmatched_exits.json")["e1"]
+    assert um["unmatched_qty"] == 4.0
+    # The late entry (4 sh) settles at EOD even though the position is gone,
+    # and the remainder then books against it — once.
+    _write(data / "pending_entries.json", [{"order_id": "b1", "symbol": "XYZ", "qty": 4,
+                                            "bucket": "momentum", "order_class": "momentum_sleeve"}])
+    br = Broker()
+    br.fills["b1"] = {"status": "filled", "filled_qty": "4", "filled_avg_price": "100"}
+    summary = ar.run_settlement(br, [])
+    assert summary["unmatched_exits"] == 0 and summary["error"] is None
+    assert _read(data / "booked_fills.json")["e1"]["qty"] == 10.0
+    assert ar.retry_unmatched_exits() == 0.0
+    closed = [t for t in _read(data / "trade_log.json") if t["status"] == "closed"]
+    assert sum(t["qty"] for t in closed) == 10
+
+
+def test_codex2_later_eod_still_settles_but_journal_runs_once(data, monkeypatch):
+    _write(data / "portfolio_state.json", {"last_eod_session_date": ar.et_session_date(),
+                                           "last_eod_completed_at": "x"})
+    _write(data / "trade_log.json", _two_lots())
+    _write(data / "pending_exits.json", [{"order_id": "p9", "symbol": "XYZ", "qty": 10,
+                                          "reason": "stop_loss"}])
+    monkeypatch.setattr(pt, "adapt_parameters",
+                        lambda **k: (_ for _ in ()).throw(AssertionError("learning re-ran")))
+
+    class NoAccount(Broker):
+        def get_account(self):
+            raise AssertionError("journal path must not re-run")
+    br = NoAccount()
+    br.fills["p9"] = {"status": "filled", "filled_qty": "10", "filled_avg_price": "95"}
+    assert ar.run_end_of_day(br, force=False) is False
+    assert _read(data / "pending_exits.json") == []
+    assert all(t["status"] == "closed" for t in _read(data / "trade_log.json"))
+    st = _read(data / "portfolio_state.json")
+    assert st["eod_settlement"]["pending_exits"] == 0 and st["eod_settlement"]["error"] is None
+
+    # Nothing outstanding -> a further run is a pure no-op (no broker calls at all).
+    class Boom(Broker):
+        def get_positions(self):
+            raise AssertionError("no settlement needed")
+    assert ar.run_end_of_day(Boom(), force=False) is False
+
+
+def test_codex2_failed_settlement_is_retried_by_a_later_run(data, monkeypatch):
+    _write(data / "portfolio_state.json", {"last_eod_session_date": ar.et_session_date(),
+                                           "eod_settlement": {"error": "exits: boom"}})
+    called = []
+    monkeypatch.setattr(ar, "run_settlement",
+                        lambda a, p: called.append(1) or {"error": None})
+    ar.run_end_of_day(Broker(), force=False)
+    assert called == [1]
+    assert _read(data / "portfolio_state.json")["eod_settlement"]["error"] is None
 
 
 def test_daily_loss_never_overwrites_a_kill_switch_halt(data, limits):
