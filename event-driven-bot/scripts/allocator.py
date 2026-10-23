@@ -96,6 +96,13 @@ DEFAULTS = {
     "cash_buffer_pct": 0.005,            # cash never spent below 0.5% of equity
     "min_order_notional": 250.0,         # no dust top-ups / trims
     "residual_gross_headroom": 0.01,     # T-bill residual stops 1pp below the gross cap
+    # No buys at all in a session whose total buy room is below
+    # max(min_order_notional, min_buy_room_pct x equity): while legacy fills the
+    # 80% gross cap, ~$1K of room would otherwise ship dust buys every session.
+    "min_buy_room_pct": 0.02,
+    # No allocator BUYS at/after this ET time (a cron delayed for hours must not
+    # buy into the close); sells/trims still run, buys wait for the next session.
+    "buy_cutoff_et": "15:00",
 }
 # Parent-spec residual rule (amendment 2026-10-23, docs/specs/crisis_core_v1_forward.json):
 # after the scaled weights, the residual goes to the T-bill basket in priority
@@ -210,7 +217,13 @@ def add_tbill_residual(core_targets, budget, available, params):
 
 
 def legacy_gross_weight(positions, alloc_qty, equity):
-    """Legacy (non-allocator) market value / equity, from broker positions."""
+    """Legacy (non-allocator) GROSS market value / equity, from broker positions.
+
+    Consistent with buy_room(): every position counts at abs(market_value),
+    longs AND shorts. A short (negative qty or side "short" — e.g. an accidental
+    legacy short) is entirely legacy (the sleeve is long-only), so it counts in
+    full; skipping it would oversize the frozen T-bill residual and leave the
+    month clipped and retried every session."""
     if equity <= 0:
         return 0.0
     mv = 0.0
@@ -220,11 +233,22 @@ def legacy_gross_weight(positions, alloc_qty, equity):
             v = abs(float(p.get("market_value") or 0))
         except (TypeError, ValueError):
             continue
-        if q <= 0:
+        if q == 0 or v == 0:
+            continue
+        if q < 0 or str(p.get("side", "")).lower() == "short":
+            mv += v
             continue
         lq = max(0.0, q - alloc_qty.get(p.get("symbol"), 0.0))
         mv += v * lq / q
     return mv / equity
+
+
+def after_buy_cutoff(now, params):
+    """True when ``now`` (aware) is at/after the ET buy cutoff (HH:MM)."""
+    from zoneinfo import ZoneInfo
+    hh, mm = (int(x) for x in str(params["buy_cutoff_et"]).split(":"))
+    et = now.astimezone(ZoneInfo("America/New_York"))
+    return (et.hour, et.minute) >= (hh, mm)
 
 
 def is_allocator_lot(t):
@@ -550,7 +574,7 @@ def book_fill(trade_log, rec, filled_qty, fill_px, now_iso):
     if rec["side"] == "buy":
         ref = rec.get("ref_price") or rec.get("limit_price")
         trade_log.append({
-            "timestamp": now_iso,
+            "timestamp": rec.get("filled_at") or now_iso,
             "date": rec.get("session"),
             "symbol": sym,
             "side": "buy",
@@ -595,7 +619,7 @@ def book_fill(trade_log, rec, filled_qty, fill_px, now_iso):
         t.update({
             "status": "closed",
             "exit_price": round(fill_px, 4),
-            "exit_timestamp": now_iso,
+            "exit_timestamp": rec.get("filled_at") or now_iso,
             "exit_reason": f"allocator_{rec.get('reason') or 'rebalance'}",
             "exit_order_id": oid,
             "exit_client_order_id": rec.get("client_order_id"),
@@ -633,7 +657,8 @@ def settle_orders(alpaca, state, trade_log, now_iso, logger=None):
         fq = float(o.get("filled_qty") or 0)
         fap = o.get("filled_avg_price")
         fp = float(fap) if fap else None
-        rec.update({"filled_qty": fq, "filled_avg_price": fp, "pending": False})
+        rec.update({"filled_qty": fq, "filled_avg_price": fp, "pending": False,
+                    "filled_at": o.get("filled_at") or rec.get("filled_at")})
         book_fill(trade_log, rec, fq, fp, now_iso)
         settled += 1
     return settled
@@ -786,6 +811,11 @@ def _submit(alpaca, o, session_date, state, trade_log, now_iso, confirm, lg):
     rec["order_id"] = order.get("id")
     status, fq, fp = confirm(alpaca, rec["order_id"])
     rec.update(status=status, filled_qty=fq, filled_avg_price=fp)
+    if status in FINAL and fq > 0:
+        try:  # stamp the row with the broker's fill time, not this run's start
+            rec["filled_at"] = (alpaca.get_order(rec["order_id"]) or {}).get("filled_at")
+        except Exception:
+            rec["filled_at"] = None
     if status in FINAL:
         rec["pending"] = False
         book_fill(trade_log, rec, fq, fp, now_iso)
@@ -849,9 +879,19 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
                  f"no settlement, no orders (fail closed)")
         return dict(summary, status="broker_orders_unavailable")
     if foreign:
-        lg.warning(f"::warning::P3 allocator: {len(foreign)} p3alloc order(s) for {session} "
-                   f"exist at the broker but not in this checkout's state {foreign[:3]} — "
-                   f"another run traded this session; stale checkout, doing nothing")
+        lg.warning(f"::warning::P3 allocator CONCURRENT RUN DETECTED: {len(foreign)} p3alloc "
+                   f"order(s) for {session} exist at the broker but not in this checkout's "
+                   f"state {foreign[:3]} — another run traded this session; stale checkout, "
+                   f"placing nothing")
+        # Record the race WITHOUT touching last_updated: this stale document must
+        # never win the snapshot merge; commit_and_push merges "concurrency"
+        # (max count) and "orders" (key-wise union) into the live state.
+        rec_state = state if state is not None else {"orders": {}}
+        c = dict(rec_state.get("concurrency") or {})
+        c.update(count=int(c.get("count") or 0) + 1, last_at=now_iso,
+                 last_session=session, last_foreign=foreign[:5])
+        rec_state["concurrency"] = c
+        _save(state_path, rec_state)
         return dict(summary, status="concurrent_run_detected", foreign=foreign)
 
     # Real fills of orders already placed are booked even when disabled.
@@ -975,6 +1015,12 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
     if buys and not done:
         if block:
             summary["skips"] += [{"symbol": b["symbol"], "reason": f"buy blocked: {block}"} for b in buys]
+        elif after_buy_cutoff(now, params):
+            summary["buy_cutoff"] = True
+            summary["deferred"] += [b["symbol"] + ":buy" for b in buys]
+            lg.warning(f"::warning::P3 allocator: past the {params['buy_cutoff_et']} ET buy "
+                       f"cutoff (late fire) — {len(buys)} buy(s) deferred to the next session; "
+                       f"trims ran")
         else:
             account = alpaca.get_account()
             positions = alpaca.get_positions() or []
@@ -986,7 +1032,19 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
             sel_buys, deferred_b = select_by_budget(buys, slots)
             summary["deferred"] += [d["symbol"] + ":buy" for d in deferred_b]
             room, room_detail = buy_room(account, positions, alpaca.get_orders(status="open") or [], params)
-            fitted, clipped_factor, clipped = fit_buys_to_room(sel_buys, room, params)
+            min_room = max(params["min_order_notional"], params["min_buy_room_pct"] * equity)
+            if room < min_room:
+                # Too little room for a meaningful buy (legacy holds the gross
+                # cap): place NO buys this session instead of dust. Recorded as
+                # cap shortfall (F1 benchmark) — not as a clip that keeps the
+                # month open; the next freeze picks up freed room.
+                fitted, clipped = [], []
+                summary["skipped_low_room"] = {"room": round(room, 2), "min_room": round(min_room, 2),
+                                               "buys": [b["symbol"] for b in sel_buys]}
+                lg.warning(f"::warning::P3 allocator: buy room ${room:,.0f} < ${min_room:,.0f} "
+                           f"— no buys this session (skipped_low_room)")
+            else:
+                fitted, clipped_factor, clipped = fit_buys_to_room(sel_buys, room, params)
             sel_buys_rec, fitted_rec, skips_rec = sel_buys, fitted, skips2
             summary["clipped"] += [c["symbol"] for c in clipped]
             summary["room"] = dict(room_detail, room=round(room, 2), factor=round(clipped_factor, 6))
@@ -1019,7 +1077,9 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
     sessions[session] = {"equity": round(equity, 2), "targets": targets,
                          "targets_constrained": c_targets, "cap_shortfall_pct": shortfall,
                          "room_factor": round(clipped_factor, 6), "buys_blocked": block,
-                         "deferred": list(summary["deferred"])}
+                         "deferred": list(summary["deferred"]),
+                         "skipped_low_room": bool(summary.get("skipped_low_room")),
+                         "buy_cutoff": bool(summary.get("buy_cutoff"))}
     for old in sorted(sessions)[:-MAX_SESSION_RECORDS]:
         sessions.pop(old)
     state["targets_constrained"] = c_targets
@@ -1028,6 +1088,8 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
     if not done and not incomplete:
         state["last_rebalance_month"] = month
         status = "month_complete"
+    elif summary.get("buy_cutoff") and not done:
+        status = "buy_cutoff"
     elif done:
         status = "drift_check" if planned_any else "month_already_complete"
     else:

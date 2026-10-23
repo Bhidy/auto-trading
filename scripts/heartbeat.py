@@ -332,6 +332,30 @@ def assess_integrity(reports: dict, today=None):
     return False, "Execution integrity & conformance: all clear."
 
 
+def read_allocator_state(root: Path):
+    """P3 crisis_core_v1 allocator state (missing -> None, no alert)."""
+    return _read_json(root / "event-driven-bot" / "data" / "allocator_state.json")
+
+
+def assess_allocator(state, today: str):
+    """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
+
+    Alerts when the P3 allocator detected a CONCURRENT run today: a p3alloc
+    order existed at the broker for this ET session that the running checkout's
+    state did not know (a racing Guardian catch-up or a lost state commit). The
+    stale run correctly did nothing, but the race itself must be seen."""
+    if not isinstance(state, dict):
+        return False, "P3 allocator: no state (not enabled yet)."
+    c = state.get("concurrency") or {}
+    if isinstance(c, dict) and (c.get("last_session") == today
+                                or (_et_date_of(c.get("last_at")) or "") == today):
+        return True, (f"P3 ALLOCATOR concurrent run detected today ({c.get('count')} total; "
+                      f"last {c.get('last_at')}; foreign orders {c.get('last_foreign')}) — "
+                      f"a stale checkout raced a live run; it placed nothing, investigate "
+                      f"the Guardian/native overlap.")
+    return False, "P3 allocator: no concurrent run today."
+
+
 def read_cross_portfolio(root: Path):
     """The cross-portfolio aggregate-exposure report P1's EOD writes (committee
     rec #3). Missing report -> None (no alert)."""
@@ -509,6 +533,12 @@ def main():
     if integ_alert:
         alert = True
         summary = f"{summary}\n\n{integ_summary}"
+
+    # P3 allocator race detector (stale checkout vs a live run, same session).
+    al_alert, al_summary = assess_allocator(read_allocator_state(REPO_ROOT), today)
+    if al_alert:
+        alert = True
+        summary = f"{summary}\n\n{al_summary}"
 
     # Cross-portfolio aggregate concentration (committee rec #3): the correlated
     # stacking no single book can see. Advisory — always surfaced for visibility.
