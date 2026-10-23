@@ -706,6 +706,8 @@
                 ch_aria_funnel: 'Always-valid confidence band on {s} alpha over {n} sessions: lower {lo}, midpoint {pt}, upper {hi} a year.',
                 ch_aria_lines: '{b} cumulative return {r} against SPY {s} over the same {n} sessions.',
                 ch_aria_dd: '{b} drawdown, worst {w}, against the {g} gate and the {k} kill switch.',
+                ch_aria_dd_start: '{b} drawdown from peak, worst {w}, against the {g} gate. Its {k} kill switch is measured from starting equity, so it is not drawn on this chart.',
+                k_spy_gaps: 'SPY ({n} sessions without data)', no_data: 'no data',
                 tip_band: 'lower {lo} · mid {pt} · upper {hi}',
                 mx_h: 'Every gate, every strategy', mx_strategy: 'Strategy', mx_verdict: 'Verdict',
                 grp_evidence: 'Evidence', grp_risk: 'Risk', grp_ops: 'Operations',
@@ -739,6 +741,8 @@
                 ch_aria_funnel: 'نطاق ثقة صالح دائماً لألفا {s} عبر {n} جلسة: الأدنى {lo}، المنتصف {pt}، الأعلى {hi} سنوياً.',
                 ch_aria_lines: 'العائد التراكمي لـ {b} {r} مقابل SPY {s} عبر نفس الـ {n} جلسة.',
                 ch_aria_dd: 'تراجع {b}، الأسوأ {w}، مقابل حد {g} ومفتاح الإيقاف {k}.',
+                ch_aria_dd_start: 'تراجع {b} من القمة، الأسوأ {w}، مقابل حد {g}. مفتاح الإيقاف {k} يُقاس من رأس المال الابتدائي فلا يُرسم هنا.',
+                k_spy_gaps: 'SPY ({n} جلسة بلا بيانات)', no_data: 'لا بيانات',
                 tip_band: 'الأدنى {lo} · المنتصف {pt} · الأعلى {hi}',
                 mx_h: 'كل الشروط، لكل استراتيجية', mx_strategy: 'الاستراتيجية', mx_verdict: 'الحكم',
                 grp_evidence: 'الأدلة', grp_risk: 'المخاطر', grp_ops: 'التشغيل',
@@ -963,13 +967,15 @@
             if (!report) { host.innerHTML = ''; return; }
             var state = keepOpen ? openStates() : {};
             var b = (report.books || {})[current] || {}, ser = b.series || {};
-            var n = (ser.dates || []).length, ret = n ? ser.cum_return[n - 1] : null, spy = n && ser.benchmark_cum ? ser.benchmark_cum[n - 1] : null;
+            var n = (ser.dates || []).length, ret = n ? ser.cum_return[n - 1] : null, spy = null;
+            (ser.benchmark_cum || []).forEach(function (v) { if (num(v)) spy = v; });
             var dd = num(b.max_drawdown_paper_period) ? -b.max_drawdown_paper_period : null;
-            var kill = (b.kill_switch || {}).kill_drawdown;
+            var kill = (b.kill_switch || {}).kill_drawdown, killBasis = (b.kill_switch || {}).basis;
+            var spyGaps = (ser.benchmark_missing || []).length;
             var kpis = '<dl class="kpis">' +
                 '<div><dt>' + t('k_equity') + '</dt><dd>' + (num(b.last_equity) ? L(ATFmt.money(b.last_equity, 0)) : '—') + '</dd></div>' +
                 '<div><dt>' + tm('k_ret', { d: n ? dateLabel(ser.dates[0]) : '—' }) + '</dt><dd class="' + signCls(ret) + '">' + L(spct(ret, 2)) + '</dd></div>' +
-                '<div><dt>' + t('k_spy') + '</dt><dd class="' + signCls(spy) + '">' + L(spct(spy, 2)) + '</dd></div>' +
+                '<div><dt>' + (spyGaps ? tm('k_spy_gaps', { n: L(spyGaps) }) : t('k_spy')) + '</dt><dd class="' + signCls(spy) + '">' + L(spct(spy, 2)) + '</dd></div>' +
                 '<div><dt>' + t('k_dd') + '</dt><dd class="' + signCls(dd) + '">' + L(spct(dd, 1)) + '</dd></div></dl>';
             var panels = n >= 2
                 ? '<div class="g2"><div class="panel"><h3>' + t('p_ret') + '</h3><div class="rx-chart" id="ch-ret" tabindex="0" dir="ltr"></div></div>' +
@@ -983,15 +989,19 @@
                         { width: width, height: width < 520 ? 160 : 190, months: months(),
                           aria: tm('ch_aria_lines', { b: tag, r: RC.pct(ret, 1), s: RC.pct(spy, 1), n: n }) });
                     r.describe = function (i) {
-                        return '<b>' + esc(dateLabel(ser.dates[i])) + '</b><br>' + esc(tag) + ' ' + esc(RC.pct(ser.cum_return[i], 2)) + ' · SPY ' + esc(RC.pct(ser.benchmark_cum[i], 2));
+                        return '<b>' + esc(dateLabel(ser.dates[i])) + '</b><br>' + esc(tag) + ' ' + esc(RC.pct(ser.cum_return[i], 2)) + ' · SPY ' +
+                            esc(num(ser.benchmark_cum[i]) ? RC.pct(ser.benchmark_cum[i], 2) : t('no_data'));
                     };
                     return r;
                 } });
                 charts.push({ host: 'ch-dd', build: function (width) {
                     var lim = [{ value: -gateDD, label: t('ch_dd_gate'), cls: 'rc-lab-wait' }];
-                    if (num(kill)) lim.push({ value: -kill, label: t('ch_kill'), cls: 'rc-lab-neg' });
+                    // The kill line belongs on a PEAK-relative chart only when the book's
+                    // kill switch is measured from its peak (P1); P2/P3 measure from
+                    // starting equity, so their threshold is not drawn here.
+                    if (num(kill) && killBasis === 'peak') lim.push({ value: -kill, label: t('ch_kill'), cls: 'rc-lab-neg' });
                     var r = RC.underwater(ser.dates, ser.drawdown, lim, { width: width, height: width < 520 ? 160 : 190, months: months(),
-                        aria: tm('ch_aria_dd', { b: tag, w: RC.pct(dd, 1), g: RC.pct(-gateDD, 0), k: RC.pct(num(kill) ? -kill : null, 0) }) });
+                        aria: tm(killBasis === 'peak' ? 'ch_aria_dd' : 'ch_aria_dd_start', { b: tag, w: RC.pct(dd, 1), g: RC.pct(-gateDD, 0), k: RC.pct(num(kill) ? -kill : null, 0) }) });
                     r.describe = function (i) { return '<b>' + esc(dateLabel(ser.dates[i])) + '</b><br>' + esc(RC.pct(ser.drawdown[i], 2)); };
                     return r;
                 } });

@@ -343,15 +343,15 @@ def kill_reference(pid, current_equity):
         except Exception:
             ref = max(float(st.get("starting_equity") or 100000.0), float(st.get("peak_equity") or 0.0))
         return {"reference_equity": ref, "current_equity": current_equity, "kill_drawdown": system_kd,
-                "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"}
+                "basis": "peak", "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"}
     if pid == "portfolio_2":
         p2 = _load(_rel("political-copy-bot", "config", "risk_limits.json"), {}) or {}
         return {"reference_equity": 100000.0, "current_equity": current_equity,
                 "kill_drawdown": float(p2.get("kill_switch_drawdown_pct") or 15.0) / 100.0,
-                "source": "P2 check_kill_switch: drawdown from initial capital $100,000"}
+                "basis": "start", "source": "P2 check_kill_switch: drawdown from initial capital $100,000"}
     st = _load(_rel(STATE_FILES[pid]), {}) or {}
     return {"reference_equity": float(st.get("starting_equity") or 100000.0), "current_equity": current_equity,
-            "kill_drawdown": system_kd,
+            "kill_drawdown": system_kd, "basis": "start",
             "source": "P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity"}
 
 

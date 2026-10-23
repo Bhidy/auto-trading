@@ -264,9 +264,10 @@ def window_returns(values_by_date, sessions, start, end, exclude=None, max_abs=N
 
 def chart_series(dates, returns, bench_by_date=None, nd=5):
     """Compounded cumulative return and drawdown for charting (rounded). The
-    benchmark is compounded over the SAME dates only (a missing benchmark day
-    contributes 0), so the two lines are always comparable."""
-    cum, b_cum, dd = [], [], []
+    benchmark is compounded over the same dates; a date with no benchmark
+    return is a GAP (None, listed in ``benchmark_missing``) — never an invented
+    0% (Codex review of #107)."""
+    cum, b_cum, dd, missing = [], [], [], []
     v = bv = peak = 1.0
     for d, r in zip(dates, returns):
         v *= 1.0 + r
@@ -274,11 +275,16 @@ def chart_series(dates, returns, bench_by_date=None, nd=5):
         cum.append(round(v - 1.0, nd))
         dd.append(round(v / peak - 1.0, nd))
         if bench_by_date is not None:
-            bv *= 1.0 + bench_by_date.get(d, 0.0)
-            b_cum.append(round(bv - 1.0, nd))
+            if d in bench_by_date and bench_by_date[d] is not None:
+                bv *= 1.0 + bench_by_date[d]
+                b_cum.append(round(bv - 1.0, nd))
+            else:
+                b_cum.append(None)
+                missing.append(d)
     out = {"dates": list(dates), "cum_return": cum, "drawdown": dd}
     if bench_by_date is not None:
         out["benchmark_cum"] = b_cum
+        out["benchmark_missing"] = missing
     return out
 
 
