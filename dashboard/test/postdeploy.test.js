@@ -288,3 +288,13 @@ test('D11 CSP pins script hosts', async () => {
     assert.match(csp, /object-src 'none'/);
     assert.ok(!/default-src/.test(csp), 'styles/fonts/images/frames stay unrestricted');
 });
+
+test('intelligence safety block reports unmatched exits (absent offline)', async () => {
+    const r = await request('GET', '/api/portfolio/portfolio_1/intelligence');
+    assert.equal(r.status, 200);
+    const d = JSON.parse(r.body);
+    const sf = d.safety || (d.intelligence && d.intelligence.safety);
+    assert.ok(sf, 'safety block present');
+    assert.ok('unmatched_exits' in sf.files, 'file presence reported');
+    assert.equal(typeof sf.unmatched_exits.count, 'number');
+});

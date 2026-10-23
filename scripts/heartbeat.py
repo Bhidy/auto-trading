@@ -179,7 +179,13 @@ def read_safety_state(root: Path):
                 state = json.load(f)
         except Exception:
             state = None
-        out[label] = {"state": state, "recon": None, "pending_exits": None}
+        out[label] = {"state": state, "recon": None, "pending_exits": None, "unmatched_exits": None}
+        try:
+            with open(root / Path(rel).parent / "unmatched_exits.json") as f:
+                um = json.load(f)
+            out[label]["unmatched_exits"] = list(um.values()) if isinstance(um, dict) else None
+        except Exception:
+            pass
         pend = root / Path(rel).parent / "pending_exits.json"
         try:
             with open(pend) as f:
@@ -248,6 +254,11 @@ def assess_safety_state(books: dict):
         today_utc = datetime.now(timezone.utc).date().isoformat()
         stuck = [x for x in ((b or {}).get("pending_exits") or [])
                  if (_date_of((x or {}).get("submitted_at")) or today_utc) < today_utc]
+        unmatched = [x for x in ((b or {}).get("unmatched_exits") or []) if isinstance(x, dict)]
+        if unmatched:
+            problems.append(f"{label} — {len(unmatched)} exit fill(s) larger than the logged lots, "
+                            f"awaiting reconciliation (data/unmatched_exits.json): "
+                            f"{', '.join(str(x.get('symbol')) for x in unmatched[:8])}")
         if stuck:
             problems.append(f"{label} — {len(stuck)} exit order(s) still unsettled from a prior "
                             f"session (data/pending_exits.json): "
