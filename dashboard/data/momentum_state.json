@@ -1,28 +1,66 @@
 {
   "last_rebalance_month": "2026-07",
-  "rebalance_incomplete": false,
+  "rebalance_incomplete": true,
   "activated_at": "2026-07-06T14:28:59.013337+00:00",
-  "rebalance_count": 1,
-  "as_of": "2026-07-06T14:28:59.013337+00:00",
+  "rebalance_count": 2,
+  "as_of": "2026-10-23T14:11:34.306396+00:00",
   "targets": {
-    "MU": 0.0574,
-    "INTC": 0.0574,
-    "AMD": 0.0574,
-    "LRCX": 0.0574,
-    "CAT": 0.0574,
-    "GOOGL": 0.0574,
-    "GS": 0.0574,
-    "C": 0.0574,
-    "SLB": 0.0574,
-    "MPC": 0.0574,
-    "MS": 0.0574,
-    "PSX": 0.0574,
-    "MRK": 0.0574
+    "MU": 0.0692,
+    "INTC": 0.0692,
+    "AMD": 0.0692,
+    "AMAT": 0.0692,
+    "MPC": 0.0692,
+    "PSX": 0.0692,
+    "MRK": 0.0692,
+    "TGT": 0.0692,
+    "LLY": 0.0692,
+    "JNJ": 0.0692,
+    "SLB": 0.0692,
+    "DE": 0.0692
   },
-  "orders_placed": 3,
+  "targets_month": "2026-10",
+  "targets_frozen_at": "2026-10-23T14:11:34.306396+00:00",
+  "orders_placed": 11,
+  "orders_confirmed": 9,
+  "orders_deferred": [
+    {
+      "symbol": "MU",
+      "side": "buy",
+      "why": "max_trades_per_day"
+    },
+    {
+      "symbol": "SLB",
+      "side": "buy",
+      "why": "max_trades_per_day"
+    },
+    {
+      "symbol": "TGT",
+      "side": "buy",
+      "why": "max_trades_per_day"
+    }
+  ],
+  "orders_pending": [
+    {
+      "symbol": "MPC",
+      "side": "sell",
+      "order_id": "540a9adb-50c7-4b89-a43b-e6e9d7764f01",
+      "status": "new",
+      "filled_qty": 0.0,
+      "qty": 3
+    },
+    {
+      "symbol": "MRK",
+      "side": "buy",
+      "order_id": "881f1ec2-f64a-4b09-b55a-8f801f73f44e",
+      "status": "new",
+      "filled_qty": 0.0,
+      "qty": 46
+    }
+  ],
+  "entries_allowed": true,
   "universe_size": 115,
-  "vol_scale": 0.8291,
-  "book_vol": 0.3015,
-  "deployed_pct": 74.6,
+  "vol_scale": 1.0,
+  "book_vol": 0.1998,
+  "deployed_pct": 83.1,
   "risk_off": false
 }

@@ -1,0 +1,37 @@
+{
+  "artifact": "data/passive_core_validation_v2.json",
+  "source": "scripts/research/passive_core_eval.py",
+  "fingerprint": {
+    "as_of": "2026-10-23T09:45:55.801643+00:00",
+    "inputs": [
+      {
+        "path": "docs/specs/passive_core_v2.json",
+        "exists": true,
+        "sha256": "52f605ce8f2b331ae5c10b6f4175f363412f9dc4a35c9bc1599ccb687a3c72d5",
+        "bytes": 7761
+      },
+      {
+        "path": "data/research_cache/adj_bars/etf8_adjusted.json",
+        "exists": true,
+        "sha256": "a4dc5e5e73f6e872eb17066111467d41a9503b4cc7e9e909c7a80365f954ad30",
+        "bytes": 1288551
+      }
+    ],
+    "combined_sha256": "2c6ffc4fa1dcf0382f687fe3edb4ec067e8c82da2872c1f805931ae4165e099b",
+    "meta": {
+      "spec_hash": "c8d2c75e3117d5820003a1827586b5e3e07eddf81af21809c2ed7399d7823467"
+    }
+  },
+  "warnings": [
+    "Cash remainder earns 0% (conservative).",
+    "IEX-feed closes (free tier) differ slightly from consolidated closes; thin ETFs (BIL, SHY) occasionally miss IEX bars and those dates are dropped from the common axis.",
+    "Total-return bars reinvest distributions on the ex-date at zero cost (no withholding tax), slightly flattering both core and SPY.",
+    "Alpaca's dividend adjustment back-scales historical prices; levels differ from v1 but daily returns are what is evaluated.",
+    "Not a blind test: data/core_satellite_backtest_5y.json (2026-06-18) already evaluated this same 8-ETF basket on overlapping 5y data. The basket was not fitted (no tunable parameters), but its selection was informed by that study, so this is a pre-registered CONFIRMATION on overlapping history, not a fresh out-of-sample test.",
+    "v1 FAILED C1. This is a deliberate SECOND test of the same spec family, motivated by v1's known price-only bias against the income-heavy sleeve. Two looks at the same hypothesis => n_trials=2 for DSR; v2 may PASS or FAIL, and a v2 PASS does not erase that v1 was run first.",
+    "Regime coverage: the mid-2023-onward span is a predominantly rising-equity regime; only the 2021-06-onward span includes the 2022 joint bond+equity drawdown.",
+    "Survivorship: the universe is 8 large, long-lived ETFs chosen today; no delisting risk modeled.",
+    "Backtest is simulation (hypothetical, paper) \u2014 not live performance."
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}

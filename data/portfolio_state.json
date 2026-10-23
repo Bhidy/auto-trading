@@ -1,23 +1,38 @@
 {
-  "equity": 97254.4,
+  "equity": 97088.76,
   "starting_equity": 100000.0,
   "day_start_equity": 97254.4,
   "week_start_equity": 97970.98,
   "positions": {
-    "C": {
-      "qty": 38,
-      "avg_price": 142.77,
+    "AMAT": {
+      "qty": 17,
+      "avg_price": 377.11,
       "bucket": "unknown"
     },
-    "CAT": {
+    "AMD": {
+      "qty": 13,
+      "avg_price": 516.76,
+      "bucket": "unknown"
+    },
+    "DE": {
+      "qty": 10,
+      "avg_price": 636.29,
+      "bucket": "unknown"
+    },
+    "INTC": {
+      "qty": 77,
+      "avg_price": 86.379221,
+      "bucket": "unknown"
+    },
+    "JNJ": {
+      "qty": 25,
+      "avg_price": 264.14,
+      "bucket": "unknown"
+    },
+    "LLY": {
       "qty": 5,
-      "avg_price": 984.7,
+      "avg_price": 1282.51,
       "bucket": "unknown"
-    },
-    "GOOGL": {
-      "qty": 15,
-      "avg_price": 358.15,
-      "bucket": "aggressive_growth"
     },
     "MPC": {
       "qty": 18,
@@ -25,7 +40,7 @@
       "bucket": "unknown"
     },
     "PSX": {
-      "qty": 27,
+      "qty": 24,
       "avg_price": 178.82,
       "bucket": "unknown"
     },
@@ -35,19 +50,63 @@
       "bucket": "unknown"
     }
   },
-  "trades_today": 0,
-  "total_exposure": 34871.78,
-  "long_market_value": 34871.78,
+  "trades_today": 12,
+  "total_exposure": 60158.9566,
+  "long_market_value": 60158.9566,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 62382.62,
-  "day_pnl": 0.0,
-  "day_pnl_pct": 0.0,
-  "week_pnl": -716.58,
-  "week_pnl_pct": -0.007314,
-  "halted": true,
-  "halt_reason": "Kill switch: 73.94% drawdown",
+  "cash": 36929.8,
+  "day_pnl": -165.64,
+  "day_pnl_pct": -0.001703,
+  "week_pnl": -882.22,
+  "week_pnl_pct": -0.009005,
+  "halted": false,
+  "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-10-23T00:09:06.726878+00:00"
+  "last_updated": "2026-10-23T14:11:34.436118+00:00",
+  "week_start_iso_week": "2026-W43",
+  "halt_clears_consumed": [
+    "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
+  ],
+  "last_halt": {
+    "halt_reason": "Kill switch: 73.94% drawdown",
+    "halt_set_at": null,
+    "halt_kind": null,
+    "halt_until": null,
+    "halt_evidence": null,
+    "halt_verified": null,
+    "ended": "human_clear",
+    "ended_at": "2026-10-23T14:10:33.240158+00:00"
+  },
+  "last_halt_clear": {
+    "applied_at": "2026-10-23T14:10:33.240158+00:00",
+    "clear_key": "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23",
+    "verified_equity": 97178.35,
+    "drawdown_pct_from_peak": 2.822,
+    "changed_by": "owner-delegated chief-expert decision (Claude, audit session 2026-10-23)"
+  },
+  "halt_clear_last_attempt": {
+    "at": "2026-10-23T14:10:33.240158+00:00",
+    "source": "trading-session",
+    "evidence": {
+      "at": "2026-10-23T14:10:33.240158+00:00",
+      "reads": [
+        97178.35,
+        97178.35
+      ],
+      "read_gap_pct": 0.0,
+      "independent_equity": 97180.94,
+      "confirmation": "large move 0.1% CONFIRMED by independent valuation $97,180.94",
+      "reason": "two consistent reads + independent valuation",
+      "drawdown_pct_from_peak": 2.822,
+      "peak_reference_equity": 100000.0
+    },
+    "applied": true
+  },
+  "halt_set_at": null,
+  "halt_kind": null,
+  "halt_evidence": null,
+  "halt_verified": null,
+  "halt_unverified_reason": null
 }
