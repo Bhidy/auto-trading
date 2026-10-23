@@ -94,3 +94,15 @@ futures (34.2% in bills/cash), so the 2020 drawdown that fails C1 was taken with
   alike and changes no verdict.
 - Uninvested cash earns 0%. Fills are at the official open with modelled friction, without partial fills or a limit-order miss model.
 - The C5 combo test substitutes neighbours into component books (derived blends, not new trials).
+
+## Independent audit (2026-10-23) — corrections to this record
+
+An independent re-derivation (own simulator, same SIP data) **reproduced every headline number** (SPY 14.78% / 33.79% DD; crisis-core 8.47% / 14.77% DD; DSR 0.899 at N=38) and found no look-ahead or metric bug that flips a verdict. It also found the following, recorded here rather than buried:
+
+1. **Criteria drift (process).** `STRATEGY_EVIDENCE_2026-10.md` proposed stricter C5 (Sharpe change < 0.15 AND neighbour max DD ≤ 15%) and C6 (the 20 bps case must also pass C1 and C3) than the specs used (Sharpe change < 0.25; stress Sharpe ≥ 0.4), with no recorded amendment. Under the document's own stricter rules crisis-core also fails C5 (band 1.5% max DD 15.44%) and C6 — **four failed criteria, not two**. The verdict (FAIL) is unchanged and stronger.
+2. **Pre-registration not provable from git.** Specs, engine, results and write-up landed in one commit (6aa24472), so the "spec before results" order cannot be verified from history. From now on specs are committed in a separate, earlier commit than any result (CLAUDE.md research standard).
+3. **Data defects (Alpaca adjusted bars).** SPY's 2018-06-15 dividend is missing (SPY 2018 = −4.53% patched vs −4.96% here; CAGR +0.05pp) and DBMF's 2019-12-30 distribution is unadjusted (−1.0% to crisis-core; patched CAGR 8.60%, Sharpe 0.744, DSR 0.907). No verdict changes. DBMF/KMLM also have ~100 stale zero-volume bars each in 2019–2022.
+4. **What crisis-core really is.** A daily-rebalanced 46% SPY / 54% BIL mix gives ~8.4% CAGR, Sharpe 0.72, 16.6% max DD vs crisis-core's 8.5% / 0.73 / 14.8%: it is mostly de-risked SPY. The managed-futures sleeve buys ~2pp of drawdown and a better 2022 (−4.0% vs −7.5%). "Best of five" is fair; "evidence of edge" is not — the forward spec correctly avoids that claim.
+5. **DSR feasibility.** With crisis-core's skew/kurtosis, DSR ≥ 0.95 at N=38 needs Sharpe ≈ 0.86; SPY itself scores 0.894. With N=5 distinct strategies crisis-core's DSR is 0.938 (still FAIL).
+6. **Minor.** The "15 CPCV paths" are 15 splits (5 full paths). `passive_core_eval.py` uses the theoretical 1/(T−1) Sharpe variance for DSR while the lab uses the empirical trial spread (the former would put crisis-core near 0.5).
+7. **Live scaled P3 allocator (as first deployed).** Expected ~5.6% CAGR, 5.5% vol, 10.1% max DD (2020), worst day −2.7%; F2 (DD ≤ 10%) sits at the historical worst. ~33% idle cash at 0% cost ~1%/yr versus the parent spec's rule of routing residual to the T-bill basket — fixed separately (residual → T-bills within the 8% cap and 80% gross room).

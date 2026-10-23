@@ -117,7 +117,15 @@ def score_lot(slices, spy, spy_dates, beta=1.0):
             px, basis_limit = s.get("limit_price"), True
         if not qty or not px:
             return None, "missing_qty_or_basis"
-        exit_d = (s.get("exit_timestamp") or "")[:10]
+        # Backfilled rows (pnl_backfill) carry the RECONCILIATION time in
+        # exit_timestamp, not the sell date — benchmarking SPY over that window
+        # would be wrong (independent quant audit 2026-10-23). Use a true fill
+        # date when recorded; otherwise exclude the lot rather than guess.
+        exit_d = (s.get("exit_fill_date") or s.get("exit_filled_at") or "")[:10]
+        if not exit_d:
+            if s.get("pnl_backfill"):
+                return None, "exit_date_unknown_backfill"
+            exit_d = (s.get("exit_timestamp") or "")[:10]
         p0 = close_on_or_before(spy, spy_dates, s.get("date") or entry_date)
         p1 = close_on_or_before(spy, spy_dates, exit_d)
         if p0 is None or p1 is None:
