@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T17:54:12.506887+00:00",
+  "generated_at": "2026-10-23T18:20:12.028012+00:00",
   "as_of_session": "2026-10-22",
   "methodology_version": "2.3.0",
   "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.3)",
@@ -273,10 +273,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": null,
-          "status": "not_measured",
-          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
-          "eta_sessions": null,
+          "value": 13,
+          "status": "insufficient",
+          "detail": "13 consecutive clean sessions",
+          "eta_sessions": 17,
           "hard": true
         }
       ],
@@ -320,8 +320,7 @@
           "label": "estimate (current alpha / trade / clean-session rates held constant)",
           "excludes_measurement_gaps": [
             "edge",
-            "slippage",
-            "exception_free"
+            "slippage"
           ]
         }
       },
@@ -332,8 +331,7 @@
       "gates_total": 12,
       "measurement_gaps": [
         "edge",
-        "slippage",
-        "exception_free"
+        "slippage"
       ],
       "series": {
         "edge": {
@@ -666,7 +664,7 @@
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Paper track record (trading sessions) \u2014 1 active sessions since the version start (78 total, 77 halted/frozen excluded). Not yet measured (blocks GO): edge, slippage, exception_free. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
+      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Paper track record (trading sessions) \u2014 1 active sessions since the version start (78 total, 77 halted/frozen excluded). Not yet measured (blocks GO): edge, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p1-multifactor-satellite-v2",
@@ -878,10 +876,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": null,
-          "status": "not_measured",
-          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
-          "eta_sessions": null,
+          "value": 13,
+          "status": "insufficient",
+          "detail": "13 consecutive clean sessions",
+          "eta_sessions": 17,
           "hard": true
         }
       ],
@@ -924,8 +922,7 @@
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge, profit_factor, regime_coverage",
           "excludes_measurement_gaps": [
-            "slippage",
-            "exception_free"
+            "slippage"
           ]
         }
       },
@@ -935,8 +932,7 @@
       "gates_passed": 7,
       "gates_total": 14,
       "measurement_gaps": [
-        "slippage",
-        "exception_free"
+        "slippage"
       ],
       "series": {
         "edge": {
@@ -1017,7 +1013,7 @@
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-copy-v2",
@@ -1231,10 +1227,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": null,
-          "status": "not_measured",
-          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
-          "eta_sessions": null,
+          "value": 13,
+          "status": "insufficient",
+          "detail": "13 consecutive clean sessions",
+          "eta_sessions": 17,
           "hard": true
         }
       ],
@@ -1278,8 +1274,7 @@
           "label": "no projection \u2014 no convergence path for: edge",
           "excludes_measurement_gaps": [
             "reconciliation",
-            "slippage",
-            "exception_free"
+            "slippage"
           ],
           "edge_range": {
             "median_sessions": null,
@@ -1298,8 +1293,7 @@
       "gates_total": 14,
       "measurement_gaps": [
         "reconciliation",
-        "slippage",
-        "exception_free"
+        "slippage"
       ],
       "series": {
         "edge": {
@@ -1868,7 +1862,7 @@
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-58.9%, +73.4%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-58.85%, +73.42%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-58.9%, +73.4%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-58.85%, +73.42%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-benchmark-etf-v1",
@@ -2049,10 +2043,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": null,
-          "status": "not_measured",
-          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
-          "eta_sessions": null,
+          "value": 13,
+          "status": "insufficient",
+          "detail": "13 consecutive clean sessions",
+          "eta_sessions": 17,
           "hard": true
         }
       ],
@@ -2083,25 +2077,23 @@
           "sessions_remaining": null
         },
         "overall": {
-          "sessions_remaining": null,
-          "projected_date": null,
-          "label": "evidence gates met; blocked only by measurement gaps",
+          "sessions_remaining": 17,
+          "projected_date": "2026-11-16",
+          "label": "estimate (current alpha / trade / clean-session rates held constant)",
           "excludes_measurement_gaps": [
             "reconciliation",
-            "slippage",
-            "exception_free"
+            "slippage"
           ]
         }
       },
       "verdict": "BETA_SLEEVE",
       "verdict_note": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only",
-      "binding_gate": "reconciliation",
+      "binding_gate": "exception_free",
       "gates_passed": 8,
       "gates_total": 11,
       "measurement_gaps": [
         "reconciliation",
-        "slippage",
-        "exception_free"
+        "slippage"
       ],
       "series": {
         "edge": {
@@ -2522,7 +2514,7 @@
           "benchmark_missing": []
         }
       },
-      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 8/11 hard gates pass. 100 sessions since 2026-06-02. Binding: Broker vs ledger reconciliation \u2014 this book writes a working-orders report only (no drift audit). ETA: evidence gates met; blocked only by measurement gaps. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
+      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 8/11 hard gates pass. 100 sessions since 2026-06-02. Binding: Unhandled-exception-free sessions \u2014 13 consecutive clean sessions. ETA 2026-11-16 (estimate (current alpha / trade / clean-session rates held constant)). Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p3-event-driven-legacy",
@@ -2738,10 +2730,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": null,
-          "status": "not_measured",
-          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
-          "eta_sessions": null,
+          "value": 13,
+          "status": "insufficient",
+          "detail": "13 consecutive clean sessions",
+          "eta_sessions": 17,
           "hard": true
         }
       ],
@@ -2783,9 +2775,7 @@
           "sessions_remaining": null,
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge, profit_factor",
-          "excludes_measurement_gaps": [
-            "exception_free"
-          ],
+          "excludes_measurement_gaps": [],
           "edge_range": {
             "median_sessions": null,
             "pessimistic_sessions": null,
@@ -2801,9 +2791,7 @@
       "binding_gate": "edge",
       "gates_passed": 11,
       "gates_total": 14,
-      "measurement_gaps": [
-        "exception_free"
-      ],
+      "measurement_gaps": [],
       "series": {
         "edge": {
           "dates": [
@@ -3459,7 +3447,7 @@
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-268.6%, +215.8%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-268.65%, +215.76%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Not yet measured (blocks GO): exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-268.6%, +215.8%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-268.65%, +215.76%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p3-crisis-core-v1-forward",
@@ -3678,10 +3666,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": null,
-          "status": "not_measured",
-          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
-          "eta_sessions": null,
+          "value": 13,
+          "status": "insufficient",
+          "detail": "13 consecutive clean sessions",
+          "eta_sessions": 17,
           "hard": true
         }
       ],
@@ -3726,8 +3714,7 @@
           "excludes_measurement_gaps": [
             "regime_coverage",
             "duplicate_orders",
-            "slippage",
-            "exception_free"
+            "slippage"
           ]
         }
       },
@@ -3739,8 +3726,7 @@
       "measurement_gaps": [
         "regime_coverage",
         "duplicate_orders",
-        "slippage",
-        "exception_free"
+        "slippage"
       ],
       "series": {
         "edge": {
@@ -3757,7 +3743,7 @@
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT READY: 3/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage, exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT READY: 3/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage. Returns are BOOK-level (whole account)."
     }
   ],
   "books": {
@@ -5147,9 +5133,9 @@
     "calendar": "alpaca",
     "bars": "alpaca daily bars (sip, adjustment=all)",
     "workflow_history": {
-      "portfolio_1": "GITHUB_TOKEN/GITHUB_REPOSITORY not set",
-      "portfolio_2": "GITHUB_TOKEN/GITHUB_REPOSITORY not set",
-      "portfolio_3": "GITHUB_TOKEN/GITHUB_REPOSITORY not set"
+      "portfolio_1": "github actions run history",
+      "portfolio_2": "github actions run history",
+      "portfolio_3": "github actions run history"
     }
   },
   "warnings": [
@@ -5158,7 +5144,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T17:54:18.326358+00:00",
+    "as_of": "2026-10-23T18:20:22.638389+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
