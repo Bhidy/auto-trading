@@ -141,6 +141,7 @@ def test_copy_buy_unfilled_has_no_slippage_sample(tmp_path, monkeypatch):
     rec = bot._execute_buy({"politician": {"name": "X"}, "transaction": {"size": "1K–15K"}},
                            "KR", 100_000, 100_000, {"equity": "100000"})
     assert rec["slippage_pct"] is None and rec["filled_qty"] == 0
+    assert rec["entry_price"] is None            # never the limit as a phantom fill
     assert E.adverse_slippage_bps([{**rec, "timestamp": "2026-10-23T15:00:00Z"}]) == []
 
 
@@ -261,3 +262,13 @@ def test_heartbeat_watches_p2_drift():
     alert, summary = heartbeat.assess_reconciliation(
         {"P2 Capitol Shadow": {"in_sync": False, "orphan_open_trades": ["HD"]}})
     assert alert and "P2 Capitol Shadow" in summary and "HD" in summary
+
+
+def test_unfilled_lot_without_entry_price_reconciles_honestly(tmp_path, monkeypatch):
+    # A copy BUY unfilled at confirm time books entry_price=None; when the broker
+    # never holds it, the repair closes it with pnl=None (no fabricated P&L).
+    lot = {**LOT, "entry_price": None, "filled_qty": 0.0, "order_status": "canceled"}
+    rep = _recon(tmp_path, monkeypatch, [], [lot])
+    assert rep["in_sync"] is True
+    log = json.loads((tmp_path / "data" / "trade_log.json").read_text())
+    assert log[0]["status"] != "open" and log[0].get("pnl") is None

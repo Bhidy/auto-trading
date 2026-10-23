@@ -1138,14 +1138,17 @@ class PoliticianBot:
 
             # Confirm the fill so the trade log records the real entry price.
             status, filled_qty, filled_price = confirm_fill(self.alpaca, order.get("id"))
-            entry_price = filled_price if filled_price else limit_price
+            # Fills from the broker only: an order still unfilled after the
+            # confirm window books NO entry price (never the limit). The
+            # reconciler, scorecard and copy-sell P&L handle a missing entry.
+            entry_price = round(filled_price, 4) if filled_price else None
 
             trade_record = {
                 "symbol": ticker,
                 "side": "buy",
                 "qty": qty,
                 "limit_price": limit_price,
-                "entry_price": round(entry_price, 4),
+                "entry_price": entry_price,
                 # Fill-fidelity: intended_price is the ARRIVAL price (quote mid
                 # read just before submit), not the limit, so slippage measures
                 # execution cost rather than headroom under our own cap. Rows
@@ -1154,7 +1157,7 @@ class PoliticianBot:
                 "arrival_source": arrival_source,
                 "intended_price": arrival,
                 "slippage_pct": (round((entry_price - arrival) / arrival * 100, 4)
-                                 if (arrival and filled_price) else None),
+                                 if (arrival and entry_price) else None),
                 "client_order_id": coid,
                 "filled_qty": filled_qty,
                 "estimated_value": round(qty * limit_price, 2),

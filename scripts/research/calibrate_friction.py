@@ -58,6 +58,18 @@ def _adverse_bps(side, intended, fill):
     return (fill - intended) / intended * 10_000.0  # buy (default)
 
 
+def _unfilled(t):
+    """A row whose recorded broker fill quantity is zero: its entry_price is a
+    fallback (P2 logs the limit when confirm_fill sees no fill), not a fill,
+    so it is no slippage sample. Rows without filled_qty (legacy) are kept."""
+    if "filled_qty" not in t:
+        return False
+    try:
+        return float(t.get("filled_qty") or 0) <= 0
+    except (TypeError, ValueError):
+        return True
+
+
 def _percentile(sorted_vals, q):
     """Linear-interpolated percentile (q in [0,1]); pure-stdlib."""
     if not sorted_vals:
@@ -88,7 +100,7 @@ def calibrate_portfolio(log_path, min_sample_n,
 
     adverse = []
     for t in log:
-        if not isinstance(t, dict):
+        if not isinstance(t, dict) or _unfilled(t):
             continue
         intended = t.get("intended_price")
         if intended is None:

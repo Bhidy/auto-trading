@@ -105,3 +105,20 @@ def test_calibrator_refuses_small_sample():
         out = calibrate_portfolio(p, min_sample_n=25)
     assert out["below_floor"] is True
     assert out["applied_slippage_bps"] == DEFAULT_SLIPPAGE_BPS
+
+
+def test_calibrator_ignores_unfilled_orders():
+    """A canceled/unfilled P2 copy BUY logs entry_price = its limit (fallback),
+    not a fill; with intended_price = arrival that would fabricate adverse
+    slippage (Codex on #112). Zero-fill rows are excluded."""
+    from research.calibrate_friction import calibrate_portfolio
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        unfilled = [{"side": "buy", "intended_price": 100.0, "limit_price": 100.35,
+                     "entry_price": 100.35, "filled_qty": 0.0} for _ in range(30)]
+        p = os.path.join(d, "tl.json")
+        with open(p, "w") as f:
+            json.dump(unfilled, f)
+        out = calibrate_portfolio(p, min_sample_n=25)
+    assert out["below_floor"] is True
+    assert out["applied_slippage_bps"] == DEFAULT_SLIPPAGE_BPS
