@@ -42,7 +42,7 @@ for _p in (_ROOT, os.path.join(_ROOT, "scripts")):
 from backtest import metrics as M  # noqa: E402
 from shared.portfolio_risk import conditional_var  # noqa: E402
 
-METHODOLOGY_VERSION = "2.2.0"
+METHODOLOGY_VERSION = "2.3.0"
 PERIODS_PER_YEAR = 252
 
 # --- PRE-REGISTERED THRESHOLDS (docs/LIVE_READINESS.md §2, v2) ---------------
@@ -583,7 +583,9 @@ def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_
     ir_d = (a / sr) if sr > 0 else 0.0
     psr = M.probabilistic_sharpe_ratio(ir_d, 0.0, n, skew, kurt) if sr > 0 else 0.0
     dsr = M.deflated_sharpe_at_trial_count(ir_d, n, trial_count, skew, kurt) if sr > 0 else 0.0
-    sig_eff = max(sr, reg["se_alpha_hac"] * math.sqrt(n))
+    # Same floor as the decision's predictable scale, so the ETA projection never
+    # solves an easier boundary than the test it projects (Codex review of #106).
+    sig_eff = max(sr, reg["se_alpha_hac"] * math.sqrt(n), th["cs_sigma_floor_daily"])
     pcs = predictable_cs(y, x, rho, a_lvl, lag=th["hac_lag"], burn_in=th["cs_burn_in"],
                          sigma_floor=th["cs_sigma_floor_daily"], path=True)
     lo, hi = pcs["lower"], pcs["upper"]

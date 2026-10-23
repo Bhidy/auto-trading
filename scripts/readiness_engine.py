@@ -904,7 +904,7 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         "generated_at": now_utc.isoformat(),
         "as_of_session": as_of,
         "methodology_version": R.METHODOLOGY_VERSION,
-        "methodology_doc": "docs/LIVE_READINESS.md §2 (v2.2)",
+        "methodology_doc": "docs/LIVE_READINESS.md §2 (v2.3)",
         "thresholds": dict(R.THRESHOLDS),
         "edge_decision": {
             "rule": "always-valid one-sided normal-mixture confidence sequence on the HAC-scaled OLS alpha "

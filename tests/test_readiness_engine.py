@@ -755,3 +755,11 @@ def test_status_less_legacy_lot_counts_as_open_exposure():
     assert E.exposure_end(leg, rows, "2026-10-30") == "2026-10-30"
     marker = [{"symbol": "KO", "side": "sell", "timestamp": "2026-09-30T14:00:00Z"}]  # P2-style exit marker
     assert E.exposure_end(leg, marker, "2026-10-30") == "2026-10-03"
+
+
+def test_edge_eta_scale_respects_the_decision_floor():
+    # Tiny residual vol: the ETA must project on the FLOORED scale the test uses.
+    y, x, f = _series(80, 0.0001, noise=0.0001, seed=9)
+    e = R.edge_test(y, x, f, 1)
+    assert e["sigma_eff_daily"] >= R.THRESHOLDS["cs_sigma_floor_daily"]
+    assert R.METHODOLOGY_VERSION == "2.3.0"

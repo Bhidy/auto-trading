@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-23T17:31:25.200666+00:00",
+  "generated_at": "2026-10-23T17:37:14.808085+00:00",
   "as_of_session": "2026-10-22",
-  "methodology_version": "2.2.0",
-  "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.2)",
+  "methodology_version": "2.3.0",
+  "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.3)",
   "thresholds": {
     "min_track_sessions": 90,
     "min_edge_sessions": 60,
@@ -5146,7 +5146,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T17:31:39.921947+00:00",
+    "as_of": "2026-10-23T17:37:22.450007+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
