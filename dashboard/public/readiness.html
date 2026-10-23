@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/assets/portfolio.css">
     <style>
         /* Live-Readiness — "Verdict Room". Every colour derives from a RiseWealth
-           token (news-public.css / portfolio.css). The whole page, hero included,
+           token (news-public.css / portfolio.css). The whole page
            follows the theme: light ground in light mode, brand-ink in dark. */
         .rx {
             --rx-serif: 'DM Serif Display', Georgia, serif;
@@ -49,16 +49,10 @@
         .rx p { text-wrap: pretty; }
         .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-        /* ── Hero: brand ink band ── */
-        .rx-hero {
-            --h-bg: var(--page); --h-ink: var(--ink); --h-line: var(--line);
-            background: var(--h-bg); color: var(--h-ink); padding: clamp(96px, 11vw, 132px) 0 clamp(32px, 4.5vw, 56px);
-            border-bottom: 1px solid var(--h-line);
-        }
-        .rx-hero h1 { font-size: clamp(2.6rem, 6vw, 4.5rem); line-height: 1.04; letter-spacing: -0.02em; }
-        [data-theme="dark"] .rx-hero {
-            --h-bg: #140C07; --h-ink: #FFF1E8; --h-line: rgba(255, 255, 255, 0.08);
-        }
+        /* No hero: content starts under the fixed nav; the page h1 stays for screen readers. */
+        .rx-body { padding-top: clamp(104px, 10vw, 128px); }
+        .rx-body > .rx-sec:first-of-type { margin-top: 0; }
+        .rx-body > #alerts:not(:empty) { margin: 0 0 32px; }
         .rx-chart { position: relative; margin-top: 18px; min-height: 120px; outline: none; }
         .rx-chart:focus-visible { box-shadow: 0 0 0 2px var(--c-acc); border-radius: 8px; }
         .rx-empty-chart { display: grid; place-items: center; min-height: 160px; border: 1px dashed var(--c-line); border-radius: 12px; color: var(--c-muted); font-size: 14px; text-align: center; padding: 16px; }
@@ -303,13 +297,9 @@
     </nav>
 
     <main class="rx" id="rx">
-        <section class="rx-hero" aria-labelledby="rx-title">
-            <div class="rx-wrap">
-                <h1 id="rx-title" data-key="hero_title">Live-Readiness</h1>
-            </div>
-        </section>
+        <h1 id="rx-title" class="sr" data-key="hero_title">Live-Readiness</h1>
 
-        <div class="rx-wrap">
+        <div class="rx-wrap rx-body">
             <div id="alerts"></div>
 
             <section class="rx-sec" aria-labelledby="bk-h">
