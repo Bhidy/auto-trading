@@ -90,11 +90,12 @@ test('ring: progress is clamped and never exceeds the circle', () => {
     assert.match(RC.ring(null, 90), /stroke-dasharray="0 /);
 });
 
-test('cleared count counts only the exact verdict GO', () => {
+test('cleared count counts only the exact verdict GO, over GO candidates only', () => {
     const c = RL.clearedCount({ sleeves: [{ verdict: 'GO' }, { verdict: 'go' }, { verdict: 'FORWARD_TEST_PASS' }, { verdict: 'NOT_READY' }] });
-    assert.deepEqual(c, { cleared: 1, total: 4 });
-    assert.deepEqual(RL.clearedCount(null), { cleared: 0, total: 0 });
-    assert.equal(RL.clearedCount(REPORT).total, REPORT.sleeves.length);
+    assert.deepEqual(c, { cleared: 1, total: 3, ineligible: 0, beta: 0, unclassified: 1, all: 4 });
+    assert.deepEqual(RL.clearedCount(null), { cleared: 0, total: 0, ineligible: 0, beta: 0, unclassified: 0, all: 0 });
+    const r = RL.clearedCount(REPORT);
+    assert.equal(r.total + r.ineligible + r.beta + r.unclassified, REPORT.sleeves.length, 'every sleeve is accounted for');
 });
 
 test('lead sleeve: accruing, edge-claiming, series-owning, most evidence — never an inactive one', () => {

@@ -103,6 +103,27 @@ test('committed report: every sleeve has a known verdict and none of them is col
     }
 });
 
+test('cleared-count denominator: only GO candidates; parked and beta sleeves are named, not counted', () => {
+    const sl = (verdict, status) => sleeve({ verdict, status });
+    const c = RL.clearedCount({ sleeves: [
+        sl('NOT_ELIGIBLE', 'exits_only'), sl('NOT_ELIGIBLE', 'quarantined'), sl('NOT_READY', 'active'),
+        sl('BETA_SLEEVE', 'active'), sl('NOT_ELIGIBLE', 'quarantined'), sl('NOT_READY', 'forward_test'),
+    ] });
+    assert.deepEqual(c, { cleared: 0, total: 2, ineligible: 3, beta: 1, unclassified: 0, all: 6 });
+    assert.deepEqual(RL.CANDIDATE_VERDICTS, ['GO', 'NOT_READY', 'FORWARD_TEST_PASS']);
+
+    // a BETA_SLEEVE or NOT_ELIGIBLE can never inflate the cleared numerator
+    const g = RL.clearedCount({ sleeves: [sl('GO'), sl('FORWARD_TEST_PASS'), sl('BETA_SLEEVE'), sl('NOT_ELIGIBLE')] });
+    assert.equal(g.cleared, 1);
+    assert.equal(g.total, 2);
+    assert.ok(g.cleared <= g.total);
+
+    // malformed / unknown verdicts leave the denominator but stay visible
+    const u = RL.clearedCount({ sleeves: [null, sl('READY'), sl(undefined), sl('NOT_READY')] });
+    assert.deepEqual(u, { cleared: 0, total: 1, ineligible: 0, beta: 0, unclassified: 3, all: 4 });
+    assert.deepEqual(RL.clearedCount({ sleeves: 'x' }), { cleared: 0, total: 0, ineligible: 0, beta: 0, unclassified: 0, all: 0 });
+});
+
 test('page wiring: readiness.html loads the logic module and keeps no client-side gate math', () => {
     const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'readiness.html'), 'utf-8');
     assert.match(html, /<script src="\/assets\/readiness-logic\.js"><\/script>/);
