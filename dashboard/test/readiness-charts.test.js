@@ -107,3 +107,30 @@ test('lead sleeve: accruing, edge-claiming, series-owning, most evidence — nev
     const lead = RL.leadSleeve(REPORT);
     if (lead) assert.ok(['active', 'forward_test'].includes(lead.status) && lead.claims_edge !== false && lead.owns_edge_test !== false);
 });
+
+test('lines: a missing benchmark observation is a gap in the path, never a drawn 0%', () => {
+    const r = RC.lines(['d1', 'd2', 'd3', 'd4'], [{ key: 's', label: 'SPY', values: [0.01, null, 0.02, 0.03] }], { width: 400 });
+    noNaN(r.svg);
+    const d = r.svg.match(/class="rc-line[^"]*" d="([^"]+)"/)[1];
+    assert.equal((d.match(/M/g) || []).length, 2, 'path restarts after the gap');
+    assert.equal((d.match(/[ML]/g) || []).length, 3, 'only the three real points are drawn');
+    assert.ok(r.svg.includes('⁦+3.0%⁩'), 'end label is the last real value');
+});
+
+test('report: every book declares its kill-switch basis (peak-relative or start-relative)', () => {
+    for (const [pid, b] of Object.entries(REPORT.books)) {
+        assert.ok(['peak', 'start'].includes(b.kill_switch && b.kill_switch.basis), `${pid} kill basis`);
+        const s = b.series || {};
+        if (s.benchmark_cum) {
+            assert.ok(Array.isArray(s.benchmark_missing), `${pid} lists benchmark gaps`);
+            s.benchmark_missing.forEach((d) => assert.equal(s.benchmark_cum[s.dates.indexOf(d)], null));
+        }
+    }
+});
+
+test('lines: a series ending in a gap is labelled without a stale value', () => {
+    const r = RC.lines(['d1', 'd2', 'd3'], [{ key: 's', label: 'SPY', values: [0.01, null, null] }], { width: 400 });
+    noNaN(r.svg);
+    assert.ok(r.svg.includes('SPY ⁦—⁩'));
+    assert.equal(r.svg.includes('+1.0%'), false);
+});

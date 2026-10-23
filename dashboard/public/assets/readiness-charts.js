@@ -62,10 +62,15 @@
         return out;
     }
     function polyline(xs, ys) {
-        var d = '';
-        for (var i = 0; i < xs.length; i++) d += (i ? 'L' : 'M') + r1(xs[i]) + ' ' + r1(ys[i]);
+        var d = '', pen = false;
+        for (var i = 0; i < xs.length; i++) {
+            if (ys[i] == null) { pen = false; continue; }          // a gap, never an invented value
+            d += (pen ? 'L' : 'M') + r1(xs[i]) + ' ' + r1(ys[i]);
+            pen = true;
+        }
         return d;
     }
+    function lastFinite(vs) { for (var i = vs.length - 1; i >= 0; i--) if (num(vs[i])) return vs[i]; return null; }
     /** Push end labels apart so none overlap (min gap px), within [top, bottom]. */
     function declutter(items, gap, top, bottom) {
         items.sort(function (a, b) { return a.y - b.y; });
@@ -189,14 +194,15 @@
         var p = (hi - lo) * 0.1 || 0.01; lo -= p; hi += p;
         var x = lin(0, n - 1, f.l, f.w - f.r), y = lin(lo, hi, f.h - f.b, f.t);
         var xs = []; for (var i = 0; i < n; i++) xs.push(x(i));
-        var labs = declutter(ls.map(function (l) {
-            var v = l.values[n - 1];
-            return { y: y(v), t: l.label + ' ' + iso(pct(v, 1)), c: l.cls || '' };
+        var labs = declutter(ls.filter(function (l) { return num(lastFinite(l.values)); }).map(function (l) {
+            var v = lastFinite(l.values), fin = num(l.values[n - 1]);
+            // A series that ends in a gap has no current value: label it, don't quote a stale one.
+            return { y: y(v), t: l.label + ' ' + iso(fin ? pct(v, 1) : '—'), c: l.cls || '' };
         }), 15, f.t + 4, f.h - f.b);
         var svg = open(f, 'rc-lines', opts.aria || 'Cumulative return') +
             yGrid(f, ticks(lo, hi, 3), y, function (v) { return pct(v, 0); }) +
             ls.map(function (l) {
-                var ys = l.values.map(function (v) { return y(num(v) ? v : 0); });
+                var ys = l.values.map(function (v) { return num(v) ? y(v) : null; });
                 return '<path class="rc-halo" d="' + polyline(xs, ys) + '"/><path class="rc-line ' + (l.cls || '') + '" d="' + polyline(xs, ys) + '"/>';
             }).join('') +
             labs.map(function (e) { return '<text class="rc-lab ' + e.c + '" x="' + (f.w - f.r + 8) + '" y="' + r1(e.y + 4) + '">' + esc(e.t) + '</text>'; }).join('') +

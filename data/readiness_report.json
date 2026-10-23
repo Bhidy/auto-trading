@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T17:37:14.808085+00:00",
+  "generated_at": "2026-10-23T17:54:12.506887+00:00",
   "as_of_session": "2026-10-22",
   "methodology_version": "2.3.0",
   "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.3)",
@@ -662,7 +662,8 @@
             0.03514,
             0.04058,
             0.02829
-          ]
+          ],
+          "benchmark_missing": []
         }
       },
       "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Paper track record (trading sessions) \u2014 1 active sessions since the version start (78 total, 77 halted/frozen excluded). Not yet measured (blocks GO): edge, slippage, exception_free. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
@@ -1012,7 +1013,8 @@
             0.00583,
             -0.00017,
             -0.01266
-          ]
+          ],
+          "benchmark_missing": []
         }
       },
       "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
@@ -1862,7 +1864,8 @@
             0.03514,
             0.04058,
             0.02829
-          ]
+          ],
+          "benchmark_missing": []
         }
       },
       "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-58.9%, +73.4%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-58.85%, +73.42%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level (whole account)."
@@ -2515,7 +2518,8 @@
             0.01899,
             0.02434,
             0.01224
-          ]
+          ],
+          "benchmark_missing": []
         }
       },
       "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 8/11 hard gates pass. 100 sessions since 2026-06-02. Binding: Broker vs ledger reconciliation \u2014 this book writes a working-orders report only (no drift audit). ETA: evidence gates met; blocked only by measurement gaps. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
@@ -3451,7 +3455,8 @@
             0.02136,
             0.02318,
             0.03075
-          ]
+          ],
+          "benchmark_missing": []
         }
       },
       "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-268.6%, +215.8%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-268.65%, +215.76%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Not yet measured (blocks GO): exception_free. Returns are BOOK-level (whole account)."
@@ -3748,7 +3753,8 @@
           "dates": [],
           "cum_return": [],
           "drawdown": [],
-          "benchmark_cum": []
+          "benchmark_cum": [],
+          "benchmark_missing": []
         }
       },
       "narrative": "NOT READY: 3/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage, exception_free. Returns are BOOK-level (whole account)."
@@ -3784,6 +3790,7 @@
         "reference_equity": 100000.0,
         "current_equity": 97220.5,
         "kill_drawdown": 0.18,
+        "basis": "start",
         "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"
       },
       "series": {
@@ -4210,7 +4217,8 @@
           0.0368,
           0.04225,
           0.02994
-        ]
+        ],
+        "benchmark_missing": []
       },
       "verdicts": {
         "p1-momentum-v1": "NOT_ELIGIBLE",
@@ -4244,6 +4252,7 @@
         "reference_equity": 100000.0,
         "current_equity": 104552.28,
         "kill_drawdown": 0.15,
+        "basis": "start",
         "source": "P2 check_kill_switch: drawdown from initial capital $100,000"
       },
       "series": {
@@ -4666,7 +4675,8 @@
           0.02996,
           0.03537,
           0.02314
-        ]
+        ],
+        "benchmark_missing": []
       },
       "verdicts": {
         "p2-copy-v2": "NOT_READY",
@@ -4700,6 +4710,7 @@
         "reference_equity": 100000.0,
         "current_equity": 99084.45,
         "kill_drawdown": 0.18,
+        "basis": "start",
         "source": "P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity"
       },
       "series": {
@@ -5122,7 +5133,8 @@
           0.02996,
           0.03537,
           0.02314
-        ]
+        ],
+        "benchmark_missing": []
       },
       "verdicts": {
         "p3-event-driven-legacy": "NOT_ELIGIBLE",
@@ -5146,7 +5158,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T17:37:22.450007+00:00",
+    "as_of": "2026-10-23T17:54:18.326358+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
