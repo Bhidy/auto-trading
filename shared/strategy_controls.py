@@ -119,3 +119,58 @@ def halt_clear_matches(clear, state):
     if want_reason and want_reason != state.get("halt_reason"):
         return False, f"halt_reason_match={want_reason!r} != halt_reason={state.get('halt_reason')!r}"
     return True, "matches"
+
+
+# ---------------------------------------------------------------------------
+# Human-owned ALLOCATOR switch (2026-10-23, P3 crisis_core_v1 forward test)
+# ---------------------------------------------------------------------------
+# An allocator is a SEPARATE, explicitly-enabled sleeve. It is independent of
+# ``new_entries_enabled`` (P3's legacy event-driven entries stay quarantined
+# while the allocator runs) and is enabled ONLY by a human-owned block:
+#   "allocator": {
+#     "strategy": "crisis_core_v1", "mode": "paper_forward_test",
+#     "enabled": true, "scale_to_cap": true,
+#     "reason": "...", "changed_at": "YYYY-MM-DD", "changed_by": "..."
+#   }
+# Fails CLOSED: missing / malformed / unknown strategy or mode / enabled not
+# exactly ``true`` / scale_to_cap not exactly ``true`` (the unscaled 11.4%
+# weights would breach P3's 8% per-symbol cap) / missing provenance => None.
+# Code NEVER writes this file.
+
+ALLOCATOR_STRATEGIES = {"crisis_core_v1"}
+ALLOCATOR_MODES = {"paper_forward_test"}
+ALLOCATOR_REQUIRED = ("reason", "changed_at", "changed_by")
+
+
+def allocator_control(portfolio_id, controls=None, path=None, problems=None):
+    """Validated allocator control dict for ``portfolio_id``, or None (disabled).
+
+    ``problems`` (optional list) receives a human-readable reason whenever the
+    block is present but rejected, so the caller can log WHY it is disabled."""
+    def _reject(msg):
+        if problems is not None:
+            problems.append(msg)
+        return None
+
+    controls = controls if controls is not None else load_controls(path)
+    if not isinstance(controls, dict):
+        return _reject("strategy_controls.json missing/unreadable — allocator disabled")
+    book = controls.get(portfolio_id)
+    if not isinstance(book, dict) or book.get("allocator") is None:
+        return _reject(f"no allocator block for {portfolio_id} — allocator disabled")
+    block = book["allocator"]
+    if not isinstance(block, dict):
+        return _reject("allocator block is not an object — disabled")
+    if block.get("strategy") not in ALLOCATOR_STRATEGIES:
+        return _reject(f"allocator strategy {block.get('strategy')!r} not recognised — disabled")
+    if block.get("mode") not in ALLOCATOR_MODES:
+        return _reject(f"allocator mode {block.get('mode')!r} not allowed — disabled")
+    if block.get("enabled") is not True:
+        return _reject("allocator enabled is not true — disabled")
+    if block.get("scale_to_cap") is not True:
+        return _reject("allocator scale_to_cap is not true (unscaled weights breach the "
+                       "per-symbol cap) — disabled")
+    missing = [k for k in ALLOCATOR_REQUIRED if not block.get(k)]
+    if missing:
+        return _reject(f"allocator block missing provenance field(s) {missing} — disabled")
+    return dict(block)

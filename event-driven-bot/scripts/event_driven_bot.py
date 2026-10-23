@@ -585,7 +585,13 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
 
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    trades_today = len([t for t in trade_log if t.get("date", "").startswith(today)])
+    # max_trades_per_day is SHARED with the crisis_core_v1 allocator sleeve:
+    # count legacy rows plus every allocator order submitted today (its sells
+    # close lots instead of adding rows, so rows alone would under-count).
+    from allocator import allocator_orders_on, is_allocator_lot
+    trades_today = (len([t for t in trade_log if t.get("date", "").startswith(today)
+                         and not is_allocator_lot(t)])
+                    + allocator_orders_on(today, data_dir=DATA_DIR))
     # Per-symbol re-entry cooldown — block CHURN (repeated stop-outs of one
     # name) without barring a single-stop recovery (D11, backtest 2026-06-18).
     cooldown_days = limits.get("symbol_reentry_cooldown_days", 0)
@@ -649,11 +655,16 @@ def execute_signals(alpaca: AlpacaClient, signals: list, tranche: str):
         if sector_val / equity * 100 >= limits["max_sector_exposure_pct"]:
             swapped = False
             if sector_rotation_enabled and sector_rotations < max_sector_rotations:
+                # Never rotate OUT of an allocator-universe symbol: the swap
+                # closes the WHOLE position, which would sell the crisis_core_v1
+                # sleeve's shares (its ETFs all map to "Unknown").
+                from allocator import UNIVERSE as _ALLOC_UNIVERSE
                 held_in_sector = [
                     {"symbol": p["symbol"], "qty": int(float(p.get("qty", 0) or 0)),
                      "rs": rs_lookup.get(p["symbol"], -999.0)}
                     for p in positions
                     if SECTOR_MAP.get(p["symbol"], "Unknown") == sector
+                    and p["symbol"] not in _ALLOC_UNIVERSE
                 ]
                 exit_pick = pick_sector_rotation_exit(
                     signal.get("rs_vs_spy", 0), held_in_sector,
@@ -1039,8 +1050,25 @@ def _rearm_protective_stops(alpaca: AlpacaClient, limits: dict, exclude=None):
     protected |= set(exclude or ())
 
     trade_log = load_json(DATA_DIR / "trade_log.json", [])
-    tl_by_sym = {t["symbol"]: t for t in trade_log
-                 if t.get("status") == "open" and t.get("symbol")}
+    # Allocator-sleeve lots (crisis_core_v1 forward test) are UNSTOPPED by
+    # design (static weights, band/drift rules only). A protective sell would
+    # also reserve their shares and make every rebalance trim 403. For a symbol
+    # in the allocator universe, arm AT MOST the qty of LEGACY open lots in the
+    # trade log — never "position minus allocator lots": a filled-but-not-yet-
+    # booked allocator buy (pending after confirm, or a withheld trade-log
+    # commit) would otherwise be mistaken for legacy and get a GTC stop.
+    from allocator import UNIVERSE as _ALLOC_UNIVERSE
+    from allocator import is_allocator_lot
+    from shared.reconcile import is_open_trade as _is_open
+    legacy_open = [t for t in trade_log
+                   if _is_open(t) and t.get("symbol") and not is_allocator_lot(t)]
+    legacy_lot_qty = {}
+    for t in legacy_open:
+        try:
+            legacy_lot_qty[t["symbol"]] = legacy_lot_qty.get(t["symbol"], 0.0) + abs(float(t.get("qty") or 0))
+        except (TypeError, ValueError):
+            continue
+    tl_by_sym = {t["symbol"]: t for t in legacy_open if t.get("status") == "open"}
 
     fb_stop = limits.get("rearm_fallback_stop_pct", 0.08)
     fb_tp   = limits.get("rearm_fallback_tp_pct", 0.15)
@@ -1051,8 +1079,10 @@ def _rearm_protective_stops(alpaca: AlpacaClient, limits: dict, exclude=None):
             continue
         try:
             qty = int(float(pos.get("qty", 0) or 0))
+            if sym in _ALLOC_UNIVERSE:
+                qty = min(qty, int(legacy_lot_qty.get(sym, 0.0)))
             if qty <= 0 or pos.get("side", "long") != "long":
-                continue  # only re-arm long positions
+                continue  # only re-arm legacy long qty (allocator shares never)
             current = float(pos.get("current_price", 0) or 0)
             if current <= 0:
                 continue
@@ -1098,11 +1128,17 @@ def _enforce_catalyst_decay(alpaca: AlpacaClient, positions: list, limits: dict)
     except Exception:
         open_orders = []
 
+    from allocator import UNIVERSE as _ALLOC_UNIVERSE
     for t in trade_log:
         if t.get("status") != "open":
             continue
         sym = t.get("symbol")
         if sym not in held or not catalyst_decayed(t, max_hold_days=max_hold):
+            continue
+        if sym in _ALLOC_UNIVERSE:
+            # close_position() would liquidate the allocator sleeve's shares too.
+            log.warning(f"::warning::Catalyst-decay exit skipped for {sym}: allocator-universe "
+                        f"symbol (whole-position close would sell sleeve shares)")
             continue
         age = trade_age_days(t)
         log.info(f"  Catalyst-decay exit: {sym} held {age}d ≥ {max_hold}d — closing")
@@ -1145,8 +1181,19 @@ def run_eod_journal(alpaca: AlpacaClient):
     # Places NO orders; never fabricates P&L.
     from shared.reconcile import (compute_drift, exit_prices_from_fills,
                                   exit_reasons_from_orders, guarded_pnl_fn,
+                                  order_classes_from_orders, order_ids_from_orders,
                                   reconcile_log_to_broker, is_open_trade)
     from shared.accounting import realized_pnl
+    # Book the allocator sleeve's terminal orders FIRST (real fills, tagged
+    # allocator lots), so the reconcile below never re-logs them untagged.
+    try:
+        from allocator import settle_allocator_orders
+        n_settled = settle_allocator_orders(alpaca, DATA_DIR, logger=log)
+        if n_settled:
+            log.info(f"  Allocator: settled {n_settled} pending order(s) before reconcile")
+            trade_log = load_json(DATA_DIR / "trade_log.json", [])
+    except Exception as e:
+        log.warning(f"  Allocator settlement failed (reconcile continues): {e}")
     # Source REAL exit prices from the broker's sell fills so an orphaned bracket
     # close becomes a genuine realized-P&L trade (was always pnl=None before, which
     # left P3 edge unmeasurable). Fail-open: no fills -> closed_reconciled as before.
@@ -1159,14 +1206,24 @@ def run_eod_journal(alpaca: AlpacaClient):
     # stop leg -> stop_loss, limit leg -> take_profit, market -> market_exit).
     # exit_reason was None on 30/30 closes before (audit 2026-07-04, D2).
     exit_reasons = {}
+    order_classes = {}
+    order_ids = {}
     try:
-        exit_reasons = exit_reasons_from_orders(alpaca.get_orders("closed"))
+        closed_orders = alpaca.get_orders("closed")
+        exit_reasons = exit_reasons_from_orders(closed_orders)
+        # A late allocator fill re-logged by the reconcile keeps its sleeve
+        # (read off the deterministic p3alloc client_order_id prefix).
+        order_classes = order_classes_from_orders(
+            closed_orders, {"p3alloc": "allocator_forward_test"})
+        # ...and carries the broker order_id, so a later allocator settlement
+        # sees the fill as already booked (dedupe by order_id, never twice).
+        order_ids = order_ids_from_orders(closed_orders, ("p3alloc",))
     except Exception as e:
         log.warning(f"  Could not fetch closed orders for exit reasons: {e}")
     repaired, recon_actions = reconcile_log_to_broker(
         trade_log, positions, exit_prices=exit_prices,
         pnl_fn=guarded_pnl_fn(realized_pnl),  # never fabricates on a missing entry
-        exit_reasons=exit_reasons,
+        exit_reasons=exit_reasons, order_classes=order_classes, order_ids=order_ids,
     )
     if recon_actions:
         save_json(DATA_DIR / "trade_log.json", repaired)
@@ -1365,6 +1422,7 @@ def main():
     parser.add_argument("mode", choices=[
         "weekly-screen", "morning-scan", "trading-session",
         "intraday-monitor", "news-scan", "eod-journal", "weekly-review",
+        "allocator",
     ])
     args = parser.parse_args()
 
@@ -1379,7 +1437,9 @@ def main():
 
     # Check halt state
     state = load_json(DATA_DIR / "bot_state.json")
-    if state.get("halted") and args.mode not in ("intraday-monitor", "eod-journal"):
+    # The allocator runs while halted: it blocks its own BUYS on a halt but may
+    # still trim (risk-reducing), so it is exempt from this early return.
+    if state.get("halted") and args.mode not in ("intraday-monitor", "eod-journal", "allocator"):
         halt_until = state.get("halt_until", "")
         if halt_until:
             ht = datetime.fromisoformat(halt_until)
@@ -1483,6 +1543,23 @@ def main():
                 log.info("Skipping execution — market closed")
         else:
             log.info("No actionable news catalysts found")
+
+    elif args.mode == "allocator":
+        log.info("=" * 60)
+        log.info("ALLOCATOR — crisis_core_v1 scaled, PAPER FORWARD TEST")
+        log.info("=" * 60)
+        if not alpaca.is_market_open():
+            log.warning("Market closed — skipping allocator")
+            return
+        from allocator import run_allocator
+        from allocator import run_failed
+        result = run_allocator(alpaca, data_dir=DATA_DIR, config_dir=CONFIG_DIR, logger=log)
+        log.info(f"Allocator result: {result.get('status')}")
+        _sync_state(alpaca)
+        if run_failed(result):
+            # Non-zero so the workflow's fail step / Guardian ALLOC_FAIL fire.
+            log.error(f"::error::P3 allocator run FAILED: status={result.get('status')}")
+            sys.exit(1)
 
     elif args.mode == "intraday-monitor":
         run_intraday_monitor(alpaca)

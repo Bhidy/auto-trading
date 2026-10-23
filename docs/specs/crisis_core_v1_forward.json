@@ -1,0 +1,151 @@
+{
+  "spec_id": "crisis-core-v1-forward",
+  "status": "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion",
+  "parent_spec": "docs/specs/crisis_core_v1.json",
+  "parent_spec_sha256": "12b81284c4e68ed3d8affcc99834dd1b7cd3f8597ae0b827e4de37632825bf12",
+  "parent_result": "docs/research/STRATEGY_LAB_RESULTS_2026-10.md \u2014 crisis-core-v1 FAIL (C1 max DD 14.77% > 12%; C3 DSR 0.90 < 0.95). Not tuned, not re-run.",
+  "signal_code": "scripts/backtest/allocators.py::crisis_core_target_weights (sha256 037f634d3ebb957bd23fb41aeee6b0c887569f7a202995bea637beefa04a01da), unchanged; scaling + execution in event-driven-bot/scripts/allocator.py",
+  "portfolio": "portfolio_3",
+  "account": "Alpaca PAPER account of portfolio_3 (Cautious Sniper). PAPER ONLY \u2014 the engine refuses any non-paper base_url.",
+  "objective": "Measure live PAPER tracking of the scaled crisis_core_v1 weights against the same weights simulated on daily closes (execution fidelity, cost, cap discipline, operational integrity). This is NOT evidence of edge and cannot promote the strategy.",
+  "universe": "Equity SPY QQQ IWM EFA; managed futures DBMF KMLM CTA; IEF; T-bill basket BIL SHV SGOV USFR (priority order). Legacy P3 symbols are never traded by this sleeve.",
+  "symbols": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "EFA",
+    "DBMF",
+    "KMLM",
+    "CTA",
+    "IEF",
+    "BIL",
+    "SHV",
+    "SGOV",
+    "USFR"
+  ],
+  "timeframe": "1Day",
+  "scaling": {
+    "reason": "P3 hard per-symbol cap max_position_pct_per_symbol = 8% (event-driven-bot/config/risk_limits.json, NOT modified). The tested 11.4%/ETF weights would breach it.",
+    "spec_cap": 0.114,
+    "hard_cap": 0.08,
+    "drift_headroom": 0.004,
+    "live_cap": 0.076,
+    "scale": "live_cap / spec_cap = 0.076 / 0.114 = 0.666667 (explicit parameter, allocator.build_params)",
+    "applies_to": "every spec weight (8 risky ETFs 11.4% -> 7.6%; T-bill basket 8.8% -> 5.8667%, each basket member <= 7.6%), the no-trade band (2% -> 1.3333% of equity, absolute) and the drift guard (12% -> 8%). Residual (33.33%) = uninvested cash.",
+    "capital_basis": "Weights are fractions of TOTAL P3 equity. Legacy positions count toward equity but are never traded; if legacy + sleeve would exceed P3 max_gross_exposure_pct (80%) or available cash, sleeve BUYS are scaled down pro rata (legacy is never sold)."
+  },
+  "indicators": [
+    {
+      "name": "CALENDAR_REBALANCE",
+      "params": {
+        "frequency": "monthly",
+        "snapshot": "latest completed daily close before the session (the prior month-end close on the first session of a month; the latest close on a catch-up / first-enablement run)",
+        "execution": "first p3-trading session of the month (~09:50 ET), marketable DAY limits",
+        "targets_frozen": "per calendar month; a month is complete only when every order for it filled fully, nothing was deferred by the trade budget and no buy was clipped by a P3 limit \u2014 until then each session retries the diff against the SAME frozen targets"
+      }
+    },
+    {
+      "name": "STATIC_WEIGHTS_SCALED",
+      "params": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "tbill_basket": 0.0586667
+      }
+    }
+  ],
+  "entry_rule": "Monthly rebalance to the frozen scaled targets with an absolute 1.3333% band; |target - current| < band => no trade, except target == 0 with holdings (sell to zero) and total symbol weight > 7.6% (trade to target). First run after enablement builds the full target at once.",
+  "exit_rule": "No discretionary exits and no stops (static weights). Band, drift guard (any sleeve symbol whose total weight > 8% at a session is trimmed to target, every session) and cap rules only. P3's daily-loss kill switch still liquidates the whole book.",
+  "sizing": "qty = floor(min(target_w - current_w, 7.6% - total_w) x equity / max(last, limit)); whole shares only; skip < 1 share, < $250 order notional, or a NEW position < P3 min_position_notional_usd ($2,000). Post-trade total position <= 7.6% (and therefore < 8%) of equity at max(live price, limit price).",
+  "execution": {
+    "orders": "marketable DAY LIMIT: buys ask x 1.0025, sells bid x 0.9975 (crossed/missing/>1% wide quote => last trade). Never market orders.",
+    "client_order_id": "shared.alpaca_http.make_client_order_id('p3alloc', symbol, side, <ET session date>) \u2014 at most one order per symbol/side/session; a 422 is a duplicate only if that id exists at the broker.",
+    "fills": "booked only from the broker's terminal order state (confirm_fill / get_order): real filled_qty x filled_avg_price; a non-terminal order is a pending record booked at the next run or the EOD journal. Never a limit or quote price.",
+    "order_budget": "P3 max_trades_per_day (15), shared with every other P3 order that session; sells/trims first, then buys by |delta w| descending; the rest waits for the next session.",
+    "guards": "python-level market-open check (plus the workflow gate); P3 halt or daily loss at/over the kill switch => no buys (trims allowed); failed preflight or unusable risk limits => no orders; incomplete/stale snapshot => no orders (a data gap is never read as 'unlisted')."
+  },
+  "signal_bar": "close of the last completed session before the rebalance session",
+  "fill": {
+    "model": "limit",
+    "bar": "the live session after the signal close (intraday, ~09:50 ET)",
+    "look_ahead_ack": false
+  },
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "friction_note": "fees_bps/slippage_bps are the repo-floor friction applied to the SIMULATED comparator only; the live sleeve pays whatever it actually pays and is measured (criterion F4).",
+  "benchmark": "Tracking reference: the same frozen scaled targets simulated on actual daily closes over the forward window (same band/drift rules, next-session execution at the session's close as a proxy for the 09:50 ET fill, repo-floor friction). SPY buy-and-hold reported for information only.",
+  "evaluation": {
+    "clock": "trading days since the first allocator fill (day 1 = first session with a filled p3alloc order)",
+    "checkpoints_trading_days": [
+      60,
+      90
+    ],
+    "data": "event-driven-bot/data/trade_log.json (tranche allocator_forward_test), event-driven-bot/data/allocator_state.json, broker FILL activities and order history for client_order_id prefix p3alloc, Supabase portfolio_equity_history (portfolio_3), market_daily_history closes."
+  },
+  "metrics": {
+    "sleeve_return": "r_t = (sum over allocator lots of realized + unrealized P&L change on session t) / P3 equity at close t-1 \u2014 the same basis as the simulated weights (fractions of total equity).",
+    "simulated_return": "s_t = sum_i w_i,t-1 x close-to-close return_i,t of the simulated scaled book (weights drift between rebalances), minus simulated friction on rebalance days.",
+    "tracking_error": "stdev(r_t - s_t) x sqrt(252), annualized, over all sessions since day 1.",
+    "max_drawdown": "max drawdown of I_t = prod(1 + r_t) (sleeve index on the total-equity basis).",
+    "slippage": "per fill, adverse-positive bps vs the decision reference price (last trade at decision): buy (fill - ref)/ref x 1e4, sell (ref - fill)/ref x 1e4; notional-weighted mean across all allocator fills.",
+    "cap_breach": "any allocator order whose post-trade TOTAL symbol position at max(live price, limit price) exceeds 8% of equity at submission, OR any symbol above 8% of equity at a session close that is not trimmed at the next session.",
+    "duplicate_orders": "more than one broker order per (p3alloc, symbol, side, session), more than one trade-log buy row per broker order id, or any fill booked twice."
+  },
+  "acceptance": {
+    "scope": "Evaluated at 60 and 90 trading days. ALL must hold at each checkpoint.",
+    "F1_tracking_error": {
+      "metric": "tracking_error",
+      "op": "<=",
+      "threshold": 0.03,
+      "benchmark": "the CAP-CONSTRAINED target the engine computed each session (recorded in allocator_state.json), simulated on daily closes \u2014 NOT the unconstrained scaled weights. Underweight caused by P3's 80% gross cap or cash while legacy positions run off is cap COMPLIANCE, reported separately as 'cap_shortfall_pct' (informational), never counted as tracking error."
+    },
+    "F2_max_drawdown": {
+      "metric": "max_drawdown",
+      "op": "<=",
+      "threshold": 0.1
+    },
+    "F3_no_cap_breach": {
+      "metric": "cap_breach count",
+      "op": "==",
+      "threshold": 0
+    },
+    "F4_slippage": {
+      "metric": "mean slippage bps",
+      "op": "<=",
+      "threshold": 15.0
+    },
+    "F5_no_duplicates": {
+      "metric": "duplicate_orders count",
+      "op": "==",
+      "threshold": 0
+    },
+    "stop_rules": "F3 or F5 failing at ANY time => the human owner disables the allocator block immediately (does not wait for a checkpoint). F2 breached intraperiod => committee review within 1 session.",
+    "outcome": "PASS at 90 days => recorded as forward EXECUTION evidence only; the strategy stays a FAILED backtest candidate and stays paper. Any promotion requires a NEW pre-registered spec that passes the full backtest gate + committee. FAIL => disable via strategy_controls (human), record, do not tune."
+  },
+  "governance": {
+    "enablement": "config/strategy_controls.json portfolio_3.allocator = {strategy: crisis_core_v1, mode: paper_forward_test, enabled: true, scale_to_cap: true, reason, changed_at, changed_by}. Human-owned; code never writes it; missing/malformed => disabled.",
+    "risk_limits": "config/risk_limits.json and event-driven-bot/config/risk_limits.json are read-only inputs and are NOT modified.",
+    "legacy": "P3 legacy event-driven entries remain quarantined (new_entries_enabled=false); its open lots run off under their brackets and are never traded by this sleeve."
+  },
+  "known_limitations": [
+    "Forward window (60-90 sessions) is far too short to say anything about return or edge; the criteria are execution/fidelity criteria by design.",
+    "Latest-quote/last-trade prices are IEX on the free data tier.",
+    "Cap/gross-room clipping while legacy runs off is reported as cap_shortfall_pct and is NOT counted in F1 (see amendments, 2026-10-23)."
+  ],
+  "pre_registered_at": "2026-10-23T11:40Z",
+  "pre_registration_note": "Written before the allocator placed any order. Edits after the first allocator fill void the checkpoints; amendments must be appended with date + reason.",
+  "amendments": [
+    {
+      "at": "2026-10-23",
+      "before_any_forward_data": true,
+      "change": "F1 benchmark defined as the cap-constrained engine target; cap shortfall reported separately.",
+      "why": "At enablement legacy positions (~32% of equity) + the sleeve exceed P3's 80% gross cap, so the sleeve deploys ~73% of target until legacy runs off. That is a hard-limit constraint, not strategy tracking error.",
+      "by": "owner-delegated chief-expert decision (Claude, audit session 2026-10-23)"
+    }
+  ]
+}

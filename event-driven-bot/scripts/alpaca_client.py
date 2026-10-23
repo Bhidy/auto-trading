@@ -70,8 +70,13 @@ class AlpacaClient:
                 return None
             raise
 
-    def get_orders(self, status="open"):
-        return self._get(f"{self.base_url}/v2/orders", {"status": status})
+    def get_orders(self, status="open", after=None, limit=None):
+        params = {"status": status}
+        if after:
+            params["after"] = after
+        if limit:
+            params["limit"] = limit
+        return self._get(f"{self.base_url}/v2/orders", params)
 
     def get_account_activities(self, activity_type="FILL", page_size=100):
         """Account activities (default FILL) — used to source real exit-fill prices
@@ -79,10 +84,12 @@ class AlpacaClient:
         return self._get(f"{self.base_url}/v2/account/activities/{activity_type}",
                          {"page_size": page_size})
 
-    def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
+    def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220, end=None):
         params = {"timeframe": timeframe, "limit": limit, "feed": "sip"}
         if start:
             params["start"] = start
+        if end:
+            params["end"] = end
         return self._get(f"{self.data_url}/v2/stocks/{symbol}/bars", params)
 
     def get_stock_bars_multi(self, symbols, timeframe="1Day", start=None, limit=220):
@@ -183,6 +190,12 @@ class AlpacaClient:
 
     def get_order(self, order_id):
         return self._get(f"{self.base_url}/v2/orders/{order_id}")
+
+    def get_order_by_client_id(self, client_order_id):
+        """The broker's record for one of OUR deterministic client_order_ids —
+        resolves a 422 to a real duplicate (or proves it is not one)."""
+        return self._get(f"{self.base_url}/v2/orders:by_client_order_id",
+                         {"client_order_id": client_order_id})
 
     def cancel_all_orders(self):
         return self._delete(f"{self.base_url}/v2/orders")

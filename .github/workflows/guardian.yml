@@ -131,6 +131,12 @@ jobs:
       #       portfolio_state.json is ALSO written by the hourly monitor, so it
       #       read fresh on days the scan never ran)
       #   P3: event-driven-bot signals.json (written only by morning-scan)
+      #       OR a P3 session order at the BROKER today — the crisis_core_v1
+      #       allocator (p3alloc-<ET date>-) or a legacy entry (p3-<ET date>-) —
+      #       OR a p3-trading run for today still queued/in progress. Without
+      #       the broker rule a catch-up could overlap the native run (EST:
+      #       Guardian 14:40Z vs p3-trading 14:50Z) and trade the allocator
+      #       from a stale checkout.
       - name: Install freshness gate
         run: |
           cat > "$RUNNER_TEMP/guardian_fresh.py" << 'PY'
@@ -167,14 +173,27 @@ jobs:
 
           P1_SESSION_PREFIXES = ("p1mom-", "p1core-", "p1-")   # trading-session orders only
 
-          def p1_broker_traded_today():
-              """GROUND TRUTH: did a P1 trading session place an order this ET
-              session? Reads the broker (cheap GET /v2/orders?after=ET-midnight).
+          def p3_session_prefixes():
+              day = datetime.datetime.now(ET).strftime("%Y%m%d")
+              # Allocator + legacy entry ids only; p3-rearm-/p3-stop- (monitor) excluded.
+              return (f"p3alloc-{day}-", f"p3-{day}-")
+
+          BROKER_RULES = {
+              "p1": ("config/alpaca_config.json", lambda: P1_SESSION_PREFIXES),
+              "p3": ("event-driven-bot/config/alpaca_config.json", p3_session_prefixes),
+          }
+
+          def broker_traded_today(pid):
+              """GROUND TRUTH: did this book's trading session place an order this
+              ET session? Reads the broker (cheap GET /v2/orders?after=ET-midnight).
               Catches a native run that traded but whose state commit is late or
-              lost. Monitor exits (p1stop/p1tp/p1time/p1cap) do not count."""
+              lost. Monitor exits (p1stop/p1tp/p1time/p1cap, p3-rearm/p3-stop) do
+              not count."""
+              cfg_path, prefixes_fn = BROKER_RULES[pid]
+              prefixes = tuple(prefixes_fn())
               try:
                   import requests
-                  with open("config/alpaca_config.json") as f:
+                  with open(cfg_path) as f:
                       cfg = json.load(f)
               except Exception:
                   return False                       # no creds here: signals rule only
@@ -188,21 +207,21 @@ jobs:
                   r.raise_for_status()
                   orders = r.json() or []
               except Exception as e:
-                  print(f"P1 broker order check unavailable ({e}) — signals rule only")
+                  print(f"{pid.upper()} broker order check unavailable ({e}) — signals rule only")
                   return False
               hits = [o for o in orders
-                      if str(o.get("client_order_id") or "").startswith(P1_SESSION_PREFIXES)]
+                      if str(o.get("client_order_id") or "").startswith(prefixes)]
               if hits:
-                  print(f"P1 broker: {len(hits)} trading-session order(s) today")
+                  print(f"{pid.upper()} broker: {len(hits)} trading-session order(s) today")
               return bool(hits)
 
-          def p1_trading_run_active(today):
-              """A native p1-trading run created this ET session that is still
+          def trading_run_active(pid, today):
+              """A native <pid>-trading run created this ET session that is still
               queued/in progress will trade itself — don't race it."""
               if not os.environ.get("GH_TOKEN"):
                   return False
               try:
-                  r = subprocess.run(["gh", "run", "list", "--workflow", "p1-trading.yml",
+                  r = subprocess.run(["gh", "run", "list", "--workflow", f"{pid}-trading.yml",
                                       "--limit", "10", "--json", "status,createdAt"],
                                      capture_output=True, text=True, timeout=30, check=False)
                   runs = json.loads(r.stdout or "[]") if r.returncode == 0 else []
@@ -212,7 +231,7 @@ jobs:
                       ("queued", "in_progress", "waiting", "pending", "requested")
                       and et_date(x.get("createdAt")) == today]
               if live:
-                  print(f"P1: {len(live)} p1-trading run(s) for today still active")
+                  print(f"{pid.upper()}: {len(live)} {pid}-trading run(s) for today still active")
               return bool(live)
 
           pid = sys.argv[1]
@@ -228,8 +247,8 @@ jobs:
                              capture_output=True, text=True, check=False)
           remote = stamp(r.stdout, keys) if r.returncode == 0 else ""
           fresh = max(local, remote) >= today
-          if not fresh and pid == "p1":
-              fresh = p1_broker_traded_today() or p1_trading_run_active(today)
+          if not fresh and pid in BROKER_RULES:
+              fresh = broker_traded_today(pid) or trading_run_active(pid, today)
           print(f"{pid.upper()} session={today} local={local or 'none'} "
                 f"origin/main={remote or 'none'} -> {'FRESH (skip)' if fresh else 'STALE (run)'}")
           sys.exit(0 if fresh else 1)
@@ -288,6 +307,11 @@ jobs:
           echo "::warning::P3 had not run today — Guardian running its pipeline now."
           cd "$GITHUB_WORKSPACE/event-driven-bot"
           export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+          # crisis_core_v1 forward-test sleeve first (idempotent per ET session;
+          # no-op unless the human-owned allocator control is enabled). Its
+          # failure must not skip the legacy steps, but still fails this step.
+          ALLOC_FAIL=0
+          python3 scripts/event_driven_bot.py allocator || ALLOC_FAIL=1
           DAY=$(TZ=America/New_York date +%u)
           if [ "$DAY" = "1" ]; then
             python3 scripts/event_driven_bot.py weekly-screen || true
@@ -295,6 +319,7 @@ jobs:
           python3 scripts/event_driven_bot.py morning-scan
           python3 scripts/event_driven_bot.py trading-session
           python3 scripts/event_driven_bot.py news-scan || true
+          if [ "$ALLOC_FAIL" = "1" ]; then echo "::error::P3 allocator catch-up failed"; exit 1; fi
 
       - name: P2 catch-up (only if market open AND not run today)
         id: p2catch
