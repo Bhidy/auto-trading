@@ -136,13 +136,24 @@ def align(merged, symbols):
     return dates, closes, opens, len(union) - len(dates)
 
 
-def load_dataset(sources, symbols, max_rel_diff=0.01, root=ROOT):
+def clip_span(merged, start=None, end=None):
+    """Restrict every symbol's {date: bar} map to start <= date <= end (inclusive, ISO dates)."""
+    if not start and not end:
+        return merged
+    lo, hi = start or "0000-00-00", end or "9999-99-99"
+    return {s: {d: b for d, b in dm.items() if lo <= d <= hi} for s, dm in merged.items()}
+
+
+def load_dataset(sources, symbols, max_rel_diff=0.01, root=ROOT, start=None, end=None):
+    """Load + splice + (optionally) clip to [start, end] + align. Without start/end
+    this is exactly the v1 behaviour."""
     per_source, files = [], []
     for src in sources:
         bars, used = _bars_in_dir(os.path.join(root, src), symbols)
         per_source.append(bars)
         files += used
     merged, checks = splice_sources(per_source, symbols, max_rel_diff)
+    merged = clip_span(merged, start, end)
     dates, closes, opens, dropped = align(merged, symbols)
     return {"dates": dates, "closes": closes, "opens": opens, "dropped_dates": dropped,
             "splice_checks": checks, "files": files,
@@ -422,14 +433,19 @@ def combine_acceptance(dataset_results, spec):
     return out
 
 
-def run(spec_path=SPEC_PATH, out_path=OUT_PATH, root=ROOT, write=True):
+def run(spec_path=SPEC_PATH, out_path=OUT_PATH, root=ROOT, write=True, bars_dir=None):
+    """Evaluate a spec. ``bars_dir`` (repo-relative) overrides every dataset's sources
+    with that single directory (e.g. a total-return cache); spans still come from the
+    spec's per-dataset ``start``/``end``. Default (None) is the v1 behaviour."""
     spec = load_spec(spec_path)
     cost_bps, slip_bps = load_friction("portfolio_1", data_dir=os.path.join(root, "data"))
     cost_frac = (cost_bps + slip_bps) / 10_000.0
     ev = spec["evaluation"]
     results, files = {}, []
     for d in ev["datasets"]:
-        ds = load_dataset(d["sources"], spec["symbols"], float(ev.get("splice_max_rel_close_diff", 0.01)), root)
+        sources = [bars_dir] if bars_dir else d["sources"]
+        ds = load_dataset(sources, spec["symbols"], float(ev.get("splice_max_rel_close_diff", 0.01)), root,
+                          start=d.get("start"), end=d.get("end"))
         files += ds["files"]
         if not ds["dates"]:
             results[d["id"]] = {"status": "NOT_AVAILABLE" if not d.get("required") else "INSUFFICIENT_DATA",
@@ -443,8 +459,9 @@ def run(spec_path=SPEC_PATH, out_path=OUT_PATH, root=ROOT, write=True):
     acceptance = combine_acceptance(results, spec)
     caveats = list(spec.get("known_biases", [])) + [
         spec.get("prior_knowledge_disclosure", ""),
-        "Regime coverage: the committed span (mid-2023 onward) is a predominantly rising-equity regime; "
-        "only the extended_5y dataset (when present) includes the 2022 joint bond+equity drawdown.",
+        spec.get("deliberate_second_test", ""),
+        "Regime coverage: the mid-2023-onward span is a predominantly rising-equity regime; "
+        "only the 2021-06-onward span includes the 2022 joint bond+equity drawdown.",
         "Survivorship: the universe is 8 large, long-lived ETFs chosen today; no delisting risk modeled.",
         "Backtest is simulation (hypothetical, paper) — not live performance.",
     ]
@@ -452,6 +469,8 @@ def run(spec_path=SPEC_PATH, out_path=OUT_PATH, root=ROOT, write=True):
         "spec_id": spec["spec_id"], "spec_hash": spec_hash(spec),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "friction_bps_per_side": {"cost": cost_bps, "slippage": slip_bps},
+        "bar_adjustment": ev.get("bar_adjustment", "split (price-only)"),
+        "bars_dir_override": bars_dir,
         "data_span": {k: v.get("data_span") for k, v in results.items()},
         "datasets": results,
         "acceptance": acceptance,
@@ -476,8 +495,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Evaluate the pre-registered passive core spec.")
     ap.add_argument("--spec", default=SPEC_PATH)
     ap.add_argument("--out", default=OUT_PATH)
+    ap.add_argument("--bars-dir", default=None,
+                    help="repo-relative bar-cache dir overriding every dataset's sources "
+                         "(e.g. data/research_cache/adj_bars for total-return bars)")
     args = ap.parse_args(argv)
-    out = run(args.spec, args.out)
+    out = run(args.spec, args.out, bars_dir=args.bars_dir)
     print(f"Wrote {args.out}  spec_hash={out['spec_hash'][:12]}")
     for k, r in out["datasets"].items():
         if r.get("status") != "EVALUATED":

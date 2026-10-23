@@ -10,9 +10,11 @@ import pytest
 from backtest import metrics
 from backtest.strategy_spec import load_and_validate
 from research.passive_core_eval import (
-    SPEC_PATH, align, combine_acceptance, dsr_with_trial_count, evaluate_dataset, load_spec, run,
-    simulate_buy_hold, simulate_core, spec_hash, splice_sources, window_bounds,
+    ROOT, SPEC_PATH, align, clip_span, combine_acceptance, dsr_with_trial_count, evaluate_dataset, load_dataset,
+    load_spec, run, simulate_buy_hold, simulate_core, spec_hash, splice_sources, window_bounds,
 )
+
+SPEC_V2_PATH = os.path.join(ROOT, "docs", "specs", "passive_core_v2.json")
 
 SYMS = ["SPY", "AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG"]
 
@@ -237,3 +239,69 @@ def test_run_end_to_end_writes_artifact_and_provenance(tmp_path):
     assert out["acceptance"]["C3_live_tracking_error"] == "PENDING_LIVE"
     assert os.path.exists(str(out_file) + ".provenance.json")
     assert json.loads(out_file.read_text())["spec_id"] == spec["spec_id"]
+
+
+# --- v2: total-return (adjusted) bar loader --------------------------------------------
+
+def _write_bucket(path, ds, syms=SYMS, scale=1.0):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"adjustment": "all", "bars": {
+        s: [{"t": d + "T04:00:00Z", "o": o * scale, "c": c * scale}
+            for d, o, c in zip(ds["dates"], ds["opens"][s], ds["closes"][s])] for s in syms}}))
+
+
+def test_v2_spec_differs_from_v1_only_in_bars_and_trial_count():
+    ok, errors = load_and_validate(SPEC_V2_PATH)
+    assert ok, errors
+    v1, v2 = load_spec(SPEC_PATH), load_spec(SPEC_V2_PATH)
+    for k in ("symbols", "target_weight", "max_weight", "fees_bps", "slippage_bps", "acceptance", "indicators"):
+        assert v1[k] == v2[k], k
+    for k in ("window_bars", "min_windows", "cpcv", "splice_max_rel_close_diff"):
+        assert v1["evaluation"][k] == v2["evaluation"][k], k
+    assert v2["n_trials"] == 2 and v2["prior_evidence"]["spec_id"] == v1["spec_id"]
+    assert v2["evaluation"]["bars_fetch"]["params"]["adjustment"] == "all"
+    assert {(d["start"], d["end"]) for d in v2["evaluation"]["datasets"]} == {
+        ("2023-06-16", "2026-10-13"), ("2021-06-14", "2026-10-13")}
+
+
+def test_clip_span_is_inclusive_and_noop_without_bounds():
+    d = _weekdays(5)
+    m = {"SPY": _bars(d, [1, 2, 3, 4, 5])}
+    assert clip_span(m) is m
+    assert sorted(clip_span(m, d[1], d[3])["SPY"]) == d[1:4]
+
+
+def test_adjusted_loader_reads_cache_and_clips_span(tmp_path):
+    ds = _dataset(n=40)
+    _write_bucket(tmp_path / "data" / "research_cache" / "adj_bars" / "etf8_adjusted.json", ds)
+    full = load_dataset(["data/research_cache/adj_bars"], SYMS, root=str(tmp_path))
+    assert full["dates"] == ds["dates"] and full["files"]
+    cut = load_dataset(["data/research_cache/adj_bars"], SYMS, root=str(tmp_path),
+                       start=ds["dates"][10], end=ds["dates"][29])
+    assert cut["dates"] == ds["dates"][10:30]
+    assert cut["closes"]["SPY"] == ds["closes"]["SPY"][10:30]
+
+
+def test_missing_adjusted_cache_yields_no_dates(tmp_path):
+    out = load_dataset(["data/research_cache/adj_bars"], SYMS, root=str(tmp_path))
+    assert out["dates"] == [] and out["sources_present"] == []
+
+
+def test_bars_dir_override_and_spans_end_to_end(tmp_path):
+    ds = _dataset(n=63 * 12)
+    _write_bucket(tmp_path / "data" / "adj" / "b.json", ds, scale=2.0)      # back-scaled levels
+    _write_bucket(tmp_path / "data" / "deep" / "b.json", ds)
+    spec = _spec(n_trials=2)
+    spec["evaluation"]["datasets"] = [
+        {"id": "long", "sources": ["data/deep"], "start": ds["dates"][0], "end": ds["dates"][-1], "required": True},
+        {"id": "short", "sources": ["data/deep"], "start": ds["dates"][63], "end": ds["dates"][-1], "required": True}]
+    spec_file = tmp_path / "spec.json"
+    spec_file.write_text(json.dumps(spec))
+    base = run(str(spec_file), str(tmp_path / "a.json"), root=str(tmp_path))
+    over = run(str(spec_file), str(tmp_path / "b.json"), root=str(tmp_path), bars_dir="data/adj")
+    assert over["bars_dir_override"] == "data/adj"
+    assert base["datasets"]["long"]["n_windows"] == 12 and base["datasets"]["short"]["n_windows"] == 11
+    # A uniform price rescale (dividend back-adjustment shape) leaves returns-based criteria unchanged.
+    for k in ("long", "short"):
+        assert over["datasets"][k]["criteria"] == base["datasets"][k]["criteria"]
+    assert over["datasets"]["long"]["psr_dsr"]["n_trials"] == 2

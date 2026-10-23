@@ -1,0 +1,173 @@
+{
+  "spec_id": "passive-core-ew8-v2-total-return",
+  "portfolio": "portfolio_1",
+  "pre_registered_at": "2026-10-23",
+  "pre_registration_note": "Written BEFORE any dividend-adjusted bar was fetched or evaluated. Identical to passive-core-ew8-v1 (universe, weights, cap guard incl. its 2026-10-23 amendment, monthly rebalance, friction, 63-bar windows, min 10 windows, acceptance C1/C2/C3, robustness rule, both spans). The ONLY change: total-return (dividend-adjusted, Alpaca adjustment=all) daily bars instead of split-only bars. Any edit voids results.",
+  "prior_knowledge_disclosure": "Not a blind test: data/core_satellite_backtest_5y.json (2026-06-18) already evaluated this same 8-ETF basket on overlapping 5y data. The basket was not fitted (no tunable parameters), but its selection was informed by that study, so this is a pre-registered CONFIRMATION on overlapping history, not a fresh out-of-sample test.",
+  "universe": "8 liquid US ETFs spanning equity, long bonds, gold, short bonds, T-bills: SPY, QQQ, IWM, DIA, TLT, GLD, SHY, BIL (all with full cached daily history in data/deep + data/)",
+  "symbols": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "DIA",
+    "TLT",
+    "GLD",
+    "SHY",
+    "BIL"
+  ],
+  "timeframe": "1Day",
+  "indicators": [
+    {
+      "name": "CALENDAR_REBALANCE",
+      "params": {
+        "frequency": "monthly",
+        "day": "first_trading_day_of_month",
+        "execution": "open"
+      }
+    },
+    {
+      "name": "CAP_DRIFT_GUARD",
+      "params": {
+        "max_weight": 0.12,
+        "check": "daily_close",
+        "action": "trim_to_target",
+        "execution": "next_open",
+        "at_trade_event_also_trim": "any symbol above max_weight at that open"
+      }
+    }
+  ],
+  "entry_rule": "Day 0 open: buy every symbol to target_weight. First trading day of each month at the open: trade every symbol back to target_weight (valuation at that open).",
+  "exit_rule": "No discretionary exits. Daily close check: any symbol whose weight > max_weight is trimmed to target_weight at the next open; at that trade event any other symbol above max_weight at the same open is trimmed too (no post-trade weight > 12%).",
+  "signal_bar": "t-1 close (calendar/drift rule only; no price-based signal)",
+  "fill": {
+    "model": "next_open",
+    "bar": "t open",
+    "look_ahead_ack": false
+  },
+  "sizing": "Equal weight 11.4% per ETF (= 12% ETF hard cap x 0.95 live buffer, as in portfolio_manager.compute_core_orders) => 91.2% invested, 8.8% cash earning 0%. Fractional shares.",
+  "target_weight": 0.114,
+  "max_weight": 0.12,
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "friction_source": "scripts/backtest/friction.py load_friction('portfolio_1') at run time (floored at 5 bps cost + 5 bps slippage, per side, on traded notional).",
+  "benchmark": "SPY buy & hold, 100% invested from day 0 open, identical friction on the entry trade",
+  "n_trials": 2,
+  "n_trials_note": "Spec family passive-core-ew8 has now been tested twice (v1 price-only, v2 total-return); DSR uses N=2 via the False-Strategy-Theorem null benchmark. Still understates search to the extent the basket was informed by earlier studies.",
+  "evaluation": {
+    "window_bars": 63,
+    "window_layout": "non-overlapping 63-bar windows aligned to the most recent bar; leftover oldest bars excluded from window stats but included in full-span stats",
+    "min_windows": 10,
+    "datasets": [
+      {
+        "id": "committed_span",
+        "sources": [
+          "data/research_cache/adj_bars"
+        ],
+        "start": "2023-06-16",
+        "end": "2026-10-13",
+        "required": true,
+        "note": "Same span as v1 'committed' dataset; total-return bars from the gitignored research cache."
+      },
+      {
+        "id": "extended_5y_span",
+        "sources": [
+          "data/research_cache/adj_bars"
+        ],
+        "start": "2021-06-14",
+        "end": "2026-10-13",
+        "required": true,
+        "note": "Same span as v1 'extended_5y' dataset (includes the 2022 joint bond+equity drawdown)."
+      }
+    ],
+    "splice_max_rel_close_diff": 0.01,
+    "cpcv": {
+      "n_groups": 6,
+      "n_test_groups": 2,
+      "label_horizon": 0,
+      "embargo_pct": 0.0
+    },
+    "bar_adjustment": "all (splits + dividends), Alpaca IEX feed",
+    "bars_fetch": {
+      "endpoint": "GET /v2/stocks/bars",
+      "params": {
+        "symbols": "SPY,QQQ,IWM,DIA,TLT,GLD,SHY,BIL",
+        "timeframe": "1Day",
+        "adjustment": "all",
+        "feed": "iex",
+        "start": "2021-06-01",
+        "limit": 10000
+      },
+      "pagination": "next_page_token",
+      "storage": "data/research_cache/adj_bars/ (gitignored; raw bars never committed)",
+      "credentials": "P1 paper keys, market-data GET only"
+    }
+  },
+  "acceptance": {
+    "C1_sharpe_vs_spy": {
+      "metric": "mean of per-window annualized Sharpe (core) minus mean of per-window annualized Sharpe (SPY)",
+      "op": ">=",
+      "threshold": -0.15
+    },
+    "C2_drawdown_vs_spy": {
+      "metric": "max drawdown of the full-span core equity path vs SPY's full-span max drawdown",
+      "op": "<=",
+      "threshold": "SPY"
+    },
+    "C3_live_tracking_error": {
+      "metric": "annualized std of (live core-sleeve daily return - this spec's model daily return)",
+      "op": "<=",
+      "threshold": 0.03,
+      "min_live_days": 60,
+      "status_until_measured": "PENDING_LIVE"
+    },
+    "robustness_rule": "C1 and C2 must PASS on EVERY evaluated dataset with >= min_windows windows; a dataset with fewer windows is INSUFFICIENT_DATA and cannot produce a PASS."
+  },
+  "known_biases": [
+    "Cash remainder earns 0% (conservative).",
+    "IEX-feed closes (free tier) differ slightly from consolidated closes; thin ETFs (BIL, SHY) occasionally miss IEX bars and those dates are dropped from the common axis.",
+    "Total-return bars reinvest distributions on the ex-date at zero cost (no withholding tax), slightly flattering both core and SPY.",
+    "Alpaca's dividend adjustment back-scales historical prices; levels differ from v1 but daily returns are what is evaluated."
+  ],
+  "supersedes_test_of": "passive-core-ew8-v1",
+  "deliberate_second_test": "v1 FAILED C1. This is a deliberate SECOND test of the same spec family, motivated by v1's known price-only bias against the income-heavy sleeve. Two looks at the same hypothesis => n_trials=2 for DSR; v2 may PASS or FAIL, and a v2 PASS does not erase that v1 was run first.",
+  "prior_evidence": {
+    "spec_id": "passive-core-ew8-v1",
+    "spec_hash": "8dc10af05a7513ce2f70a2d647613da56867336fee0a71f6874d2e7f494eb817",
+    "artifact": "data/passive_core_validation.json",
+    "acceptance": {
+      "C1_sharpe_vs_spy": "FAIL",
+      "C2_drawdown_vs_spy": "PASS",
+      "C3_live_tracking_error": "PENDING_LIVE",
+      "overall": "FAIL"
+    },
+    "results": {
+      "committed": {
+        "data_span": [
+          "2023-06-16",
+          "2026-10-13"
+        ],
+        "n_windows": 13,
+        "C1_value": -0.2091,
+        "core_mdd": 0.0925,
+        "spy_mdd": 0.1898
+      },
+      "extended_5y": {
+        "data_span": [
+          "2021-06-14",
+          "2026-10-13"
+        ],
+        "n_windows": 21,
+        "C1_value": -0.288,
+        "core_mdd": 0.1848,
+        "spy_mdd": 0.2538
+      }
+    }
+  },
+  "inherited_amendments": [
+    {
+      "date": "2026-10-23",
+      "change": "CAP_DRIFT_GUARD also trims any symbol above max_weight at the open of a trade event",
+      "reason": "first run showed a post-trade weight of 12.22% (an untraded name gapped above the cap at the trim open). Cap-compliance fix only; acceptance criteria, universe, weights, windows and datasets unchanged. First-run C1/C2: committed -0.2054 FAIL / 0.0926<=0.1898 PASS; extended_5y -0.2857 FAIL / 0.1848<=0.2538 PASS."
+    }
+  ]
+}
