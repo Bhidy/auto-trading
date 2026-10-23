@@ -1,5 +1,5 @@
 {
-  "equity": 97088.76,
+  "equity": 97452.08,
   "starting_equity": 100000.0,
   "day_start_equity": 97254.4,
   "week_start_equity": 97970.98,
@@ -35,8 +35,13 @@
       "bucket": "unknown"
     },
     "MPC": {
-      "qty": 18,
+      "qty": 15,
       "avg_price": 271.597,
+      "bucket": "unknown"
+    },
+    "MRK": {
+      "qty": 46,
+      "avg_price": 144.278695,
       "bucket": "unknown"
     },
     "PSX": {
@@ -51,20 +56,20 @@
     }
   },
   "trades_today": 12,
-  "total_exposure": 60158.9566,
-  "long_market_value": 60158.9566,
+  "total_exposure": 65781.1425,
+  "long_market_value": 65781.1425,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 36929.8,
-  "day_pnl": -165.64,
-  "day_pnl_pct": -0.001703,
-  "week_pnl": -882.22,
-  "week_pnl_pct": -0.009005,
+  "cash": 31670.94,
+  "day_pnl": 197.68,
+  "day_pnl_pct": 0.002033,
+  "week_pnl": -518.9,
+  "week_pnl_pct": -0.005296,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-10-23T14:11:34.436118+00:00",
+  "last_updated": "2026-10-23T18:31:27.141696+00:00",
   "week_start_iso_week": "2026-W43",
   "halt_clears_consumed": [
     "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
@@ -108,5 +113,14 @@
   "halt_kind": null,
   "halt_evidence": null,
   "halt_verified": null,
-  "halt_unverified_reason": null
+  "halt_unverified_reason": null,
+  "current_regime": "BULL",
+  "current_regime_at": "2026-10-23T18:31:26.763689+00:00",
+  "current_regime_modifiers": {
+    "equity_mult": 1.0,
+    "defensive_mult": 0.8,
+    "cash_target": 0.15
+  },
+  "morning_regime": "BULL",
+  "regime_deteriorated_intraday": false
 }
