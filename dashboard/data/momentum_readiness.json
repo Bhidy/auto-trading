@@ -5,12 +5,12 @@
   "basis": "p1_account_level",
   "days_on_paper": 109,
   "track_days_measured": 80,
-  "oos_sharpe": 1.45,
+  "oos_sharpe": 1.56,
   "max_drawdown_pct": 1.79,
-  "momentum_fills": 8,
-  "rebalance_count": 1,
-  "latest_vol_scale": 0.8291,
-  "latest_deployed_pct": 74.6,
+  "momentum_fills": 17,
+  "rebalance_count": 2,
+  "latest_vol_scale": 1.0,
+  "latest_deployed_pct": 83.1,
   "gates": {
     "min_days": 90,
     "min_oos_sharpe": 1.0,
@@ -25,7 +25,7 @@
       "pass": true
     },
     "oos_sharpe": {
-      "value": 1.45,
+      "value": 1.56,
       "threshold": 1.0,
       "op": ">=",
       "pass": true
@@ -37,7 +37,7 @@
       "pass": true
     },
     "momentum_fills": {
-      "value": 8,
+      "value": 17,
       "threshold": 26,
       "op": ">=",
       "pass": false
