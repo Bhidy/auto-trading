@@ -78,6 +78,8 @@ THRESHOLDS = {
     "eta_cap_sessions": 2520,          # 10 years: beyond this = not converging
     "rf_fallback_annual": 0.04,        # used ONLY if T-bill (BIL) returns are missing
     "cs_burn_in": 20,                  # returns used only to seed the predictable plug-ins
+    "cs_sigma_floor_daily": 0.0025,    # predictable scale floor (~4%/yr): a near-flat burn-in
+                                       # can never give one later return unbounded weight
     # v2.2 two-stage path (Stage A research proof + Stage B live incubation)
     "research_max_backtest_drawdown": 0.12,  # STRATEGY_EVIDENCE §8.3: 6 pts under the kill switch
     "incubation_min_returns": 60,      # halt-free daily returns before consistency is judged
@@ -404,7 +406,7 @@ def confidence_sequence(alpha_hat, sigma, n, rho, a):
     return alpha_hat - half, alpha_hat + half
 
 
-def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=21):
+def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=21, sigma_floor=0.0):
     """Always-valid bounds on the daily alpha of y = alpha + beta*x + e, built
     from PREDICTABLE plug-ins (v2.2; replaces the full-sample plug-in of 2.1).
 
@@ -413,7 +415,13 @@ def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=2
     x (Bartlett long-run factor of past u, lag ``lag``, floored at 1). The
     fast window absorbs a volatility RISE within days; the expanding sd alone
     lagged it and over-stated significance after a low->high vol regime shift
-    (stress simulation 2026-10-23: 3.0% false GO vs 0.83% target). Under alpha = a0 the standardized increments
+    (stress simulation 2026-10-23: 3.0% false GO vs 0.83% target). The scale
+    is also floored at ``sigma_floor`` (a constant, so still predictable): a
+    near-zero-variance burn-in would otherwise give the next return an
+    unbounded weight 1/sigma and a conditional variance far above one, which
+    voids the mixture's coverage (Codex review of PR #105). A floor above a
+    sleeve's true volatility only widens its band — conservative for both a GO
+    and an incubation FAIL. Under alpha = a0 the standardized increments
     (u_t - a0)/sigma_{t-1} are a martingale-difference sequence with ~unit
     conditional variance, so the normal-mixture boundary b(m) on their sum
     holds at every look (Ville). With weights w_t = 1/sigma_{t-1}:
@@ -450,7 +458,7 @@ def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=2
                 for lg in range(1, lag + 1):
                     lr += 2.0 * (1.0 - lg / (lag + 1.0)) * gam[lg]
                 factor = math.sqrt(max(1.0, lr / gam[0])) if gam[0] > 0 else 1.0
-                sig = math.sqrt(var) * factor
+                sig = max(math.sqrt(var) * factor, sigma_floor)
                 w = 1.0 / sig
                 A += w * u
                 B += w
@@ -543,7 +551,8 @@ def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_
     psr = M.probabilistic_sharpe_ratio(ir_d, 0.0, n, skew, kurt) if sr > 0 else 0.0
     dsr = M.deflated_sharpe_at_trial_count(ir_d, n, trial_count, skew, kurt) if sr > 0 else 0.0
     sig_eff = max(sr, reg["se_alpha_hac"] * math.sqrt(n))
-    pcs = predictable_cs(y, x, rho, a_lvl, lag=th["hac_lag"], burn_in=th["cs_burn_in"])
+    pcs = predictable_cs(y, x, rho, a_lvl, lag=th["hac_lag"], burn_in=th["cs_burn_in"],
+                         sigma_floor=th["cs_sigma_floor_daily"])
     lo, hi = pcs["lower"], pcs["upper"]
     out.update({
         "alpha_daily": a, "alpha_annual": a * PERIODS_PER_YEAR, "beta": reg["beta"],
@@ -752,7 +761,8 @@ def incubation_gate(returns, rf_rets, profile, th=None):
     rpy = PERIODS_PER_YEAR
     expected = hc * profile["sharpe_excess"] / math.sqrt(rpy) * sd
     hi = predictable_cs(ex, [0.0] * n, th["cs_rho_sessions"], th["incubation_alpha"],
-                        lag=th["hac_lag"], burn_in=th["cs_burn_in"], fit_beta=False)["upper"]
+                        lag=th["hac_lag"], burn_in=th["cs_burn_in"], fit_beta=False,
+                        sigma_floor=th["cs_sigma_floor_daily"])["upper"]
     vol_ratio = sd * math.sqrt(rpy) / profile["vol"]
     dd = drawdown_stats(returns)["max_drawdown"]
     dd_cap = th["incubation_dd_multiple"] * profile["max_drawdown"]
