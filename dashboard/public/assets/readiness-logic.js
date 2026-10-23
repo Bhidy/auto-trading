@@ -109,10 +109,26 @@
         return (m || p) ? { median: m, pessimistic: p } : null;
     }
 
-    /** Sleeves whose verdict is exactly "GO" (the only verdict ever counted). */
+    /** Verdicts of sleeves that can become GO — the hero's denominator. NOT_ELIGIBLE
+        (owner-parked: exits_only / quarantined) and BETA_SLEEVE (no edge claim, never
+        GO by design) are excluded; an unknown verdict is excluded too but reported
+        as `unclassified`, so no sleeve silently drops out of the hero. */
+    var CANDIDATE_VERDICTS = ['GO', 'NOT_READY', 'FORWARD_TEST_PASS'];
+
+    /** { cleared, total, ineligible, beta, unclassified, all } — cleared counts only
+        the exact verdict "GO"; total counts only GO candidates. */
     function clearedCount(report) {
         var sl = (report && Array.isArray(report.sleeves)) ? report.sleeves : [];
-        return { cleared: sl.filter(function (s) { return s && s.verdict === 'GO'; }).length, total: sl.length };
+        var c = { cleared: 0, total: 0, ineligible: 0, beta: 0, unclassified: 0, all: sl.length };
+        sl.forEach(function (s) {
+            var v = s && s.verdict;
+            if (v === 'GO') c.cleared++;
+            if (CANDIDATE_VERDICTS.indexOf(v) >= 0) c.total++;
+            else if (v === 'NOT_ELIGIBLE') c.ineligible++;
+            else if (v === 'BETA_SLEEVE') c.beta++;
+            else c.unclassified++;
+        });
+        return c;
     }
 
     function edgePoints(s) {
@@ -137,7 +153,7 @@
     }
 
     return {
-        KNOWN_VERDICTS: KNOWN_VERDICTS, verdictInfo: verdictInfo, gateStatusKnown: gateStatusKnown,
+        KNOWN_VERDICTS: KNOWN_VERDICTS, CANDIDATE_VERDICTS: CANDIDATE_VERDICTS, verdictInfo: verdictInfo, gateStatusKnown: gateStatusKnown,
         edgeStatus: edgeStatus, edgeQualifier: edgeQualifier, alphaDisplay: alphaDisplay,
         confidenceBound: confidenceBound, etaRange: etaRange, clearedCount: clearedCount,
         leadSleeve: leadSleeve, edgePoints: edgePoints

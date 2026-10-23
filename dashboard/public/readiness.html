@@ -69,7 +69,10 @@
         .rx-count .big { font-family: var(--rx-serif); font-size: clamp(6rem, 13vw, 10.5rem); line-height: .9; color: var(--h-big); }
         .rx-count .big.go { color: var(--c-pos); }
         .rx-count .of { font-family: var(--rx-serif); font-size: clamp(2.4rem, 4.5vw, 3.5rem); color: var(--h-of); }
-        .rx-count p { margin: 0 0 14px; max-width: 12rem; font-size: 15px; line-height: 1.45; }
+        .rx-count-t { margin-bottom: 14px; max-width: 13rem; }
+        .rx-count p { margin: 0; font-size: 15px; line-height: 1.45; }
+        .rx-count p.rx-count-x { margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--h-muted); }
+        .rx-count-x span { white-space: nowrap; }
         .rx-lead { margin-top: clamp(32px, 5vw, 52px); background: var(--h-card); border: 1px solid var(--h-line); border-radius: 18px; box-shadow: var(--h-sh); padding: clamp(18px, 2.4vw, 28px); }
         .rx-lead-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px 28px; }
         .rx-cap { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--h-muted); }
@@ -686,7 +689,8 @@
         var X = {
             en: {
                 hero_lede: 'Which strategies have earned real capital — and the one thing still standing in the way of each.',
-                count_l: 'strategy versions cleared for live capital',
+                count_l: 'eligible strategy versions cleared for live capital',
+                count_x: 'Not counted: {list}', count_x_inel: '{n} not eligible', count_x_beta: '{n} beta sleeve', count_x_beta_pl: '{n} beta sleeves', count_x_unk: '{n} unclassified',
                 lead_cap: 'Furthest-along edge test', lead_none: 'No strategy is accruing live edge evidence yet.',
                 lead_note: 'Edge is proven when the lower bound clears the GO line. Today the band still spans zero.',
                 lead_note_go: 'The lower bound has cleared the GO line.',
@@ -717,7 +721,8 @@
             },
             ar: {
                 hero_lede: 'أي الاستراتيجيات استحقت رأس مال حقيقي — وما الشرط الوحيد الذي ما زال يعترض كل واحدة منها.',
-                count_l: 'إصدارات استراتيجيات مؤهلة لرأس مال حقيقي',
+                count_l: 'من إصدارات الاستراتيجيات المرشّحة اجتازت شروط رأس المال الحقيقي',
+                count_x: 'غير محتسبة: {list}', count_x_inel: '{n} غير مؤهلة', count_x_beta: '{n} استراتيجية بيتا', count_x_beta_pl: '{n} استراتيجيات بيتا', count_x_unk: '{n} غير مصنّفة',
                 lead_cap: 'أبعد اختبار تفوق تقدماً', lead_none: 'لا توجد استراتيجية تجمع أدلة تفوق حية بعد.',
                 lead_note: 'يثبت التفوق عندما يتجاوز الحد الأدنى خط «جاهز». ما زال النطاق اليوم يشمل الصفر.',
                 lead_note_go: 'تجاوز الحد الأدنى خط «جاهز».',
@@ -776,6 +781,14 @@
         }
 
         // ── Hero ──
+        // Sleeves outside the GO-candidate denominator, named so none silently disappears.
+        function countExcluded(cc) {
+            var parts = [];
+            if (cc.ineligible) parts.push(tm('count_x_inel', { n: L(cc.ineligible) }));
+            if (cc.beta) parts.push(tm(cc.beta === 1 ? 'count_x_beta' : 'count_x_beta_pl', { n: L(cc.beta) }));
+            if (cc.unclassified) parts.push(tm('count_x_unk', { n: L(cc.unclassified) }));
+            return parts.length ? '<p class="rx-count-x">' + tm('count_x', { list: parts.map(function (x) { return '<span>' + x + '</span>'; }).join(' · ') }) + '</p>' : '';
+        }
         function renderHero() {
             var count = document.getElementById('count'), lead = document.getElementById('lead');
             if (!report) {
@@ -785,7 +798,7 @@
             }
             var cc = RL.clearedCount(report);
             count.innerHTML = '<span dir="ltr" style="display:flex;align-items:baseline"><span class="big' + (cc.cleared > 0 ? ' go' : '') + '">' + esc(cc.cleared) + '</span><span class="of">/' + esc(cc.total) + '</span></span>' +
-                '<p>' + t('count_l') + '</p>';
+                '<div class="rx-count-t"><p>' + t('count_l') + '</p>' + countExcluded(cc) + '</div>';
             var s = RL.leadSleeve(report);
             if (!s) { lead.innerHTML = '<p class="rx-cap">' + t('lead_cap') + '</p><div class="rx-empty-chart" style="margin-top:14px">' + t('lead_none') + '</div>'; return; }
             var e = s.edge || {}, ad = RL.alphaDisplay(s), w = s.window || {};
