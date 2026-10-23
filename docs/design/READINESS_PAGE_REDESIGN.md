@@ -95,3 +95,15 @@ All of these flow through `data/readiness_report.json` → `/api/readiness`, ver
 - Node: every chart point traces to a report value; no NaN; clamped values marked.
 - Contrast measured ≥ 4.5 : 1 for body text and ≥ 3 : 1 for chart strokes on both grounds.
 - Self-review rubric (global design authority §5) ≥ 8 on every line, scored honestly after the build.
+
+## 9. Result (audit "after", measured 2026-10-23; Direction A chosen by the owner, light + dark)
+
+| Metric | Before | After |
+|---|---|---|
+| Charts | 0 | 3 per book (evidence funnel, return vs SPY, drawdown vs limits), plus a funnel per non-lead strategy with a trajectory |
+| Words above the fold (1440) | — (590 on one book) | 107 |
+| Distinct strategies visible at once | 2–3 (one book) | all 6 (gate matrix) |
+| Mobile height vs desktop | 1.9× | 1.55× (3,984 vs 2,575 px) |
+| Horizontal overflow | none | none at 390 / 834 / 1440 × EN/AR × light/dark |
+| Text contrast (measured) | not measured | ≥ 4.8 : 1 light, ≥ 6.8 : 1 dark |
+| Plotted value = report value | n/a | node tests bind every funnel point and book series to `readiness_report.json` |
