@@ -77,6 +77,7 @@ THRESHOLDS = {
     "min_sessions_for_eta": 20,        # below this an alpha estimate is noise
     "eta_cap_sessions": 2520,          # 10 years: beyond this = not converging
     "rf_fallback_annual": 0.04,        # used ONLY if T-bill (BIL) returns are missing
+    "cs_burn_in": 20,                  # returns used only to seed the predictable plug-ins
     # v2.2 two-stage path (Stage A research proof + Stage B live incubation)
     "research_max_backtest_drawdown": 0.12,  # STRATEGY_EVIDENCE §8.3: 6 pts under the kill switch
     "incubation_min_returns": 60,      # halt-free daily returns before consistency is judged
@@ -403,6 +404,83 @@ def confidence_sequence(alpha_hat, sigma, n, rho, a):
     return alpha_hat - half, alpha_hat + half
 
 
+def predictable_cs(y, x, rho, a, lag=5, burn_in=20, fit_beta=True, fast_window=21):
+    """Always-valid bounds on the daily alpha of y = alpha + beta*x + e, built
+    from PREDICTABLE plug-ins (v2.2; replaces the full-sample plug-in of 2.1).
+
+    Increment t uses only returns before t: u_t = y_t - beta_{t-1} x_t, scaled
+    by sigma_{t-1} = max(sd of all past u, sd of the last ``fast_window`` u)
+    x (Bartlett long-run factor of past u, lag ``lag``, floored at 1). The
+    fast window absorbs a volatility RISE within days; the expanding sd alone
+    lagged it and over-stated significance after a low->high vol regime shift
+    (stress simulation 2026-10-23: 3.0% false GO vs 0.83% target). Under alpha = a0 the standardized increments
+    (u_t - a0)/sigma_{t-1} are a martingale-difference sequence with ~unit
+    conditional variance, so the normal-mixture boundary b(m) on their sum
+    holds at every look (Ville). With weights w_t = 1/sigma_{t-1}:
+        S(a0) = sum w_t u_t - a0 sum w_t;  bounds = (sum w u -/+ b(m)) / sum w.
+    The first ``burn_in`` returns only seed the estimates. Volatility that
+    changes over time is tracked by the expanding estimate instead of being
+    averaged retrospectively, and beta error enters only through
+    beta-prediction noise (mean-zero up to the small market drift).
+    Returns dict(lower, upper, point, m) — daily units; None bounds if m < 1."""
+    n = len(y)
+    sx = sy = sxx = sxy = 0.0
+    k = 0                                  # points in the OLS sums
+    mu = m2 = 0.0                          # Welford on past u
+    ku = 0
+    hist = []                              # past centred u (last lag+1) for autocovariances
+    recent = []                            # last fast_window raw u (fast scale)
+    gam = [0.0] * (lag + 1)                # running sums of u_t*u_{t-l} (centred at update)
+    A = B = 0.0
+    m = 0
+    for t in range(n):
+        xt, yt = (x[t] if fit_beta else 0.0), y[t]
+        beta = 0.0
+        if fit_beta and k >= 2:
+            vx = sxx - sx * sx / k
+            beta = ((sxy - sx * sy / k) / vx) if vx > 0 else 0.0
+        u = yt - beta * xt
+        if t >= burn_in and ku >= 2:
+            var = m2 / (ku - 1)
+            if len(recent) >= 5:
+                rm = sum(recent) / len(recent)
+                var = max(var, sum((r - rm) ** 2 for r in recent) / (len(recent) - 1))
+            if var > 0:
+                lr = gam[0]
+                for lg in range(1, lag + 1):
+                    lr += 2.0 * (1.0 - lg / (lag + 1.0)) * gam[lg]
+                factor = math.sqrt(max(1.0, lr / gam[0])) if gam[0] > 0 else 1.0
+                sig = math.sqrt(var) * factor
+                w = 1.0 / sig
+                A += w * u
+                B += w
+                m += 1
+        # update the plug-ins with u_t (after it was used)
+        ku += 1
+        d = u - mu
+        mu += d / ku
+        m2 += d * (u - mu)
+        recent.append(u)
+        if len(recent) > fast_window:
+            recent.pop(0)
+        c = u - mu
+        hist.append(c)
+        if len(hist) > lag + 1:
+            hist.pop(0)
+        for lg in range(0, min(lag, len(hist) - 1) + 1):
+            gam[lg] += hist[-1] * hist[-1 - lg]
+        if fit_beta:
+            k += 1
+            sx += xt
+            sy += yt
+            sxx += xt * xt
+            sxy += xt * yt
+    if m < 1 or B <= 0:
+        return {"lower": None, "upper": None, "point": None, "m": m}
+    b = cs_boundary(m, rho, a)
+    return {"lower": (A - b) / B, "upper": (A + b) / B, "point": A / B, "m": m}
+
+
 def sessions_to_cross(alpha_daily, sigma, rho, a, cap):
     """Expected sessions until the lower bound clears 0 if the TRUE alpha were
     ``alpha_daily`` (drift alpha*n/sigma meets the boundary b(n)); None if not
@@ -429,9 +507,11 @@ def sessions_to_cross(alpha_daily, sigma, rho, a, cap):
 def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_level=None):
     """Benchmark-relative edge on aligned daily series (same length/dates).
 
-    Decision (v2.1): an always-valid one-sided confidence sequence on the daily
-    OLS alpha, scaled by the HAC long-run sd (sigma_eff = max(resid sd,
-    se_HAC * sqrt(n))). PASS iff n >= min_edge_sessions AND the lower bound > 0.
+    Decision (v2.2): an always-valid one-sided confidence sequence on the daily
+    alpha built from PREDICTABLE plug-ins (``predictable_cs``: beta and the
+    HAC-inflated scale estimated only from earlier returns). PASS iff
+    n >= min_edge_sessions AND the lower bound > 0. The full-sample OLS alpha,
+    beta and sigma_eff are reported (and drive the ETA projection) only.
     'fail' iff the UPPER bound < 0 (alpha significantly negative); otherwise
     'insufficient' (still accruing). t_HAC / PSR / DSR@trial_count / z_required
     are reported for information only."""
@@ -463,13 +543,15 @@ def edge_test(book_rets, spy_rets, rf_rets, trial_count, thresholds=None, alpha_
     psr = M.probabilistic_sharpe_ratio(ir_d, 0.0, n, skew, kurt) if sr > 0 else 0.0
     dsr = M.deflated_sharpe_at_trial_count(ir_d, n, trial_count, skew, kurt) if sr > 0 else 0.0
     sig_eff = max(sr, reg["se_alpha_hac"] * math.sqrt(n))
-    lo, hi = confidence_sequence(a, sig_eff, n, rho, a_lvl)
+    pcs = predictable_cs(y, x, rho, a_lvl, lag=th["hac_lag"], burn_in=th["cs_burn_in"])
+    lo, hi = pcs["lower"], pcs["upper"]
     out.update({
         "alpha_daily": a, "alpha_annual": a * PERIODS_PER_YEAR, "beta": reg["beta"],
         "t_hac": reg["t_alpha_hac"], "ir_annual": ir_d * math.sqrt(PERIODS_PER_YEAR), "psr": psr,
         "dsr": dsr, "sigma_resid_daily": sr, "sigma_eff_daily": sig_eff,
         "se_alpha_hac_daily": reg["se_alpha_hac"], "skew": skew, "kurtosis": kurt,
-        "cs_lower_daily": lo, "cs_upper_daily": hi,
+        "cs_lower_daily": lo, "cs_upper_daily": hi, "cs_increments": pcs["m"],
+        "alpha_predictive_daily": pcs["point"],
         "cs_lower": None if lo is None else lo * PERIODS_PER_YEAR,
         "cs_upper": None if hi is None else hi * PERIODS_PER_YEAR,
     })
@@ -669,7 +751,8 @@ def incubation_gate(returns, rf_rets, profile, th=None):
                     "zero-variance live series — not a traded strategy", hard=False)
     rpy = PERIODS_PER_YEAR
     expected = hc * profile["sharpe_excess"] / math.sqrt(rpy) * sd
-    _lo, hi = confidence_sequence(mean, sd, n, th["cs_rho_sessions"], th["incubation_alpha"])
+    hi = predictable_cs(ex, [0.0] * n, th["cs_rho_sessions"], th["incubation_alpha"],
+                        lag=th["hac_lag"], burn_in=th["cs_burn_in"], fit_beta=False)["upper"]
     vol_ratio = sd * math.sqrt(rpy) / profile["vol"]
     dd = drawdown_stats(returns)["max_drawdown"]
     dd_cap = th["incubation_dd_multiple"] * profile["max_drawdown"]

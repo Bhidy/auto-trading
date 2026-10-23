@@ -90,7 +90,9 @@
     function role(ov, keys) {
         var sources = [obj(ov.range), obj(ov.eta_range), obj(ov.projected_date), obj(ov.sessions_remaining), ov];
         var p = null;
+        var er = obj(ov.edge_range);   // engine schema: edge_range.{median,pessimistic}_{sessions,date}
         keys.forEach(function (k) {
+            if (er) p = merge(p, point({ projected_date: er[k + '_date'], sessions_remaining: er[k + '_sessions'] }));
             sources.forEach(function (src) { if (src) p = merge(p, point(src[k])); });
             p = merge(p, point(ov['projected_date_' + k]));
             if (num(ov['sessions_remaining_' + k])) p = merge(p, { date: null, sessions: ov['sessions_remaining_' + k] });

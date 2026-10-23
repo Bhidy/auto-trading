@@ -523,6 +523,7 @@
         if (BOOKS.indexOf(current) < 0) current = 'portfolio_1';
         var report = null, reportErr = null, details = {}, cfg = {};
 
+        var HTML_KEYS = { paper_banner: 'paper_banner' };   // keys whose table value is trusted markup
         function t(k) { return (T[lang] && T[lang][k] != null) ? T[lang][k] : ((T.en[k] != null) ? T.en[k] : k); }
         function tm(k, v) { var s = t(k); for (var x in v) s = s.split('{' + x + '}').join(v[x]); return s; }
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -872,7 +873,11 @@
             document.documentElement.lang = lang;
             document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.querySelectorAll('[data-key]').forEach(function (el) { el.textContent = t(el.getAttribute('data-key')); });
-            document.querySelectorAll('[data-key-html]').forEach(function (el) { el.innerHTML = t(el.getAttribute('data-key-html')); });
+            // HTML only from the static table, looked up by a fixed allow-list (never DOM text as markup).
+            document.querySelectorAll('[data-key-html]').forEach(function (el) {
+                var k = HTML_KEYS[el.getAttribute('data-key-html')];
+                if (k) el.innerHTML = t(k);
+            });
             var tg = document.getElementById('langToggle');
             if (tg) tg.textContent = lang === 'ar' ? 'EN' : 'AR';
             renderAll(true);

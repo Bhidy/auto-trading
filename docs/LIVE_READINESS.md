@@ -42,7 +42,7 @@ one is a methodology change (bump the version, add a §7 entry, never tune to a 
 | # | Gate | Threshold (hard) | Applies to |
 |---|------|------------------|------------|
 | 1 | Track record | ≥ **90 active trading sessions** since `start_date` (exchange calendar; halted/frozen sessions excluded — v1 required an uninterrupted record) | all |
-| 2 | **Benchmark-relative edge** | OLS of daily excess return on SPY excess return (rf = BIL daily total return); decided by an **always-valid one-sided confidence sequence** on alpha (normal mixture, ρ = 252 sessions, scale = Newey-West lag-5 long-run sd): **PASS iff the lower bound > 0** at level **0.05 / K** (K = max(6, live edge-claiming sleeves)) and n ≥ 60 halt-free daily returns. `fail` iff the upper bound < 0; otherwise `insufficient`. Not applicable to `claims_edge: false` sleeves; only the `owns_book_edge` sleeve of a shared account may pass it. | edge sleeves |
+| 2 | **Benchmark-relative edge** | OLS of daily excess return on SPY excess return (rf = BIL daily total return); decided by an **always-valid one-sided confidence sequence** on alpha (normal mixture, ρ = 252 sessions) built from **predictable plug-ins**: each day's residual uses a beta, and a scale, estimated only from earlier days. The scale is max(expanding sd, last-21-session sd) × the Bartlett lag-5 long-run factor; the first 20 returns only seed the estimates: **PASS iff the lower bound > 0** at level **0.05 / K** (K = max(6, live edge-claiming sleeves)) and n ≥ 60 halt-free daily returns. `fail` iff the upper bound < 0; otherwise `insufficient`. Not applicable to `claims_edge: false` sleeves; only the `owns_book_edge` sleeve of a shared account may pass it. | edge sleeves |
 | 3 | Max drawdown | ≤ 15%, the **stricter** of the version window and the whole paper period of the book | all |
 | 4 | Kill-switch headroom | live kill threshold − drawdown from the **live engine's reference** ≥ 6 pts (STRATEGY_EVIDENCE §8.3): P1 18% from `risk_officer.drawdown_reference_equity` (max(start, verified peak)); P2 15% from $100,000; P3 has no drawdown switch in its engine, so the system 18% from its starting equity applies | all |
 | 5 | Worst day | > −4% (the daily-loss halt) | all |
@@ -81,9 +81,12 @@ read the report warns that flows are unverified.
 
 **Attribution honesty:** no book yet has a clean sleeve-level return series, so every edge
 and risk number is computed on the **whole account**. When sleeves of one account overlap in
-time, exactly one (`owns_book_edge`) may own the edge test (`attribution: book_level`); the
+time, exactly one (`owns_book_edge`) may own the edge test (`attribution: book_level`). The
 others are `book_level_shared` and cannot GO on edge (P2: copies own it, the benchmark ETF
-sleeve claims no edge). Sleeve P&L is never fabricated.
+sleeve claims no edge). Overlap is judged against each sleeve's **exposure**, not its
+`end_date`. A sleeve stays exposed while any of its trade-log lots is open, or until its last
+recorded exit. Unknown exposure counts as still exposed. So P3 crisis-core shares the book with the running-off
+legacy lots and cannot claim their returns. Sleeve P&L is never fabricated.
 
 **Why v2 replaces "OOS Sharpe ≥ 1.0":**
 - An absolute Sharpe is earned by beta. SPY alone ran at ~0.66 over 2026-05-26..10-21 and in many
@@ -120,6 +123,25 @@ sleeve claims no edge). Sleeve P&L is never fabricated.
 | zero alpha, AR(1) 0.15 residuals, level 0.05/6 | 0.20% (1/500) |
 | zero alpha, Student-t(4) residuals, level 0.05/6 | 0.00% (0/500) |
 | v2.0 fixed rule, N = 1, same setup | **30.7%** (looks every 5 sessions, 300 paths) |
+
+**v2.2 stress test** (Codex review 2026-10-23: v2.1 plugged full-sample beta/HAC estimates
+into the martingale, which voids Ville's guarantee under changing volatility). Zero alpha, level
+0.05/6 = 0.83%, looks every 10 sessions for 5 years, 400 paths each:
+
+| Residuals | v2.1 full-sample plug-in | v2.2 predictable (expanding sd only) | **v2.2 shipped** (max(expanding, 21-day) sd) |
+|---|---|---|---|
+| iid normal | 0.25% | 0.25% | **0.25%** |
+| AR(1) 0.15 | 0.25% | 0.25% | **0.25%** |
+| Student-t(4) | 0.00% | 0.00% | **0.00%** |
+| GARCH(1,1) | 0.25% | 0.25% | **0.00%** |
+| vol 30% → 5% after 6 months | 0.00% | 0.00% | **0.00%** |
+| vol 5% → 30% after 1 year | 0.00% | **3.00% (fails)** | **0.25%** |
+| beta drifting 0.5 → 1.1 | 0.25% | 0.25% | **0.25%** |
+
+The expanding-only version failed the low-to-high volatility shift, so the fast window was
+added. Price of validity (120 paths, 10-year horizon): median sessions to GO at IR 1.2 go from
+1,720 (v2.1) to 2,200 (≈ 8.7 y); at IR 2.0, from 800 to 900. P(GO within 5 y) at IR 2.0 goes
+from 85% to 78%.
 
 | True annual IR (β 0.5, 10% residual vol) | Median sessions to GO | P(GO by 2 / 5 / 10 / 20 y) |
 |---|---|---|
@@ -205,12 +227,12 @@ account activities, calendar, SIP adjusted SPY/BIL bars, GitHub run history). Ed
 
 | Sleeve (registry id) | Status | Sessions (active) | Alpha/yr (β) | Always-valid bounds | Verdict | Gates | Binding gate · ETA |
 |---|---|---|---|---|---|---|---|
-| P1 momentum v1 | exits_only | 78 (**1** — frozen 07-07..10-22) | — (n = 1) | — | **NOT_ELIGIBLE** | 8/12 | edge · too early |
-| P1 multi-factor satellite | quarantined | 16 (16) | −77.9% (0.84) | [−524%, +368%] | **NOT_ELIGIBLE** | 7/14 | edge (n = 15) · PF 0.33 on 61 trades |
-| P2 copy v2 (owns P2 edge) | active | 78 (78) | +2.8% (0.45) | [−42.9%, +48.5%] | **NOT_READY** | 7/14 | edge · no central projection; optimistic (α̂ + 1 s.e.) ≈ 486 sessions → 2028-09 |
+| P1 momentum v1 | exits_only, shares the book with open multi-factor lots | 78 (**1** — frozen 07-07..10-22) | — (n = 1) | — | **NOT_ELIGIBLE** | 8/12 | track record |
+| P1 multi-factor satellite | quarantined | 16 (16) | −77.9% (0.84) | — (15 returns < 20 burn-in) | **NOT_ELIGIBLE** | 7/14 | edge (n = 15) · PF 0.33 on 61 trades |
+| P2 copy v2 (owns P2 edge) | active | 78 (78) | +2.8% (0.45) | [−58.9%, +73.4%] | **NOT_READY** | 7/14 | edge · no central projection; optimistic (α̂ + 1 s.e.) ≈ 486 sessions → 2028-09 |
 | P2 benchmark ETF | active, no edge claim | 100 (100) | not applicable | — | **BETA_SLEEVE** | 8/11 | exception-free streak · 2026-11-16 |
-| P3 legacy event-driven | quarantined | 90 (90) | −11.9% (0.57) | [−131%, +107%] | **NOT_ELIGIBLE** | 11/14 | edge · PF 0.99 on 81 trades |
-| P3 crisis_core_v1 forward | forward_test (cap FORWARD_TEST_PASS) | 0 | — | — | **NOT_READY** | 3/12 | edge · too early (first fills 2026-10-23) |
+| P3 legacy event-driven | quarantined | 90 (90) | −11.9% (0.57) | [−269%, +216%] | **NOT_ELIGIBLE** | 11/14 | edge · PF 0.99 on 81 trades |
+| P3 crisis_core_v1 forward | forward_test (cap FORWARD_TEST_PASS); shares the book with 5 open legacy lots from 10-23 | 0 | — | — | **NOT_READY** | 3/12 | edge · too early (first fills 2026-10-23) |
 
 Book facts: whole-paper-period max DD P1 7.8%, P2 3.3%, P3 9.2%; kill-switch headroom vs the
 live references P1 15.2 pts (18% from $100K), P2 15.0 pts (15% from $100K; book above start),
@@ -234,7 +256,7 @@ negative alpha), not to certify.
 
 | Version | Date | Change | Reason |
 |---|---|---|---|
-| 2.2.0 | 2026-10-23 | Two-stage path to GO (§2a): Stage A `research` (pre-registered result, spec-hash verified, acceptance PASS, backtest DD ≤ 12%) + Stage B `incubation_consistency` (≥ 60 live returns not contradicting the backtest: always-valid Sharpe bound vs 0.5× haircut, vol ratio 0.5–1.5, DD ≤ 1.5× backtest). Selected only when Stage A passes, the live edge has not, and the sleeve owns its series; all other hard gates unchanged. Registry field `research`. | Live P&L alone cannot certify IR ≤ 1 in under ~7 years (v2.1 power table); institutional practice certifies edge in pre-registered, deflated research and uses live incubation to verify implementation. Stage B's limited power is measured and stated. |
+| 2.2.0 | 2026-10-23 | **Review round:** the edge decision now uses a predictable plug-in confidence sequence (above); attribution is judged on exposure (open lots) instead of `end_date`. Then the two-stage path to GO (§2a): Stage A `research` (pre-registered result, spec-hash verified, acceptance PASS, backtest DD ≤ 12%) + Stage B `incubation_consistency` (≥ 60 live returns not contradicting the backtest: always-valid Sharpe bound vs 0.5× haircut, vol ratio 0.5–1.5, DD ≤ 1.5× backtest). Selected only when Stage A passes, the live edge has not, and the sleeve owns its series; all other hard gates unchanged. Registry field `research`. | Live P&L alone cannot certify IR ≤ 1 in under ~7 years (v2.1 power table); institutional practice certifies edge in pre-registered, deflated research and uses live incubation to verify implementation. Stage B's limited power is measured and stated. |
 | 2.1.0 | 2026-10-23 | Edge decided by an always-valid one-sided normal-mixture confidence sequence (ρ = 252, HAC scale) at 0.05/K, K = max(6, live edge sleeves); DSR@backtest-trials and t_HAC/z_req demoted to informational. New verdicts BETA_SLEEVE (`claims_edge: false`) and FORWARD_TEST_PASS (cap for forward tests); one edge owner per shared account (`book_level_shared`). Kill headroom vs each live engine's reference; max DD = stricter of window and whole paper period; halted sessions excluded (`book_halts`); abs(r) > 25% data faults and Alpaca cash-flow sessions excluded; slippage only vs a decision/arrival price; ETA as median/pessimistic/optimistic range; id-less trade rows distinct; cron dedup only once today's equity point exists. | Adversarial review 2026-10-23: daily re-evaluation of a fixed threshold gave 21–26% false GO at zero alpha over 2–5 y; backtest trial counts wrongly deflated live returns; P2 benchmark sleeve was scored on the copy book; window-peak headroom differed from the live kill switches; a frozen P1 counted as track record; P2's journal phantom ($27.9K) would have entered as data; P2 "slippage" was limit headroom. |
 | 2.0.0 | 2026-10-23 | Readiness Engine v2: per-sleeve registry; trading-session counting with version reset; benchmark-relative alpha (OLS on SPY, rf = BIL, Newey-West lag 5) + DSR ≥ 0.95 at the honest trial count replaces absolute OOS Sharpe ≥ 1.0; kill-switch headroom, worst day, CVaR95, regime coverage and five operational gates computed; binding gate + power-analysis ETA; no percentage score. Kept: 90 sessions, DD ≤ 15%, PF ≥ 1.3, ≥ 50 trades. | Audit 2026-10-23 of the readiness page: P1 Sharpe gate hard-coded PASS from a stale July constant, hard-coded backtest chips, calendar days counted as trading days and never reset on strategy change, live Sharpe never computed, PF/sample mixed versions and sleeves, "60% ready" gauge, no ETA, regime and operational gates never computed. |
 | 1.0 | 2026-06 | Original §2 table (track record, OOS Sharpe ≥ 1.0, DD, PF, trades, regimes). | Initial live-readiness bar. |

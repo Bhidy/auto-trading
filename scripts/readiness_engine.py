@@ -362,14 +362,36 @@ def family_k(registry, th=None):
     return max(int(th["k_family_floor"]), live), live
 
 
-def edge_ownership(s, registry, as_of):
-    """(attribution, owns_edge, note). Sleeves of one book whose live windows
-    overlap share the book-level series; only ONE may own the edge test."""
-    def span(x):
-        return x["start_date"], min(x.get("end_date") or as_of, as_of)
-    a0, a1 = span(s)
+def exposure_end(s, log, as_of):
+    """Last session a sleeve still carried positions in its book. ``end_date``
+    is only the last session it OPENED entries: lots keep moving the book's
+    returns until they exit. Open lot (or no row selector / no log) => exposed
+    through ``as_of`` (fail closed: an unknown exposure is never assumed gone);
+    otherwise the later of end_date and the last recorded exit."""
+    if not s.get("end_date"):
+        return as_of
+    rows = sleeve_rows(s["id"], log, s["start_date"], as_of) if log is not None else None
+    if rows is None:
+        return as_of
+    if any(str(t.get("status") or "").lower() == "open" for t in rows):
+        return as_of
+    exits = [d for d in (R.iso_date_et(t.get("exit_timestamp")) for t in rows) if d]
+    return min(max([s["end_date"]] + exits), as_of)
+
+
+def edge_ownership(s, registry, as_of, exposure=None):
+    """(attribution, owns_edge, note). A sleeve shares its book-level series
+    with every other sleeve of the book whose EXPOSURE span (start ->
+    ``exposure`` end, default end_date) overlaps this sleeve's evidence window;
+    only ONE sleeve may own the edge test of a shared series."""
+    exposure = exposure or {}
+    a0, a1 = s["start_date"], min(s.get("end_date") or as_of, as_of)
+
+    def exp_span(x):
+        return x["start_date"], min(exposure.get(x["id"]) or x.get("end_date") or as_of, as_of)
+
     group = [o for o in registry if o["book"] == s["book"] and o["id"] != s["id"]
-             and span(o)[0] <= a1 and a0 <= span(o)[1]]
+             and exp_span(o)[0] <= a1 and a0 <= exp_span(o)[1]]
     if not group:
         return "book_level", s.get("claims_edge", True), "sole registered sleeve in the book over its window"
     peers = [s] + group
@@ -716,6 +738,9 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
     controls = _load(CONTROLS_PATH, {})
     warnings.extend(controls_warnings(registry, controls))
 
+    logs = {pid: _load(_rel(b["dir"], "trade_log.json"), None) for pid, b in BOOKS.items()}
+    exposure = {x["id"]: exposure_end(x, logs.get(x["book"]), as_of) for x in registry if x.get("book") in BOOKS}
+
     wf_cache = {}
     sleeves_out = []
     for s in registry:
@@ -745,7 +770,7 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         use_bil = bool(edge_w["dates"]) and sum(1 for d in edge_w["dates"] if d in bil_by) >= 0.9 * len(edge_w["dates"])
         aligned = [(d, r) for d, r in zip(edge_w["dates"], edge_w["returns"]) if d in spy_by]
 
-        attribution, owns_edge, attr_note = edge_ownership(s, registry, as_of)
+        attribution, owns_edge, attr_note = edge_ownership(s, registry, as_of, exposure)
         y = [r for _, r in aligned]
         rf = [(bil_by.get(d, rf_const) if use_bil else rf_const) for d, _ in aligned]
         if not claims_edge:

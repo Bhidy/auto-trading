@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T16:36:03.973745+00:00",
+  "generated_at": "2026-10-23T16:53:12.789134+00:00",
   "as_of_session": "2026-10-22",
   "methodology_version": "2.2.0",
   "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.2)",
@@ -32,6 +32,7 @@
     "min_sessions_for_eta": 20,
     "eta_cap_sessions": 2520,
     "rf_fallback_annual": 0.04,
+    "cs_burn_in": 20,
     "research_max_backtest_drawdown": 0.12,
     "incubation_min_returns": 60,
     "incubation_sharpe_haircut": 0.5,
@@ -85,8 +86,8 @@
         "data_fault_sessions": [],
         "cash_flow_sessions": []
       },
-      "attribution": "book_level",
-      "owns_edge_test": true,
+      "attribution": "book_level_shared",
+      "owns_edge_test": false,
       "path": "live_edge",
       "research": {
         "registered": false,
@@ -95,7 +96,7 @@
         "profile": null,
         "incubation_status": "not_applicable"
       },
-      "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
+      "attribution_note": "book-level series owned by NO sleeve (ambiguous owns_book_edge); returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
       "gates": [
         {
           "id": "track_record",
@@ -119,8 +120,8 @@
             "cs_lower": null,
             "cs_upper": null
           },
-          "status": "insufficient",
-          "detail": "only 1 aligned daily returns",
+          "status": "not_measured",
+          "detail": "no clean sleeve series: book-level series owned by NO sleeve (ambiguous owns_book_edge) (stats shown are the book's)",
           "eta_sessions": null,
           "hard": true
         },
@@ -313,10 +314,11 @@
           "optimistic_date": null
         },
         "overall": {
-          "sessions_remaining": null,
-          "projected_date": null,
-          "label": "no projection \u2014 no convergence path for: edge",
+          "sessions_remaining": 89,
+          "projected_date": "2027-03-03",
+          "label": "estimate (current alpha / trade / clean-session rates held constant)",
           "excludes_measurement_gaps": [
+            "edge",
             "slippage",
             "exception_free"
           ]
@@ -324,14 +326,15 @@
       },
       "verdict": "NOT_ELIGIBLE",
       "verdict_note": null,
-      "binding_gate": "edge",
+      "binding_gate": "track_record",
       "gates_passed": 8,
       "gates_total": 12,
       "measurement_gaps": [
+        "edge",
         "slippage",
         "exception_free"
       ],
-      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 1 aligned daily returns. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Paper track record (trading sessions) \u2014 1 active sessions since the version start (78 total, 77 halted/frozen excluded). Not yet measured (blocks GO): edge, slippage, exception_free. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p1-multifactor-satellite-v2",
@@ -392,8 +395,8 @@
             "t_hac": -4.86,
             "dsr": 0.0,
             "n": 15,
-            "cs_lower": -5.2405,
-            "cs_upper": 3.6829
+            "cs_lower": null,
+            "cs_upper": null
           },
           "status": "insufficient",
           "detail": "n=15 < 60 pre-registered minimum",
@@ -566,8 +569,8 @@
         "status": "insufficient",
         "eta_state": "too_early",
         "decision_rule": "confidence_sequence",
-        "cs_lower": -5.240514,
-        "cs_upper": 3.682912,
+        "cs_lower": null,
+        "cs_upper": null,
         "alpha_level": 0.008333,
         "rho": 252
       },
@@ -603,7 +606,7 @@
         "slippage",
         "exception_free"
       ],
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Alpha vs SPY -77.9%/yr (beta 0.84, n=15); always-valid bounds [-524.1%, +368.3%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-copy-v2",
@@ -662,11 +665,11 @@
             "t_hac": 0.37,
             "dsr": 0.0417,
             "n": 78,
-            "cs_lower": -0.4288,
-            "cs_upper": 0.4854
+            "cs_lower": -0.5885,
+            "cs_upper": 0.7342
           },
           "status": "insufficient",
-          "detail": "alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042",
+          "detail": "alpha +2.83%/yr (beta 0.45); always-valid bounds [-58.85%, +73.42%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042",
           "eta_sessions": null,
           "hard": true
         },
@@ -840,8 +843,8 @@
         "status": "insufficient",
         "eta_state": "uncertain",
         "decision_rule": "confidence_sequence",
-        "cs_lower": -0.428827,
-        "cs_upper": 0.485374,
+        "cs_lower": -0.588504,
+        "cs_upper": 0.734164,
         "alpha_level": 0.008333,
         "rho": 252
       },
@@ -887,7 +890,7 @@
         "slippage",
         "exception_free"
       ],
-      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-42.9%, +48.5%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-58.9%, +73.4%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-58.85%, +73.42%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-benchmark-etf-v1",
@@ -1183,11 +1186,11 @@
             "t_hac": -0.572,
             "dsr": 0.0103,
             "n": 89,
-            "cs_lower": -1.3053,
-            "cs_upper": 1.0673
+            "cs_lower": -2.6865,
+            "cs_upper": 2.1576
           },
           "status": "insufficient",
-          "detail": "alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010",
+          "detail": "alpha -11.90%/yr (beta 0.57); always-valid bounds [-268.65%, +215.76%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010",
           "eta_sessions": null,
           "hard": true
         },
@@ -1361,8 +1364,8 @@
         "status": "insufficient",
         "eta_state": "uncertain",
         "decision_rule": "confidence_sequence",
-        "cs_lower": -1.305349,
-        "cs_upper": 1.067279,
+        "cs_lower": -2.686496,
+        "cs_upper": 2.157617,
         "alpha_level": 0.008333,
         "rho": 252
       },
@@ -1404,7 +1407,7 @@
       "measurement_gaps": [
         "exception_free"
       ],
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-130.5%, +106.7%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Not yet measured (blocks GO): exception_free. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-268.6%, +215.8%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-268.65%, +215.76%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Not yet measured (blocks GO): exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p3-crisis-core-v1-forward",
@@ -1812,7 +1815,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T16:36:08.902897+00:00",
+    "as_of": "2026-10-23T16:53:17.985236+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
