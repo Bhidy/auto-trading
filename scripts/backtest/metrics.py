@@ -217,6 +217,29 @@ def deflated_sharpe_ratio(trial_sharpes, n_obs, skew=0.0, kurtosis=3.0):
     return probabilistic_sharpe_ratio(sr_best, sr0, n_obs, skew, kurtosis)
 
 
+def expected_max_null_z(n_trials):
+    """Expected maximum of ``n_trials`` independent standard-normal draws
+    (Bailey & López de Prado, False Strategy Theorem). 0.0 for a single trial."""
+    if n_trials is None or n_trials <= 1:
+        return 0.0
+    z1 = inverse_normal_cdf(1.0 - 1.0 / n_trials)
+    z2 = inverse_normal_cdf(1.0 - 1.0 / (n_trials * math.e))
+    return (1.0 - _EULER_MASCHERONI) * z1 + _EULER_MASCHERONI * z2
+
+
+def deflated_sharpe_at_trial_count(sr, n_obs, n_trials, skew=0.0, kurtosis=3.0):
+    """Deflated Sharpe when only the honest TRIAL COUNT is known, not each
+    trial's Sharpe. Benchmark = expected max per-period Sharpe of ``n_trials``
+    zero-skill trials whose estimates have null variance ~1/(n_obs-1); then
+    ``probabilistic_sharpe_ratio``. N <= 1 reduces to PSR vs 0. Same formula as
+    ``scripts/research/passive_core_eval.dsr_with_trial_count`` (research lane);
+    this is the cloud-path copy. ``sr`` is per-period."""
+    if n_obs < 2:
+        return 0.0
+    sr0 = math.sqrt(1.0 / (n_obs - 1)) * expected_max_null_z(n_trials)
+    return probabilistic_sharpe_ratio(sr, sr0, n_obs, skew, kurtosis)
+
+
 def probability_of_backtest_overfitting(perf_matrix, n_splits=None):
     """Probability of Backtest Overfitting (CSCV, Bailey et al.).
 

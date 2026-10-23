@@ -1,0 +1,65 @@
+name: "Readiness Engine v2 — Daily Report"
+
+# Recomputes the per-sleeve live-readiness report (docs/LIVE_READINESS.md §2 v2)
+# after every EOD has committed: benchmark-relative alpha + DSR at the honest
+# trial count, risk / sample / regime / operational gates, binding gate + ETA.
+# READ-ONLY on the broker (GET portfolio history, calendar, bars) — it places no
+# orders and never writes config. Output: data/readiness_report.json, mirrored
+# to dashboard/data/ by commit_and_push.sh.
+on:
+  schedule:
+    # After all EODs (EDT ends ~20:50 UTC, EST ~21:50 UTC). Two fires cover both
+    # UTC offsets; --skip-if-current makes the second a no-op once the session's
+    # report exists.
+    - cron: "45 22 * * 1-5"   # 6:45pm ET EDT
+    - cron: "45 23 * * 1-5"   # 6:45pm ET EST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read     # workflow run history for the exception-free gate
+
+concurrency:
+  group: readiness
+  cancel-in-progress: false
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compute readiness report
+        env:
+          P1_API_KEY: ${{ secrets.P1_API_KEY }}
+          P1_API_SECRET: ${{ secrets.P1_API_SECRET }}
+          P2_API_KEY: ${{ secrets.P2_API_KEY }}
+          P2_API_SECRET: ${{ secrets.P2_API_SECRET }}
+          P3_API_KEY: ${{ secrets.P3_API_KEY }}
+          P3_API_SECRET: ${{ secrets.P3_API_SECRET }}
+          # Optional read-only fallback for equity history (RLS anon = SELECT only).
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            python3 scripts/readiness_engine.py --skip-non-session --skip-if-current
+          else
+            python3 scripts/readiness_engine.py
+          fi
+
+      - name: Sync data to dashboard for Vercel deploy
+        run: |
+          mkdir -p dashboard/data
+          cp data/readiness_report.json dashboard/data/ 2>/dev/null || true
+
+      - name: Commit report
+        run: |
+          bash scripts/commit_and_push.sh "Readiness v2: daily report" data/readiness_report.json
