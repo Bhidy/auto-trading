@@ -729,8 +729,9 @@ def test_chart_series_compounds_and_drawdown_is_peak_relative():
     s = R.chart_series(["d1", "d2", "d3"], [0.10, -0.10, 0.05], {"d1": 0.01, "d3": 0.02})
     assert s["cum_return"] == [0.1, round(1.1 * 0.9 - 1, 5), round(1.1 * 0.9 * 1.05 - 1, 5)]
     assert s["drawdown"][0] == 0.0 and s["drawdown"][1] == round(0.99 / 1.1 - 1, 5)
-    # A missing benchmark day is a gap, never an invented 0% return.
-    assert s["benchmark_cum"] == [0.01, None, round(1.01 * 1.02 - 1, 5)]
+    # After a missing benchmark day the cumulative benchmark is unknown — never
+    # compounded across the gap (that would assume a 0% session).
+    assert s["benchmark_cum"] == [0.01, None, None]
     assert s["benchmark_missing"] == ["d2"]
 
 # --- review round 2 (Codex on PR #105) -----------------------------------------

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T17:40:59.098913+00:00",
+  "generated_at": "2026-10-23T17:54:12.506887+00:00",
   "as_of_session": "2026-10-22",
   "methodology_version": "2.3.0",
   "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.3)",
@@ -3790,7 +3790,7 @@
         "reference_equity": 100000.0,
         "current_equity": 97220.5,
         "kill_drawdown": 0.18,
-        "basis": "peak",
+        "basis": "start",
         "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"
       },
       "series": {
@@ -5158,7 +5158,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T17:41:06.939474+00:00",
+    "as_of": "2026-10-23T17:54:18.326358+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",

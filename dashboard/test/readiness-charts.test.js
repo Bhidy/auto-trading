@@ -127,3 +127,10 @@ test('report: every book declares its kill-switch basis (peak-relative or start-
         }
     }
 });
+
+test('lines: a series ending in a gap is labelled without a stale value', () => {
+    const r = RC.lines(['d1', 'd2', 'd3'], [{ key: 's', label: 'SPY', values: [0.01, null, null] }], { width: 400 });
+    noNaN(r.svg);
+    assert.ok(r.svg.includes('SPY ⁦—⁩'));
+    assert.equal(r.svg.includes('+1.0%'), false);
+});

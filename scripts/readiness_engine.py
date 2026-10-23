@@ -342,8 +342,12 @@ def kill_reference(pid, current_equity):
             ref = drawdown_reference_equity(st)
         except Exception:
             ref = max(float(st.get("starting_equity") or 100000.0), float(st.get("peak_equity") or 0.0))
+        start = float(st.get("starting_equity") or 100000.0)
+        # The ACTIVE basis: a verified peak above the start makes the switch
+        # peak-relative; with no verified peak it measures from starting equity.
+        basis = "peak" if ref > start + 1e-6 else "start"
         return {"reference_equity": ref, "current_equity": current_equity, "kill_drawdown": system_kd,
-                "basis": "peak", "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"}
+                "basis": basis, "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"}
     if pid == "portfolio_2":
         p2 = _load(_rel("political-copy-bot", "config", "risk_limits.json"), {}) or {}
         return {"reference_equity": 100000.0, "current_equity": current_equity,

@@ -707,7 +707,7 @@
                 ch_aria_lines: '{b} cumulative return {r} against SPY {s} over the same {n} sessions.',
                 ch_aria_dd: '{b} drawdown, worst {w}, against the {g} gate and the {k} kill switch.',
                 ch_aria_dd_start: '{b} drawdown from peak, worst {w}, against the {g} gate. Its {k} kill switch is measured from starting equity, so it is not drawn on this chart.',
-                k_spy_gaps: 'SPY ({n} sessions without data)', no_data: 'no data',
+                k_spy_gaps: 'SPY — unknown ({n} sessions without data)', no_data: 'no data',
                 tip_band: 'lower {lo} · mid {pt} · upper {hi}',
                 mx_h: 'Every gate, every strategy', mx_strategy: 'Strategy', mx_verdict: 'Verdict',
                 grp_evidence: 'Evidence', grp_risk: 'Risk', grp_ops: 'Operations',
@@ -742,7 +742,7 @@
                 ch_aria_lines: 'العائد التراكمي لـ {b} {r} مقابل SPY {s} عبر نفس الـ {n} جلسة.',
                 ch_aria_dd: 'تراجع {b}، الأسوأ {w}، مقابل حد {g} ومفتاح الإيقاف {k}.',
                 ch_aria_dd_start: 'تراجع {b} من القمة، الأسوأ {w}، مقابل حد {g}. مفتاح الإيقاف {k} يُقاس من رأس المال الابتدائي فلا يُرسم هنا.',
-                k_spy_gaps: 'SPY ({n} جلسة بلا بيانات)', no_data: 'لا بيانات',
+                k_spy_gaps: 'SPY — غير معروف ({n} جلسة بلا بيانات)', no_data: 'لا بيانات',
                 tip_band: 'الأدنى {lo} · المنتصف {pt} · الأعلى {hi}',
                 mx_h: 'كل الشروط، لكل استراتيجية', mx_strategy: 'الاستراتيجية', mx_verdict: 'الحكم',
                 grp_evidence: 'الأدلة', grp_risk: 'المخاطر', grp_ops: 'التشغيل',
@@ -967,8 +967,9 @@
             if (!report) { host.innerHTML = ''; return; }
             var state = keepOpen ? openStates() : {};
             var b = (report.books || {})[current] || {}, ser = b.series || {};
-            var n = (ser.dates || []).length, ret = n ? ser.cum_return[n - 1] : null, spy = null;
-            (ser.benchmark_cum || []).forEach(function (v) { if (num(v)) spy = v; });
+            var n = (ser.dates || []).length, ret = n ? ser.cum_return[n - 1] : null;
+            // The comparison is only valid when SPY covers every session; a gap makes it unknown.
+            var spy = n && ser.benchmark_cum && num(ser.benchmark_cum[n - 1]) ? ser.benchmark_cum[n - 1] : null;
             var dd = num(b.max_drawdown_paper_period) ? -b.max_drawdown_paper_period : null;
             var kill = (b.kill_switch || {}).kill_drawdown, killBasis = (b.kill_switch || {}).basis;
             var spyGaps = (ser.benchmark_missing || []).length;

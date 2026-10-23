@@ -195,8 +195,9 @@
         var x = lin(0, n - 1, f.l, f.w - f.r), y = lin(lo, hi, f.h - f.b, f.t);
         var xs = []; for (var i = 0; i < n; i++) xs.push(x(i));
         var labs = declutter(ls.filter(function (l) { return num(lastFinite(l.values)); }).map(function (l) {
-            var v = lastFinite(l.values);
-            return { y: y(v), t: l.label + ' ' + iso(pct(v, 1)), c: l.cls || '' };
+            var v = lastFinite(l.values), fin = num(l.values[n - 1]);
+            // A series that ends in a gap has no current value: label it, don't quote a stale one.
+            return { y: y(v), t: l.label + ' ' + iso(fin ? pct(v, 1) : '—'), c: l.cls || '' };
         }), 15, f.t + 4, f.h - f.b);
         var svg = open(f, 'rc-lines', opts.aria || 'Cumulative return') +
             yGrid(f, ticks(lo, hi, 3), y, function (v) { return pct(v, 0); }) +
