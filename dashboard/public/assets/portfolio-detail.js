@@ -1141,10 +1141,43 @@
         'Materials':              { beta: 1.05, vol: 0.22 },
         'Utilities':              { beta: 0.45, vol: 0.15 },
         'Real Estate':            { beta: 0.85, vol: 0.20 },
-        'Broad Market':           { beta: 1.00, vol: 0.16 },
+        'US Equity (Broad)':      { beta: 1.00, vol: 0.17 },
+        // Asset-class buckets (server SECTOR_MAP). Fallbacks only — the
+        // symbols the books actually hold are priced in ASSET_RISK below.
+        'International Equity':   { beta: 0.80, vol: 0.16 },
+        'Managed Futures':        { beta: 0.00, vol: 0.13 },
+        'US Treasuries':          { beta: 0.10, vol: 0.08 },
+        'Cash & T-Bills':         { beta: 0.00, vol: 0.005 },
+        'Gold':                   { beta: 0.15, vol: 0.15 },
         'Unclassified':           { beta: 1.00, vol: 0.20 },
         'Other':           { beta: 1.00, vol: 0.20 }
     };
+
+    // Per-ETF overrides: a broad index or asset-class ETF is not "the market at
+    // beta 1.0". ASSUMPTION / SOURCE: approximate long-run (≈5-year, monthly)
+    // betas vs SPY and annualised volatilities as published by fund-data
+    // aggregators, rounded to 0.05 — static estimates, NOT realised from this
+    // book's own bars, and the UI labels the figure an estimate.
+    //  - Managed futures (DBMF/KMLM/CTA): trend-following; 5Y beta ≈ 0, its
+    //    sign flips with the window, so 0 is used rather than a false decimal.
+    //  - IEF: stock/bond correlation turned positive after 2021 (slightly
+    //    negative before); +0.10 is the conservative (higher-risk) choice.
+    //  - T-bill funds (BIL/SHV/SGOV/USFR): beta 0, vol ≈ 0.5%.
+    var ASSET_RISK = {
+        SPY:  { beta: 1.00, vol: 0.17 }, QQQ: { beta: 1.15, vol: 0.22 },
+        IWM:  { beta: 1.15, vol: 0.24 }, DIA: { beta: 0.90, vol: 0.16 },
+        EFA:  { beta: 0.80, vol: 0.16 },
+        DBMF: { beta: 0.00, vol: 0.12 }, KMLM: { beta: 0.00, vol: 0.15 }, CTA: { beta: 0.00, vol: 0.12 },
+        SHY:  { beta: 0.02, vol: 0.02 }, IEF:  { beta: 0.10, vol: 0.07 }, TLT: { beta: 0.20, vol: 0.15 },
+        BIL:  { beta: 0.00, vol: 0.005 }, SHV: { beta: 0.00, vol: 0.005 },
+        SGOV: { beta: 0.00, vol: 0.005 }, USFR: { beta: 0.00, vol: 0.005 },
+        GLD:  { beta: 0.15, vol: 0.15 }
+    };
+    function riskFor(h) {
+        var sym = String((h && h.symbol) || '').toUpperCase();
+        return ASSET_RISK[sym] || SECTOR_RISK[h && h.sector] || SECTOR_RISK.Other;
+    }
+    var CASH_LIKE = { 'Defensive': 1, 'Cash & T-Bills': 1, 'US Treasuries': 1, 'Gold': 1 };
 
     function il(en, ar) { return lang === 'ar' ? ar : en; }
     function moneyShort(n, signed) {
@@ -1223,7 +1256,7 @@
 
         var wsum = 0, betaAcc = 0, volAcc = 0;
         holds.forEach(function (h) {
-            var sr = SECTOR_RISK[h.sector] || SECTOR_RISK.Other;
+            var sr = riskFor(h);
             var w = (h.weight || 0) / 100;
             wsum += w; betaAcc += w * sr.beta; volAcc += w * sr.vol;
         });
@@ -1385,7 +1418,47 @@
             healthScoreCard(I) +
             riskExposureCard(I) +
         '</div>' +
+        allocatorStatusCard() +
         tradeQualityCard(I);
+    }
+
+    /* ── P3 allocator forward-test status (read from allocator_state.json) ─ */
+    function allocatorStatusCard() {
+        if (pfId !== 'portfolio_3') return '';
+        var a = detailCache && detailCache.allocator;
+        var head = icHead('layers', il('Allocator · Forward Test', 'المُخصِّص · اختبار أمامي'),
+            il('Paper forward test of a strategy that failed its backtest promotion gate — not a promotion',
+               'اختبار أمامي ورقي لاستراتيجية لم تجتز بوابة الترقية في الاختبار الرجعي — ليست ترقية'));
+        if (!a || !a.available) {
+            return '<div class="pf-ic pf-alloc">' + head +
+                '<div class="pf-alloc-empty">' + il('No allocator state recorded yet.', 'لا توجد حالة مسجّلة للمُخصِّص بعد.') + '</div></div>';
+        }
+        var pctTxt = function (v, d) { return v == null ? '—' : fmt(v, d == null ? 1 : d) + '%'; };
+        var w100 = function (v) { return v == null ? null : v * 100; };
+        var statusTxt = a.status ? a.status.replace(/_/g, ' ') : null;
+        var ord = a.last_run_orders || {};
+        var r = a.residual_tbill;
+        var residual = !r ? il('Not recorded in state', 'غير مسجّل في الحالة')
+            : (r.added && r.added.length
+                ? r.added.map(function (x) { return escHtml(x.symbol) + ' ' + pctTxt(w100(x.weight), 2); }).join(' · ') +
+                  (r.cash_residual != null ? ' <span class="pf-alloc-dim">· ' + il('cash ', 'نقد ') + pctTxt(w100(r.cash_residual), 2) + '</span>' : '')
+                : escHtml(r.rule || il('No residual added', 'لا يوجد فائض مضاف')));
+        var cells = [
+            [il('Strategy', 'الاستراتيجية'), '<span class="pf-num">' + escHtml(a.strategy_tag || a.strategy || '—') + '</span>', true],
+            [il('Month', 'الشهر'), '<span class="pf-num">' + escHtml(a.targets_month || '—') + '</span>' +
+                (statusTxt ? ' <span class="pf-alloc-dim">· ' + escHtml(statusTxt) + '</span>' : '')],
+            [il('Last run', 'آخر تشغيل'), '<span class="pf-num">' + (a.last_run_at ? ATFmt.etDateTime(a.last_run_at) : '—') + '</span>'],
+            [il('Cap shortfall', 'نقص سقف التخصيص'), '<span class="pf-num">' + pctTxt(a.cap_shortfall_pct, 1) + '</span>'],
+            [il('Last run orders', 'أوامر آخر تشغيل'), '<span class="pf-num">' + (ord.filled || 0) + '/' + (ord.count || 0) + '</span> <span class="pf-alloc-dim">' + il('filled', 'منفّذة') + '</span>'],
+            [il('Open lots', 'المراكز المفتوحة'), '<span class="pf-num">' + (a.open_lots || 0) + '</span> <span class="pf-alloc-dim">· ' + (a.targets ? a.targets.length : 0) + ' ' + il('targets', 'أهداف') + '</span>'],
+            [il('T-bill residual', 'فائض أذون الخزانة'), residual, true]
+        ];
+        var blocked = a.buys_blocked ? '<div class="pf-alloc-warn">' + il('Buys blocked: ', 'الشراء محظور: ') + escHtml(a.buys_blocked) + '</div>' : '';
+        return '<div class="pf-ic pf-alloc">' + head +
+            '<dl class="pf-alloc-grid">' + cells.map(function (c) {
+                return '<div' + (c[2] ? ' class="pf-alloc-wide"' : '') + '><dt>' + c[0] + '</dt><dd>' + c[1] + '</dd></div>';
+            }).join('') + '</dl>' + blocked +
+        '</div>';
     }
     function hubPaneAttribution(I) {
         return strategyAttributionCard(I) + aiDecisionInsightsCard(I);
@@ -1513,7 +1586,7 @@
         }
         var betaTone = I.beta > 1.15 ? 'pf-neg' : I.beta < 0.85 ? '' : '';
         var metricsRow =
-            metric(il('Portfolio Beta', 'بيتا المحفظة'), '<span class="' + betaTone + '">' + fmt(I.beta, 2) + '</span>', il('vs S&P 500', 'مقابل S&P 500')) +
+            metric(il('Portfolio Beta', 'بيتا المحفظة'), '<span class="' + betaTone + '">' + fmt(I.beta, 2) + '</span>', il('Est. from holdings · vs S&P 500', 'تقدير من المراكز · مقابل S&P 500')) +
             metric(il('Volatility (Ann.)', 'التقلب السنوي'), fmt(I.portVol * 100, 1) + '%', il('estimated', 'تقديري')) +
             metric(il('Cash Deployment', 'نشر النقد'), fmt(I.cashDeploy, 1) + '%', il('invested', 'مُستثمر')) +
             metric(il('Largest Position', 'أكبر مركز'), fmt(I.largest, 1) + '%', I.byWeight[0] ? escHtml(I.byWeight[0].symbol) : '—') +
@@ -1588,7 +1661,7 @@
         }
         var rows = src.map(function (h) {
             var ret = h.totalReturn || 0, day = h.dayChangePct || 0, w = h.weight || 0;
-            var sr = SECTOR_RISK[h.sector] || SECTOR_RISK.Other;
+            var sr = riskFor(h);
             var action, pillCls;
             if (portfolio.halted) { action = il('Hold', 'احتفاظ'); pillCls = 'is-hold'; }
             else if (w > 12) { action = il('Trim', 'تقليص'); pillCls = 'is-sell'; }
@@ -1610,7 +1683,7 @@
             var riskLvl = (sr.vol > 0.28 || w > 12) ? 'is-high' : sr.vol < 0.12 ? 'is-low' : 'is-med';
             var riskTxt = riskLvl === 'is-high' ? il('High', 'عالٍ') : riskLvl === 'is-low' ? il('Low', 'منخفض') : il('Medium', 'متوسط');
 
-            var hold = h.sector === 'Crypto' ? '1–3d' : h.sector === 'Defensive' ? '15–30d' : h.sector === 'Tech' ? '5–10d' : '7–14d';
+            var hold = h.sector === 'Crypto' ? '1–3d' : CASH_LIKE[h.sector] ? '15–30d' : h.sector === 'Tech' ? '5–10d' : '7–14d';
 
             var expl = action === il('Trim', 'تقليص') ? il('Position exceeds single-name weight target; trimming reduces concentration risk.', 'يتجاوز المركز هدف وزن الاسم الواحد؛ التقليص يقلل مخاطر التركّز.')
                 : action === il('Reduce', 'تخفيض') ? il('Underperforming vs cost basis; tighten risk and reassess thesis.', 'أداء أضعف من التكلفة؛ شدّد المخاطر وأعد تقييم الفرضية.')
@@ -2085,7 +2158,7 @@
                     '<div style="flex:1;height:4px;background:var(--line);border-radius:999px;"><div style="height:100%;background:' + h.color + ';width:' + barW.toFixed(1) + '%;border-radius:999px;"></div></div>' +
                     '<span class="pf-num" style="font-size:.75rem;min-width:3rem;">' + h.weight.toFixed(1) + '%</span>' +
                 '</div></td>' +
-                '<td><span class="pf-badge-neu">' + h.sector + '</span></td>' +
+                '<td><span class="pf-badge-neu">' + escHtml(h.sector) + '</span></td>' +
             '</tr>';
         }).join('');
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
@@ -2722,10 +2795,15 @@
             exchBadge = `<span style="font-size:0.58rem; font-weight:700; color:var(--muted); border:1px solid var(--line); padding:0.1rem 0.3rem; border-radius:3px; margin-inline-start:0.35rem; text-transform:uppercase; font-family:var(--pf-mono); display:inline-block; line-height:1;">${h.exchange}</span>`;
         }
 
+        // P3 allocator sleeve (crisis_core_v1 paper forward test) — tagged by the API.
+        var sleeveBadge = h.sleeve === 'allocator_forward_test'
+            ? '<span class="pf-sleeve-badge" title="' + escHtml(il('Allocator sleeve · crisis_core_v1 paper forward test — not a promoted strategy', 'شريحة المُخصِّص · اختبار أمامي ورقي لـ crisis_core_v1 — ليست استراتيجية معتمدة')) + '">' + il('Forward test', 'اختبار أمامي') + '</span>'
+            : '';
+
         return '<div class="pf-sym">' +
             getLogoHtml(h.symbol, 28) +
             '<div class="pf-sym-info">' +
-                '<div class="sym-code" style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">' + h.symbol + sideBadge + exchBadge + '</div>' +
+                '<div class="sym-code" style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">' + h.symbol + sideBadge + exchBadge + sleeveBadge + '</div>' +
                 '<div class="sym-name">' + (lang==='ar' ? escHtml(h.companyNameAr||h.companyName) : escHtml(h.companyName)) + '</div>' +
             '</div>' +
         '</div>';

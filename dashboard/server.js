@@ -714,7 +714,8 @@ const SAFETY_FILES = ['haltGovernance', 'pendingExits', 'pendingEntries', 'booke
         const p = getIntelligencePaths(id);
         if (!p) continue;
         for (const k of ['state', 'tradeLog', 'signals', 'strategyParams', 'learningReport',
-            'reconciliation', 'orderState', 'paramChangeLog', 'governanceAudit', 'lastGood', ...SAFETY_FILES]) add(p[k]);
+            'reconciliation', 'orderState', 'paramChangeLog', 'governanceAudit', 'lastGood', ...SAFETY_FILES,
+            'allocatorState']) add(p[k]);
         if (overlayKey(p.state) && overlayKey(p.tradeLog)) {
             stateCorePairs.push({ id, state: path.resolve(p.state), tradeLog: path.resolve(p.tradeLog) });
         }
@@ -749,6 +750,85 @@ function getIntelligencePaths(id) {
         // Exit fills larger than the logged lots (Codex review of #93): the
         // remainder waits here until a lot exists — a reconciliation item.
         unmatchedExits: d('unmatched_exits.json'),
+        // P3 allocator forward-test sleeve (crisis_core_v1_scaled). Only P3 runs
+        // it, so no other book probes for the file (null = not applicable).
+        allocatorState: id === 'portfolio_3' ? d('allocator_state.json') : null,
+    };
+}
+
+// The P3 allocator sleeve's tranche tag (event-driven-bot/scripts/allocator.py TRANCHE).
+const ALLOCATOR_TRANCHE = 'allocator_forward_test';
+
+// Compact, read-only status of the P3 allocator forward test, built from its
+// committed state file plus the trade log's open allocator lots. Every field is
+// copied or counted from those files; anything the engine has not written is
+// null, and a missing/malformed state file is `{ available: false }` — never a
+// placeholder status. `universe` is the set of symbols that belong to the sleeve
+// (frozen targets + open allocator lots), used to badge positions.
+function buildAllocatorStatus(state, tradeLog) {
+    const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+    if (!isObj(state)) return { available: false };
+    const num = (v) => (v === null || v === undefined || v === '' || typeof v === 'boolean' || !Number.isFinite(Number(v))) ? null : Number(v);
+    const str = (v) => (v === null || v === undefined || v === '') ? null : String(v);
+    const symOk = (k) => /^[A-Z][A-Z0-9.]{0,9}$/.test(k);
+    const lastRun = isObj(state.last_run) ? state.last_run : {};
+    const targets = isObj(state.targets) ? state.targets : {};
+    const constrained = isObj(state.targets_constrained) ? state.targets_constrained : {};
+
+    const targetRows = Object.keys(targets).filter(symOk)
+        .map(sym => ({ symbol: sym, target_w: num(targets[sym]), constrained_w: num(constrained[sym]) }))
+        .sort((a, b) => (b.target_w || 0) - (a.target_w || 0) || a.symbol.localeCompare(b.symbol));
+
+    const openLots = (Array.isArray(tradeLog) ? tradeLog : []).filter(t => isObj(t)
+        && (t.tranche === ALLOCATOR_TRANCHE || t.order_class === ALLOCATOR_TRANCHE)
+        && String(t.status || '').toLowerCase() === 'open');
+    const openSymbols = [...new Set(openLots.map(t => String(t.symbol || '').toUpperCase()).filter(symOk))].sort();
+
+    const orders = Array.isArray(lastRun.orders) ? lastRun.orders.filter(isObj) : [];
+    const filled = orders.filter(o => String(o.status || '').toLowerCase() === 'filled').length;
+
+    let residual = null;
+    if (isObj(state.residual_tbill)) {
+        const r = state.residual_tbill;
+        const added = isObj(r.added) ? Object.keys(r.added).filter(symOk)
+            .map(sym => ({ symbol: sym, weight: num(r.added[sym]) })) : [];
+        residual = {
+            rule: str(r.rule), budget: num(r.budget), cash_residual: num(r.cash_residual),
+            legacy_gross_w_at_freeze: num(r.legacy_gross_w_at_freeze), added,
+        };
+    }
+    const blocked = lastRun.buys_blocked;
+
+    return {
+        available: true,
+        tranche: ALLOCATOR_TRANCHE,
+        strategy: str(state.strategy),
+        strategy_tag: str(state.strategy_tag),
+        mode: str(state.mode),
+        note: str(state.note),
+        status: str(lastRun.status),
+        session: str(lastRun.session || state.last_trade_session),
+        last_run_at: str(lastRun.at || state.last_run_at),
+        last_updated: str(state.last_updated),
+        targets_month: str(state.targets_month),
+        targets_frozen_at: str(state.targets_frozen_at),
+        last_rebalance_month: str(state.last_rebalance_month),
+        cap_shortfall_pct: num(state.cap_shortfall_pct !== undefined ? state.cap_shortfall_pct : lastRun.cap_shortfall_pct),
+        live_cap: num(state.live_cap),
+        hard_cap: num(state.hard_cap),
+        scale: num(state.scale),
+        buys_blocked: (blocked === null || blocked === undefined || blocked === false) ? null
+            : (typeof blocked === 'string' ? blocked : JSON.stringify(blocked)),
+        last_run_orders: {
+            count: orders.length, filled, unfilled: orders.length - filled,
+            deferred: Array.isArray(lastRun.deferred) ? lastRun.deferred.length : 0,
+            skipped: Array.isArray(lastRun.skips) ? lastRun.skips.length : 0,
+        },
+        targets: targetRows,
+        residual_tbill: residual,
+        open_lots: openLots.length,
+        open_symbols: openSymbols,
+        universe: [...new Set([...targetRows.map(t => t.symbol), ...openSymbols])].sort(),
     };
 }
 
@@ -970,6 +1050,8 @@ app.get('/api/portfolio/:id/intelligence', (req, res) => {
         strategy_params: strategyParams,
         learning_report: learningReport,
         safety: buildSafetyState(id, paths),
+        ...(paths.allocatorState
+            ? { allocator: buildAllocatorStatus(readJsonFile(paths.allocatorState, null), tradeLog) } : {}),
     });
 });
 
@@ -980,8 +1062,17 @@ app.get('/api/portfolio/:id/intelligence', (req, res) => {
 // UI) — never a guessed sector and never the book's strategy name (post-deploy
 // audit D2: P3's ANET/DG/KO/MRK were all reported as "Financials").
 const SECTOR_MAP = {
-    SPY: 'Broad Market', QQQ: 'Broad Market', DIA: 'Broad Market', IWM: 'Broad Market',
-    BIL: 'Defensive', SHY: 'Defensive', TLT: 'Defensive', GLD: 'Defensive',
+    SPY: 'US Equity (Broad)', QQQ: 'US Equity (Broad)', DIA: 'US Equity (Broad)', IWM: 'US Equity (Broad)',
+    // Asset-class buckets for the non-equity ETFs (P1 defensive sleeve + the P3
+    // crisis_core_v1 allocator forward test). A 1-3M T-bill fund and a 20Y+
+    // Treasury fund carry very different risk, so they are not pooled as one
+    // "Defensive" sector (engineering audit 2026-10-23: ~27% of P3 showed as
+    // Unclassified before these were mapped).
+    EFA: 'International Equity',
+    DBMF: 'Managed Futures', KMLM: 'Managed Futures', CTA: 'Managed Futures',
+    SHY: 'US Treasuries', IEF: 'US Treasuries', TLT: 'US Treasuries',
+    BIL: 'Cash & T-Bills', SHV: 'Cash & T-Bills', SGOV: 'Cash & T-Bills', USFR: 'Cash & T-Bills',
+    GLD: 'Gold',
     XLK: 'Technology', XLF: 'Financials', XLE: 'Energy', XLV: 'Health Care', XLY: 'Consumer Discretionary',
     XLP: 'Consumer Staples', XLI: 'Industrials', XLC: 'Communication Services', XLB: 'Materials',
     XLU: 'Utilities', XLRE: 'Real Estate',
@@ -1693,6 +1784,9 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
     const signalsData = readJsonFile(paths.signals, {});
     const strategyParams = readJsonFile(paths.strategyParams, {});
     const learningReport = readJsonFile(paths.learningReport, {});
+    const allocPath = (getIntelligencePaths(id) || {}).allocatorState;
+    const allocator = allocPath ? buildAllocatorStatus(readJsonFile(allocPath, null), tradeLog) : null;
+    const allocUniverse = new Set(allocator && allocator.available ? allocator.universe : []);
 
     let liveAccount = null;
     let livePositions = [];
@@ -1872,7 +1966,11 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                 stale: true
             } : null;
         })(),
-        positions: positionsList,
+        // Sleeve tag: positions that belong to the P3 allocator forward test.
+        positions: positionsList.map(p => ({
+            ...p, sleeve: allocUniverse.has(String(p.symbol || '').toUpperCase()) ? ALLOCATOR_TRANCHE : null,
+        })),
+        ...(allocator ? { allocator } : {}),
         orders: liveOrders,
         trade_log: tradeLog,
         signals: signalsData,
@@ -3818,5 +3916,6 @@ if (require.main === module) {
 app._internals = {
     journalDatesToCover, planOverlayUpdate, dayPnlBasis, aggregateDayPnlBasis, sectorFor,
     normalizeCryptoPair, pageAssets, markEquityAnchors, previousWeekday, haltAssessment,
+    buildAllocatorStatus, getIntelligencePaths, hotStatePaths,
 };
 module.exports = app;
