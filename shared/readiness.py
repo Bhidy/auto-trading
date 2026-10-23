@@ -969,7 +969,7 @@ def reconciliation_gate(report, as_of, sessions, th=None):
         return gate("reconciliation", name, thr, None, "not_measured", "no reconciliation report")
     if "in_sync" not in report:
         return gate("reconciliation", name, thr, None, "not_measured",
-                    "this book writes a working-orders report only (no drift audit)")
+                    "report has no drift audit (in_sync): a working-orders-only report")
     age = stale_sessions(_iso_date_et(report.get("timestamp")), as_of, sessions)
     if report.get("in_sync") is False:
         return gate("reconciliation", name, thr, False, "fail", "broker and ledger have diverged")

@@ -41,12 +41,14 @@ FRESHNESS_SOURCES = {
 # job runs ~16:20 ET.
 SESSION_COMPLETE_HOUR_ET = 17
 
-# Portfolios that run the EOD broker-vs-ledger reconciliation audit (P1 + P3;
-# P2 uses a working-orders report, not drift). If a report says in_sync=false,
-# the broker and the trade log have diverged — a money-correctness signal that
-# must never sit silent. P2 has no drift report, so it's intentionally absent.
+# Portfolios that run the broker-vs-ledger reconciliation audit (P1 + P3 at
+# EOD; P2 in its hourly monitor, since 2026-10-23 alongside its working-orders
+# report). If a report says in_sync=false, the broker and the trade log have
+# diverged — a money-correctness signal that must never sit silent. A legacy
+# P2 report without in_sync is "missing", never drift.
 RECONCILE_SOURCES = {
     "P1 Self Improving Brain": "data/reconciliation_report.json",
+    "P2 Capitol Shadow": "political-copy-bot/data/reconciliation_report.json",
     "P3 Cautious Sniper": "event-driven-bot/data/reconciliation_report.json",
 }
 

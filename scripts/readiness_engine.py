@@ -483,25 +483,43 @@ def duplicate_entries(rows):
 
 # Sleeves whose trade-log ``intended_price`` is a DECISION/ARRIVAL price (a
 # quote or last trade read at signal/submit time), per the writing code. Every
-# other sleeve logs its LIMIT price there (P1 momentum/multi-factor, P2), which
+# other sleeve logs its LIMIT price there (P1 momentum/multi-factor), which
 # measures headroom under the limit, not execution quality => not_measured.
+# P2 logged its limit there until 2026-10-23; those legacy rows carry
+# intended_price == limit_price and are skipped by adverse_slippage_bps.
+_P2_ARRIVAL = ("NBBO mid of the quote read just before the limit order (politician_bot.py "
+               "arrival_reference: one-sided quote -> that side, no quote -> latest trade); "
+               "rows before 2026-10-23 logged the limit and are excluded")
 ARRIVAL_REFERENCE = {
+    "p2-copy-v2": _P2_ARRIVAL,
+    "p2-benchmark-etf-v1": _P2_ARRIVAL,
     "p3-event-driven-legacy": "latest trade read just before the bracket market order "
                               "(event_driven_bot.py: price = live trade 'p')",
     "p3-crisis-core-v1-forward": "last trade at submit (allocator ref_price = quote 'last')",
 }
 
 
+def _unfilled(t):
+    """A row whose recorded broker fill quantity is zero: its entry_price (if
+    any) is not a fill, so it is no slippage sample."""
+    if "filled_qty" not in t:
+        return False
+    try:
+        return float(t.get("filled_qty") or 0) <= 0
+    except (TypeError, ValueError):
+        return True
+
+
 def adverse_slippage_bps(rows):
     """Adverse slippage (bps, + = cost) vs each row's recorded ARRIVAL reference,
     ONE sample per order (lot-split rows share an order id). A row whose
     reference equals its limit price is skipped (the allocator falls back to the
-    limit when no quote was recorded). Buys: fill above reference is adverse;
-    sells: below."""
+    limit when no quote was recorded), as is a row with zero recorded fill qty.
+    Buys: fill above reference is adverse; sells: below."""
     out, seen = [], set()
     for t in rows:
         ref, fill = t.get("intended_price"), t.get("entry_price")
-        if ref is None or fill is None or not _is_entry(t):
+        if ref is None or fill is None or not _is_entry(t) or _unfilled(t):
             continue
         if t.get("limit_price") is not None and float(t["limit_price"]) == float(ref):
             continue

@@ -610,6 +610,32 @@ def politician_open_lot_qty(trade_log, symbol, politician) -> float:
     return total
 
 
+def arrival_reference(quote: dict | None, last_trade: float | None = None):
+    """The ARRIVAL price for slippage measurement: the NBBO mid of the quote read
+    just before submit (one-sided quote -> that side; no quote -> the latest
+    trade print). Returns ``(price, source)`` or ``(None, None)``.
+
+    This is deliberately NOT the limit price. P2 pegs its limit to the ask (or
+    bid) + an offset, so fill-vs-limit only measures headroom under our own
+    cap; fill-vs-arrival is the execution cost the readiness slippage gate
+    needs (readiness_engine.ARRIVAL_REFERENCE)."""
+    q = quote or {}
+    try:
+        ask = float(q.get("ap") or 0)
+        bid = float(q.get("bp") or 0)
+    except (TypeError, ValueError):
+        ask = bid = 0.0
+    if ask > 0 and bid > 0 and bid <= ask:
+        return round((ask + bid) / 2, 4), "quote_mid"
+    if ask > 0 or bid > 0:
+        return round(ask or bid, 4), "quote_ask" if ask > 0 else "quote_bid"
+    try:
+        lt = float(last_trade or 0)
+    except (TypeError, ValueError):
+        lt = 0.0
+    return (round(lt, 4), "last_trade") if lt > 0 else (None, None)
+
+
 def exit_limit_price(alpaca, symbol: str, slip: float = 0.001):
     """Marketable SELL limit off the LIVE quote (bid x (1-slip)); falls back to
     the latest trade print; None when no live price exists — the caller then
@@ -1076,10 +1102,12 @@ class PoliticianBot:
             quote = self.alpaca.get_latest_quote(ticker)
             ask_price = float(quote.get("quote", {}).get("ap", 0))
             bid_price = float(quote.get("quote", {}).get("bp", 0))
+            arrival, arrival_source = arrival_reference(quote.get("quote"))
             if ask_price <= 0:
                 trade_data = self.alpaca.get_latest_trade(ticker)
                 ask_price = float(trade_data.get("trade", {}).get("p", 0))
                 bid_price = ask_price
+                arrival, arrival_source = arrival_reference(None, ask_price)
             if ask_price <= 0:
                 log.error(f"Cannot get price for {ticker}")
                 return None
@@ -1118,12 +1146,15 @@ class PoliticianBot:
                 "qty": qty,
                 "limit_price": limit_price,
                 "entry_price": round(entry_price, 4),
-                # Fill-fidelity (Phase 1): normalize intended_price + slippage_pct
-                # across all three bots so friction calibration + reconciliation
-                # cover the full $300k (P2 entry = its limit price).
-                "intended_price": limit_price,
-                "slippage_pct": (round((entry_price - limit_price) / limit_price * 100, 4)
-                                 if limit_price else None),
+                # Fill-fidelity: intended_price is the ARRIVAL price (quote mid
+                # read just before submit), not the limit, so slippage measures
+                # execution cost rather than headroom under our own cap. Rows
+                # before 2026-10-23 logged the limit here (readiness skips them).
+                "arrival_price": arrival,
+                "arrival_source": arrival_source,
+                "intended_price": arrival,
+                "slippage_pct": (round((entry_price - arrival) / arrival * 100, 4)
+                                 if (arrival and filled_price) else None),
                 "client_order_id": coid,
                 "filled_qty": filled_qty,
                 "estimated_value": round(qty * limit_price, 2),
@@ -1530,10 +1561,12 @@ class PoliticianBot:
                 quote = self.alpaca.get_latest_quote(sym)
                 ask = float(quote.get("quote", {}).get("ap", 0))
                 bid = float(quote.get("quote", {}).get("bp", 0))
+                arrival, arrival_source = arrival_reference(quote.get("quote"))
                 ref = ask if (side == "buy" and ask > 0) else (bid if bid > 0 else ask)
                 if ref <= 0:
                     trade = self.alpaca.get_latest_trade(sym)
                     ref = float(trade.get("trade", {}).get("p", 0))
+                    arrival, arrival_source = arrival_reference(None, ref)
                 if ref <= 0:
                     continue
                 qty = int(notional / ref)
@@ -1548,9 +1581,18 @@ class PoliticianBot:
                 )
                 log.info(f"SLEEVE {side.upper()} {qty} x {sym} @ ${limit_price:.2f} "
                          f"(${qty * limit_price:,.0f}) — {o['reason']}")
+                # Book the REAL fill (never the limit); an unfilled order keeps
+                # entry_price absent and the reconciler settles it from broker truth.
+                status, filled_qty, filled_price = confirm_fill(self.alpaca, order.get("id"))
                 sleeve_record = {
                     "symbol": sym, "side": side, "qty": qty,
                     "limit_price": limit_price,
+                    "arrival_price": arrival,
+                    "arrival_source": arrival_source,
+                    "intended_price": arrival,
+                    "client_order_id": coid,
+                    "filled_qty": filled_qty,
+                    "order_status": status if status != "unknown" else order.get("status"),
                     "estimated_value": round(qty * limit_price, 2),
                     "order_id": order.get("id"),
                     "politician": "BENCHMARK_SLEEVE",
@@ -1559,6 +1601,10 @@ class PoliticianBot:
                     "evidence_quality": "beta",  # parked beta, NOT politician alpha
                     "reason": o["reason"],
                 }
+                if filled_price:
+                    sleeve_record["fill_price" if side == "sell" else "entry_price"] = round(filled_price, 4)
+                    if arrival:
+                        sleeve_record["slippage_pct"] = round((filled_price - arrival) / arrival * 100, 4)
                 if side == "sell":
                     # Rebalance trims are exit events: mark the row so it can
                     # never be reconciled as a short lot (D4). The buy lots it
@@ -1737,16 +1783,20 @@ class PoliticianBot:
         truth. P2 previously never closed a round-trip, so its edge was
         unmeasurable; this closes completed exits with REAL fill prices (realized
         P&L) and trims/cleans orphan lots. Honest: missing entry/exit -> pnl=None,
-        never fabricated. Read-only on the broker — places NO orders."""
+        never fabricated. Then audits the repaired log against the broker
+        (shared.reconcile.compute_drift, like P1/P3) so the readiness
+        reconciliation gate has an ``in_sync`` verdict. Read-only on the broker —
+        places NO orders."""
         try:
             from shared.accounting import realized_pnl
-            from shared.reconcile import (exit_prices_from_fills, exit_reasons_from_orders,
-                                          guarded_pnl_fn, reconcile_log_to_broker,
+            from shared.reconcile import (compute_drift, exit_prices_from_fills,
+                                          exit_reasons_from_orders, guarded_pnl_fn,
+                                          is_open_trade, reconcile_log_to_broker,
                                           working_orders_report)
             open_orders = self.alpaca.get_orders("open")
-            report = working_orders_report(open_orders)
+            working = working_orders_report(open_orders)
             positions = self.alpaca.get_positions()
-            report["positions_held"] = len(positions)
+            report = {}
 
             # Close completed round-trips to broker truth with real exit fills.
             tl_path = BASE_DIR / "data" / "trade_log.json"
@@ -1775,9 +1825,27 @@ class PoliticianBot:
                         json.dump(repaired, f, indent=2)
                     report["position_reconcile_actions"] = len(actions)
                     log.info(f"P2 position reconcile: {len(actions)} action(s)")
+                    trade_log = repaired
+
+            if not isinstance(trade_log, list):
+                trade_log = []
+            open_trades = [t for t in trade_log
+                           if isinstance(t, dict) and is_open_trade(t) and t.get("symbol")]
+            drift = compute_drift([p.get("symbol") for p in positions if p.get("symbol")],
+                                  [t.get("symbol") for t in open_trades],
+                                  positions=positions, open_trades=open_trades)
+            report = {**drift, **{k: v for k, v in working.items() if k != "timestamp"}, **report}
+            report["timestamp"] = drift["timestamp"]
 
             with open(BASE_DIR / "data" / "reconciliation_report.json", "w") as f:
                 json.dump(report, f, indent=2)
+            if report["in_sync"]:
+                log.info("Reconciliation: trade log and broker positions in sync")
+            else:
+                log.warning(f"Reconciliation DRIFT: orphan={report['orphan_open_trades']} "
+                            f"unlogged={report['unlogged_positions']} "
+                            f"qty={[d['symbol'] for d in report['qty_drift']]} "
+                            f"cost_basis={[d['symbol'] for d in report['cost_basis_drift']]}")
             if report["working_count"]:
                 log.warning(f"Reconciliation: {report['working_count']} unfilled/working "
                             f"order(s): {[o['symbol'] for o in report['working_orders']]}")
