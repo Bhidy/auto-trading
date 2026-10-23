@@ -22,6 +22,15 @@
     "new_entries_enabled": false,
     "reason": "Forensic audit 2026-10-03: entry signal has no out-of-sample edge (live breakout-score IC ~0, |t|<=1.4; news IC negative) and live PF fell to 0.64 (23% win, 35 trades) after the July exit restructure. Committee verdict NO TRADE (85). Open positions run off under their brackets; re-enable only for a new pre-registered design that passes walk-forward + DSR.",
     "changed_at": "2026-10-03",
-    "changed_by": "owner-delegated chief-expert decision (Claude, audit session)"
+    "changed_by": "owner-delegated chief-expert decision (Claude, audit session)",
+    "allocator": {
+      "strategy": "crisis_core_v1",
+      "mode": "paper_forward_test",
+      "enabled": true,
+      "scale_to_cap": true,
+      "reason": "PAPER forward test of crisis_core_v1 scaled to P3's 8% per-symbol cap (7.6%/ETF). The strategy FAILED its backtest promotion gate (max DD 14.8% > 12%, DSR 0.90 < 0.95) and is NOT promoted; it runs on P3's otherwise idle quarantined capital to collect out-of-sample execution evidence under docs/specs/crisis_core_v1_forward.json (stop rules F3/F5 => disable immediately). Legacy P3 entries stay quarantined.",
+      "changed_at": "2026-10-23",
+      "changed_by": "owner-delegated chief-expert decision (Claude, audit session 2026-10-23)"
+    }
   }
 }

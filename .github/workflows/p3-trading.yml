@@ -18,7 +18,7 @@ on:
         required: false
         default: "full"
         type: choice
-        options: [full, weekly-screen, morning-scan, trading-session, news-scan, eod-journal, weekly-review]
+        options: [full, allocator, weekly-screen, morning-scan, trading-session, news-scan, eod-journal, weekly-review]
 
 permissions:
   contents: write
@@ -85,6 +85,23 @@ jobs:
           fi
           echo "already_ran=$ALREADY" >> $GITHUB_OUTPUT
 
+      # crisis_core_v1 PAPER FORWARD TEST sleeve (docs/specs/crisis_core_v1_forward.json).
+      # Runs BEFORE the quarantined legacy path. Enabled ONLY by the human-owned
+      # portfolio_3.allocator block in config/strategy_controls.json (absent =>
+      # no orders). Not dedup-gated: it is idempotent per ET session on its own
+      # (allocator_state.json last_trade_session + deterministic p3alloc
+      # client_order_ids), and later fires settle any pending fills.
+      # continue-on-error keeps the legacy exit hygiene running; the final
+      # "Fail if allocator failed" step still fails the job (failure-alert).
+      - name: Allocator (crisis_core_v1 forward test)
+        id: allocator
+        continue-on-error: true
+        if: steps.market.outputs.is_open == 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'allocator')
+        run: |
+          cd "$GITHUB_WORKSPACE/event-driven-bot"
+          export PYTHONPATH="$GITHUB_WORKSPACE/event-driven-bot/scripts"
+          python3 scripts/event_driven_bot.py allocator
+
       - name: Weekly screen (Mondays only)
         if: steps.market.outputs.is_open == 'true' && steps.dedup.outputs.already_ran != 'true' && (github.event.schedule || github.event.inputs.mode == 'full' || github.event.inputs.mode == 'weekly-screen')
         run: |
@@ -136,3 +153,9 @@ jobs:
         if: always()
         run: |
           bash scripts/commit_and_push.sh "P3: trading pipeline" event-driven-bot/data event-driven-bot/journal
+
+      - name: Fail if allocator failed
+        if: always() && steps.allocator.outcome == 'failure'
+        run: |
+          echo "::error::P3 allocator step failed — state was still committed above; see its log."
+          exit 1

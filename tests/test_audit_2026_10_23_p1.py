@@ -1128,7 +1128,11 @@ def test_sim_m5_guardian_p1_fresh_when_broker_has_todays_session_order(tmp_path)
     script.write_text(_guardian_script())
     env = {k: v for k, v in os.environ.items() if k != "GH_TOKEN"}
     env["PYTHONPATH"] = str(fake)
-    for coid, expect in (("p1stop-20261023-CAT-sell", 1), ("p1mom-20261023-AMD-buy", 0)):
+    env["PYTHONDONTWRITEBYTECODE"] = "1"   # fake module rewritten per iteration (stale .pyc risk)
+    from zoneinfo import ZoneInfo
+    day = datetime.now(ZoneInfo("America/New_York")).strftime("%Y%m%d")   # never a hard-coded date
+    for coid, expect in ((f"p1stop-{day}-CAT-sell", 1), (f"p1mom-{day}-AMD-buy", 0)):
+        shutil.rmtree(fake / "__pycache__", ignore_errors=True)
         (fake / "requests.py").write_text(
             "class _R:\n"
             "    def raise_for_status(self): pass\n"

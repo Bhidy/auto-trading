@@ -320,7 +320,9 @@ restore_owned() {
 # portfolio snapshot. Pushing some without the others corrupts it (e.g. the
 # ledger says "booked" while the trade-log row was withheld, so the fill can
 # never be re-booked). If any member is withheld, the whole group is.
-GROUP_FILES=" trade_log.json booked_fills.json pending_exits.json pending_entries.json portfolio_state.json "
+# allocator_state.json (P3 crisis_core_v1 sleeve) holds that sleeve's booked
+# order flags, so it travels with trade_log.json the same way.
+GROUP_FILES=" trade_log.json booked_fills.json pending_exits.json pending_entries.json portfolio_state.json allocator_state.json "
 withhold_groups() {
   local w f d dirs=" " already
   for w in ${WITHHELD[@]+"${WITHHELD[@]}"}; do

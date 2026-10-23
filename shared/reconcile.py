@@ -407,7 +407,8 @@ def _close_record(trade, now_iso, exit_price=None, pnl_fn=None, reason="reconcil
     return trade
 
 
-def _unlogged_lot(symbol, qty, entry_price, now_iso, reason, order_class=None):
+def _unlogged_lot(symbol, qty, entry_price, now_iso, reason, order_class=None,
+                  order_id=None):
     """A fresh open lot reconstructed from a live broker position (real cost basis).
 
     ``order_class`` carries the sleeve the broker order belonged to (recovered by
@@ -430,6 +431,8 @@ def _unlogged_lot(symbol, qty, entry_price, now_iso, reason, order_class=None):
     }
     if order_class:
         lot["order_class"] = order_class
+    if order_id:
+        lot["order_id"] = order_id
     return lot
 
 
@@ -454,9 +457,27 @@ def order_classes_from_orders(orders, prefix_map):
     return {sym: prefix_map[pfx] for sym, (_, pfx) in latest.items() if pfx in prefix_map}
 
 
+def order_ids_from_orders(orders, prefixes):
+    """{symbol: order_id} of the most recent FILLED buy per symbol whose
+    deterministic client_order_id starts with one of ``prefixes`` + "-".
+    Stamped on reconstructed lots so a sleeve that books fills by order_id
+    (P3 allocator) never books the same broker fill a second time."""
+    latest = {}
+    for o in orders or []:
+        if o.get("side") != "buy" or o.get("status") not in ("filled", "partially_filled"):
+            continue
+        sym, coid, oid = o.get("symbol"), o.get("client_order_id") or "", o.get("id")
+        if not sym or not oid or coid.split("-", 1)[0] not in prefixes:
+            continue
+        when = o.get("filled_at") or o.get("submitted_at") or ""
+        if sym not in latest or when > latest[sym][0]:
+            latest[sym] = (when, oid)
+    return {sym: oid for sym, (_, oid) in latest.items()}
+
+
 def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
                             exit_prices=None, pnl_fn=None, exit_reasons=None,
-                            order_classes=None):
+                            order_classes=None, order_ids=None):
     """Repair the OPEN trades in ``trade_log`` to match broker ``positions``
     (ground truth). Returns ``(new_log, actions)``. Places NO orders.
 
@@ -480,6 +501,9 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
     ``order_classes``: optional {symbol: order_class} (see
     ``order_classes_from_orders``) — stamped on every reconstructed open lot so a
     late fill keeps its sleeve.
+    ``order_ids``: optional {symbol: broker order_id} (see
+    ``order_ids_from_orders``) — stamped likewise, so order-id-deduplicated
+    booking never re-books that fill.
     """
     now_iso = now_iso or datetime.now(timezone.utc).isoformat()
     exit_prices = exit_prices or {}
@@ -558,7 +582,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
             touched.add(sym)
             log.append(_unlogged_lot(sym, -diff, b["avg"], now_iso,
                                      reason="qty_drift_short",
-                                     order_class=(order_classes or {}).get(sym)))
+                                     order_class=(order_classes or {}).get(sym),
+                                     order_id=(order_ids or {}).get(sym)))
             actions.append({"action": "add_qty", "symbol": sym,
                             "added_qty": round(-diff, 6), "broker_qty": broker_qty})
 
@@ -567,7 +592,8 @@ def reconcile_log_to_broker(trade_log, positions, *, now_iso=None,
         if sym not in open_by_sym and (b["qty"] or 0) > 0:
             log.append(_unlogged_lot(sym, b["qty"], b["avg"], now_iso,
                                      reason="unlogged_position",
-                                     order_class=(order_classes or {}).get(sym)))
+                                     order_class=(order_classes or {}).get(sym),
+                                     order_id=(order_ids or {}).get(sym)))
             actions.append({"action": "add_unlogged", "symbol": sym,
                             "qty": round(b["qty"], 6)})
 
