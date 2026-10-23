@@ -422,6 +422,8 @@
                 g_cvar95: 'Daily CVaR 95% (historical)', g_sample: 'Closed round trips (whole trades)', g_profit_factor: 'Profit factor',
                 g_regime_coverage: 'Regime coverage', g_reconciliation: 'Broker vs ledger reconciliation', g_duplicate_orders: 'Duplicate orders',
                 g_slippage: 'Average adverse slippage', g_data_freshness: 'Data freshness', g_exception_free: 'Exception-free sessions',
+                g_research: 'Pre-registered research proof (Stage A)', g_incubation_consistency: 'Live incubation vs backtest (Stage B)',
+                w_path: 'Path to GO', path_live_edge: 'Live edge proof', path_two_stage: 'Two-stage (research + incubation)',
                 stale: '<b>This report is {n} weekday sessions old</b> (generated {when}). Verdicts below may be stale — the daily readiness workflow may not have run.',
                 unavailable: '<b>Readiness report unavailable.</b> No verdict is shown rather than a guessed one. {why}',
                 why_absent: 'The engine has not published a report yet.', why_malformed: 'The published report failed validation.', why_network: 'The API could not be reached.',
@@ -497,6 +499,8 @@
                 g_cvar95: 'CVaR اليومي 95% (تاريخي)', g_sample: 'الصفقات المغلقة الكاملة', g_profit_factor: 'معامل الربح',
                 g_regime_coverage: 'تغطية أنظمة السوق', g_reconciliation: 'مطابقة الوسيط مع السجل', g_duplicate_orders: 'الأوامر المكررة',
                 g_slippage: 'متوسط الانزلاق السعري', g_data_freshness: 'حداثة البيانات', g_exception_free: 'جلسات بلا أخطاء',
+                g_research: 'إثبات بحثي مسجّل مسبقًا (المرحلة أ)', g_incubation_consistency: 'الحضانة الحية مقابل الاختبار التاريخي (المرحلة ب)',
+                w_path: 'المسار إلى «جاهز»', path_live_edge: 'إثبات التفوق الحي', path_two_stage: 'مرحلتان (بحث + حضانة)',
                 stale: '<b>عمر هذا التقرير {n} جلسات تداول</b> (صدر {when}). قد تكون الأحكام أدناه قديمة — ربما لم يعمل سير الجاهزية اليومي.',
                 unavailable: '<b>تقرير الجاهزية غير متاح.</b> لا نعرض حكماً بدلاً من تخمينه. {why}',
                 why_absent: 'لم ينشر المحرك تقريراً بعد.', why_malformed: 'التقرير المنشور لم يجتز التحقق.', why_network: 'تعذّر الوصول إلى الواجهة.',
@@ -572,6 +576,12 @@
                 case 'sample': return num(v) ? tm('u_trips', { n: L(v) }) : L(v);
                 case 'profit_factor': return L(fix(v, 2));
                 case 'slippage': return L(fix(v, 1) + ' bps');
+                case 'research':
+                    return v.overall ? L(String(v.overall) + (num(v.sharpe_excess) ? ' · Sharpe ' + fix(v.sharpe_excess, 2) : '') +
+                        (num(v.max_drawdown) ? ' · DD ' + pct(v.max_drawdown) : '')) : '—';
+                case 'incubation_consistency':
+                    return num(v.live_sharpe_excess) ? L('n ' + v.n + ' · Sharpe ' + fix(v.live_sharpe_excess, 2) + ' / ' +
+                        fix(v.backtest_sharpe_excess, 2) + ' · vol× ' + fix(v.vol_ratio, 2)) : tm('u_sessions', { n: L(v.n != null ? v.n : 0) });
                 case 'reconciliation': return v === true ? t('u_insync') : (v === false ? t('u_drift') : L(v));
                 case 'regime_coverage':
                     var ks = Object.keys(v || {});
@@ -707,6 +717,7 @@
                     '<div><dt>' + t('w_basis') + '</dt><dd>' + esc(key('basis_', s.evidence_basis)) + '</dd></div>' +
                     '<div><dt>' + t('w_bench') + '</dt><dd>' + L(s.benchmark || '—') + '</dd></div>' +
                     '<div><dt>' + t('w_trials') + '</dt><dd>' + L(s.trial_count != null ? s.trial_count : '—') + '</dd></div>' +
+                    (s.path ? '<div><dt>' + t('w_path') + '</dt><dd>' + esc(key('path_', s.path)) + '</dd></div>' : '') +
                     (s.spec ? '<div><dt>' + t('w_spec') + '</dt><dd>' + L(s.spec) + '</dd></div>' : '') +
                 '</dl>' +
                 (s.attribution === 'book_level' ? '<p class="slv-attr">' + t('attr_book') + '</p>' : '') +

@@ -517,3 +517,130 @@ def test_cron_dedup_only_when_todays_session_is_complete():
     assert E.report_is_current(full, "2026-10-23", "2026-10-23") is True
     assert E.report_is_current(lagging, "2026-10-23", "2026-10-23") is False   # 19:45 retry must run
     assert E.report_is_current(full, "2026-10-22", "2026-10-23") is False
+
+
+# --- v2.2 two-stage path (research proof + live incubation) --------------------
+
+def _lab_result(overall="PASS", dd=0.10, sr=0.8, vol=0.09, sha="a" * 64):
+    return {"spec_sha256": sha, "spec_path": "docs/specs/x.json",
+            "acceptance": {"C1": "PASS" if overall == "PASS" else "FAIL", "overall": overall},
+            "main": {"sharpe_excess": sr, "vol": vol, "drawdown": {"max_drawdown": dd}}}
+
+
+CFG = {"artifact": "data/strategy_lab_results.json", "result_key": "x"}
+
+
+def test_research_gate_never_passes_without_a_registered_result():
+    g, prof = R.research_gate(None, None, None)
+    assert g["status"] == "not_measured" and prof is None and g["hard"] is False
+    g, _ = R.research_gate(CFG, None, "a" * 64)
+    assert g["status"] == "not_measured"
+
+
+def test_research_gate_voids_a_result_whose_spec_changed():
+    g, prof = R.research_gate(CFG, _lab_result(), "b" * 64)
+    assert g["status"] == "fail" and "mismatch" in g["detail"] and prof is None
+
+
+def test_research_gate_fails_on_acceptance_or_drawdown():
+    g, prof = R.research_gate(CFG, _lab_result(overall="FAIL"), "a" * 64)
+    assert g["status"] == "fail" and prof is not None   # profile kept for display only
+    g, _ = R.research_gate(CFG, _lab_result(dd=0.148), "a" * 64)  # artifact PASS but DD > 12%
+    assert g["status"] == "fail" and "max DD" in g["detail"]
+    g, _ = R.research_gate(CFG, _lab_result(sr=-0.1), "a" * 64)
+    assert g["status"] == "fail"
+
+
+def test_research_gate_passes_a_clean_preregistered_result():
+    g, prof = R.research_gate(CFG, _lab_result(), "a" * 64)
+    assert g["status"] == "pass" and prof["sharpe_excess"] == 0.8 and prof["max_drawdown"] == 0.10
+
+
+def _incubation_series(n, sharpe, vol=0.09, seed=3, rf=0.00015):
+    rng = random.Random(seed)
+    sd = vol / math.sqrt(252)
+    mu = sharpe / math.sqrt(252) * sd
+    return [rf + rng.gauss(mu, sd) for _ in range(n)], [rf] * n
+
+
+PROFILE = {"sharpe_excess": 0.8, "vol": 0.09, "max_drawdown": 0.10, "source": "t"}
+
+
+def test_incubation_waits_for_its_minimum_and_projects_an_eta():
+    r, f = _incubation_series(40, 0.8)
+    g = R.incubation_gate(r, f, PROFILE)
+    assert g["status"] == "insufficient" and g["eta_sessions"] == 20
+    assert R.incubation_gate(r, f, None)["status"] == "not_applicable"
+
+
+def test_incubation_passes_a_book_that_behaves_like_its_backtest():
+    r, f = _incubation_series(90, 0.8)
+    g = R.incubation_gate(r, f, PROFILE)
+    assert g["status"] == "pass", g["detail"]
+
+
+def test_incubation_fails_a_book_not_running_the_tested_strategy():
+    r, f = _incubation_series(90, 0.8, vol=0.25)          # ~2.8x the backtest vol
+    g = R.incubation_gate(r, f, PROFILE)
+    assert g["status"] == "fail" and g["value"]["checks"]["vol_ratio_in_band"] is False
+
+
+def test_incubation_fails_a_book_significantly_worse_than_its_backtest():
+    r, f = _incubation_series(250, -3.0)                  # deep, persistent bleed
+    g = R.incubation_gate(r, f, PROFILE)
+    assert g["status"] == "fail" and g["value"]["checks"]["sharpe_not_contradicted"] is False
+
+
+def test_incubation_false_fail_rate_is_bounded_under_the_haircut_null():
+    # True live Sharpe = exactly haircut x backtest: the always-valid bound may
+    # wrongly flag it at most ~incubation_alpha of the time.
+    fails = 0
+    for seed in range(200):
+        r, f = _incubation_series(90, 0.5 * PROFILE["sharpe_excess"], seed=seed)
+        g = R.incubation_gate(r, f, {**PROFILE, "max_drawdown": 1.0})
+        fails += not g["value"]["checks"]["sharpe_not_contradicted"]
+    assert fails / 200 <= R.THRESHOLDS["incubation_alpha"]
+
+
+def _gates_all_pass_except(edge_status):
+    g = [R.gate("track_record", "t", "", 90, "pass"), R.gate("edge", "e", "", None, edge_status),
+         R.gate("max_drawdown", "d", "", 0.05, "pass")]
+    return g
+
+
+def test_two_stage_path_reaches_go_without_a_live_edge_proof():
+    import readiness_engine as E
+    gates = _gates_all_pass_except("insufficient")
+    res = R.gate("research", "r", "", None, "pass", hard=False)
+    inc = R.gate("incubation_consistency", "i", "", None, "pass", hard=False)
+    path = E.select_path(True, True, gates[1], res, inc)
+    assert path == "two_stage" and gates[1]["hard"] is False and res["hard"] and inc["hard"]
+    v = R.verdict("active", gates + [res, inc], R.nyse_sessions("2026-01-01", "2027-12-31"), "2026-10-22")
+    assert v["verdict"] == "GO"
+
+
+def test_two_stage_path_blocked_by_failed_incubation_or_research():
+    import readiness_engine as E
+    sessions = R.nyse_sessions("2026-01-01", "2027-12-31")
+    gates = _gates_all_pass_except("insufficient")
+    res = R.gate("research", "r", "", None, "pass", hard=False)
+    inc = R.gate("incubation_consistency", "i", "", None, "fail", hard=False)
+    E.select_path(True, True, gates[1], res, inc)
+    assert R.verdict("active", gates + [res, inc], sessions, "2026-10-22")["verdict"] == "NOT_READY"
+    gates = _gates_all_pass_except("insufficient")
+    res = R.gate("research", "r", "", None, "fail", hard=False)
+    inc = R.gate("incubation_consistency", "i", "", None, "pass", hard=False)
+    assert E.select_path(True, True, gates[1], res, inc) == "live_edge"
+    assert R.verdict("active", gates + [res, inc], sessions, "2026-10-22")["verdict"] == "NOT_READY"
+
+
+def test_two_stage_never_applies_to_shared_series_or_forward_tests():
+    import readiness_engine as E
+    sessions = R.nyse_sessions("2026-01-01", "2027-12-31")
+    gates = _gates_all_pass_except("not_measured")
+    res = R.gate("research", "r", "", None, "pass", hard=False)
+    inc = R.gate("incubation_consistency", "i", "", None, "pass", hard=False)
+    assert E.select_path(True, False, gates[1], res, inc) == "live_edge"   # does not own the series
+    gates = _gates_all_pass_except("insufficient")
+    E.select_path(True, True, gates[1], res, inc)
+    assert R.verdict("forward_test", gates + [res, inc], sessions, "2026-10-22")["verdict"] == "FORWARD_TEST_PASS"

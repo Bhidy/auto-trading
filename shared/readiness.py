@@ -42,7 +42,7 @@ for _p in (_ROOT, os.path.join(_ROOT, "scripts")):
 from backtest import metrics as M  # noqa: E402
 from shared.portfolio_risk import conditional_var  # noqa: E402
 
-METHODOLOGY_VERSION = "2.1.0"
+METHODOLOGY_VERSION = "2.2.0"
 PERIODS_PER_YEAR = 252
 
 # --- PRE-REGISTERED THRESHOLDS (docs/LIVE_READINESS.md §2, v2) ---------------
@@ -77,6 +77,14 @@ THRESHOLDS = {
     "min_sessions_for_eta": 20,        # below this an alpha estimate is noise
     "eta_cap_sessions": 2520,          # 10 years: beyond this = not converging
     "rf_fallback_annual": 0.04,        # used ONLY if T-bill (BIL) returns are missing
+    # v2.2 two-stage path (Stage A research proof + Stage B live incubation)
+    "research_max_backtest_drawdown": 0.12,  # STRATEGY_EVIDENCE §8.3: 6 pts under the kill switch
+    "incubation_min_returns": 60,      # halt-free daily returns before consistency is judged
+    "incubation_sharpe_haircut": 0.5,  # live may run at half the backtest Sharpe (decay)
+    "incubation_alpha": 0.05,          # always-valid level of the contradiction test
+    "incubation_vol_ratio_min": 0.5,   # live vol / backtest vol band
+    "incubation_vol_ratio_max": 1.5,
+    "incubation_dd_multiple": 1.5,     # live max DD <= 1.5 x backtest max DD
 }
 
 REGIME_GROUPS = {
@@ -87,7 +95,7 @@ REGIME_GROUPS = {
 
 # Order used to break ties for the binding gate (earliest = most fundamental).
 GATE_PRIORITY = [
-    "edge", "track_record", "sample", "profit_factor", "max_drawdown",
+    "edge", "research", "incubation_consistency", "track_record", "sample", "profit_factor", "max_drawdown",
     "kill_switch_headroom", "worst_day", "cvar95", "regime_coverage",
     "reconciliation", "duplicate_orders", "slippage", "data_freshness",
     "exception_free",
@@ -567,6 +575,120 @@ def edge_gate(edge, eta, th=None):
                 val, edge.get("status"), detail, eta_sessions=eta_s)
 
 
+def research_gate(cfg, result, actual_spec_sha256, th=None):
+    """Stage A (v2.2): a PRE-REGISTERED research result, machine-checked.
+
+    ``cfg`` is the registry ``research`` block, ``result`` the artifact entry it
+    points to (or None), ``actual_spec_sha256`` the hash of the spec file today.
+    PASS iff the spec is unchanged since the result (hash match), the
+    pre-registered acceptance says overall PASS, and the backtest itself shows
+    a positive excess Sharpe and max drawdown <= research_max_backtest_drawdown.
+    Returns (gate, profile); profile = the backtest numbers Stage B is judged
+    against (None unless the result is usable). The gate is informational
+    (hard=False) unless the engine selects the two-stage path."""
+    th = th or THRESHOLDS
+    name = "Pre-registered research proof (Stage A)"
+    thr = (f"acceptance overall PASS on an unchanged spec; backtest max DD <= "
+           f"{th['research_max_backtest_drawdown']:.0%}; excess Sharpe > 0")
+    if not cfg:
+        return gate("research", name, thr, None, "not_measured",
+                    "no pre-registered research result on file — only the live-edge path can lead to GO",
+                    hard=False), None
+    if not isinstance(result, dict):
+        return gate("research", name, thr, None, "not_measured",
+                    f"registered result {cfg.get('artifact')}#{cfg.get('result_key')} not found", hard=False), None
+    recorded = result.get("spec_sha256")
+    if not recorded or not actual_spec_sha256:
+        return gate("research", name, thr, None, "not_measured",
+                    "spec hash unavailable — the result cannot be tied to an unchanged spec", hard=False), None
+    if recorded != actual_spec_sha256:
+        return gate("research", name, thr, {"spec_sha256": actual_spec_sha256[:12]}, "fail",
+                    "spec changed after its result was recorded (sha256 mismatch) — the result is void",
+                    hard=False), None
+    acc = result.get("acceptance") or {}
+    main = result.get("main") or {}
+    dd = ((main.get("drawdown") or {}).get("max_drawdown")
+          if isinstance(main.get("drawdown"), dict) else main.get("max_drawdown"))
+    sr, vol = main.get("sharpe_excess"), main.get("vol")
+    profile = None
+    if all(isinstance(v, (int, float)) for v in (dd, sr, vol)) and vol > 0:
+        profile = {"sharpe_excess": sr, "vol": vol, "max_drawdown": dd,
+                   "source": f"{cfg.get('artifact')}#{cfg.get('result_key')}"}
+    failed = sorted(k for k, v in acc.items() if k != "overall" and v != "PASS")
+    problems = []
+    if acc.get("overall") != "PASS":
+        problems.append("acceptance " + str(acc.get("overall") or "missing")
+                        + (f" ({', '.join(failed)})" if failed else ""))
+    if profile is None:
+        problems.append("backtest Sharpe/vol/max DD missing")
+    else:
+        if dd > th["research_max_backtest_drawdown"]:
+            problems.append(f"backtest max DD {dd:.1%} > {th['research_max_backtest_drawdown']:.0%}")
+        if sr <= 0:
+            problems.append(f"backtest excess Sharpe {sr:.2f} <= 0")
+    val = {"overall": acc.get("overall"), "sharpe_excess": _r(sr, 3), "max_drawdown": _r(dd),
+           "vol": _r(vol), "failed_criteria": failed}
+    if problems:
+        return gate("research", name, thr, val, "fail", "; ".join(problems), hard=False), profile
+    return gate("research", name, thr, val, "pass",
+                f"pre-registered result PASS (excess Sharpe {sr:.2f}, max DD {dd:.1%}, spec "
+                f"{recorded[:12]} unchanged)", hard=False), profile
+
+
+def incubation_gate(returns, rf_rets, profile, th=None):
+    """Stage B (v2.2): live incubation must NOT CONTRADICT the backtest.
+
+    Incubation cannot prove edge in 60-90 sessions (the s.e. of an annual Sharpe
+    is ~2 there); it detects implementation failure. After
+    ``incubation_min_returns`` halt-free returns, FAIL if any of:
+      * the always-valid upper bound (level incubation_alpha) on the mean daily
+        excess return is below haircut x backtest Sharpe x live daily sd —
+        live is significantly worse than half the backtest Sharpe;
+      * live vol / backtest vol is outside [vol_ratio_min, vol_ratio_max] —
+        the book is not running the strategy that was tested;
+      * live max DD > dd_multiple x backtest max DD.
+    Always-valid bounds keep a daily re-evaluation honest."""
+    th = th or THRESHOLDS
+    name = "Live incubation consistent with the backtest (Stage B)"
+    hc = th["incubation_sharpe_haircut"]
+    thr = (f">= {th['incubation_min_returns']} returns; not significantly below {hc:g}x backtest Sharpe; "
+           f"vol ratio in [{th['incubation_vol_ratio_min']:g}, {th['incubation_vol_ratio_max']:g}]; "
+           f"max DD <= {th['incubation_dd_multiple']:g}x backtest")
+    if profile is None:
+        return gate("incubation_consistency", name, thr, None, "not_applicable",
+                    "no usable research profile to compare against", hard=False)
+    n, need = len(returns), th["incubation_min_returns"]
+    if n < need or len(rf_rets) != n:
+        return gate("incubation_consistency", name, thr, {"n": n}, "insufficient",
+                    f"{n} of {need} halt-free returns", eta_sessions=max(1, need - n), hard=False)
+    ex = [r - f for r, f in zip(returns, rf_rets)]
+    mean = sum(ex) / n
+    sd = math.sqrt(sum((e - mean) ** 2 for e in ex) / (n - 1))
+    if sd <= 0:
+        return gate("incubation_consistency", name, thr, {"n": n}, "fail",
+                    "zero-variance live series — not a traded strategy", hard=False)
+    rpy = PERIODS_PER_YEAR
+    expected = hc * profile["sharpe_excess"] / math.sqrt(rpy) * sd
+    _lo, hi = confidence_sequence(mean, sd, n, th["cs_rho_sessions"], th["incubation_alpha"])
+    vol_ratio = sd * math.sqrt(rpy) / profile["vol"]
+    dd = drawdown_stats(returns)["max_drawdown"]
+    dd_cap = th["incubation_dd_multiple"] * profile["max_drawdown"]
+    checks = {
+        "sharpe_not_contradicted": hi is not None and hi >= expected,
+        "vol_ratio_in_band": th["incubation_vol_ratio_min"] <= vol_ratio <= th["incubation_vol_ratio_max"],
+        "drawdown_within_multiple": dd <= dd_cap,
+    }
+    live_sr = mean / sd * math.sqrt(rpy)
+    val = {"n": n, "live_sharpe_excess": _r(live_sr, 3), "backtest_sharpe_excess": _r(profile["sharpe_excess"], 3),
+           "vol_ratio": _r(vol_ratio, 3), "live_max_drawdown": _r(dd), "drawdown_cap": _r(dd_cap),
+           "checks": checks}
+    detail = (f"live excess Sharpe {live_sr:+.2f} vs backtest {profile['sharpe_excess']:.2f} "
+              f"(upper bound {'ok' if checks['sharpe_not_contradicted'] else 'BELOW'} {hc:g}x); "
+              f"vol ratio {vol_ratio:.2f}; max DD {dd:.1%} vs cap {dd_cap:.1%}")
+    return gate("incubation_consistency", name, thr, val,
+                "pass" if all(checks.values()) else "fail", detail, hard=False)
+
+
 def drawdown_stats(returns):
     curve = equity_curve(returns)
     mdd = M.max_drawdown(curve)
@@ -878,6 +1000,8 @@ def narrative(entry):
         parts.append(f"NOT READY: {gp}/{gt} hard gates pass.")
     w = entry.get("window") or {}
     parts.append(f"{w.get('trading_days', 0)} sessions since {w.get('start')}.")
+    if entry.get("path") == "two_stage":
+        parts.append("Path: two-stage (pre-registered research PASS + live incubation).")
     if edge.get("alpha_annual") is not None and edge.get("cs_lower") is not None:
         parts.append(f"Alpha vs SPY {edge['alpha_annual'] * 100:+.1f}%/yr (beta {edge['beta']:.2f}, n={edge['n']}); "
                      f"always-valid bounds [{edge['cs_lower'] * 100:+.1f}%, {edge['cs_upper'] * 100:+.1f}%]/yr.")

@@ -21,6 +21,7 @@ SUPABASE_ANON_KEY, GITHUB_TOKEN + GITHUB_REPOSITORY.
 """
 import argparse
 import glob
+import hashlib
 import json
 import os
 import sys
@@ -604,6 +605,35 @@ def _edge_summary(edge, eta_edge):
     }
 
 
+def load_research(cfg):
+    """(result entry, actual sha256 of its spec file) for a registry ``research``
+    block {artifact, result_key}; (None, None) when absent/unreadable."""
+    if not cfg:
+        return None, None
+    doc = _load(_rel(cfg.get("artifact") or ""), {}) or {}
+    result = (doc.get("results") or {}).get(cfg.get("result_key"))
+    if not isinstance(result, dict):
+        return None, None
+    spec = result.get("spec_path") or cfg.get("spec_path")
+    try:
+        sha = hashlib.sha256(Path(_rel(spec)).read_bytes()).hexdigest() if spec else None
+    except OSError:
+        sha = None
+    return result, sha
+
+
+def select_path(claims_edge, owns_edge, edge_g, research_g, incubation_g):
+    """v2.2: GO is reachable by EITHER path. live_edge = the always-valid alpha
+    bound proves edge on live P&L (gate 2 hard). two_stage = a pre-registered
+    research PASS (Stage A) + live incubation consistent with it (Stage B) —
+    chosen only when Stage A passed and the live edge has not; then gate 2 is
+    informational and Stages A/B are hard. Mutates the gates' ``hard`` flags."""
+    if claims_edge and owns_edge and research_g["status"] == "pass" and edge_g["status"] != "pass":
+        edge_g["hard"], research_g["hard"], incubation_g["hard"] = False, True, True
+        return "two_stage"
+    return "live_edge"
+
+
 def _not_applicable_edge(trial_count, why):
     return {"n": None, "trial_count": trial_count, "z_required": None, "alpha_daily": None,
             "alpha_annual": None, "beta": None, "t_hac": None, "ir_annual": None, "psr": None,
@@ -716,15 +746,15 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         aligned = [(d, r) for d, r in zip(edge_w["dates"], edge_w["returns"]) if d in spy_by]
 
         attribution, owns_edge, attr_note = edge_ownership(s, registry, as_of)
+        y = [r for _, r in aligned]
+        rf = [(bil_by.get(d, rf_const) if use_bil else rf_const) for d, _ in aligned]
         if not claims_edge:
             edge = _not_applicable_edge(s["trial_count"], "sleeve claims no edge (registry claims_edge=false)")
             eta_edge = {"state": "not_applicable", "sessions_remaining": None}
             edge_g = R.gate("edge", "Benchmark-relative edge (always-valid alpha bound vs SPY)",
                             "not applicable: no edge claimed", None, "not_applicable", edge["detail"], hard=False)
         else:
-            y = [r for _, r in aligned]
             x = [spy_by[d] for d, _ in aligned]
-            rf = [(bil_by.get(d, rf_const) if use_bil else rf_const) for d, _ in aligned]
             edge = R.edge_test(y, x, rf, s["trial_count"], alpha_level=a_level)
             edge["rf_source"] = "BIL daily total return" if use_bil else \
                 f"constant {th['rf_fallback_annual']:.0%}/yr (BIL returns unavailable)"
@@ -737,6 +767,19 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
                 edge_g["status"], edge_g["eta_sessions"] = "not_measured", None
                 edge_g["detail"] = f"no clean sleeve series: {attr_note} (stats shown are the book's)"
         gates = [R.track_record_gate(active_sessions), edge_g]
+        path, research_summary = "live_edge", None
+        if claims_edge:
+            result, spec_sha = load_research(s.get("research"))
+            research_g, profile = R.research_gate(s.get("research"), result, spec_sha)
+            incubation_g = R.incubation_gate(y, rf, profile)
+            if not owns_edge and incubation_g["status"] != "not_applicable":
+                incubation_g["status"], incubation_g["eta_sessions"] = "not_measured", None
+                incubation_g["detail"] = f"no clean sleeve series: {attr_note}"
+            path = select_path(claims_edge, owns_edge, edge_g, research_g, incubation_g)
+            gates += [research_g, incubation_g]
+            research_summary = {"registered": bool(s.get("research")), "status": research_g["status"],
+                                "detail": research_g["detail"], "profile": profile,
+                                "incubation_status": incubation_g["status"]}
         gates[0]["detail"] = (f"{active_sessions} active sessions since the version start "
                               f"({n_sessions} total, {len(halted_in)} halted/frozen excluded)")
         gates += R.risk_gates(risk_w["returns"], book_returns=(info["whole"] or {}).get("returns"),
@@ -790,6 +833,8 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
                        "cash_flow_sessions": risk_w["excluded"]},
             "attribution": attribution,
             "owns_edge_test": owns_edge,
+            "path": path,
+            "research": research_summary,
             "attribution_note": f"{attr_note}; returns are the whole {pid} account "
                                 f"({books[pid]['equity_source'] or 'no equity source'})",
             "gates": gates,
@@ -814,7 +859,7 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
         "generated_at": now_utc.isoformat(),
         "as_of_session": as_of,
         "methodology_version": R.METHODOLOGY_VERSION,
-        "methodology_doc": "docs/LIVE_READINESS.md §2 (v2.1)",
+        "methodology_doc": "docs/LIVE_READINESS.md §2 (v2.2)",
         "thresholds": dict(R.THRESHOLDS),
         "edge_decision": {
             "rule": "always-valid one-sided normal-mixture confidence sequence on the HAC-scaled OLS alpha "
@@ -822,8 +867,12 @@ def build_report(registry_doc, *, as_of=None, offline=False, now_utc=None):
             "alpha_family": th["alpha_family"], "k_family": k_family, "k_live_edge_sleeves": k_live,
             "k_floor": th["k_family_floor"], "alpha_level_per_sleeve": round(a_level, 6),
             "rho_sessions": th["cs_rho_sessions"],
+            "two_stage": "alternative to the live-edge proof: Stage A = pre-registered research result PASS "
+                         "(unchanged spec hash, backtest max DD <= research_max_backtest_drawdown) + Stage B = "
+                         ">= incubation_min_returns live returns not contradicting the backtest (always-valid "
+                         "Sharpe bound vs haircut, vol ratio band, drawdown multiple); all other hard gates unchanged",
         },
-        "verdict_rule": "GO only if every hard gate passes; FORWARD_TEST_PASS caps forward tests; BETA_SLEEVE "
+        "verdict_rule": "GO only if every hard gate passes on the sleeve's path (live_edge or two_stage); FORWARD_TEST_PASS caps forward tests; BETA_SLEEVE "
                         "for no-edge sleeves; NOT_ELIGIBLE for exits_only/quarantined; no percentage score. "
                         "Real capital remains a human decision.",
         "verdict_values": ["GO", "NOT_READY", "NOT_ELIGIBLE", "BETA_SLEEVE", "FORWARD_TEST_PASS"],

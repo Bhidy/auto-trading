@@ -28,7 +28,7 @@ the institutional bar for promoting any single portfolio from paper to live.
 | Research provenance | Calibrated-friction artifact carries a fingerprint sidecar (p90, floored, refuse-on-small-N) | `tests/test_friction.py`, `test_research_provenance.py` | ✅ |
 | Backtest no-look-ahead | Engine prefix invariant to future bars; metrics match an independent recompute | `tests/test_reference_parity.py` | ✅ |
 
-## 2. Strategy validation gates — v2.1 (pre-registered 2026-10-23, methodology 2.1.0)
+## 2. Strategy validation gates — v2.2 (pre-registered 2026-10-23, methodology 2.2.0)
 
 Evaluated **per sleeve-version**, not per account. Every sleeve is registered in the
 human-owned `config/strategy_registry.json` (id, book, `start_date`, status, evidence
@@ -133,6 +133,41 @@ sleeve claims no edge). Sleeve P&L is never fabricated.
 > with the live record used to *refute* (risk, ops, `fail` on a significantly negative alpha),
 > not to prove.
 
+### 2a. Two paths to GO (v2.2)
+
+Gate 2 (live edge) is the **live-edge path**. It certifies edge from paper P&L alone and, at
+realistic IR, needs years (table above). v2.2 adds the institutional alternative, the
+**two-stage path**. A sleeve reaches GO by **either** path; every other hard gate (track record
+90 sessions, DD, kill headroom, worst day, CVaR, trades/PF, regimes, reconciliation, duplicates,
+slippage, freshness, exception-free) applies unchanged on both.
+
+| Stage | Gate | Rule (hard on the two-stage path) |
+|---|---|---|
+| A | `research` | The registry's `research` block points at a committed, **pre-registered** result (`data/strategy_lab_results.json`). The result's recorded `spec_sha256` must equal the spec file's hash today; a spec edited after its result voids it. Its pre-registered acceptance (which includes DSR ≥ 0.95 at the honest trial count, cost stress and parameter neighbourhood) must be **overall PASS**, and the backtest must show excess Sharpe > 0 and max DD ≤ **12%**. A missing result is `not_measured`, never a pass. |
+| B | `incubation_consistency` | At least **60 halt-free live returns**. The live book must **not contradict** the backtest. It FAILS if any of these holds: (i) the always-valid upper bound (level 0.05) on the mean daily excess return is below **0.5 ×** the backtest Sharpe × live daily sd; (ii) live vol / backtest vol is outside **[0.5, 1.5]**; (iii) live max DD > **1.5 ×** backtest max DD. |
+
+The two-stage path is selected only when Stage A passes, the live edge has not, and the sleeve
+**owns** its book's return series (a shared `book_level_shared` series can never certify a
+sleeve). Forward tests stay capped at FORWARD_TEST_PASS (their Stage A is FAIL by definition).
+
+**What Stage B can and cannot do** (measured with the engine code, 400 paths per cell; backtest
+Sharpe 0.8, vol 9%, max DD 10%):
+
+| True live behaviour | Fail rate at 60 / 90 / 126 sessions |
+|---|---|
+| as backtested (Sharpe 0.8) | 0.0% / 0.0% / 0.5% |
+| decayed to the haircut (Sharpe 0.4) | 0.0% / 0.5% / 0.8% |
+| edge gone (Sharpe 0) | 0.0% / 1.0% / 1.8% |
+| broken (Sharpe −1) | 0.5% / 2.2% / 3.8% |
+| not the tested strategy (2× vol) | 100% / 100% / 100% |
+
+Stage B is an **implementation-fidelity** check. Over 60–126 sessions no test can tell a
+Sharpe 0.8 book from a dead one (the s.e. of an annual Sharpe is ≈ 1.6–2.0), so on the two-stage
+path **the edge evidence is Stage A's**: a deflated, pre-registered, cost-stressed backtest.
+That is the same standard institutional allocators use. Stage B is re-evaluated every session
+with always-valid bounds, so a GO is never latched: a later contradiction reverts it to
+NOT_READY. A GO on either path only opens the §4 human review and never deploys capital.
+
 ## 3. Operational gates
 
 Items 10–14 of §2 are now computed per book by the engine every session. The remaining
@@ -162,7 +197,7 @@ one-off controls:
 - ~~A scripted kill-switch drill in CI~~ → **DONE:** `tests/test_kill_switch_drill.py`
   runs on every push (simulated drawdown → asserts liquidate + lockdown).
 
-## 6. Strategy-gate status snapshot — Readiness Engine v2.1 (as of session 2026-10-22)
+## 6. Strategy-gate status snapshot — Readiness Engine v2.2 (as of session 2026-10-22)
 
 Source: `data/readiness_report.json` generated 2026-10-23 16:13Z (Alpaca 1D portfolio history,
 account activities, calendar, SIP adjusted SPY/BIL bars, GitHub run history). Edge level 0.05/6
@@ -184,6 +219,13 @@ are 13 clean sessions into the 30-session exception-free gate (Guardian failed 2
 Measurement gaps: P2 has no drift audit (reconciliation), and P1/P2 log only limit prices
 (slippage not measurable vs arrival).
 
+**Two-stage path (v2.2):** only P3 crisis-core has a registered research result, and it is
+**FAIL** (C1 max DD 14.8% > 12%; C3 DSR 0.90 < 0.95), so Stage A fails and the path is closed for
+that version. P1 momentum, P1 multi-factor and P2 copy have **no** pre-registered passing result,
+so they are on the live-edge path only. The fastest honest route to a GO is a **new**
+pre-registered strategy that passes Stage A. It then needs about 90 clean sessions of paper incubation
+(about 4.5 months), not years.
+
 **No sleeve is GO. Live capital remains NO-GO.** At realistic edges the sequential test needs
 years (§2 power table); the live record's job now is to refute (risk, ops, a significantly
 negative alpha), not to certify.
@@ -192,8 +234,9 @@ negative alpha), not to certify.
 
 | Version | Date | Change | Reason |
 |---|---|---|---|
+| 2.2.0 | 2026-10-23 | Two-stage path to GO (§2a): Stage A `research` (pre-registered result, spec-hash verified, acceptance PASS, backtest DD ≤ 12%) + Stage B `incubation_consistency` (≥ 60 live returns not contradicting the backtest: always-valid Sharpe bound vs 0.5× haircut, vol ratio 0.5–1.5, DD ≤ 1.5× backtest). Selected only when Stage A passes, the live edge has not, and the sleeve owns its series; all other hard gates unchanged. Registry field `research`. | Live P&L alone cannot certify IR ≤ 1 in under ~7 years (v2.1 power table); institutional practice certifies edge in pre-registered, deflated research and uses live incubation to verify implementation. Stage B's limited power is measured and stated. |
 | 2.1.0 | 2026-10-23 | Edge decided by an always-valid one-sided normal-mixture confidence sequence (ρ = 252, HAC scale) at 0.05/K, K = max(6, live edge sleeves); DSR@backtest-trials and t_HAC/z_req demoted to informational. New verdicts BETA_SLEEVE (`claims_edge: false`) and FORWARD_TEST_PASS (cap for forward tests); one edge owner per shared account (`book_level_shared`). Kill headroom vs each live engine's reference; max DD = stricter of window and whole paper period; halted sessions excluded (`book_halts`); abs(r) > 25% data faults and Alpaca cash-flow sessions excluded; slippage only vs a decision/arrival price; ETA as median/pessimistic/optimistic range; id-less trade rows distinct; cron dedup only once today's equity point exists. | Adversarial review 2026-10-23: daily re-evaluation of a fixed threshold gave 21–26% false GO at zero alpha over 2–5 y; backtest trial counts wrongly deflated live returns; P2 benchmark sleeve was scored on the copy book; window-peak headroom differed from the live kill switches; a frozen P1 counted as track record; P2's journal phantom ($27.9K) would have entered as data; P2 "slippage" was limit headroom. |
 | 2.0.0 | 2026-10-23 | Readiness Engine v2: per-sleeve registry; trading-session counting with version reset; benchmark-relative alpha (OLS on SPY, rf = BIL, Newey-West lag 5) + DSR ≥ 0.95 at the honest trial count replaces absolute OOS Sharpe ≥ 1.0; kill-switch headroom, worst day, CVaR95, regime coverage and five operational gates computed; binding gate + power-analysis ETA; no percentage score. Kept: 90 sessions, DD ≤ 15%, PF ≥ 1.3, ≥ 50 trades. | Audit 2026-10-23 of the readiness page: P1 Sharpe gate hard-coded PASS from a stale July constant, hard-coded backtest chips, calendar days counted as trading days and never reset on strategy change, live Sharpe never computed, PF/sample mixed versions and sleeves, "60% ready" gauge, no ETA, regime and operational gates never computed. |
 | 1.0 | 2026-06 | Original §2 table (track record, OOS Sharpe ≥ 1.0, DD, PF, trades, regimes). | Initial live-readiness bar. |
 
-_Last updated: 2026-10-23 (methodology 2.1.0). Owner: Senior Chief Quant. Review: monthly; §6 regenerates daily in `data/readiness_report.json`._
+_Last updated: 2026-10-23 (methodology 2.2.0). Owner: Senior Chief Quant. Review: monthly; §6 regenerates daily in `data/readiness_report.json`._

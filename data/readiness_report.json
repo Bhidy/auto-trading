@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-23T16:13:42.542442+00:00",
+  "generated_at": "2026-10-23T16:36:03.973745+00:00",
   "as_of_session": "2026-10-22",
-  "methodology_version": "2.1.0",
-  "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.1)",
+  "methodology_version": "2.2.0",
+  "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.2)",
   "thresholds": {
     "min_track_sessions": 90,
     "min_edge_sessions": 60,
@@ -31,7 +31,14 @@
     "min_exception_free_sessions": 30,
     "min_sessions_for_eta": 20,
     "eta_cap_sessions": 2520,
-    "rf_fallback_annual": 0.04
+    "rf_fallback_annual": 0.04,
+    "research_max_backtest_drawdown": 0.12,
+    "incubation_min_returns": 60,
+    "incubation_sharpe_haircut": 0.5,
+    "incubation_alpha": 0.05,
+    "incubation_vol_ratio_min": 0.5,
+    "incubation_vol_ratio_max": 1.5,
+    "incubation_dd_multiple": 1.5
   },
   "edge_decision": {
     "rule": "always-valid one-sided normal-mixture confidence sequence on the HAC-scaled OLS alpha vs SPY; PASS iff the lower bound > 0 (n >= min_edge_sessions)",
@@ -40,9 +47,10 @@
     "k_live_edge_sleeves": 2,
     "k_floor": 6,
     "alpha_level_per_sleeve": 0.008333,
-    "rho_sessions": 252
+    "rho_sessions": 252,
+    "two_stage": "alternative to the live-edge proof: Stage A = pre-registered research result PASS (unchanged spec hash, backtest max DD <= research_max_backtest_drawdown) + Stage B = >= incubation_min_returns live returns not contradicting the backtest (always-valid Sharpe bound vs haircut, vol ratio band, drawdown multiple); all other hard gates unchanged"
   },
-  "verdict_rule": "GO only if every hard gate passes; FORWARD_TEST_PASS caps forward tests; BETA_SLEEVE for no-edge sleeves; NOT_ELIGIBLE for exits_only/quarantined; no percentage score. Real capital remains a human decision.",
+  "verdict_rule": "GO only if every hard gate passes on the sleeve's path (live_edge or two_stage); FORWARD_TEST_PASS caps forward tests; BETA_SLEEVE for no-edge sleeves; NOT_ELIGIBLE for exits_only/quarantined; no percentage score. Real capital remains a human decision.",
   "verdict_values": [
     "GO",
     "NOT_READY",
@@ -79,6 +87,14 @@
       },
       "attribution": "book_level",
       "owns_edge_test": true,
+      "path": "live_edge",
+      "research": {
+        "registered": false,
+        "status": "not_measured",
+        "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+        "profile": null,
+        "incubation_status": "not_applicable"
+      },
       "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
       "gates": [
         {
@@ -107,6 +123,26 @@
           "detail": "only 1 aligned daily returns",
           "eta_sessions": null,
           "hard": true
+        },
+        {
+          "id": "research",
+          "name": "Pre-registered research proof (Stage A)",
+          "threshold": "acceptance overall PASS on an unchanged spec; backtest max DD <= 12%; excess Sharpe > 0",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+          "eta_sessions": null,
+          "hard": false
+        },
+        {
+          "id": "incubation_consistency",
+          "name": "Live incubation consistent with the backtest (Stage B)",
+          "threshold": ">= 60 returns; not significantly below 0.5x backtest Sharpe; vol ratio in [0.5, 1.5]; max DD <= 1.5x backtest",
+          "value": null,
+          "status": "not_applicable",
+          "detail": "no usable research profile to compare against",
+          "eta_sessions": null,
+          "hard": false
         },
         {
           "id": "max_drawdown",
@@ -235,10 +271,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 13,
-          "status": "insufficient",
-          "detail": "13 consecutive clean sessions",
-          "eta_sessions": 17,
+          "value": null,
+          "status": "not_measured",
+          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
+          "eta_sessions": null,
           "hard": true
         }
       ],
@@ -281,7 +317,8 @@
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge",
           "excludes_measurement_gaps": [
-            "slippage"
+            "slippage",
+            "exception_free"
           ]
         }
       },
@@ -291,9 +328,10 @@
       "gates_passed": 8,
       "gates_total": 12,
       "measurement_gaps": [
-        "slippage"
+        "slippage",
+        "exception_free"
       ],
-      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 1 aligned daily returns. Not yet measured (blocks GO): slippage. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 78 sessions since 2026-07-06. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 1 aligned daily returns. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p1-multifactor-satellite-v2",
@@ -325,6 +363,14 @@
       },
       "attribution": "book_level",
       "owns_edge_test": true,
+      "path": "live_edge",
+      "research": {
+        "registered": false,
+        "status": "not_measured",
+        "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+        "profile": null,
+        "incubation_status": "not_applicable"
+      },
       "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_1 account (alpaca portfolio history (1D))",
       "gates": [
         {
@@ -353,6 +399,26 @@
           "detail": "n=15 < 60 pre-registered minimum",
           "eta_sessions": null,
           "hard": true
+        },
+        {
+          "id": "research",
+          "name": "Pre-registered research proof (Stage A)",
+          "threshold": "acceptance overall PASS on an unchanged spec; backtest max DD <= 12%; excess Sharpe > 0",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+          "eta_sessions": null,
+          "hard": false
+        },
+        {
+          "id": "incubation_consistency",
+          "name": "Live incubation consistent with the backtest (Stage B)",
+          "threshold": ">= 60 returns; not significantly below 0.5x backtest Sharpe; vol ratio in [0.5, 1.5]; max DD <= 1.5x backtest",
+          "value": null,
+          "status": "not_applicable",
+          "detail": "no usable research profile to compare against",
+          "eta_sessions": null,
+          "hard": false
         },
         {
           "id": "max_drawdown",
@@ -477,10 +543,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 13,
-          "status": "insufficient",
-          "detail": "13 consecutive clean sessions",
-          "eta_sessions": 17,
+          "value": null,
+          "status": "not_measured",
+          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
+          "eta_sessions": null,
           "hard": true
         }
       ],
@@ -523,7 +589,8 @@
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge, profit_factor, regime_coverage",
           "excludes_measurement_gaps": [
-            "slippage"
+            "slippage",
+            "exception_free"
           ]
         }
       },
@@ -533,9 +600,10 @@
       "gates_passed": 7,
       "gates_total": 14,
       "measurement_gaps": [
-        "slippage"
+        "slippage",
+        "exception_free"
       ],
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Alpha vs SPY -77.9%/yr (beta 0.84, n=15); always-valid bounds [-524.1%, +368.3%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage. Returns are BOOK-level (whole account)."
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 16 sessions since 2026-05-27. Alpha vs SPY -77.9%/yr (beta 0.84, n=15); always-valid bounds [-524.1%, +368.3%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 n=15 < 60 pre-registered minimum. Not yet measured (blocks GO): slippage, exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-copy-v2",
@@ -565,6 +633,14 @@
       },
       "attribution": "book_level",
       "owns_edge_test": true,
+      "path": "live_edge",
+      "research": {
+        "registered": false,
+        "status": "not_measured",
+        "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+        "profile": null,
+        "incubation_status": "not_applicable"
+      },
       "attribution_note": "owns the shared book-level edge test (overlaps: p2-benchmark-etf-v1); returns are the whole portfolio_2 account (alpaca portfolio history (1D))",
       "gates": [
         {
@@ -593,6 +669,26 @@
           "detail": "alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042",
           "eta_sessions": null,
           "hard": true
+        },
+        {
+          "id": "research",
+          "name": "Pre-registered research proof (Stage A)",
+          "threshold": "acceptance overall PASS on an unchanged spec; backtest max DD <= 12%; excess Sharpe > 0",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+          "eta_sessions": null,
+          "hard": false
+        },
+        {
+          "id": "incubation_consistency",
+          "name": "Live incubation consistent with the backtest (Stage B)",
+          "threshold": ">= 60 returns; not significantly below 0.5x backtest Sharpe; vol ratio in [0.5, 1.5]; max DD <= 1.5x backtest",
+          "value": null,
+          "status": "not_applicable",
+          "detail": "no usable research profile to compare against",
+          "eta_sessions": null,
+          "hard": false
         },
         {
           "id": "max_drawdown",
@@ -721,10 +817,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 13,
-          "status": "insufficient",
-          "detail": "13 consecutive clean sessions",
-          "eta_sessions": 17,
+          "value": null,
+          "status": "not_measured",
+          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
+          "eta_sessions": null,
           "hard": true
         }
       ],
@@ -768,7 +864,8 @@
           "label": "no projection \u2014 no convergence path for: edge",
           "excludes_measurement_gaps": [
             "reconciliation",
-            "slippage"
+            "slippage",
+            "exception_free"
           ],
           "edge_range": {
             "median_sessions": null,
@@ -787,9 +884,10 @@
       "gates_total": 14,
       "measurement_gaps": [
         "reconciliation",
-        "slippage"
+        "slippage",
+        "exception_free"
       ],
-      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-42.9%, +48.5%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level (whole account)."
+      "narrative": "NOT READY: 7/14 hard gates pass. 78 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.45, n=78); always-valid bounds [-42.9%, +48.5%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.83%/yr (beta 0.45); always-valid bounds [-42.88%, +48.54%]/yr at level 0.0083; info: t_HAC 0.37, DSR@34 0.042. ETA: no projection \u2014 no convergence path for: edge. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-benchmark-etf-v1",
@@ -819,6 +917,8 @@
       },
       "attribution": "book_level_shared",
       "owns_edge_test": false,
+      "path": "live_edge",
+      "research": null,
       "attribution_note": "claims no edge; the book-level series is never credited to it; returns are the whole portfolio_2 account (alpaca portfolio history (1D))",
       "gates": [
         {
@@ -968,10 +1068,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 13,
-          "status": "insufficient",
-          "detail": "13 consecutive clean sessions",
-          "eta_sessions": 17,
+          "value": null,
+          "status": "not_measured",
+          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
+          "eta_sessions": null,
           "hard": true
         }
       ],
@@ -1002,25 +1102,27 @@
           "sessions_remaining": null
         },
         "overall": {
-          "sessions_remaining": 17,
-          "projected_date": "2026-11-16",
-          "label": "estimate (current alpha / trade / clean-session rates held constant)",
+          "sessions_remaining": null,
+          "projected_date": null,
+          "label": "evidence gates met; blocked only by measurement gaps",
           "excludes_measurement_gaps": [
             "reconciliation",
-            "slippage"
+            "slippage",
+            "exception_free"
           ]
         }
       },
       "verdict": "BETA_SLEEVE",
       "verdict_note": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only",
-      "binding_gate": "exception_free",
+      "binding_gate": "reconciliation",
       "gates_passed": 8,
       "gates_total": 11,
       "measurement_gaps": [
         "reconciliation",
-        "slippage"
+        "slippage",
+        "exception_free"
       ],
-      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 8/11 hard gates pass. 100 sessions since 2026-06-02. Binding: Unhandled-exception-free sessions \u2014 13 consecutive clean sessions. ETA 2026-11-16 (estimate (current alpha / trade / clean-session rates held constant)). Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
+      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 8/11 hard gates pass. 100 sessions since 2026-06-02. Binding: Broker vs ledger reconciliation \u2014 this book writes a working-orders report only (no drift audit). ETA: evidence gates met; blocked only by measurement gaps. Not yet measured (blocks GO): reconciliation, slippage, exception_free. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p3-event-driven-legacy",
@@ -1052,6 +1154,14 @@
       },
       "attribution": "book_level",
       "owns_edge_test": true,
+      "path": "live_edge",
+      "research": {
+        "registered": false,
+        "status": "not_measured",
+        "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+        "profile": null,
+        "incubation_status": "not_applicable"
+      },
       "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_3 account (alpaca portfolio history (1D))",
       "gates": [
         {
@@ -1080,6 +1190,26 @@
           "detail": "alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010",
           "eta_sessions": null,
           "hard": true
+        },
+        {
+          "id": "research",
+          "name": "Pre-registered research proof (Stage A)",
+          "threshold": "acceptance overall PASS on an unchanged spec; backtest max DD <= 12%; excess Sharpe > 0",
+          "value": null,
+          "status": "not_measured",
+          "detail": "no pre-registered research result on file \u2014 only the live-edge path can lead to GO",
+          "eta_sessions": null,
+          "hard": false
+        },
+        {
+          "id": "incubation_consistency",
+          "name": "Live incubation consistent with the backtest (Stage B)",
+          "threshold": ">= 60 returns; not significantly below 0.5x backtest Sharpe; vol ratio in [0.5, 1.5]; max DD <= 1.5x backtest",
+          "value": null,
+          "status": "not_applicable",
+          "detail": "no usable research profile to compare against",
+          "eta_sessions": null,
+          "hard": false
         },
         {
           "id": "max_drawdown",
@@ -1208,10 +1338,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 13,
-          "status": "insufficient",
-          "detail": "13 consecutive clean sessions",
-          "eta_sessions": 17,
+          "value": null,
+          "status": "not_measured",
+          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
+          "eta_sessions": null,
           "hard": true
         }
       ],
@@ -1253,7 +1383,9 @@
           "sessions_remaining": null,
           "projected_date": null,
           "label": "no projection \u2014 no convergence path for: edge, profit_factor",
-          "excludes_measurement_gaps": [],
+          "excludes_measurement_gaps": [
+            "exception_free"
+          ],
           "edge_range": {
             "median_sessions": null,
             "pessimistic_sessions": null,
@@ -1269,8 +1401,10 @@
       "binding_gate": "edge",
       "gates_passed": 11,
       "gates_total": 14,
-      "measurement_gaps": [],
-      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-130.5%, +106.7%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Returns are BOOK-level (whole account)."
+      "measurement_gaps": [
+        "exception_free"
+      ],
+      "narrative": "NOT ELIGIBLE: sleeve is quarantined (no new evidence accrues). 90 sessions since 2026-05-27. Alpha vs SPY -11.9%/yr (beta 0.57, n=89); always-valid bounds [-130.5%, +106.7%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha -11.90%/yr (beta 0.57); always-valid bounds [-130.53%, +106.73%]/yr at level 0.0083; info: t_HAC -0.57, DSR@13 0.010. Not yet measured (blocks GO): exception_free. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p3-crisis-core-v1-forward",
@@ -1300,6 +1434,19 @@
       },
       "attribution": "book_level",
       "owns_edge_test": true,
+      "path": "live_edge",
+      "research": {
+        "registered": true,
+        "status": "fail",
+        "detail": "acceptance FAIL (C1_max_drawdown_le_12pct, C3_sharpe_ge_0.5_and_dsr_ge_0.95); backtest max DD 14.8% > 12%",
+        "profile": {
+          "sharpe_excess": 0.729,
+          "vol": 0.083,
+          "max_drawdown": 0.1477,
+          "source": "data/strategy_lab_results.json#crisis-core-v1"
+        },
+        "incubation_status": "insufficient"
+      },
       "attribution_note": "sole registered sleeve in the book over its window; returns are the whole portfolio_3 account (alpaca portfolio history (1D))",
       "gates": [
         {
@@ -1328,6 +1475,37 @@
           "detail": "only 0 aligned daily returns",
           "eta_sessions": null,
           "hard": true
+        },
+        {
+          "id": "research",
+          "name": "Pre-registered research proof (Stage A)",
+          "threshold": "acceptance overall PASS on an unchanged spec; backtest max DD <= 12%; excess Sharpe > 0",
+          "value": {
+            "overall": "FAIL",
+            "sharpe_excess": 0.729,
+            "max_drawdown": 0.1477,
+            "vol": 0.083,
+            "failed_criteria": [
+              "C1_max_drawdown_le_12pct",
+              "C3_sharpe_ge_0.5_and_dsr_ge_0.95"
+            ]
+          },
+          "status": "fail",
+          "detail": "acceptance FAIL (C1_max_drawdown_le_12pct, C3_sharpe_ge_0.5_and_dsr_ge_0.95); backtest max DD 14.8% > 12%",
+          "eta_sessions": null,
+          "hard": false
+        },
+        {
+          "id": "incubation_consistency",
+          "name": "Live incubation consistent with the backtest (Stage B)",
+          "threshold": ">= 60 returns; not significantly below 0.5x backtest Sharpe; vol ratio in [0.5, 1.5]; max DD <= 1.5x backtest",
+          "value": {
+            "n": 0
+          },
+          "status": "insufficient",
+          "detail": "0 of 60 halt-free returns",
+          "eta_sessions": 60,
+          "hard": false
         },
         {
           "id": "max_drawdown",
@@ -1445,10 +1623,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 13,
-          "status": "insufficient",
-          "detail": "13 consecutive clean sessions",
-          "eta_sessions": 17,
+          "value": null,
+          "status": "not_measured",
+          "detail": "workflow run history not available to this run (needs GITHUB_TOKEN)",
+          "eta_sessions": null,
           "hard": true
         }
       ],
@@ -1493,7 +1671,8 @@
           "excludes_measurement_gaps": [
             "regime_coverage",
             "duplicate_orders",
-            "slippage"
+            "slippage",
+            "exception_free"
           ]
         }
       },
@@ -1505,9 +1684,10 @@
       "measurement_gaps": [
         "regime_coverage",
         "duplicate_orders",
-        "slippage"
+        "slippage",
+        "exception_free"
       ],
-      "narrative": "NOT READY: 3/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage. Returns are BOOK-level (whole account)."
+      "narrative": "NOT READY: 3/12 hard gates pass. 0 sessions since 2026-10-23. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 only 0 aligned daily returns. ETA: no projection \u2014 no convergence path for: edge, max_drawdown, worst_day, cvar95. Not yet measured (blocks GO): regime_coverage, duplicate_orders, slippage, exception_free. Returns are BOOK-level (whole account)."
     }
   ],
   "books": {
@@ -1621,9 +1801,9 @@
     "calendar": "alpaca",
     "bars": "alpaca daily bars (sip, adjustment=all)",
     "workflow_history": {
-      "portfolio_1": "github actions run history",
-      "portfolio_2": "github actions run history",
-      "portfolio_3": "github actions run history"
+      "portfolio_1": "GITHUB_TOKEN/GITHUB_REPOSITORY not set",
+      "portfolio_2": "GITHUB_TOKEN/GITHUB_REPOSITORY not set",
+      "portfolio_3": "GITHUB_TOKEN/GITHUB_REPOSITORY not set"
     }
   },
   "warnings": [
@@ -1632,13 +1812,13 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T16:14:06.107904+00:00",
+    "as_of": "2026-10-23T16:36:08.902897+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
         "exists": true,
-        "sha256": "4096e559381159dfafc1f49f100ce99c7c45f6d4da5a34d85eae0faaf8f77164",
-        "bytes": 8119
+        "sha256": "3f0bf268d70fecafc7a828eca8e324430f2161ffdf6167393bcb95669ceaf4f3",
+        "bytes": 8736
       },
       {
         "path": "config/strategy_controls.json",
@@ -1689,7 +1869,7 @@
         "bytes": 275
       }
     ],
-    "combined_sha256": "f022f4d3af57c9f7494145e1e2825ba8d1d42481cedb7f9bacbd89a29b77da47",
+    "combined_sha256": "a3fe75bd1d7d03ecd4c99c865e910fe201ecd37b7d15a4523d2a022deb22e363",
     "meta": {
       "engine": "scripts/readiness_engine.py"
     }

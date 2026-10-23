@@ -1,5 +1,5 @@
 {
-  "_doc": "HUMAN-OWNED. Never written by code (read-only input to scripts/readiness_engine.py). One entry per sleeve-VERSION. start_date = first ET session whose returns/trades count as evidence for this version (pre-start data is excluded, so a strategy change resets the track record). end_date (optional) = last session the version traded new entries. status: active | forward_test | exits_only | quarantined (exits_only/quarantined accrue no new evidence => verdict NOT_ELIGIBLE). evidence_basis: daily_returns | trades | both. trial_count = honest number of configurations tried on this idea (DSR deflates at it); never lower it without a recorded reason. Change only with a recorded reason, date and owner. claims_edge (bool, default true): false = beta/allocation sleeve that claims no edge (edge gate not applicable, verdict BETA_SLEEVE). owns_book_edge (bool): when sleeves of one book overlap in time, the ONE sleeve whose edge test may use the shared book-level series; the others are book_level_shared and cannot GO on edge. book_halts: sessions a book was halted/frozen (excluded from evidence windows), each with cited evidence.",
+  "_doc": "HUMAN-OWNED. Never written by code (read-only input to scripts/readiness_engine.py). One entry per sleeve-VERSION. start_date = first ET session whose returns/trades count as evidence for this version (pre-start data is excluded, so a strategy change resets the track record). end_date (optional) = last session the version traded new entries. status: active | forward_test | exits_only | quarantined (exits_only/quarantined accrue no new evidence => verdict NOT_ELIGIBLE). evidence_basis: daily_returns | trades | both. trial_count = honest number of configurations tried on this idea (DSR deflates at it); never lower it without a recorded reason. Change only with a recorded reason, date and owner. claims_edge (bool, default true): false = beta/allocation sleeve that claims no edge (edge gate not applicable, verdict BETA_SLEEVE). owns_book_edge (bool): when sleeves of one book overlap in time, the ONE sleeve whose edge test may use the shared book-level series; the others are book_level_shared and cannot GO on edge. book_halts: sessions a book was halted/frozen (excluded from evidence windows), each with cited evidence. research (optional, v2.2): {artifact, result_key} pointing at a PRE-REGISTERED research result (e.g. data/strategy_lab_results.json); the engine verifies the spec sha256 and acceptance; a PASS enables the two-stage path (research proof + live incubation consistency) instead of proving edge on live P&L alone. Absent = live-edge path only.",
   "_changed_at": "2026-10-23",
   "_changed_by": "owner-delegated chief-expert decision (Claude, readiness-v2 session 2026-10-23)",
   "book_halts": [
@@ -115,7 +115,12 @@
       "trial_count": 40,
       "trial_count_source": "data/strategy_lab_results.json trial_count: lab_N = registered_N = 38, N_incl_passive_core = 40 (the more conservative 40 is used).",
       "spec": "docs/specs/crisis_core_v1_forward.json",
-      "notes": "First fills 2026-10-23 (event-driven-bot/data/allocator_state.json, 9/9 p3alloc orders filled). FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95): a forward test can measure execution but cannot by itself promote the strategy. Daily-return evidence is BOOK-LEVEL while legacy P3 lots are still running off; a holdings-based sleeve series is a follow-up."
+      "notes": "First fills 2026-10-23 (event-driven-bot/data/allocator_state.json, 9/9 p3alloc orders filled). FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95): a forward test can measure execution but cannot by itself promote the strategy. Daily-return evidence is BOOK-LEVEL while legacy P3 lots are still running off; a holdings-based sleeve series is a follow-up.",
+      "research": {
+        "artifact": "data/strategy_lab_results.json",
+        "result_key": "crisis-core-v1",
+        "note": "Pre-registered result is FAIL (C1 DD 14.8% > 12%, C3 DSR 0.90 < 0.95): Stage A fails, so the two-stage path is closed for this version."
+      }
     }
   ]
 }
