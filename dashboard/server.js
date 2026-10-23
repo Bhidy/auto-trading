@@ -34,10 +34,24 @@ for (const verb of ['get', 'post', 'put', 'patch', 'delete']) {
 // Behind the Vercel proxy — needed so rate-limiting sees the real client IP.
 app.set('trust proxy', 1);
 
-// Security headers. CSP/COEP are disabled because the dashboard intentionally
-// uses inline scripts/styles and external font/quote resources; the rest of
-// helmet's protections (HSTS, noSniff, frameguard, referrer policy) still apply.
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+// Security headers. A script-only CSP (post-deploy audit D11): pages use inline
+// scripts/handlers, so 'unsafe-inline' stays, but script hosts are pinned to the
+// ones the pages actually load — jsDelivr (Chart.js, GSAP, three, SheetJS) and
+// TradingView's widget loader on Market Pulse. Styles, fonts, images, frames and
+// fetches are deliberately left unrestricted (no default-src) so Google Fonts,
+// logo images and the TradingView iframe keep working. COEP stays off.
+app.use(helmet({
+    contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+            defaultSrc: helmet.contentSecurityPolicy.dangerouslyDisableDefaultSrc,
+            scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://s3.tradingview.com'],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+}));
 
 // CORS locked to configured origins (default: production + localhost). Same-origin
 // requests and tools without an Origin header (curl/health checks) are allowed.
@@ -70,6 +84,16 @@ app.use('/api', rateLimit({
 const ACCESS_TOKEN = process.env.DASHBOARD_ACCESS_TOKEN || '';
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+
+// Constant-time secret comparison that is also length-safe: both sides are
+// hashed to fixed-length digests first, so timingSafeEqual never throws on a
+// length mismatch and the response time does not reveal the secret's length.
+function secretMatches(provided, secret) {
+    if (!secret) return false;
+    const a = crypto.createHash('sha256').update(String(provided)).digest();
+    const b = crypto.createHash('sha256').update(String(secret)).digest();
+    return crypto.timingSafeEqual(a, b);
+}
 
 function tokenMatches(provided) {
     const a = Buffer.from(String(provided));
@@ -104,16 +128,62 @@ app.use((req, res, next) => {
 // Strict input validation for every route (audit 2026-10-23, D6/D7). Values are
 // interpolated into upstream Alpaca URLs, so each must be a plain token: no dot
 // segments, no `&`/`?`/`#` smuggling, no arrays/objects from qs bracket syntax.
-const SAFE_VALUE = /^[A-Za-z0-9 ._:,+=\-\/]{0,200}$/;
-function unsafeValue(v) {
+const SAFE_VALUE = /^[A-Za-z0-9 ._:,+=\-\/]*$/;
+// A symbol list (`symbols=A,B,...`, up to 50 tickers for bars-batch) needs more
+// room than a single token; every other value stays capped at 200 characters.
+const MAX_VALUE_LEN = { symbols: 600 };
+function unsafeValue(v, maxLen = 200) {
     if (Array.isArray(v) || (v !== null && typeof v === 'object')) return true;
     const str = String(v);
-    return !SAFE_VALUE.test(str) || /(^|\/)\.\.?(\/|$)/.test(str);
+    return str.length > maxLen || !SAFE_VALUE.test(str) || /(^|\/)\.\.?(\/|$)/.test(str);
 }
 app.use('/api', (req, res, next) => {
     for (const [k, v] of Object.entries(req.query || {})) {
-        if (unsafeValue(v)) return res.status(400).json({ error: `Invalid query parameter: ${k}` });
+        if (unsafeValue(v, MAX_VALUE_LEN[k] || 200)) return res.status(400).json({ error: `Invalid query parameter: ${k}` });
     }
+    return next();
+});
+
+// CDN caching (audit 2026-10-23 follow-up). Pure market-data GETs are identical
+// for every viewer and IEX data is 15-min delayed, so a 15 s edge cache removes
+// most duplicate Alpaca calls. Everything else under /api — portfolio, account,
+// orders, positions, health, intelligence, state — is per-book truth and is
+// explicitly `no-store`. The cache header is applied only to a 200 response, so
+// an upstream error is never pinned at the edge. The crypto order book (5 s
+// depth refresh) is deliberately NOT cached.
+const MARKET_CACHE_CONTROL = 'public, s-maxage=15, stale-while-revalidate=30';
+const MARKET_CACHE_ROUTES = [
+    /^\/api\/market\/bars\/[^/]+$/,
+    /^\/api\/market\/bars-batch$/,
+    /^\/api\/market\/(quotes|sectors|movers|most-active)$/,
+    /^\/api\/market-(indices|news)$/,
+    /^\/api\/stock\/[^/]+\/(details|trades|quotes)$/,
+    /^\/api\/crypto\/(bars|snapshot|quotes|trades)\/.+$/,
+    /^\/api\/supabase\/market$/,
+];
+function isMarketDataRoute(method, urlPath) {
+    return (method === 'GET' || method === 'HEAD') && MARKET_CACHE_ROUTES.some(re => re.test(urlPath));
+}
+// Reference data (tradable-asset master, exchange calendar) changes at most daily:
+// a 1 h edge cache (post-deploy audit D9 — /api/assets was 14.6 MB / 5.2 s per hit).
+const REFERENCE_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600';
+const REFERENCE_CACHE_ROUTES = [/^\/api\/assets$/, /^\/api\/market\/calendar$/];
+function isReferenceDataRoute(method, urlPath) {
+    return (method === 'GET' || method === 'HEAD') && REFERENCE_CACHE_ROUTES.some(re => re.test(urlPath));
+}
+app.use('/api', (req, res, next) => {
+    const urlPath = req.originalUrl.split('?')[0];
+    const policy = isMarketDataRoute(req.method, urlPath) ? MARKET_CACHE_CONTROL
+        : isReferenceDataRoute(req.method, urlPath) ? REFERENCE_CACHE_CONTROL : null;
+    if (!policy) {
+        res.setHeader('Cache-Control', 'no-store');
+        return next();
+    }
+    const writeHead = res.writeHead;
+    res.writeHead = function (statusCode, ...rest) {
+        this.setHeader('Cache-Control', statusCode === 200 ? policy : 'no-store');
+        return writeHead.call(this, statusCode, ...rest);
+    };
     return next();
 });
 for (const name of ['id', 'order_id', 'client_id', 'symbol', 'type', 'underlying', 'wl_id']) {
@@ -305,7 +375,24 @@ const STATE_TTL_MS = Number(process.env.DASHBOARD_STATE_TTL_MS || 60000);
 const stateOverlay = new Map();      // absPath -> parsed JSON from latest main
 const hotStatePaths = new Set();     // absPaths this instance has been asked to read
 const STATE_FAIL_BACKOFF_MS = 5 * 60000;   // after a fully failed refresh, stop retrying for 5 min
-const stateMeta = { lastRefresh: 0, lastOk: 0, files: 0, errors: 0, inflight: null, backoffUntil: 0 };
+const stateMeta = { lastRefresh: 0, lastOk: 0, files: 0, errors: 0, coreOk: null, inflight: null, backoffUntil: 0 };
+// Bounded fan-out: firing every tracked file at raw.githubusercontent.com at once
+// tripped its per-IP throttling (prod saw 15/16 then 12 then 1 errors within
+// minutes — post-deploy audit D3), so at most this many fetches run at a time.
+const STATE_FETCH_CONCURRENCY = 6;
+const STATE_CORE_RETRY_MS = 15000;  // a refresh whose core files failed retries sooner than TTL
+// Per-file refresh status, keyed by repo-relative path (never an absolute path):
+// { lastOk, lastError, errors (consecutive), absent (404 on main) }.
+const stateFileStatus = new Map();
+// Core files: each book's state + trade log. A refresh counts as "ok" only when
+// every core file refreshed. CONSISTENT-PAIR RULE: a book's state file and its
+// trade log are only ever served from the SAME snapshot. If one of the pair fails
+// in a refresh, neither is updated: the instance keeps serving the last pair that
+// refreshed together, or — on a cold instance with no such pair yet — the bundled
+// pair. Mixing a fresh trade log with a stale state (or vice versa) shows trades
+// that the account/halt state does not reflect, so a whole stale pair is
+// preferred over a mixed one.
+const stateCorePairs = [];           // [{ id, state: absPath, tradeLog: absPath }]
 
 function overlayKey(filePath) {
     const rel = path.relative(ROOT_DIR, path.resolve(filePath));
@@ -316,9 +403,9 @@ function overlayKey(filePath) {
     return rel.split(path.sep).join('/');
 }
 
-function fetchRawJson(rel, timeoutMs = 2500) {
+function fetchRawJson(rel, timeoutMs = 2500, base = STATE_RAW_BASE) {
     return new Promise((resolve, reject) => {
-        const req = https.get(STATE_RAW_BASE + rel.split('/').map(encodeURIComponent).join('/'),
+        const req = https.get(base + rel.split('/').map(encodeURIComponent).join('/'),
             { timeout: timeoutMs, headers: { 'User-Agent': 'auto-trading-dashboard' } }, (r) => {
                 if (r.statusCode !== 200) { r.resume(); return reject(new Error(`HTTP ${r.statusCode}`)); }
                 let body = '';
@@ -331,25 +418,189 @@ function fetchRawJson(rel, timeoutMs = 2500) {
     });
 }
 
+async function settledPool(items, limit, fn) {
+    const out = new Array(items.length);
+    let next = 0;
+    async function worker() {
+        while (next < items.length) {
+            const i = next++;
+            try { out[i] = { status: 'fulfilled', value: await fn(items[i]) }; }
+            catch (e) { out[i] = { status: 'rejected', reason: e }; }
+        }
+    }
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+    return out;
+}
+
+// Pure decision step of a refresh, separated for unit tests. `results` maps an
+// absPath to { ok: true, value } | { ok: false, absent: bool }. Returns the
+// entries to write into the overlay and whether every core file refreshed.
+function planOverlayUpdate(results, corePairs) {
+    const writes = new Map();
+    for (const [abs, r] of results) if (r.ok) writes.set(abs, r.value);
+    let coreOk = true;
+    for (const pair of corePairs) {
+        const a = results.get(pair.state), b = results.get(pair.tradeLog);
+        const usable = (r) => !!r && (r.ok || r.absent);
+        if (!usable(a) || !usable(b)) {
+            coreOk = false;
+            writes.delete(pair.state);
+            writes.delete(pair.tradeLog);
+        } else if (!(a.ok && b.ok)) {
+            // One side is absent on main: serve both from the bundle, never mixed.
+            writes.delete(pair.state);
+            writes.delete(pair.tradeLog);
+        }
+    }
+    return { writes, coreOk };
+}
+
 async function refreshStateOverlay() {
     const now = Date.now();
     if (!LIVE_STATE || now - stateMeta.lastRefresh < STATE_TTL_MS || now < stateMeta.backoffUntil) return;
     if (stateMeta.inflight) return stateMeta.inflight;
     stateMeta.inflight = (async () => {
         const targets = [...hotStatePaths].map(p => [p, overlayKey(p)]).filter(([, k]) => k);
-        const results = await Promise.allSettled(targets.map(([, k]) => fetchRawJson(k)));
+        const settled = await settledPool(targets, STATE_FETCH_CONCURRENCY, ([, k]) => fetchRawJson(k));
+        const results = new Map();
         let ok = 0, errors = 0;
-        results.forEach((r, i) => {
-            if (r.status === 'fulfilled') { stateOverlay.set(targets[i][0], r.value); ok++; }
-            else if (!/HTTP 404/.test(String(r.reason && r.reason.message))) errors++;
+        const at = Date.now();
+        settled.forEach((r, i) => {
+            const [abs, rel] = targets[i];
+            const st = stateFileStatus.get(rel) || { lastOk: null, lastError: null, errors: 0, absent: false };
+            if (r.status === 'fulfilled') {
+                results.set(abs, { ok: true, value: r.value });
+                Object.assign(st, { lastOk: at, errors: 0, absent: false });
+                ok++;
+            } else if (/HTTP 404/.test(String(r.reason && r.reason.message))) {
+                results.set(abs, { ok: false, absent: true });
+                Object.assign(st, { errors: 0, absent: true });
+            } else {
+                results.set(abs, { ok: false, absent: false });
+                Object.assign(st, { lastError: at, errors: st.errors + 1, absent: false });
+                errors++;
+            }
+            stateFileStatus.set(rel, st);
         });
+        const { writes, coreOk } = planOverlayUpdate(results, stateCorePairs);
+        for (const [abs, value] of writes) stateOverlay.set(abs, value);
         stateMeta.lastRefresh = Date.now();
-        if (ok) stateMeta.lastOk = stateMeta.lastRefresh;
+        stateMeta.coreOk = coreOk;
+        if (coreOk) stateMeta.lastOk = stateMeta.lastRefresh;
+        else if (ok) stateMeta.lastRefresh -= Math.max(0, STATE_TTL_MS - STATE_CORE_RETRY_MS);
         if (!ok && errors) stateMeta.backoffUntil = stateMeta.lastRefresh + STATE_FAIL_BACKOFF_MS;
         stateMeta.files = ok;
         stateMeta.errors = errors;
     })().finally(() => { stateMeta.inflight = null; });
     return stateMeta.inflight;
+}
+
+// ── Journal overlay (audit 2026-10-23 follow-up). Journal directories were
+// listed from the deployed bundle (readdirSync), so a day journaled after the
+// last code deploy never appeared in prod. For each journal directory a route
+// actually reads, the last JOURNAL_LOOKBACK_DAYS ET calendar days are fetched
+// by exact filename (`YYYY-MM-DD.json`) from the repo's raw files — no GitHub
+// API listing calls, so no unauthenticated rate limit. 404 = that day has no
+// journal; any failure leaves the bundled copy as the fallback. Journals are
+// fetched from the REPO ROOT layout (journal/, event-driven-bot/journal/, ...),
+// which is where the bots commit them and which the dashboard bundle mirrors.
+const JOURNAL_RAW_BASE = (process.env.DASHBOARD_JOURNAL_RAW_BASE
+    || STATE_RAW_BASE.replace(/dashboard\/$/, '')).replace(/\/?$/, '/');
+const JOURNAL_LOOKBACK_DAYS = 10;
+const JOURNAL_TTL_MS = Number(process.env.DASHBOARD_JOURNAL_TTL_MS || 5 * 60000);
+const journalOverlay = new Map();    // abs journal file -> parsed JSON from latest main
+const journalDirMeta = new Map();    // abs journal dir -> { lastRefresh, inflight }
+
+// The last `n` ET calendar dates, newest first (calendar arithmetic, not 24 h
+// steps, so a DST transition can never skip or repeat a day).
+function recentEtDates(n, now = Date.now()) {
+    const [y, m, d] = etDate(now).split('-').map(Number);
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(new Date(Date.UTC(y, m - 1, d - i)).toISOString().slice(0, 10));
+    return out;
+}
+
+function journalRepoRel(dir) {
+    const rel = path.relative(ROOT_DIR, path.resolve(dir));
+    if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
+    const posix = rel.split(path.sep).join('/');
+    return /(^|\/)journal$/.test(posix) ? posix : null;
+}
+
+// Dates the overlay must cover for one journal directory: EVERY ET calendar day
+// after the newest journal in the deployed bundle through today (a deploy can be
+// weeks old — fetching only a fixed recent window left a silent multi-week gap
+// in journal-backed equity charts; Codex review on PR #95), and never fewer
+// than JOURNAL_LOOKBACK_DAYS. Capped at JOURNAL_MAX_GAP_DAYS (newest kept).
+const JOURNAL_MAX_GAP_DAYS = Number(process.env.DASHBOARD_JOURNAL_MAX_GAP_DAYS || 400);
+const JOURNAL_FETCH_BATCH = 20;
+function journalDatesToCover(abs, now = Date.now()) {
+    let newestBundled = null;
+    try {
+        if (fs.existsSync(abs)) {
+            for (const f of fs.readdirSync(abs)) {
+                const m = /^(\d{4}-\d{2}-\d{2})\.json$/.exec(f);
+                if (m && (!newestBundled || m[1] > newestBundled)) newestBundled = m[1];
+            }
+        }
+    } catch (e) { /* bundle unreadable: fall back to the minimum window */ }
+    const today = etDate(now);
+    let span = JOURNAL_LOOKBACK_DAYS;
+    if (newestBundled && newestBundled < today) {
+        const gap = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${newestBundled}T00:00:00Z`)) / 86400000);
+        span = Math.max(span, gap);
+    }
+    return recentEtDates(Math.min(span, JOURNAL_MAX_GAP_DAYS), now);
+}
+
+function refreshJournalDir(dir) {
+    const rel = journalRepoRel(dir);
+    if (!LIVE_STATE || !rel) return null;
+    const abs = path.resolve(dir);
+    let meta = journalDirMeta.get(abs);
+    if (!meta) { meta = { lastRefresh: 0, inflight: null, missing: new Set() }; journalDirMeta.set(abs, meta); }
+    if (meta.inflight) return meta.inflight;
+    if (Date.now() - meta.lastRefresh < JOURNAL_TTL_MS) return null;
+    meta.inflight = (async () => {
+        const dates = journalDatesToCover(abs);
+        const live = new Set(dates.slice(0, 2));   // today + yesterday can still be appended
+        // Past days are immutable: fetch each once (hit or confirmed 404), then reuse.
+        const todo = dates.filter(dt => live.has(dt)
+            || (!journalOverlay.has(path.join(abs, `${dt}.json`)) && !meta.missing.has(dt)));
+        for (let i = 0; i < todo.length; i += JOURNAL_FETCH_BATCH) {
+            const batch = todo.slice(i, i + JOURNAL_FETCH_BATCH);
+            const results = await Promise.allSettled(batch.map(dt =>
+                fetchRawJson(`${rel}/${dt}.json`, 2500, JOURNAL_RAW_BASE)));
+            results.forEach((r, j) => {
+                const dt = batch[j];
+                if (r.status === 'fulfilled') journalOverlay.set(path.join(abs, `${dt}.json`), r.value);
+                else if (/HTTP 404/.test(String(r.reason && r.reason.message)) && !live.has(dt)) meta.missing.add(dt);
+            });
+        }
+        meta.lastRefresh = Date.now();
+    })().finally(() => { meta.inflight = null; });
+    return meta.inflight;
+}
+
+// Journal filenames for a directory: the bundle's listing merged with the
+// recent days fetched from main, deduplicated by filename, sorted. Only a
+// directory with nothing fetched yet waits for its first refresh.
+async function listJournalFiles(dir) {
+    const abs = path.resolve(dir);
+    const inDir = (k) => path.dirname(k) === abs;
+    const p = refreshJournalDir(abs);
+    if (p) {
+        if (![...journalOverlay.keys()].some(inDir)) await p.catch(() => {});
+        else p.catch(() => {});
+    }
+    const names = new Set();
+    try {
+        if (fs.existsSync(abs)) fs.readdirSync(abs).filter(f => f.endsWith('.json')).forEach(f => names.add(f));
+    } catch (e) {
+        console.error(`Error listing journal dir ${abs}:`, e.message);
+    }
+    for (const k of journalOverlay.keys()) if (inDir(k)) names.add(path.basename(k));
+    return [...names].sort();
 }
 
 // Stale-while-revalidate: only a cold instance (empty overlay) waits for the
@@ -364,6 +615,10 @@ app.use('/api', (req, res, next) => {
 
 // Helper to read JSON files safely (latest committed state first, bundle second)
 function readJsonFile(filePath, defaultValue = {}) {
+    if (journalOverlay.size) {
+        const abs = path.resolve(filePath);
+        if (journalOverlay.has(abs)) return journalOverlay.get(abs);
+    }
     if (LIVE_STATE && overlayKey(filePath)) {
         const abs = path.resolve(filePath);
         if (!hotStatePaths.has(abs)) hotStatePaths.add(abs);   // joins the next scheduled refresh
@@ -382,24 +637,29 @@ function readJsonFile(filePath, defaultValue = {}) {
 
 // Health/debug endpoint
 app.get('/api/health', (req, res) => {
+    // Public endpoint: only what the deploy smoke test and the CLAUDE.md
+    // verification need (rootDir + the three critical files' exists/size).
+    // No absolute paths, cwd or config layout (post-deploy audit D11).
     const pf1 = getPortfolioPaths('portfolio_1');
-    const info = {
-        rootDir: ROOT_DIR,
-        apiDir: __dirname,
-        cwd: process.cwd(),
-        isVercel: IS_VERCEL,
-        pf1: pf1,
-    };
+    const info = { rootDir: ROOT_DIR, isVercel: !!IS_VERCEL, files: {} };
     if (pf1) {
-        info.files = {};
-        for (const [k, p] of Object.entries(pf1)) {
-            if (typeof p === 'string') info.files[k] = { path: p, exists: fs.existsSync(p), size: fs.existsSync(p) ? fs.statSync(p).size : 0 };
+        for (const k of ['tradeLog', 'signals', 'state']) {
+            const exists = fs.existsSync(pf1[k]);
+            info.files[k] = { exists, size: exists ? fs.statSync(pf1[k]).size : 0 };
         }
+    }
+    const iso = (ms) => (ms ? new Date(ms).toISOString() : null);
+    const files = {};
+    for (const [rel, st] of [...stateFileStatus.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+        files[rel] = { lastOk: iso(st.lastOk), lastError: iso(st.lastError), errors: st.errors, absent: st.absent };
     }
     info.liveState = {
         enabled: LIVE_STATE, source: STATE_RAW_BASE, tracked: hotStatePaths.size,
-        overlaid: stateOverlay.size, lastRefresh: stateMeta.lastRefresh ? new Date(stateMeta.lastRefresh).toISOString() : null,
-        lastOk: stateMeta.lastOk ? new Date(stateMeta.lastOk).toISOString() : null, errors: stateMeta.errors,
+        overlaid: stateOverlay.size, lastRefresh: iso(stateMeta.lastRefresh),
+        lastOk: iso(stateMeta.lastOk), coreOk: stateMeta.coreOk, errors: stateMeta.errors,
+        concurrency: STATE_FETCH_CONCURRENCY, files,
+        journals: { source: JOURNAL_RAW_BASE, lookbackDays: JOURNAL_LOOKBACK_DAYS,
+            dirs: journalDirMeta.size, files: journalOverlay.size },
     };
     res.json(info);
 });
@@ -440,17 +700,28 @@ function getPortfolioPaths(id) {
 }
 
 
+// Engine safety ledgers surfaced by the intelligence endpoint (see getIntelligencePaths).
+const SAFETY_FILES = ['haltGovernance', 'pendingExits', 'pendingEntries', 'bookedFills'];
+
 // Seed the live-state overlay with every per-portfolio file so even the first
 // request after a cold start serves the latest committed state.
+// Seed the live-state overlay with every file the API reads for every book (state,
+// trade log, signals, params, learning report, intelligence + safety ledgers), so
+// the first request after a cold start is served from ONE refresh of all of them
+// rather than a mix of fresh and bundled files (post-deploy audit D3). Each book's
+// state + trade log is registered as a core pair (see the consistent-pair rule).
 (function seedHotStatePaths() {
+    const add = (f) => { if (f && overlayKey(f)) hotStatePaths.add(path.resolve(f)); };
     for (const id of Object.keys(portfoliosConfig)) {
-        const p = getPortfolioPaths(id);
+        const p = getIntelligencePaths(id);
         if (!p) continue;
-        for (const k of ['state', 'tradeLog', 'signals', 'strategyParams', 'learningReport']) {
-            if (overlayKey(p[k])) hotStatePaths.add(path.resolve(p[k]));
+        for (const k of ['state', 'tradeLog', 'signals', 'strategyParams', 'learningReport',
+            'reconciliation', 'orderState', 'paramChangeLog', 'governanceAudit', 'lastGood', ...SAFETY_FILES]) add(p[k]);
+        if (overlayKey(p.state) && overlayKey(p.tradeLog)) {
+            stateCorePairs.push({ id, state: path.resolve(p.state), tradeLog: path.resolve(p.tradeLog) });
         }
     }
-    hotStatePaths.add(path.resolve(ROOT_DIR, 'data', 'momentum_readiness.json'));
+    add(path.join(ROOT_DIR, 'data', 'momentum_readiness.json'));
 })();
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -471,6 +742,109 @@ function getIntelligencePaths(id) {
         paramChangeLog: d('param_change_log.json'),
         governanceAudit: d('governance_audit.json'),
         lastGood: d('strategy_params.last_good.json'),
+        // Engine safety ledgers (P1 runner, audit 2026-10-23): governed halt
+        // clears, orders awaiting EOD settlement, and the booked-fill ledger.
+        haltGovernance: d('halt_governance.json'),
+        pendingExits: d('pending_exits.json'),
+        pendingEntries: d('pending_entries.json'),
+        bookedFills: d('booked_fills.json'),
+    };
+}
+
+
+// Engine safety state for one book: halt latch + its evidence, confirmed peak
+// equity, the last governed halt clear, orders awaiting EOD settlement and the
+// fill ledger. Every value is read from committed state; a file the engine has
+// not written yet is reported absent (`files.*=false`), never filled in.
+function buildSafetyState(id, paths) {
+    const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v))) ? null : Number(v);
+    const str = (v) => (v === null || v === undefined || v === '') ? null : String(v);
+    const rows = (v) => Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : [];
+    const state = readJsonFile(paths.state, {}) || {};
+    const gov = readJsonFile(paths.haltGovernance, null);
+    const exits = readJsonFile(paths.pendingExits, null);
+    const entries = readJsonFile(paths.pendingEntries, null);
+    const fills = readJsonFile(paths.bookedFills, null);
+
+    const pendingRow = (p, kind) => ({
+        kind, order_id: str(p.order_id), symbol: str(p.symbol), qty: num(p.qty),
+        reason: str(p.reason), source: str(p.source), submitted_at: str(p.submitted_at),
+        intended_price: num(p.intended_price),
+    });
+    const pending = [...rows(exits).map(p => pendingRow(p, 'exit')), ...rows(entries).map(p => pendingRow(p, 'entry'))]
+        .sort((a, b) => String(b.submitted_at || '').localeCompare(String(a.submitted_at || '')));
+
+    const clears = rows(gov).filter(r => r.type === 'halt_clear')
+        .sort((a, b) => String(a.applied_at || '').localeCompare(String(b.applied_at || '')));
+    const g = clears[clears.length - 1];
+    let lastClear = null;
+    if (g) {
+        const reqd = (g.request && typeof g.request === 'object') ? g.request : {};
+        const ver = (g.verification && typeof g.verification === 'object') ? g.verification : {};
+        const cleared = (g.cleared_halt && typeof g.cleared_halt === 'object') ? g.cleared_halt : {};
+        lastClear = {
+            record: 'halt_governance', applied_at: str(g.applied_at), source: str(g.source),
+            clear_key: str(g.clear_key), reason: str(reqd.reason), changed_by: str(reqd.changed_by),
+            verified_equity: num(g.verified_equity), drawdown_pct_from_peak: num(ver.drawdown_pct_from_peak),
+            kill_switch_drawdown_pct: num(g.kill_switch_drawdown_pct),
+            cleared_halt_reason: str(cleared.halt_reason), cleared_halt_set_at: str(cleared.halt_set_at),
+        };
+    } else if (state.last_halt_clear && typeof state.last_halt_clear === 'object') {
+        const c = state.last_halt_clear;
+        lastClear = {
+            record: 'portfolio_state', applied_at: str(c.applied_at), source: null, clear_key: str(c.clear_key),
+            reason: null, changed_by: str(c.changed_by), verified_equity: num(c.verified_equity),
+            drawdown_pct_from_peak: num(c.drawdown_pct_from_peak), kill_switch_drawdown_pct: null,
+            cleared_halt_reason: null, cleared_halt_set_at: null,
+        };
+    }
+    const attempt = state.halt_clear_last_attempt && typeof state.halt_clear_last_attempt === 'object'
+        ? { at: str(state.halt_clear_last_attempt.at), applied: !!state.halt_clear_last_attempt.applied,
+            source: str(state.halt_clear_last_attempt.source) } : null;
+
+    const fillRows = (fills && typeof fills === 'object' && !Array.isArray(fills))
+        ? Object.entries(fills).filter(([, v]) => v && typeof v === 'object') : [];
+    const latestFills = fillRows
+        .map(([oid, v]) => ({ order_id: oid, symbol: str(v.symbol), kind: str(v.kind), qty: num(v.qty), price: num(v.px), at: str(v.at) }))
+        .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+
+    const obs = rows(state.halt_observations);
+    const halted = !!state.halted;
+    const evidence = (state.halt_evidence && typeof state.halt_evidence === 'object') ? state.halt_evidence : null;
+    // Same rule as the engine's annotate_halt_verification: a halt is verified
+    // only when it carries timestamped equity evidence. A legacy halt latched
+    // before stamping (no halt_verified field) is therefore unverified.
+    let verified = null, unverifiedReason = null;
+    if (halted) {
+        verified = typeof state.halt_verified === 'boolean' ? state.halt_verified
+            : !!(evidence && evidence.at && evidence.equity !== null && evidence.equity !== undefined);
+        unverifiedReason = verified ? null : (str(state.halt_unverified_reason)
+            || 'Latched with no recorded evidence (no equity reads or timestamp); cleared only by a governed halt_clear.');
+    }
+    return {
+        engine_managed: id === 'portfolio_1',
+        files: { halt_governance: gov !== null, pending_exits: exits !== null,
+            pending_entries: entries !== null, booked_fills: fills !== null },
+        halt: {
+            halted,
+            reason: halted ? str(state.halt_reason) : null,
+            kind: halted ? str(state.halt_kind) : null,
+            verified,
+            unverified_reason: unverifiedReason,
+            set_at: str(state.halt_set_at),
+            until: str(state.halt_until),
+            evidence,
+            observations_count: obs.length,
+            last_observation: obs.length ? obs[obs.length - 1] : null,
+        },
+        peak_equity: num(state.peak_equity) === null ? null
+            : { value: num(state.peak_equity), at: str(state.peak_equity_at) },
+        halt_governance: { total_clears: clears.length, last_clear: lastClear, last_attempt: attempt },
+        pending: {
+            exits: rows(exits).length, entries: rows(entries).length,
+            total: pending.length, orders: pending.slice(0, 25),
+        },
+        booked_fills: { count: fillRows.length, latest: latestFills.slice(0, 5) },
     };
 }
 
@@ -585,26 +959,52 @@ app.get('/api/portfolio/:id/intelligence', (req, res) => {
         },
         strategy_params: strategyParams,
         learning_report: learningReport,
+        safety: buildSafetyState(id, paths),
     });
 });
 
-// Cross-portfolio concentration (R1): combined single-name + sector exposure.
+// Symbol → GICS sector (single source of truth for every sector the API reports:
+// position rows in /details and the cross-portfolio concentration check). Sector
+// ETFs map to the sector they track; broad index ETFs, T-bills/treasuries/gold and
+// crypto get their own buckets. An unknown symbol is `null` ("Unclassified" in the
+// UI) — never a guessed sector and never the book's strategy name (post-deploy
+// audit D2: P3's ANET/DG/KO/MRK were all reported as "Financials").
 const SECTOR_MAP = {
-    SPY: 'Index', QQQ: 'Index', DIA: 'Index', IWM: 'Index',
-    NVDA: 'Technology', AAPL: 'Technology', MSFT: 'Technology', GOOGL: 'Technology',
-    META: 'Technology', AMZN: 'Consumer', TSLA: 'Consumer',
-    XLK: 'Technology', XLE: 'Energy', XLF: 'Financials', XLV: 'Healthcare',
-    XLY: 'Consumer', XLI: 'Industrials', XLC: 'Communications', XLB: 'Materials',
-    XLU: 'Utilities', XLRE: 'Real Estate',
+    SPY: 'Broad Market', QQQ: 'Broad Market', DIA: 'Broad Market', IWM: 'Broad Market',
     BIL: 'Defensive', SHY: 'Defensive', TLT: 'Defensive', GLD: 'Defensive',
-    JPM: 'Financials', MS: 'Financials',
-    // P2 (Capitol Shadow) / P3 (Cautious Sniper) single names — classify into real
-    // GICS sectors so combined exposure isn't understated as a large "Other" bucket.
-    CSCO: 'Technology', INTU: 'Technology', TER: 'Technology', PANW: 'Technology',
-    MPC: 'Energy', VLO: 'Energy', EOG: 'Energy',
-    WMT: 'Consumer', HD: 'Consumer', PG: 'Consumer',
-    MEDP: 'Healthcare', PH: 'Industrials', T: 'Communications',
+    XLK: 'Technology', XLF: 'Financials', XLE: 'Energy', XLV: 'Health Care', XLY: 'Consumer Discretionary',
+    XLP: 'Consumer Staples', XLI: 'Industrials', XLC: 'Communication Services', XLB: 'Materials',
+    XLU: 'Utilities', XLRE: 'Real Estate',
+    AAPL: 'Technology', MSFT: 'Technology', NVDA: 'Technology', AMD: 'Technology', AVGO: 'Technology',
+    ANET: 'Technology', CSCO: 'Technology', INTC: 'Technology', INTU: 'Technology', LRCX: 'Technology',
+    MRVL: 'Technology', MU: 'Technology', PANW: 'Technology', TER: 'Technology', WDAY: 'Technology',
+    DDOG: 'Technology', ORCL: 'Technology', CRM: 'Technology', ADBE: 'Technology',
+    GOOGL: 'Communication Services', GOOG: 'Communication Services', META: 'Communication Services',
+    NFLX: 'Communication Services', T: 'Communication Services', VZ: 'Communication Services',
+    AMZN: 'Consumer Discretionary', TSLA: 'Consumer Discretionary', HD: 'Consumer Discretionary',
+    F: 'Consumer Discretionary', MCD: 'Consumer Discretionary', NKE: 'Consumer Discretionary',
+    WMT: 'Consumer Staples', PG: 'Consumer Staples', KO: 'Consumer Staples', KR: 'Consumer Staples',
+    DG: 'Consumer Staples', TGT: 'Consumer Staples', COST: 'Consumer Staples', PEP: 'Consumer Staples',
+    JPM: 'Financials', MS: 'Financials', GS: 'Financials', C: 'Financials', AXP: 'Financials',
+    CB: 'Financials', PGR: 'Financials', SCHW: 'Financials', SPGI: 'Financials', V: 'Financials',
+    MA: 'Financials', BAC: 'Financials', WFC: 'Financials',
+    XOM: 'Energy', CVX: 'Energy', COP: 'Energy', EOG: 'Energy', MPC: 'Energy', OXY: 'Energy',
+    PSX: 'Energy', SLB: 'Energy', VLO: 'Energy',
+    ABBV: 'Health Care', AMGN: 'Health Care', DHR: 'Health Care', EW: 'Health Care', JNJ: 'Health Care',
+    LLY: 'Health Care', MEDP: 'Health Care', MRK: 'Health Care', TMO: 'Health Care', UNH: 'Health Care',
+    PFE: 'Health Care',
+    CAT: 'Industrials', CARR: 'Industrials', EMR: 'Industrials', GE: 'Industrials', PH: 'Industrials',
+    RTX: 'Industrials', UNP: 'Industrials', UPS: 'Industrials', HON: 'Industrials',
+    FCX: 'Materials', LIN: 'Materials',
+    D: 'Utilities', NEE: 'Utilities', DUK: 'Utilities',
+    SPG: 'Real Estate', PLD: 'Real Estate',
 };
+
+function sectorFor(symbol, assetClass) {
+    const sym = String(symbol || '').trim().toUpperCase();
+    if (assetClass === 'crypto' || /\/(USD|USDT|USDC)$/.test(sym)) return 'Crypto';
+    return Object.prototype.hasOwnProperty.call(SECTOR_MAP, sym) ? SECTOR_MAP[sym] : null;
+}
 
 // ET (America/New_York) calendar date YYYY-MM-DD for a ms timestamp. Alpaca daily
 // portfolio-history bars are stamped 00:00 UTC = 20:00 ET of the PRIOR trading day,
@@ -636,7 +1036,7 @@ app.get('/api/intelligence/cross-portfolio', async (req, res) => {
             if (!bySymbol[p.symbol]) bySymbol[p.symbol] = { mv: 0, books: new Set() };
             bySymbol[p.symbol].mv += p.mv;
             bySymbol[p.symbol].books.add(id);
-            const sec = SECTOR_MAP[p.symbol] || 'Other';
+            const sec = sectorFor(p.symbol) || 'Unclassified';
             bySector[sec] = (bySector[sec] || 0) + p.mv;
         });
     }
@@ -740,6 +1140,7 @@ function parsePositionLive(p, equity) {
         lastday_price: prev,
         change_today: parseFloat(p.change_today || 0) * 100,
         weight: equity > 0 ? (mktVal / equity) * 100 : 0,
+        sector: sectorFor(p.symbol, p.asset_class),
         source_portfolio: '',
         source_label: ''
     };
@@ -772,21 +1173,145 @@ function stateAccountFallback(localState) {
 // them as a verified lockdown in the meantime (after-audit N6).
 function haltAssessment(localState, equity, initialCapital) {
     const ls = localState || {};
-    if (!ls.halted) return { halt_verified: null, halt_measured_drawdown_pct: null, halt_note: null };
+    if (!ls.halted) return { halt_verified: null, halt_measured_drawdown_pct: null, halt_recorded_drawdown_pct: null, halt_note_code: null, halt_note: null };
     const ref = Math.max(Number(initialCapital) || 100000, parseFloat(ls.peak_equity) || 0);
     const eq = parseFloat(equity);
     const measured = Number.isFinite(eq) && ref > 0 ? Math.max(0, (ref - eq) / ref * 100) : null;
     const m = /Kill switch:\s*([\d.]+)%/i.exec(ls.halt_reason || '');
     const recorded = m ? parseFloat(m[1]) : null;
     if (ls.halt_verified === false) {
-        return { halt_verified: false, halt_measured_drawdown_pct: measured,
+        return { halt_verified: false, halt_measured_drawdown_pct: measured === null ? null : Math.round(measured * 100) / 100,
+                 halt_recorded_drawdown_pct: recorded, halt_note_code: 'no_evidence',
                  halt_note: ls.halt_unverified_reason || 'Halt has no recorded evidence; governed review pending.' };
     }
     if (recorded !== null && measured !== null && recorded - measured > 5) {
         return { halt_verified: false, halt_measured_drawdown_pct: Math.round(measured * 100) / 100,
+                 halt_recorded_drawdown_pct: recorded, halt_note_code: 'contradicted',
                  halt_note: `Recorded ${recorded.toFixed(2)}% drawdown contradicts measured ${measured.toFixed(2)}%; governed clear pending.` };
     }
-    return { halt_verified: true, halt_measured_drawdown_pct: measured === null ? null : Math.round(measured * 100) / 100, halt_note: null };
+    return { halt_verified: true, halt_measured_drawdown_pct: measured === null ? null : Math.round(measured * 100) / 100,
+             halt_recorded_drawdown_pct: recorded, halt_note_code: null, halt_note: null };
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// DAY-P/L BASIS (post-deploy audit D1). Day P/L stays Alpaca's definition,
+// equity − last_equity (it includes realized P/L), but last_equity is the close
+// of `account.balance_asof`, which before the open can be TWO sessions back. The
+// API therefore states the basis explicitly and only calls the figure "today"
+// when the market is open AND the basis is the session immediately before today:
+//   day_pnl_basis_date     YYYY-MM-DD close the figure is measured from (or null)
+//   market_open            from /v2/clock (cached ≤60 s per instance; estimated
+//                          from NY wall time when the broker clock is unreachable)
+//   previous_session_date  last trading session before today (ET), from /v2/calendar
+//   day_pnl_is_today       market_open && basis === previous_session_date
+// ──────────────────────────────────────────────────────────────────────────
+const CLOCK_TTL_MS = 60000;
+const CALENDAR_TTL_MS = 3600000;
+const sessionCache = { clock: null, clockAt: 0, clockInflight: null, sessions: null, sessionsAt: 0, sessionsKey: '', sessionsInflight: null };
+
+function firstKeyedConfig() {
+    return Object.values(portfoliosConfig).find(c => c && c.api_key && c.api_secret) || Object.values(portfoliosConfig)[0] || null;
+}
+
+function isoDay(v) {
+    const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(v || ''));
+    return m ? m[1] : null;
+}
+
+async function marketClockCached() {
+    if (sessionCache.clock && Date.now() - sessionCache.clockAt < CLOCK_TTL_MS) return sessionCache.clock;
+    if (sessionCache.clockInflight) return sessionCache.clockInflight;
+    sessionCache.clockInflight = (async () => {
+        let clock;
+        try {
+            const cfg = firstKeyedConfig();
+            if (!cfg) throw new Error('no broker config');
+            const c = await alpacaRequest('GET', `${cfg.base_url}/v2/clock`, cfg.api_key, cfg.api_secret);
+            clock = { is_open: c.is_open === true, next_open: c.next_open || null, next_close: c.next_close || null, timestamp: c.timestamp || null, estimated: false };
+        } catch (e) {
+            clock = estimatedClock();
+        }
+        sessionCache.clock = clock;
+        sessionCache.clockAt = Date.now();
+        return clock;
+    })().finally(() => { sessionCache.clockInflight = null; });
+    return sessionCache.clockInflight;
+}
+
+// Weekday-only fallback when the broker calendar is unreachable (holidays are
+// not modelled — the result is flagged `estimated`).
+function previousWeekday(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    let dt = new Date(Date.UTC(y, m - 1, d));
+    do { dt = new Date(dt.getTime() - 86400000); } while (dt.getUTCDay() === 0 || dt.getUTCDay() === 6);
+    return dt.toISOString().slice(0, 10);
+}
+
+// Trading-session dates (ET) covering the last ~6 weeks, from the broker calendar.
+async function recentSessionDates(todayEt) {
+    if (sessionCache.sessions && sessionCache.sessionsKey === todayEt && Date.now() - sessionCache.sessionsAt < CALENDAR_TTL_MS) {
+        return sessionCache.sessions;
+    }
+    if (sessionCache.sessionsInflight) return sessionCache.sessionsInflight;
+    sessionCache.sessionsInflight = (async () => {
+        let sessions = null;
+        try {
+            const cfg = firstKeyedConfig();
+            if (!cfg) throw new Error('no broker config');
+            const [y, m, d] = todayEt.split('-').map(Number);
+            const start = new Date(Date.UTC(y, m - 1, d - 45)).toISOString().slice(0, 10);
+            const cal = await alpacaRequest('GET', `${cfg.base_url}/v2/calendar?start=${start}&end=${todayEt}`, cfg.api_key, cfg.api_secret);
+            if (Array.isArray(cal) && cal.length) sessions = cal.map(c => isoDay(c.date)).filter(Boolean).sort();
+        } catch (e) { /* fall back to weekdays */ }
+        if (sessions) {
+            sessionCache.sessions = sessions;
+            sessionCache.sessionsKey = todayEt;
+            sessionCache.sessionsAt = Date.now();
+        }
+        return sessions;
+    })().finally(() => { sessionCache.sessionsInflight = null; });
+    return sessionCache.sessionsInflight;
+}
+
+// The last trading session strictly before `dateStr` (YYYY-MM-DD, ET).
+async function sessionBefore(dateStr) {
+    const sessions = await recentSessionDates(etDate(Date.now()));
+    const prior = (sessions || []).filter(s => s < dateStr);
+    if (prior.length) return { date: prior[prior.length - 1], estimated: false };
+    return { date: previousWeekday(dateStr), estimated: true };
+}
+
+async function sessionContext() {
+    const today = etDate(Date.now());
+    const [clock, prev] = await Promise.all([marketClockCached(), sessionBefore(today)]);
+    return {
+        market_open: clock.is_open === true,
+        clock_estimated: !!clock.estimated,
+        previous_session_date: prev.date,
+        calendar_estimated: prev.estimated,
+    };
+}
+
+// Basis fields for one book. `basisDate` is account.balance_asof for a live read;
+// a committed-state fallback has no reliable basis (null → never "today").
+function dayPnlBasis(basisDate, ctx) {
+    const basis = isoDay(basisDate);
+    return {
+        day_pnl_basis_date: basis,
+        market_open: ctx ? ctx.market_open : null,
+        previous_session_date: ctx ? ctx.previous_session_date : null,
+        day_pnl_is_today: !!(ctx && basis && ctx.market_open === true && basis === ctx.previous_session_date),
+    };
+}
+
+// Aggregate basis: a combined day P/L has ONE basis only when every included
+// book shares it; otherwise it is reported as mixed (and never as "today").
+function aggregateDayPnlBasis(basisDates, ctx) {
+    const known = basisDates.filter(Boolean);
+    const same = known.length > 0 && known.length === basisDates.length && known.every(b => b === known[0]);
+    const out = dayPnlBasis(same ? known[0] : null, ctx);
+    out.day_pnl_basis_mixed = known.length > 0 && !same;
+    return out;
 }
 
 // 2. Fetch live and local status for a portfolio card
@@ -797,12 +1322,14 @@ app.get('/api/portfolio/all/summary', async (req, res) => {
     const missingBooks = [];
     const staleBooks = [];
     const haltedBooks = [];
+    const basisDates = [];
     let anyLive = false;
     for (const id of Object.keys(portfoliosConfig)) {
         const d = await fetchPortfolioData(id);
         if (!d) continue;
         labels.push(d.cfg.label);
         if (d.account) {
+            basisDates.push(d.account.balance_asof || null);
             totalEquity += parseFloat(d.account.equity);
             totalCash += parseFloat(d.account.cash);
             const dayPnL = parseFloat(d.account.equity) - parseFloat(d.account.last_equity);
@@ -814,6 +1341,7 @@ app.get('/api/portfolio/all/summary', async (req, res) => {
             // $100K placeholder. A book with no recorded equity is reported as missing.
             const fb = stateAccountFallback(d.localState);
             if (fb) {
+                basisDates.push(null);
                 totalEquity += fb.equity;
                 totalCash += fb.cash;
                 totalDayPnL += fb.day_pnl;
@@ -838,6 +1366,7 @@ app.get('/api/portfolio/all/summary', async (req, res) => {
         cash: totalCash,
         day_pnl: totalDayPnL,
         day_pnl_pct: totalDayPnlPct,
+        ...aggregateDayPnlBasis(basisDates, await sessionContext()),
         positions_count: totalPositions,
         halted: haltedBooks.length > 0,
         halt_reason: haltedBooks.length ? haltedBooks.join(' | ') : null,
@@ -862,11 +1391,13 @@ app.get('/api/portfolio/all/details', async (req, res) => {
     const missingDetailBooks = [];
     const staleDetailBooks = [];
     const haltedDetailBooks = [];
+    const detailBasisDates = [];
 
     for (const id of Object.keys(portfoliosConfig)) {
         const d = await fetchPortfolioData(id);
         if (!d) continue;
         if (d.account) {
+            detailBasisDates.push(d.account.balance_asof || null);
             anyLiveConnected = true;
             totalEquity += parseFloat(d.account.equity);
             totalCash += parseFloat(d.account.cash);
@@ -891,6 +1422,7 @@ app.get('/api/portfolio/all/details', async (req, res) => {
             // a -100% "loss" for the whole book — after-audit N1).
             const fb = stateAccountFallback(d.localState);
             if (fb) {
+                detailBasisDates.push(null);
                 totalEquity += fb.equity;
                 totalCash += fb.cash;
                 totalLastEquity += fb.last_equity;
@@ -960,6 +1492,7 @@ app.get('/api/portfolio/all/details', async (req, res) => {
         halt_reason: haltedDetailBooks.length ? haltedDetailBooks.join(' | ') : null,
         missing_portfolios: missingDetailBooks,
         stale_portfolios: staleDetailBooks,
+        ...aggregateDayPnlBasis(detailBasisDates, await sessionContext()),
         account: {
             equity: totalEquity,
             cash: totalCash,
@@ -1087,10 +1620,12 @@ app.get('/api/portfolio/:id/summary', async (req, res) => {
     let isHalted = localState.halted || false;
     let haltReason = localState.halt_reason || null;
     let isLiveConnected = false;
+    let basisDate = null;
 
     // Attempt to query live Alpaca Account info
     try {
         const account = await alpacaRequest('GET', `${cfg.base_url}/v2/account`, cfg.api_key, cfg.api_secret);
+        basisDate = account.balance_asof || null;
         liveEquity = parseFloat(account.equity);
         liveCash = parseFloat(account.cash);
         
@@ -1124,6 +1659,7 @@ app.get('/api/portfolio/:id/summary', async (req, res) => {
         cash: liveCash,
         day_pnl: liveDayPnL,
         day_pnl_pct: liveDayPnLPct,
+        ...dayPnlBasis(isLiveConnected ? basisDate : null, await sessionContext()),
         positions_count: livePositionsCount,
         halted: isHalted,
         halt_reason: haltReason,
@@ -1196,8 +1732,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                 lastday_price: prev,
                 change_today: parseFloat(p.change_today || 0) * 100,
                 weight: parseFloat(liveAccount.equity) > 0 ? (mktVal / parseFloat(liveAccount.equity)) * 100 : 0,
-                sector: id === 'portfolio_2' ? 'Gov Copy' :
-                        id === 'portfolio_3' ? (p.symbol === 'CSCO' || p.symbol === 'PANW' ? 'Tech' : 'Financials') : 'Quant'
+                sector: sectorFor(p.symbol, p.asset_class)
             };
         });
     } else {
@@ -1219,7 +1754,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                     dayChange: 0,
                     dayChangePct: 0,
                     weight: totalEq > 0 ? (mktVal / totalEq) * 100 : 0,
-                    sector: 'Quant',
+                    sector: sectorFor(sym),
                     isStale: true
                 };
             });
@@ -1241,18 +1776,16 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                     dayChange: 0,
                     dayChangePct: 0,
                     weight: totalEq > 0 ? (mktVal / totalEq) * 100 : 0,
-                    sector: 'Gov Copy'
+                    sector: sectorFor(p.symbol)
                 };
             });
         } else if (id === 'portfolio_3') {
             // Read from latest journal for details if bot_state doesn't list full pos
             let journals = [];
             try {
-                if (fs.existsSync(paths.journalDir)) {
-                    const files = fs.readdirSync(paths.journalDir).filter(f => f.endsWith('.json')).sort();
-                    if (files.length > 0) {
-                        journals = readJsonFile(path.join(paths.journalDir, files[files.length - 1]), []);
-                    }
+                const files = await listJournalFiles(paths.journalDir);
+                if (files.length > 0) {
+                    journals = readJsonFile(path.join(paths.journalDir, files[files.length - 1]), []);
                 }
             } catch (e) {
                 console.error("Error reading portfolio_3 journal files:", e);
@@ -1275,7 +1808,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                     dayChange: 0,
                     dayChangePct: 0,
                     weight: totalEq > 0 ? (mktVal / totalEq) * 100 : 0,
-                    sector: p.sector || 'Event Tech'
+                    sector: sectorFor(p.symbol)
                 };
             });
         }
@@ -1290,6 +1823,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
         halted: localState.halted || false,
         halt_reason: localState.halt_reason || null,
         ...haltAssessment(localState, isLiveConnected ? parseFloat(liveAccount.equity) : (stateAccountFallback(localState) || {}).equity, cfg.initial_capital),
+        ...dayPnlBasis(isLiveConnected ? liveAccount.balance_asof : null, await sessionContext()),
         account: isLiveConnected ? {
             equity: parseFloat(liveAccount.equity),
             cash: parseFloat(liveAccount.cash),
@@ -1382,16 +1916,16 @@ async function realEquityBackfill(id, beforeDate, baseValue) {
     try {
         if (id === 'all' || id === 'portfolio_all') {
             const [p1, p2, p3] = await Promise.all([
-                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_1', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
-                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
-                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${START}`, select: 'date,equity', order: 'date.asc', limit: 2000 }),
+                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_1', date: `gte.${START}`, select: 'date,equity,cash', order: 'date.asc', limit: 2000 }),
+                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${START}`, select: 'date,equity,cash', order: 'date.asc', limit: 2000 }),
+                supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${START}`, select: 'date,equity,cash', order: 'date.asc', limit: 2000 }),
             ]);
-            rows = combineEquitySeries([p1, p2, p3]);
+            rows = combineEquitySeries([p1, p2, p3].map(r => dropEquityAnchors(r)));
         } else {
-            rows = await supabaseGet('portfolio_equity_history', {
+            rows = dropEquityAnchors(await supabaseGet('portfolio_equity_history', {
                 portfolio_id: `eq.${id}`, date: `gte.${START}`,
-                select: 'date,equity', order: 'date.asc', limit: 2000,
-            });
+                select: 'date,equity,cash', order: 'date.asc', limit: 2000,
+            }));
         }
     } catch (e) {
         return [];
@@ -1475,9 +2009,19 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
                 }
 
                 if (finalHistory.length > 0) {
+                    // 1D: base_value is the close of the session BEFORE the first
+                    // intraday bar's session — state that date so the benchmark can
+                    // baseline SPY on the very same close (post-deploy audit D1).
+                    let baseDate = null, baseDateEstimated = null;
+                    if (period === '1D' && !isDaily && alpacaHistory.timestamp.length) {
+                        const b = await sessionBefore(etDate(alpacaHistory.timestamp[0] * 1000));
+                        baseDate = b.date;
+                        baseDateEstimated = b.estimated;
+                    }
                     return res.json({
                         source: 'alpaca_live',
                         base_value: parseFloat(alpacaHistory.base_value || 100000),
+                        ...(baseDate ? { base_date: baseDate, base_date_estimated: baseDateEstimated } : {}),
                         history: finalHistory
                     });
                 }
@@ -1496,10 +2040,8 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
     }
     const history = [];
     try {
-        if (fs.existsSync(paths.journalDir)) {
-            const files = fs.readdirSync(paths.journalDir)
-                .filter(file => file.endsWith('.json'))
-                .sort();
+        {
+            const files = await listJournalFiles(paths.journalDir);
 
             for (const file of files) {
                 const filePath = path.join(paths.journalDir, file);
@@ -1604,21 +2146,10 @@ function estimatedClock() {
 
 app.get('/api/market/clock', async (req, res) => {
     loadConfig();
-    const cfg = Object.values(portfoliosConfig)[0];
-    if (!cfg) return res.json(estimatedClock());
-
-    try {
-        const clock = await alpacaRequest('GET', `${cfg.base_url}/v2/clock`, cfg.api_key, cfg.api_secret);
-        res.json({
-            is_open: clock.is_open,
-            next_open: clock.next_open,
-            next_close: clock.next_close,
-            timestamp: clock.timestamp
-        });
-    } catch (e) {
-        console.warn('Failed to fetch market clock:', e.message);
-        res.json(estimatedClock());
-    }
+    // Shares the per-instance ≤60 s clock cache used for the day-P/L basis.
+    const clock = await marketClockCached();
+    if (clock.estimated) return res.json(clock);
+    res.json({ is_open: clock.is_open, next_open: clock.next_open, next_close: clock.next_close, timestamp: clock.timestamp });
 });
 
 // 6. Execute live order on Alpaca
@@ -1897,6 +2428,72 @@ app.get('/api/market/bars/:symbol', async (req, res) => {
     res.json([]);
 });
 
+// 11a. Multi-symbol bars in ONE request (market-pulse sparklines fired ~29
+// single-symbol calls on a cold load). Same validation as the single-symbol
+// route; `limit` is PER SYMBOL. Alpaca's multi-symbol endpoint applies `limit`
+// to the whole page, so pages are walked (sort=desc => newest first within each
+// symbol) until every symbol has `limit` bars or the data runs out, then each
+// series is returned chronologically. Offline/upstream failure => {} (never
+// fabricated bars).
+const BATCH_SYMBOL = /^[A-Z][A-Z0-9.\-]{0,9}$/;
+const BARS_BATCH_MAX_SYMBOLS = 50;
+const BARS_BATCH_PAGE_LIMIT = 10000;
+const BARS_BATCH_MAX_PAGES = 10;
+
+app.get('/api/market/bars-batch', async (req, res) => {
+    const symbols = [...new Set(String(req.query.symbols || '').split(',')
+        .map(s => s.trim().toUpperCase()).filter(Boolean))];
+    if (!symbols.length) return res.status(400).json({ error: 'symbols is required.' });
+    if (symbols.length > BARS_BATCH_MAX_SYMBOLS) {
+        return res.status(400).json({ error: `At most ${BARS_BATCH_MAX_SYMBOLS} symbols per request.` });
+    }
+    const bad = symbols.find(s => !BATCH_SYMBOL.test(s));
+    if (bad) return res.status(400).json({ error: `Invalid symbol: ${bad}` });
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit || '30', 10) || 30));
+    const timeframe = req.query.timeframe || '1Day';
+    if (!BAR_TIMEFRAMES.test(timeframe)) return res.status(400).json({ error: 'Invalid timeframe.' });
+    for (const k of ['start', 'end']) {
+        if (req.query[k] && (!ISO_DATE.test(req.query[k]) || isNaN(Date.parse(req.query[k])))) {
+            return res.status(400).json({ error: `Invalid ${k} date.` });
+        }
+    }
+    const start = req.query.start || defaultBarsStart(timeframe, limit);
+    const end = req.query.end || '';
+    loadConfig();
+    const cfg = Object.values(portfoliosConfig)[0];
+    const out = {};
+    if (!(cfg && cfg.api_key && !cfg.api_key.includes('REDACTED') && cfg.api_key !== 'MOCK_KEY_ID_REDACTED')) {
+        return res.json(out);
+    }
+    const want = new Set(symbols);
+    const collected = Object.fromEntries(symbols.map(s => [s, []]));
+    const full = () => symbols.every(s => collected[s].length >= limit);
+    let pageToken = '';
+    try {
+        for (let page = 0; page < BARS_BATCH_MAX_PAGES; page++) {
+            let url = `${cfg.data_url}/v2/stocks/bars?symbols=${symbols.map(encodeURIComponent).join(',')}`
+                + `&timeframe=${timeframe}&limit=${BARS_BATCH_PAGE_LIMIT}&feed=iex&sort=desc`
+                + `&start=${encodeURIComponent(start)}`;
+            if (end) url += `&end=${encodeURIComponent(end)}`;
+            if (pageToken) url += `&page_token=${encodeURIComponent(pageToken)}`;
+            const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
+            for (const [sym, bars] of Object.entries((data && data.bars) || {})) {
+                if (!want.has(sym) || !Array.isArray(bars)) continue;
+                const room = limit - collected[sym].length;
+                if (room > 0) collected[sym].push(...bars.slice(0, room));
+            }
+            pageToken = data && data.next_page_token;
+            if (!pageToken || full()) break;
+        }
+    } catch (e) {
+        console.warn('[bars-batch] upstream error:', e.message);
+    }
+    for (const sym of symbols) {
+        if (collected[sym].length) out[sym] = collected[sym].slice().reverse();
+    }
+    res.json(out);
+});
+
 // ── Supabase historical data endpoints ──────────────────────────────────────
 // These read from the Supabase tables accumulated by daily EOD workflows.
 // SUPABASE_URL and SUPABASE_ANON_KEY must be set in Vercel environment variables.
@@ -1927,6 +2524,28 @@ function supabaseGet(table, params) {
     });
 }
 
+// Seed rows (post-deploy audit D10): the equity writer recorded the starting
+// capital (cash NULL) for dates before the account's first real broker snapshot.
+// They are anchors, not performance: flagged `anchor: true` here, and dropped
+// wherever rows are combined or plotted server-side. A row is an anchor only while
+// no real (cash-bearing) point has been seen yet AND its equity equals the
+// starting capital.
+function markEquityAnchors(rows, initialCapital = 100000) {
+    if (!Array.isArray(rows)) return [];
+    let seenReal = false;
+    return rows.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(r => {
+        if (!r || typeof r !== 'object') return r;
+        const hasCash = r.cash !== null && r.cash !== undefined;
+        if (hasCash) seenReal = true;
+        const eq = parseFloat(r.equity);
+        if (!seenReal && !hasCash && Number.isFinite(eq) && Math.abs(eq - initialCapital) < 0.005) {
+            return { ...r, anchor: true };
+        }
+        return r;
+    });
+}
+const dropEquityAnchors = (rows, initialCapital) => markEquityAnchors(rows, initialCapital).filter(r => !(r && r.anchor));
+
 // 11b. Supabase equity history — /api/supabase/equity?portfolio_id=portfolio_1&start=2025-06-01
 app.get('/api/supabase/equity', async (req, res) => {
     const portfolioId = req.query.portfolio_id || 'portfolio_1';
@@ -1935,13 +2554,13 @@ app.get('/api/supabase/equity', async (req, res) => {
     if (portfolioId === 'all') {
         // Aggregate all 3 portfolios by date
         const [p1, p2, p3] = await Promise.all([
-            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_1', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
-            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
-            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 }),
+            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_1', date: `gte.${start}`, select: 'date,equity,cash', order: 'date.asc', limit: 1000 }),
+            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_2', date: `gte.${start}`, select: 'date,equity,cash', order: 'date.asc', limit: 1000 }),
+            supabaseGet('portfolio_equity_history', { portfolio_id: 'eq.portfolio_3', date: `gte.${start}`, select: 'date,equity,cash', order: 'date.asc', limit: 1000 }),
         ]);
         // Forward-fill each portfolio before summing (see combineEquitySeries):
         // a naive per-date sum collapses on partial dates → false -66% curve.
-        return res.json(combineEquitySeries([p1, p2, p3]));
+        return res.json(combineEquitySeries([p1, p2, p3].map(r => dropEquityAnchors(r))));
     }
 
     const rows = await supabaseGet('portfolio_equity_history', {
@@ -1951,7 +2570,8 @@ app.get('/api/supabase/equity', async (req, res) => {
         order:        'date.asc',
         limit:        1000,
     });
-    res.json(rows || []);
+    const cfg = portfoliosConfig[portfolioId];
+    res.json(markEquityAnchors(rows || [], (cfg && cfg.initial_capital) || 100000));
 });
 
 // 11b-2. Tail risk (read-only): historical VaR/CVaR from the equity series.
@@ -1991,10 +2611,11 @@ app.get('/api/portfolio/:id/tail-risk', async (req, res) => {
     let rows;
     if (id === 'all') {
         const [p1, p2, p3] = await Promise.all(['portfolio_1', 'portfolio_2', 'portfolio_3'].map(
-            pid => supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${pid}`, date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 })));
-        rows = combineEquitySeries([p1, p2, p3]);
+            pid => supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${pid}`, date: `gte.${start}`, select: 'date,equity,cash', order: 'date.asc', limit: 1000 })));
+        rows = combineEquitySeries([p1, p2, p3].map(r => dropEquityAnchors(r)));
     } else {
-        rows = await supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${id}`, date: `gte.${start}`, select: 'date,equity', order: 'date.asc', limit: 1000 });
+        // Seed anchors are flat starting-capital rows: zero "returns" that would dilute VaR.
+        rows = dropEquityAnchors(await supabaseGet('portfolio_equity_history', { portfolio_id: `eq.${id}`, date: `gte.${start}`, select: 'date,equity,cash', order: 'date.asc', limit: 1000 }));
     }
     const returns = equityToReturns(rows);
     res.json({
@@ -2093,11 +2714,16 @@ app.get('/api/portfolio/:id/activities', async (req, res) => {
 app.get('/api/portfolios/overview', async (req, res) => {
     loadConfig();
     const summaries = [];
+    const ctx = await sessionContext();
 
     for (const [id, cfg] of Object.entries(portfoliosConfig)) {
         const paths = getPortfolioPaths(id);
         const localState = paths ? readJsonFile(paths.state, {}) : {};
-        let equity = 100000, cash = 100000, dayPnl = 0, dayPnlPct = 0, positions = 0, liveConnected = false;
+        const initialCapital = cfg.initial_capital || 100000;
+        // Honest data: no $100K placeholders. An offline book carries its last
+        // committed snapshot (`stale: true`) or nulls when none exists.
+        let equity = null, cash = null, dayPnl = null, dayPnlPct = null, positions = null;
+        let liveConnected = false, stale = false, basisDate = null;
 
         try {
             const account = await alpacaRequest('GET', `${cfg.base_url}/v2/account`, cfg.api_key, cfg.api_secret);
@@ -2105,18 +2731,30 @@ app.get('/api/portfolios/overview', async (req, res) => {
             cash = parseFloat(account.cash);
             dayPnl = parseFloat(account.equity) - parseFloat(account.last_equity);
             dayPnlPct = parseFloat(account.last_equity) > 0 ? (dayPnl / parseFloat(account.last_equity)) * 100 : 0;
+            basisDate = account.balance_asof || null;
             const pos = await alpacaRequest('GET', `${cfg.base_url}/v2/positions`, cfg.api_key, cfg.api_secret);
             positions = pos.length;
             liveConnected = true;
         } catch (e) {
-            // Local fallback
-            if (id === 'portfolio_1') { equity = parseFloat(localState.equity || 100000); cash = parseFloat(localState.cash || 100000); dayPnl = parseFloat(localState.day_pnl || 0); positions = localState.positions ? Object.keys(localState.positions).length : 0; }
-            else if (id === 'portfolio_2') { const acct = localState.account || {}; equity = parseFloat(acct.portfolio_value || acct.equity || 100000); cash = parseFloat(acct.cash || 100000); positions = localState.positions ? localState.positions.length : 0; }
-            else { equity = parseFloat(localState.equity || 100000); cash = parseFloat(localState.cash || 100000); positions = localState.positions || 0; }
+            const fb = stateAccountFallback(localState);
+            if (fb) {
+                equity = fb.equity;
+                cash = fb.cash;
+                dayPnl = fb.day_pnl;
+                dayPnlPct = fb.last_equity > 0 ? (fb.day_pnl / fb.last_equity) * 100 : 0;
+                positions = fb.positions_count;
+                stale = true;
+            }
         }
 
-        const totalReturn = ((equity - 100000) / 100000) * 100;
-        summaries.push({ id, label: cfg.label, equity, cash, dayPnl, dayPnlPct, positions, totalReturn, initialCapital: cfg.initial_capital || 100000, liveConnected, strategy: cfg.strategy });
+        const totalReturn = equity === null ? null : ((equity - initialCapital) / initialCapital) * 100;
+        const halt = haltAssessment(localState, equity, initialCapital);
+        summaries.push({
+            id, label: cfg.label, equity, cash, dayPnl, dayPnlPct, positions, totalReturn, initialCapital,
+            liveConnected, stale, strategy: cfg.strategy,
+            halted: !!localState.halted, halt_reason: localState.halt_reason || null, ...halt,
+            ...dayPnlBasis(liveConnected ? basisDate : null, ctx),
+        });
     }
     res.json(summaries);
 });
@@ -2541,22 +3179,60 @@ app.delete('/api/portfolio/:id/watchlist/:wl_id/asset/:symbol', async (req, res)
 // GROUP D: Assets
 // ──────────────────────────────────────────────────────────────────────────
 
-// D1. List/search all assets
+// D1. List/search all assets — paginated (post-deploy audit D9). The full Alpaca
+// asset master is ~15 MB, so it is fetched once per filter combination per
+// instance (1 h), searched server-side (`q`: symbol or name) and returned one page
+// at a time. The body stays a plain array; paging metadata is in headers:
+// X-Total-Count (matches after `q`), X-Page, X-Page-Limit.
+const ASSETS_DEFAULT_LIMIT = 500;
+const ASSETS_MAX_LIMIT = 2000;
+const ASSETS_CACHE_TTL_MS = 3600000;
+const assetListCache = new Map();   // "status|class|exchange" -> { at, list }
+
+function pageAssets(list, { q, page, limit }) {
+    let rows = list;
+    if (q) {
+        const Q = q.toUpperCase();
+        const rank = (a) => {
+            const sym = String(a.symbol || '').toUpperCase();
+            if (sym === Q) return 0;
+            if (sym.startsWith(Q)) return 1;
+            if (sym.includes(Q)) return 2;
+            return String(a.name || '').toUpperCase().includes(Q) ? 3 : -1;
+        };
+        rows = list.map(a => [rank(a), a]).filter(([r]) => r >= 0)
+            .sort((x, y) => x[0] - y[0]).map(([, a]) => a);
+    }
+    const start = (page - 1) * limit;
+    return { total: rows.length, items: rows.slice(start, start + limit) };
+}
+
 app.get('/api/assets', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
     const { status, asset_class, exchange } = req.query;
-    let url = `${cfg.base_url}/v2/assets?`;
-    if (status) url += `status=${status}&`;
-    if (asset_class) url += `asset_class=${asset_class}&`;
-    if (exchange) url += `exchange=${exchange}&`;
-    try {
-        const assets = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
-        res.json(assets);
-    } catch (e) {
-        res.json([]);
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(ASSETS_MAX_LIMIT, Math.max(1, parseInt(req.query.limit, 10) || ASSETS_DEFAULT_LIMIT));
+    const q = String(req.query.q || '').trim();
+    const key = `${status || ''}|${asset_class || ''}|${exchange || ''}`;
+    let entry = assetListCache.get(key);
+    if (!entry || Date.now() - entry.at > ASSETS_CACHE_TTL_MS) {
+        let url = `${cfg.base_url}/v2/assets?`;
+        if (status) url += `status=${status}&`;
+        if (asset_class) url += `asset_class=${asset_class}&`;
+        if (exchange) url += `exchange=${exchange}&`;
+        try {
+            const assets = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
+            entry = { at: Date.now(), list: Array.isArray(assets) ? assets : [] };
+            assetListCache.set(key, entry);
+        } catch (e) {
+            return sendUpstreamError(res, e);
+        }
     }
+    const { total, items } = pageAssets(entry.list, { q, page, limit });
+    res.set({ 'X-Total-Count': String(total), 'X-Page': String(page), 'X-Page-Limit': String(limit) });
+    res.json(items);
 });
 
 // D2. Single asset detail
@@ -2576,12 +3252,29 @@ app.get('/api/asset/:symbol', async (req, res) => {
 // GROUP E: Crypto Market Data
 // ──────────────────────────────────────────────────────────────────────────
 
+// Crypto pairs must be BASE/QUOTE (Alpaca's v1beta3 form). "BTCUSD" — the form
+// Alpaca uses for crypto POSITIONS — is normalised to "BTC/USD"; anything else is
+// a 400, never a silent 200 with an empty body (post-deploy audit D9).
+function normalizeCryptoPair(raw) {
+    const s = String(raw || '').trim().toUpperCase();
+    let m = /^([A-Z0-9]{2,10})\/(USD|USDT|USDC|BTC)$/.exec(s);
+    if (m) return `${m[1]}/${m[2]}`;
+    m = /^([A-Z0-9]{2,10}?)(USDT|USDC|USD)$/.exec(s);
+    return m ? `${m[1]}/${m[2]}` : null;
+}
+function cryptoSymbolParam(req, res) {
+    const pair = normalizeCryptoPair(req.params.symbol);
+    if (!pair) { res.status(400).json({ error: 'Unknown crypto pair. Use BASE/QUOTE, e.g. BTC/USD.' }); return null; }
+    return encodeURIComponent(pair);
+}
+
 // E1. Crypto historical bars
 app.get('/api/crypto/bars/:symbol', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
-    const sym = req.params.symbol.replace('/', '%2F');
+    const sym = cryptoSymbolParam(req, res);
+    if (!sym) return;
     const { timeframe, start, end, limit } = req.query;
     const tf = timeframe || '1Day';
     const lim = parseInt(limit) || 80;
@@ -2612,7 +3305,8 @@ app.get('/api/crypto/snapshot/:symbol', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
-    const sym = req.params.symbol.replace('/', '%2F');
+    const sym = cryptoSymbolParam(req, res);
+    if (!sym) return;
     try {
         const data = await alpacaRequest('GET', `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/snapshots?symbols=${sym}`, cfg.api_key, cfg.api_secret);
         res.json(data);
@@ -2626,7 +3320,8 @@ app.get('/api/crypto/quotes/:symbol', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
-    const sym = req.params.symbol.replace('/', '%2F');
+    const sym = cryptoSymbolParam(req, res);
+    if (!sym) return;
     const { start, end, limit } = req.query;
     let url = `${cfg.data_url || 'https://data.alpaca.markets'}/v1beta3/crypto/us/quotes?symbols=${sym}`;
     if (start) url += `&start=${start}`;
@@ -2645,7 +3340,8 @@ app.get('/api/crypto/trades/:symbol', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
-    const sym = req.params.symbol.replace('/', '%2F');
+    const sym = cryptoSymbolParam(req, res);
+    if (!sym) return;
     const { start, end, limit } = req.query;
     // Newest first: without sort=desc Alpaca returns the first trades of the UTC
     // day, so the "Recent Trades" tape showed hours-old prints (audit D4).
@@ -2666,7 +3362,8 @@ app.get('/api/crypto/orderbook/:symbol', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
-    const sym = req.params.symbol.replace('/', '%2F');
+    const sym = cryptoSymbolParam(req, res);
+    if (!sym) return;
     try {
         // Correct Alpaca path is /latest/orderbooks (the previous /orderbooks/books
         // 404'd, so the live depth ladder silently rendered empty for every visitor).
@@ -2899,24 +3596,47 @@ app.get('/api/portfolio/:id/activities/:type', async (req, res) => {
 // ──────────────────────────────────────────────────────────────────────────
 
 // I1. Corporate action announcements
+const CORP_ACTIONS_DEFAULT_LIMIT = 100;
+const CORP_ACTIONS_MAX_LIMIT = 500;
+const encodeCorpActionsToken = (offset) => Buffer.from(`o:${offset}`).toString('base64url');
+function decodeCorpActionsToken(token) {
+    const m = /^o:(\d{1,7})$/.exec(Buffer.from(String(token), 'base64url').toString('utf8'));
+    return m ? Number(m[1]) : null;
+}
 app.get('/api/corporate-actions', async (req, res) => {
     loadConfig();
     const cfg = Object.values(portfoliosConfig)[0];
     if (!cfg) return res.status(500).json({ error: 'No portfolio configured' });
     const { ca_types, since, until: untilDate, symbol, cusip, date_type } = req.query;
+    // The unfiltered announcement list was ~1.0 MB. Alpaca's announcements
+    // endpoint has no server-side paging, so pages are cut here: `limit`
+    // (default 100, max 500) and an opaque `page_token` (returned in the
+    // X-Next-Page-Token header) select a window; the body stays a plain array.
+    const limit = Math.min(CORP_ACTIONS_MAX_LIMIT,
+        Math.max(1, parseInt(req.query.limit || String(CORP_ACTIONS_DEFAULT_LIMIT), 10) || CORP_ACTIONS_DEFAULT_LIMIT));
+    let offset = 0;
+    if (req.query.page_token) {
+        offset = decodeCorpActionsToken(req.query.page_token);
+        if (offset === null) return res.status(400).json({ error: 'Invalid page_token.' });
+    }
     let url = `${cfg.base_url}/v2/corporate_actions/announcements?`;
-    if (ca_types) url += `ca_types=${ca_types}&`;
-    if (since) url += `since=${since}&`;
-    if (untilDate) url += `until=${untilDate}&`;
-    if (symbol) url += `symbol=${symbol}&`;
-    if (cusip) url += `cusip=${cusip}&`;
-    if (date_type) url += `date_type=${date_type}&`;
+    if (ca_types) url += `ca_types=${encodeURIComponent(ca_types)}&`;
+    if (since) url += `since=${encodeURIComponent(since)}&`;
+    if (untilDate) url += `until=${encodeURIComponent(untilDate)}&`;
+    if (symbol) url += `symbol=${encodeURIComponent(symbol)}&`;
+    if (cusip) url += `cusip=${encodeURIComponent(cusip)}&`;
+    if (date_type) url += `date_type=${encodeURIComponent(date_type)}&`;
+    let all = [];
     try {
         const data = await alpacaRequest('GET', url, cfg.api_key, cfg.api_secret);
-        res.json(data);
+        all = Array.isArray(data) ? data : [];
     } catch (e) {
-        res.json([]);
+        console.warn('[corporate-actions]', e.message);
     }
+    const page = all.slice(offset, offset + limit);
+    res.setHeader('X-Total-Count', String(all.length));
+    if (offset + limit < all.length) res.setHeader('X-Next-Page-Token', encodeCorpActionsToken(offset + limit));
+    res.json(page);
 });
 
 // I2. Single corporate action
@@ -3012,9 +3732,10 @@ app.get('/api/guardian-trigger', async (req, res) => {
         });
     }
 
-    // Vercel cron requests carry Authorization: Bearer ${CRON_SECRET}
-    const authHeader = req.headers['authorization'] || '';
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    // Vercel cron requests carry Authorization: Bearer ${CRON_SECRET}. Compared in
+    // constant time over fixed-length digests, so neither content nor length leaks.
+    const authHeader = String(req.headers['authorization'] || '');
+    if (!secretMatches(authHeader, `Bearer ${CRON_SECRET}`)) {
         return res.status(401).json({ ok: false, error: 'Unauthorized.' });
     }
 
@@ -3043,6 +3764,7 @@ app.get('/api/guardian-trigger', async (req, res) => {
                 r.on('data', d => body += d);
                 r.on('end', () => resolve({ status: r.statusCode, body }));
             });
+            r2.setTimeout(10000, () => r2.destroy(new Error('timeout')));
             r2.on('error', reject);
             r2.write(payload);
             r2.end();
@@ -3052,11 +3774,12 @@ app.get('/api/guardian-trigger', async (req, res) => {
             console.log(`[guardian-trigger] repository_dispatch OK at ${new Date().toISOString()}`);
             return res.json({ ok: true, dispatched: true, at: new Date().toISOString() });
         }
-        console.error(`[guardian-trigger] GitHub returned ${result.status}: ${result.body}`);
-        return res.status(502).json({ ok: false, github_status: result.status, body: result.body });
+        // GitHub's error body (token scopes, repo internals) stays in server logs.
+        console.error(`[guardian-trigger] GitHub returned ${result.status}: ${String(result.body).slice(0, 500)}`);
+        return res.status(502).json({ ok: false, error: 'Dispatch failed.' });
     } catch (e) {
         console.error(`[guardian-trigger] dispatch error: ${e.message}`);
-        return res.status(500).json({ ok: false, error: e.message });
+        return res.status(502).json({ ok: false, error: 'Dispatch failed.' });
     }
 });
 
@@ -3081,4 +3804,9 @@ if (require.main === module) {
     });
 }
 
+// Pure helpers exposed for unit tests only.
+app._internals = {
+    journalDatesToCover, planOverlayUpdate, dayPnlBasis, aggregateDayPnlBasis, sectorFor,
+    normalizeCryptoPair, pageAssets, markEquityAnchors, previousWeekday, haltAssessment,
+};
 module.exports = app;

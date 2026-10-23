@@ -88,29 +88,39 @@
         var tbody = $('scrTableBody');
         tbody.innerHTML = '<tr><td colspan="13" class="scr-load">Loading assets...</td></tr>';
 
-        var url = '/api/assets?status=' + status + '&asset_class=' + cls;
-        if (exchange) url += '&exchange=' + exchange;
+        // The API pages and searches server-side (audit D9): one 500-row page per
+        // request, total matches in X-Total-Count — never the 15 MB asset master.
+        var query = $('searchInput').value.trim();
+        var url = '/api/assets?status=' + encodeURIComponent(status) + '&asset_class=' + encodeURIComponent(cls) + '&limit=500';
+        if (exchange) url += '&exchange=' + encodeURIComponent(exchange);
+        if (query) url += '&q=' + encodeURIComponent(query.replace(/[^A-Za-z0-9 ._\-]/g, ''));
+        var seq = ++assetsSeq;
 
         try {
             var resp = await fetch(url);
-            allAssets = await resp.json();
-            if (!Array.isArray(allAssets)) allAssets = [];
+            var rows = await resp.json();
+            if (seq !== assetsSeq) return;   // a newer search superseded this one
+            allAssets = Array.isArray(rows) ? rows : [];
+            assetsTotal = parseInt(resp.headers.get('X-Total-Count'), 10);
+            if (!isFinite(assetsTotal)) assetsTotal = allAssets.length;
         } catch (e) {
+            if (seq !== assetsSeq) return;
             allAssets = [];
+            assetsTotal = 0;
         }
         filterAndRender();
     }
 
+    var assetsSeq = 0, assetsTotal = 0, searchTimer = null;
+    function onSearchInput() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadAssets, 250);
+    }
+
     function filterAndRender() {
-        var query = $('searchInput').value.toUpperCase().trim();
         var filtered = allAssets;
-        if (query) {
-            filtered = allAssets.filter(function (a) {
-                return (a.symbol || '').toUpperCase().indexOf(query) !== -1 || (a.name || '').toUpperCase().indexOf(query) !== -1;
-            });
-        }
         var showing = Math.min(filtered.length, 500);
-        $('scrStats').innerHTML = '<span class="scr-stat">' + t('stat_showing') + ' <strong>' + showing + '</strong> ' + t('stat_of') + ' <strong>' + filtered.length + '</strong> ' + t('stat_assets') + '</span>';
+        $('scrStats').innerHTML = '<span class="scr-stat">' + t('stat_showing') + ' <strong>' + showing + '</strong> ' + t('stat_of') + ' <strong>' + Math.max(assetsTotal, filtered.length) + '</strong> ' + t('stat_assets') + '</span>';
 
         var tbody = $('scrTableBody');
         if (filtered.length === 0) {
@@ -237,7 +247,7 @@
         loadPortfolios();
 
         $('btnLoad').addEventListener('click', loadAssets);
-        $('searchInput').addEventListener('input', filterAndRender);
+        $('searchInput').addEventListener('input', onSearchInput);
         $('filterClass').addEventListener('change', function () {
             $('filterExchange').style.display = this.value === 'crypto' ? 'none' : '';
         });

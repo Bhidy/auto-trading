@@ -448,6 +448,11 @@
             var pctClass = ATFmt.signClass(pf.dayPnlPct);
             var totalClass = ATFmt.signClass(pf.totalReturn);
             var arrow = pf.dayPnlPct >= 0 ? '▲' : '▼';
+            // Name the day figure by its real baseline (audit D1): "today" only
+            // in-session vs the previous close, else "since <date> close".
+            var basis = ATFmt.pnlBasis(pf, 'en');
+            var dayTag = basis.today ? 'today' : basis.label.replace(/^P\/L /, '').replace(/^· /, '');
+            var hasNums = pf.equity !== null && pf.equity !== undefined;
             var card = document.createElement('a');
             card.href = '/portfolio-detail.html?id=' + pf.id;
             card.style.cssText = 'display:flex;flex-direction:column;gap:0.4rem;padding:0.85rem;background:var(--page);border:1px solid rgba(229,90,31,0.12);border-radius:var(--pf-radius-sm);cursor:pointer;text-decoration:none;transition:all 180ms;';
@@ -461,12 +466,12 @@
                         ${pf.liveConnected ? 'LIVE' : 'LOCAL'}
                     </span>
                 </div>
-                <div style="font-family:var(--pf-mono);font-size:1.1rem;font-weight:700;color:var(--ink);">${fmtMoney(pf.equity)}</div>
-                <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span class="pf-num ${pctClass}" style="font-size:0.72rem;font-weight:700;">${arrow} ${Math.abs(pf.dayPnlPct).toFixed(2)}% today</span>
-                    <span class="pf-num ${totalClass}" style="font-size:0.68rem;font-weight:600;">${(pf.totalReturn >= 0 ? '+' : '') + pf.totalReturn.toFixed(2)}% total</span>
+                <div style="font-family:var(--pf-mono);font-size:1.1rem;font-weight:700;color:var(--ink);">${hasNums ? fmtMoney(pf.equity) : '—'}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+                    <span class="pf-num ${pctClass}" style="font-size:0.72rem;font-weight:700;" title="${basis.title}">${hasNums ? arrow + ' ' + ATFmt.signedPct(pf.dayPnlPct) + ' ' + dayTag : '—'}</span>
+                    <span class="pf-num ${totalClass}" style="font-size:0.68rem;font-weight:600;">${hasNums ? ATFmt.signedPct(pf.totalReturn) + ' total' : '—'}</span>
                 </div>
-                <div style="font-size:0.62rem;color:var(--muted);">${pf.positions} position${pf.positions !== 1 ? 's' : ''} · ${fmtMoney(pf.cash)} cash</div>
+                <div style="font-size:0.62rem;color:var(--muted);">${hasNums ? pf.positions + ' position' + (pf.positions !== 1 ? 's' : '') + ' · ' + fmtMoney(pf.cash) + ' cash' : 'No committed snapshot'}</div>
             `;
             container.appendChild(card);
         });
@@ -792,8 +797,12 @@
             if (dayChgText && data.account) {
                 var dayPnl = data.account.day_pnl || 0;
                 var dayPnlPct = data.account.day_pnl_pct || 0;
-                dayChgText.innerHTML = (dayPnl >= 0 ? '▲ +' : '▼ ') + fmtMoney(Math.abs(dayPnl)) + ' (' + (dayPnl >= 0 ? '+' : '') + Math.abs(dayPnlPct).toFixed(2) + '%)';
+                var dayBasis = ATFmt.pnlBasis(data, 'en');
+                dayChgText.textContent = (dayPnl >= 0 ? '▲ ' : '▼ ') + ATFmt.signedMoney(dayPnl) + ' (' + ATFmt.signedPct(dayPnlPct) + ')';
                 dayChgText.className = ATFmt.signClass(dayPnl);
+                dayChgText.title = dayBasis.title;
+                var dayChgLabel = document.getElementById('dayChgLabel');
+                if (dayChgLabel) dayChgLabel.textContent = dayBasis.today ? 'Day Change' : dayBasis.label;
             }
 
             var bpVal = document.getElementById('buyingPowerVal');
@@ -1280,20 +1289,18 @@
 
     /* ─── Sparkline Intraday Data Loader ──────────────────────────────── */
     async function loadSparklineData(symbols) {
-        var syms = symbols || watchlistSymbols;
-        var promises = syms.map(function(sym) {
-            return apiFetch('/api/market/bars/' + sym + '?timeframe=5Min&limit=200&start=' + ATFmt.intradayStart())
-                .then(function(bars) {
-                    bars = ATFmt.lastSession(bars);
-                    if (bars && bars.length > 0) {
-                        var db = stockPriceDatabase[sym] || {};
-                        db._sparkData = bars.map(function(b) { return parseFloat(b.c); });
-                        stockPriceDatabase[sym] = db;
-                    }
-                })
-                .catch(function() {});
+        var syms = (symbols || watchlistSymbols).slice(0, 50);
+        // ONE request for every watchlist series (was one per symbol, ~29 on a cold load).
+        var batch = await apiFetch('/api/market/bars-batch?symbols=' + encodeURIComponent(syms.join(',')) +
+            '&timeframe=5Min&limit=200&start=' + ATFmt.intradayStart());
+        syms.forEach(function(sym) {
+            var bars = ATFmt.lastSession(batch && batch[sym]);
+            if (bars && bars.length > 0) {
+                var db = stockPriceDatabase[sym] || {};
+                db._sparkData = bars.map(function(b) { return parseFloat(b.c); });
+                stockPriceDatabase[sym] = db;
+            }
         });
-        await Promise.all(promises);
         // Patch sparklines in place (no full rebuild → no flicker on refresh).
         if (document.getElementById('watchlistContainer') && document.querySelector('#watchlistContainer .mp-list-item')) {
             updateWatchlistSparklines();

@@ -28,9 +28,9 @@
 
         /* ──── KPI Strip ──── */
         .ct-kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: .65rem; margin-bottom: 1rem; }
-        .ct-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: .65rem .85rem; }
+        .ct-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: .85rem; padding: .65rem .85rem; min-width: 0; }
         .ct-kpi-label { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
-        .ct-kpi-val { font-family: var(--pf-mono); font-size: 1.05rem; font-weight: 700; margin-top: .15rem; }
+        .ct-kpi-val { font-family: var(--pf-mono); font-size: 1.05rem; font-weight: 700; margin-top: .15rem; overflow-wrap: anywhere; }
         .ct-kpi-val.green { color: var(--pf-green); }
         .ct-kpi-val.red { color: var(--pf-red); }
 
@@ -126,7 +126,13 @@
         @media (max-width: 640px) {
             .ct-page { padding-left: .75rem; padding-right: .75rem; }
             .ct-chart-wrap { height: 260px; }
-            .ct-kpi-strip { grid-template-columns: repeat(3, 1fr); }
+            .ct-kpi-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        /* Phones: two columns so six-figure prices fit without overflowing (audit D6). */
+        @media (max-width: 480px) {
+            .ct-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+            .ct-kpi { padding: .6rem .7rem; }
+            .ct-kpi-val { font-size: .98rem; }
         }
     </style>
 </head>

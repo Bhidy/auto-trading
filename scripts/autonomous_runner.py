@@ -718,14 +718,56 @@ def _increment(order_id, cum_qty, cum_px):
     return new, round(px if px > 0 else cum_px, 4)
 
 
+UNMATCHED_EXITS_FILE = "unmatched_exits.json"
+
+
+def _unmatched():
+    d = load_json(DATA_DIR / UNMATCHED_EXITS_FILE, {})
+    return d if isinstance(d, dict) else {}
+
+
+def unmatched_exit_qty(symbol):
+    return sum(float(r.get("unmatched_qty") or 0) for r in _unmatched().values()
+               if r.get("symbol") == symbol)
+
+
 def book_exit_fill(order_id, symbol, cum_qty, cum_px, reason):
-    """Book the unbooked part of an exit fill FIFO across open lots. Idempotent."""
+    """Book the unbooked part of an exit fill FIFO across open lots. Idempotent.
+
+    The ledger advances ONLY by what was actually booked into lots. If the fill
+    exceeds the open lots (e.g. a late entry fill left an unlogged position),
+    the remainder is kept in data/unmatched_exits.json — retried whenever a lot
+    appears (retry_unmatched_exits / settle_pending_entries) and surfaced in the
+    reconciliation report — never silently written off (Codex #1)."""
     new, px = _increment(order_id, cum_qty, cum_px)
     if not new:
         return 0.0
     from performance_tracker import reduce_open_position
-    booked = reduce_open_position(symbol, new, px, reason=reason)
-    _ledger_mark(order_id, cum_qty, cum_px, "exit", symbol)
+    booked = float(reduce_open_position(symbol, new, px, reason=reason) or 0.0)
+    if booked > 1e-9:
+        prev_q, prev_px = _ledger_booked(order_id)
+        tot = prev_q + booked
+        _ledger_mark(order_id, tot, (prev_q * prev_px + booked * px) / tot, "exit", symbol)
+    remainder = new - booked
+    um = _unmatched()
+    if remainder > 1e-9:
+        um[str(order_id)] = {"order_id": order_id, "symbol": symbol, "cum_qty": float(cum_qty),
+                             "cum_px": float(cum_px), "reason": reason,
+                             "unmatched_qty": round(remainder, 6),
+                             "at": datetime.now(timezone.utc).isoformat()}
+        log.warning(f"::warning::P1 exit fill {order_id} {symbol}: {remainder:g} sh had no open "
+                    f"lot to close — kept as UNMATCHED for reconciliation")
+    else:
+        um.pop(str(order_id), None)
+    save_json(DATA_DIR / UNMATCHED_EXITS_FILE, um)
+    return booked
+
+
+def retry_unmatched_exits():
+    """Book unmatched exit remainders against lots that have since appeared."""
+    booked = 0.0
+    for oid, r in list(_unmatched().items()):
+        booked += book_exit_fill(oid, r["symbol"], r["cum_qty"], r["cum_px"], r.get("reason"))
     return booked
 
 
@@ -926,7 +968,9 @@ def settle_pending_entries(alpaca, positions):
             open_qty = sum(float(t.get("qty") or 0) for t in load_json(DATA_DIR / "trade_log.json", [])
                            if isinstance(t, dict) and t.get("symbol") == sym
                            and t.get("status") == "open")
-            room = max(0.0, held.get(sym, 0.0) - open_qty)
+            # Room = shares held beyond logged lots, PLUS shares an exit already
+            # sold with no lot to close (the late entry IS that lot).
+            room = max(0.0, held.get(sym, 0.0) - open_qty + unmatched_exit_qty(sym))
             qty = min(new, room)
             if qty > 1e-9:
                 log_trade(sym, "buy", qty, px, p.get("bucket") or "momentum", None,
@@ -940,6 +984,37 @@ def settle_pending_entries(alpaca, positions):
             keep.append(p)
     save_json(path, keep)
     return settled
+
+
+def run_settlement(alpaca, positions):
+    """Idempotent fill settlement: pending exits, pending entries, then unmatched
+    exit remainders (a late entry may have just created their lot). Returns a
+    summary; ``error`` is set if any step failed so a later EOD run retries."""
+    errors = []
+    for name, fn in (("exits", lambda: settle_pending_exits(alpaca)),
+                     ("entries", lambda: settle_pending_entries(alpaca, positions)),
+                     ("unmatched", retry_unmatched_exits)):
+        try:
+            fn()
+        except Exception as e:
+            errors.append(f"{name}: {e}")
+            log.warning(f"  Settlement ({name}) failed: {e}")
+    pe = load_json(DATA_DIR / PENDING_EXITS_FILE, [])
+    pn = load_json(DATA_DIR / PENDING_ENTRIES_FILE, [])
+    return {"at": datetime.now(timezone.utc).isoformat(),
+            "pending_exits": len(pe) if isinstance(pe, list) else 0,
+            "pending_entries": len(pn) if isinstance(pn, list) else 0,
+            "unmatched_exits": len(_unmatched()),
+            "error": "; ".join(errors) or None}
+
+
+def settlement_outstanding(state):
+    """Anything a later EOD run of the same session should still settle?"""
+    pe = load_json(DATA_DIR / PENDING_EXITS_FILE, [])
+    pn = load_json(DATA_DIR / PENDING_ENTRIES_FILE, [])
+    last = (state or {}).get("eod_settlement") or {}
+    return bool((isinstance(pe, list) and pe) or (isinstance(pn, list) and pn)
+                or _unmatched() or last.get("error"))
 
 
 def _sleeve_symbols(params=None):
@@ -2299,6 +2374,11 @@ def reconcile_positions(alpaca: AlpacaClient):
     report = compute_drift(pos_syms, open_syms, positions=positions,
                            open_trades=open_trades)
     report["reconcile_actions"] = recon_actions
+    report["unmatched_exits"] = list(_unmatched().values())
+    if report["unmatched_exits"]:
+        report["in_sync"] = False
+        log.warning(f"  Reconciliation: {len(report['unmatched_exits'])} exit fill(s) with "
+                    f"unbooked quantity: {[(u['symbol'], u['unmatched_qty']) for u in report['unmatched_exits']]}")
     save_json(DATA_DIR / "reconciliation_report.json", report)
     if report["in_sync"]:
         log.info("  Reconciliation: trade log and broker positions in sync")
@@ -2332,8 +2412,18 @@ def run_end_of_day(alpaca: AlpacaClient, force=None):
     if force is None:
         force = os.environ.get("P1_EOD_FORCE", "").strip() == "1"
     if portfolio_state.get("last_eod_session_date") == session_date and not force:
-        log.info(f"EOD already completed for session {session_date} "
-                 f"(at {portfolio_state.get('last_eod_completed_at')}) — skipping (idempotent).")
+        # The journal, self-learning and anchors are once-per-session. Fill
+        # SETTLEMENT is idempotent by order id, so later staggered runs keep
+        # settling while anything is outstanding or the last settlement failed
+        # (Codex #2) — otherwise a late fill waits a whole day to be booked.
+        if settlement_outstanding(portfolio_state):
+            log.info(f"EOD already completed for {session_date}; settlement outstanding — "
+                     f"settling only.")
+            portfolio_state["eod_settlement"] = run_settlement(alpaca, alpaca.get_positions())
+            save_json(DATA_DIR / "portfolio_state.json", portfolio_state)
+        else:
+            log.info(f"EOD already completed for session {session_date} "
+                     f"(at {portfolio_state.get('last_eod_completed_at')}) — skipping (idempotent).")
         return False
     roll_session_anchors(portfolio_state, session_date)
 
@@ -2341,16 +2431,9 @@ def run_end_of_day(alpaca: AlpacaClient, force=None):
     equity = float(account["equity"])
     positions = alpaca.get_positions()
 
-    # Book late fills of exits that were still working at confirmation time, at
-    # the REAL broker fill (H3), before any reconciliation reads the log.
-    try:
-        settle_pending_exits(alpaca)
-    except Exception as e:
-        log.warning(f"  Pending-exit settlement skipped: {e}")
-    try:
-        settle_pending_entries(alpaca, positions)
-    except Exception as e:
-        log.warning(f"  Pending-entry settlement skipped: {e}")
+    # Book late fills of exits/entries that were still working at confirmation
+    # time, at the REAL broker fill (H3), before any reconciliation reads the log.
+    portfolio_state["eod_settlement"] = run_settlement(alpaca, positions)
 
     # Close open trades that were filled
     trade_log = load_json(DATA_DIR / "trade_log.json", [])

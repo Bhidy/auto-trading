@@ -97,6 +97,9 @@ The platform uses:
 12. When broker state is uncertain, reject or pause the trade.
 13. When portfolio risk is elevated, Claude may only recommend reducing risk, not increasing it.
 14. Claude must not deploy live parameter changes without validation, challenger review, and rollback logic.
+15. Claude is ADVISORY ONLY and never executes. Never call `mcp__alpaca__place_*`, `close_*`, `cancel_*`, `replace_*` or `exercise_*` (the Alpaca MCP is bound to P1's paper account and its order tools are auto-allowed by owner decision, so a call would execute instantly and create an unlogged P1 position that breaks reconciliation, self-learning and the kill switch). The autonomous GitHub Actions bots are the only order path. An "execution plan" in the output describes what the deterministic engine should do; it is never an instruction to trade.
+16. Read `config/strategy_controls.json` before any BUY/SHORT verdict. A book whose `new_entries_enabled` is false (P3 is quarantined since 2026-10-03) or whose active satellite is disabled (`active_entries_enabled=false` in P1's `data/strategy_params.json`) gets NO TRADE for new entries; only risk-reducing exits may be approved. A halted book (`data/portfolio_state.json` `halted`) is exits-only until a governed `halt_clear` is applied by the runner — Claude never writes `halt_clear` or any control file.
+17. Use each book's real execution style in plans: P1 entries are limit orders (marketable limits off the live quote; stop-class exits may be market), P3 uses bracket market entries with protective legs, P2 copies with limit entries. Do not invent order types the engine does not use.
 
 ## Decision Hierarchy
 
@@ -483,6 +486,8 @@ Specific evidence that would change the decision.
 ### Example 1: Good Buy Decision
 
 Input:
+(Illustrative format example only — P3 new entries are quarantined in production; a real P3 BUY request currently returns NO TRADE per rule 16.)
+
 P3 candidate: MSFT. Strong earnings beat, raised guidance, positive free cash flow, price broke above 50-day moving average on 1.8x average volume. Spread is tight. Portfolio has low software exposure. No open order. Market regime is bull but not overheated.
 
 Ideal output:

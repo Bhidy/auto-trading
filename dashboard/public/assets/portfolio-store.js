@@ -52,6 +52,19 @@
         PH:   { name: 'Parker-Hannifin Corp.', nameAr: 'باركر هانيفين', sector: 'Industrials', color: '#F26B1F' }
     };
 
+    // Day-P/L basis exactly as the API states it (audit D1) — consumed by
+    // ATFmt.pnlBasis() to label the figure "Today's P/L" or "P/L since … close".
+    function pnlBasisFields(data) {
+        data = data || {};
+        return {
+            day_pnl_basis_date: data.day_pnl_basis_date || null,
+            day_pnl_is_today: data.day_pnl_is_today === true,
+            day_pnl_basis_mixed: data.day_pnl_basis_mixed === true,
+            market_open: data.market_open === undefined ? null : data.market_open,
+            previous_session_date: data.previous_session_date || null
+        };
+    }
+
     function symMeta(sym) {
         if (!sym) return { name: 'Other', nameAr: 'أخرى', sector: 'Other', color: '#7A6B5E' };
         var cleanSym = String(sym).trim().toUpperCase();
@@ -105,6 +118,9 @@
                     haltVerified: data.halt_verified === undefined ? null : data.halt_verified,
                     haltMeasuredDrawdownPct: data.halt_measured_drawdown_pct === undefined ? null : data.halt_measured_drawdown_pct,
                     haltNote: data.halt_note || null,
+                    haltNoteCode: data.halt_note_code || null,
+                    haltRecordedDrawdownPct: data.halt_recorded_drawdown_pct === undefined ? null : data.halt_recorded_drawdown_pct,
+                    pnlBasis: pnlBasisFields(data),
                     isAggregated: data.is_aggregated || false,
                     transactions: (data.trade_log || []).map(function(t, idx) {
                         return {
@@ -206,7 +222,9 @@
                     symbol: p.symbol,
                     companyName: meta.name,
                     companyNameAr: meta.nameAr,
-                    sector: meta.sector,
+                    // The API's GICS sector (null when unknown) — never the local
+                    // sleeve label, which named strategies, not sectors (audit D2).
+                    sector: ('sector' in p) ? (p.sector || 'Unclassified') : meta.sector,
                     color: meta.color,
                     quantity: p.quantity,
                     avgCost: p.avgCost,
@@ -251,6 +269,7 @@
                 totalReturn: totalReturn,
                 todayGain: dayPnL,
                 todayPct: dayPnLPct,
+                pnlBasis: pnlBasisFields(data),
                 dividendsYTD: 0, // Optionals
                 holdings: enriched,
                 sectors: sectors,
@@ -505,6 +524,9 @@
                 haltVerified: data.halt_verified === undefined ? null : data.halt_verified,
                 haltMeasuredDrawdownPct: data.halt_measured_drawdown_pct === undefined ? null : data.halt_measured_drawdown_pct,
                 haltNote: data.halt_note || null,
+                haltNoteCode: data.halt_note_code || null,
+                haltRecordedDrawdownPct: data.halt_recorded_drawdown_pct === undefined ? null : data.halt_recorded_drawdown_pct,
+                pnlBasis: pnlBasisFields(data),
                 isAggregated: data.is_aggregated || false,
                 transactions: []
             };

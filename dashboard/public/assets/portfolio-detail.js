@@ -326,7 +326,12 @@
                           (portfolio.halted) ? t('underperform') : t('outperform');
         var statusClass = isAgg ? 'pf-pos' : unverifiedHalt ? 'pf-warn' : (portfolio.halted) ? 'pf-neg' : 'pf-pos';
         var statusSub = isAgg ? (lang === 'ar' ? 'عرض مجمع للقراءة فقط' : 'Read-only Aggregate View') :
-                        isServer ? 'Algorithmic Mode' : 'Sandbox Mode';
+                        isServer ? il('Algorithmic Mode', 'الوضع الخوارزمي') : il('Sandbox Mode', 'وضع التجربة');
+        // Day P/L is labelled by its real baseline (audit D1): "Today's P/L" only
+        // in-session vs the previous close, otherwise "P/L since <date> close".
+        var dayBasis = (isServer && (metrics.pnlBasis || portfolio.pnlBasis))
+            ? ATFmt.pnlBasis(metrics.pnlBasis || portfolio.pnlBasis, lang)
+            : { today: true, label: t('todayPL'), title: '' };
 
         // Fetch live account values or local fallback
         var buyingPower = detailCache ? detailCache.account.buying_power : metrics.cashBalance * 2;
@@ -334,7 +339,7 @@
 
         var kpis = [
             kpi(t('totalValue'),  '$' + fmt(metrics.totalValue), null),
-            kpi(t('todayPL'),     ATFmt.signedMoney(metrics.todayGain), pct(metrics.todayPct), todayClass),
+            kpi(dayBasis.label,   ATFmt.signedMoney(metrics.todayGain), pct(metrics.todayPct), todayClass, dayBasis.title),
             kpi(t('totalGain'),   ATFmt.signedMoney(metrics.totalGain), null, gainClass),
             kpi(t('totalReturn'), pct(metrics.totalReturn), null, retClass),
             kpi(t('cashBal'),     '$' + fmt(metrics.cashBalance), null),
@@ -364,9 +369,9 @@
         document.getElementById('addTxBtn').addEventListener('click', openOrderModal);
     }
 
-    function kpi(label, value, sub, cls) {
-        return '<div class="pf-kpi">' +
-            '<div class="pf-kpi__label">' + label + '</div>' +
+    function kpi(label, value, sub, cls, labelTitle) {
+        return '<div class="pf-kpi"' + (labelTitle ? ' title="' + escHtml(labelTitle) + '"' : '') + '>' +
+            '<div class="pf-kpi__label">' + label + (labelTitle ? ' <span class="pf-kpi__info" aria-hidden="true">ⓘ</span>' : '') + '</div>' +
             '<div class="pf-kpi__value pf-num' + (cls ? ' ' + cls : '') + '" title="' + escHtml(String(value)) + '">' + escHtml(String(value)) + '</div>' +
             (sub ? '<div class="pf-kpi__sub pf-num' + (cls ? ' ' + cls : '') + '" title="' + escHtml(String(sub)) + '">' + escHtml(String(sub)) + '</div>' : '') +
         '</div>';
@@ -387,7 +392,11 @@
                 <svg class="pf-halt-unverified__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r="0.6" fill="currentColor"/></svg>
                 <div>
                     <h4>${il('Unverified halt — pending governed clear', 'إيقاف غير مُتحقق منه — بانتظار الإلغاء المعتمد')}</h4>
-                    <p dir="auto">${escHtml(portfolio.haltNote || il('The recorded halt is not supported by measured data.', 'الإيقاف المسجّل غير مدعوم بالبيانات المقاسة.'))}</p>
+                    <p dir="auto">${escHtml(ATFmt.haltNote({
+                        halt_verified: false, halt_note: portfolio.haltNote, halt_note_code: portfolio.haltNoteCode,
+                        halt_recorded_drawdown_pct: portfolio.haltRecordedDrawdownPct,
+                        halt_measured_drawdown_pct: portfolio.haltMeasuredDrawdownPct
+                    }, lang) || il('The recorded halt is not supported by measured data.', 'الإيقاف المسجّل غير مدعوم بالبيانات المقاسة.'))}</p>
                     ${mdd != null && isFinite(mdd) ? '<p class="pf-halt-unverified__meta">' + il('Measured drawdown', 'التراجع المقاس') + ': ' + ATFmt.ltr(Number(mdd).toFixed(2) + '%') + ' · ' + il('Trading stays paused until the clear is approved.', 'يبقى التداول متوقفاً حتى اعتماد الإلغاء.') + '</p>' : ''}
                 </div>
             </div>`;
@@ -571,6 +580,9 @@
                     // vs the first intraday bar (market open) — which silently dropped the
                     // overnight gap and flipped the sign (audit 2026-06-18).
                     if (intraday && d && parseFloat(d.base_value) > 0) h._baseValue = parseFloat(d.base_value);
+                    // The close base_value was struck at — SPY is baselined on the SAME
+                    // close so both lines cover an identical window (audit D1).
+                    if (intraday && d && d.base_date) h._baseDate = String(d.base_date).slice(0, 10);
                     return h;
                 })
                 .catch(function () { return []; });
@@ -595,19 +607,22 @@
         });
         return m;
     }
-    function bmFetchSpy(period, startDate, endDate, intraday) {
+    function bmFetchSpy(period, startDate, endDate, intraday, baseDate) {
         if (intraday) {
             var iurl = '/api/market/bars/SPY?timeframe=5Min&limit=78&start=' + encodeURIComponent(startDate + 'T13:30:00Z') + '&end=' + encodeURIComponent(startDate + 'T21:00:00Z');
-            // Fetch SPY's PREVIOUS CLOSE too, so SPY is baselined the same way the
-            // portfolio is (vs prior close) — keeping the relative figure apples-to-apples.
+            // SPY's baseline is its close ON THE PORTFOLIO'S BASIS DATE — never the
+            // quote's "previous close", which before the open is a different session
+            // (P1 from Oct 21 vs SPY from Oct 22 — audit D1). No aligned close ⇒ no
+            // SPY line and no out/under-performance claim.
+            var burl = baseDate ? ('/api/market/bars/SPY?timeframe=1Day&limit=5&start=' + encodeURIComponent(baseDate) +
+                '&end=' + encodeURIComponent(baseDate + 'T23:59:59Z')) : null;
             return Promise.all([
                 fetch(iurl).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }),
-                fetch('/api/stock/SPY/details', { cache: 'no-store' })
-                    .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+                burl ? fetch(burl).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; }) : Promise.resolve([])
             ]).then(function (res) {
                 var map = bmSpyMapFromAlpaca(res[0], true);
-                var prev = (res[1] && res[1].quote) ? parseFloat(res[1].quote.prev) : 0;
-                if (prev > 0) map._prevClose = prev;
+                var baseBar = (Array.isArray(res[1]) ? res[1] : []).filter(function (b) { return (b.t || '').slice(0, 10) === baseDate; })[0];
+                if (baseBar && parseFloat(baseBar.c) > 0) map._prevClose = parseFloat(baseBar.c);
                 return map;
             });
         }
@@ -633,9 +648,10 @@
             return last;
         });
         if (spyFirst === null) return null;
-        // For 1D, baseline to SPY's PREVIOUS CLOSE (same convention as the portfolio's
-        // base_value) so both lines and the relative figure are measured vs prior close.
-        var base = (intraday && spyMap._prevClose > 0) ? spyMap._prevClose : spyFirst;
+        // For 1D, baseline to SPY's close on the portfolio's basis date (same close
+        // as base_value). Without that aligned close the windows differ: no line.
+        if (intraday && !(spyMap._prevClose > 0)) return null;
+        var base = intraday ? spyMap._prevClose : spyFirst;
         return aligned.map(function (c) { var v = (c === null ? spyFirst : c); return (v / base) * 100; });
     }
 
@@ -826,7 +842,7 @@
             }
             var startDate = (equityRows[0].date || '').slice(0, 10);
             var endDate   = (equityRows[equityRows.length - 1].date || '').slice(0, 10);
-            bmFetchSpy(chartPeriod, startDate, endDate, intraday).then(function (spyMap) {
+            bmFetchSpy(chartPeriod, startDate, endDate, intraday, equityRows._baseDate || null).then(function (spyMap) {
                 if (token !== _benchToken) return;
                 try {
                     renderBenchmark(canvas, equityRows, spyMap, intraday, isDark);
@@ -1012,13 +1028,28 @@
         // ── 1D note: state the baseline explicitly so "today" matches Today's P/L. ──
         var baseNote = document.getElementById('benchBaselineNote');
         if (intraday) {
+            // Name the window by its real baseline close (audit D1): "today" only
+            // in-session when the baseline is the previous session's close.
+            var pb = (metrics && metrics.pnlBasis) || (portfolio && portfolio.pnlBasis) || {};
+            var bd = equityRows._baseDate || null;
+            var winBasis = ATFmt.pnlBasis(bd ? {
+                day_pnl_basis_date: bd, market_open: pb.market_open,
+                day_pnl_is_today: pb.market_open === true && bd === pb.previous_session_date
+            } : {}, lang);
             var subEl1d = document.querySelector('.pf-bench-sub');
-            if (subEl1d) subEl1d.textContent = bl(
-                'Today vs previous close — indexed to 100 at the prior close (matches Today’s P/L)',
-                'اليوم مقابل الإغلاق السابق — مُرتكز على 100 عند الإغلاق السابق (يطابق ربح/خسارة اليوم)');
-            if (baseNote) baseNote.textContent = bl(
-                'Both lines are indexed to 100 at yesterday’s close, so the move shown is today’s.',
-                'كلا الخطين مُرتكز على 100 عند إغلاق أمس، فالحركة المعروضة هي حركة اليوم.');
+            if (subEl1d) {
+                subEl1d.textContent = winBasis.today
+                    ? bl('Today vs previous close — indexed to 100 at the prior close',
+                         'اليوم مقابل الإغلاق السابق — مُرتكز على 100 عند الإغلاق السابق')
+                    : (bd ? winBasis.label + bl(' — indexed to 100 at that close', ' — مُرتكز على 100 عند ذلك الإغلاق')
+                          : bl('Latest session — baseline close unknown', 'آخر جلسة — إغلاق الأساس غير معروف'));
+                subEl1d.title = winBasis.title || '';
+            }
+            if (baseNote) baseNote.textContent = bd
+                ? bl('Portfolio and S&P 500 are both indexed to 100 at the same close, so the windows match.',
+                     'المحفظة ومؤشر S&P 500 مُرتكزان على 100 عند الإغلاق نفسه، لذا تتطابق فترتا المقارنة.')
+                : bl('No aligned baseline close — the S&P 500 comparison is withheld.',
+                     'لا يوجد إغلاق أساس متطابق — تُحجب المقارنة مع S&P 500.');
         } else {
             // Non-1D: restore the default note + subtitle (the short-history block below
             // may further refine the subtitle). Without this reset, switching 1D -> 1M
@@ -1103,6 +1134,15 @@
         'Consumer Disc.':  { beta: 1.18, vol: 0.22 },
         'Comm. Services':  { beta: 0.98, vol: 0.20 },
         'Quant':           { beta: 1.10, vol: 0.18 },
+        // GICS sector names reported by the API (audit D2).
+        'Technology':             { beta: 1.28, vol: 0.30 },
+        'Consumer Discretionary': { beta: 1.18, vol: 0.22 },
+        'Communication Services': { beta: 0.98, vol: 0.20 },
+        'Materials':              { beta: 1.05, vol: 0.22 },
+        'Utilities':              { beta: 0.45, vol: 0.15 },
+        'Real Estate':            { beta: 0.85, vol: 0.20 },
+        'Broad Market':           { beta: 1.00, vol: 0.16 },
+        'Unclassified':           { beta: 1.00, vol: 0.20 },
         'Other':           { beta: 1.00, vol: 0.20 }
     };
 
@@ -1527,7 +1567,7 @@
         }).join('');
         if (!rows) rows = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem;">' + il('No allocation sleeves to attribute yet.', 'لا توجد شرائح تخصيص للإسناد بعد.') + '</td></tr>';
 
-        var ths = [il('Allocation Sleeve', 'شريحة التخصيص'), il('Capital', 'رأس المال'), il("Today's P/L", 'ربح/خسارة اليوم'),
+        var ths = [il('Allocation Sleeve', 'شريحة التخصيص'), il('Capital', 'رأس المال'), il('Day Change', 'تغير اليوم'),
             il('Total Return', 'العائد الكلي'), il('Win Rate', 'معدل الربح'), il('Worst Pos.', 'أسوأ مركز'),
             il('Trades', 'الصفقات'), il('Trend', 'الاتجاه'), il('Status', 'الحالة')];
 

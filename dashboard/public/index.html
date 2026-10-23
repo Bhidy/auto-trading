@@ -525,14 +525,28 @@
                 var tile = document.querySelector('[data-portfolio="' + p.id + '"]');
                 if (!tile) return;
                 var nameEl = tile.querySelector('[data-name]'); if (nameEl && p.label) nameEl.textContent = p.label;
-                var eqEl = tile.querySelector('[data-equity]'); if (eqEl) countUp(eqEl, Number(p.equity) || 0, function (v) { return fmtUSD(v); });
+                // Honest data: a book with no equity on record shows "—", never $0.
+                var hasEq = p.equity !== null && p.equity !== undefined && isFinite(Number(p.equity));
+                var eqEl = tile.querySelector('[data-equity]'); if (eqEl) { if (hasEq) countUp(eqEl, Number(p.equity), function (v) { return fmtUSD(v); }); else eqEl.textContent = '—'; }
                 var ret = Number(p.totalReturn) || 0;
-                var retEl = tile.querySelector('[data-return]'); if (retEl) { signClass(retEl, ret); countUp(retEl, ret, function (v) { return fmtPct(v); }); }
-                var posEl = tile.querySelector('[data-positions]'); if (posEl) countUp(posEl, Number(p.positions) || 0, function (v) { return String(Math.round(v)); });
+                var retEl = tile.querySelector('[data-return]'); if (retEl) { if (hasEq) { signClass(retEl, ret); countUp(retEl, ret, function (v) { return fmtPct(v); }); } else retEl.textContent = '—'; }
+                var posEl = tile.querySelector('[data-positions]'); if (posEl) { if (hasEq) countUp(posEl, Number(p.positions) || 0, function (v) { return String(Math.round(v)); }); else posEl.textContent = '—'; }
                 var live = tile.querySelector('[data-live]');
                 if (live) {
+                    // Same halt states as the /portfolio badges (audit D7): a halted
+                    // book never reads as a plain "Connected" tile.
                     var txt = live.querySelector('[data-live-text]');
-                    if (p.liveConnected) { live.classList.remove('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · متصل' : 'Paper · Connected'); }
+                    live.classList.remove('is-offline', 'is-halted', 'is-unverified');
+                    live.removeAttribute('title');
+                    if (p.halted && p.halt_verified === false) {
+                        live.classList.add('is-unverified');
+                        live.setAttribute('title', ATFmt.haltNote(p, lang));
+                        if (txt) txt.textContent = (lang === 'ar' ? 'متوقف · غير مُتحقق' : 'Halted · unverified');
+                    } else if (p.halted) {
+                        live.classList.add('is-halted');
+                        if (p.halt_reason) live.setAttribute('title', p.halt_reason);
+                        if (txt) txt.textContent = (lang === 'ar' ? 'متوقف' : 'Halted');
+                    } else if (p.liveConnected) { if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · متصل' : 'Paper · Connected'); }
                     else { live.classList.add('is-offline'); if (txt) txt.textContent = (lang === 'ar' ? 'ورقي · مزامنة' : 'Paper · Synced'); }
                 }
             });

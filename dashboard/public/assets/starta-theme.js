@@ -178,6 +178,83 @@
             var o = Object.assign({ timeZone: ET_ZONE, month: "short", day: "numeric" }, opts || {});
             return d.toLocaleDateString("en-US", o);
         },
+        /** "Oct 22, 2026 · 20:09 ET" — a full market timestamp on the exchange clock. */
+        etDateTime: function (v) {
+            var d = toDate(v);
+            if (isNaN(d.getTime())) return "—";
+            return d.toLocaleDateString("en-US", { timeZone: ET_ZONE, month: "short", day: "numeric", year: "numeric" }) +
+                " · " + d.toLocaleTimeString("en-GB", { timeZone: ET_ZONE, hourCycle: "h23", hour: "2-digit", minute: "2-digit" }) + " ET";
+        },
+        /**
+         * Label + tooltip for a day-P/L figure from the API's basis fields
+         * (day_pnl_basis_date, day_pnl_is_today, day_pnl_basis_mixed, market_open).
+         * "Today's P/L" ONLY during the session when the basis is the previous
+         * close; otherwise the figure is named by its real baseline (audit D1).
+         */
+        pnlBasis: function (src, lang) {
+            src = src || {};
+            var ar = lang === "ar";
+            var basis = src.day_pnl_basis_date || null;
+            if (src.day_pnl_is_today === true) {
+                return {
+                    today: true,
+                    label: ar ? "أرباح/خسائر اليوم" : "Today's P/L",
+                    title: ar ? "حقوق الملكية الآن مقابل إغلاق الجلسة السابقة." : "Equity now vs the previous session's close."
+                };
+            }
+            if (src.day_pnl_basis_mixed) {
+                return {
+                    today: false,
+                    label: ar ? "الربح/الخسارة · أساس مختلط" : "P/L · mixed basis",
+                    title: ar ? "المحافظ تُقاس من إغلاقات مختلفة لدى الوسيط، لذا لا يُعرض الرقم المجمّع على أنه ربح اليوم."
+                              : "The books are measured from different broker closes, so the combined figure is not shown as today's P/L."
+                };
+            }
+            if (basis) {
+                var parts = basis.split("-").map(Number);
+                var d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12));
+                var dayEn = d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" });
+                var dayAr = d.toLocaleDateString("ar-EG-u-nu-latn", { timeZone: "UTC", month: "long", day: "numeric" });
+                var why = src.market_open === false
+                    ? (ar ? "السوق مغلق. " : "The market is closed. ")
+                    : src.market_open === true
+                        ? (ar ? "لم يحدّث الوسيط تاريخ أساس الرصيد بعد. " : "The broker has not rolled its balance date forward yet. ")
+                        : "";
+                return {
+                    today: false,
+                    label: ar ? ("الربح/الخسارة منذ إغلاق " + dayAr) : ("P/L since " + dayEn + " close"),
+                    title: why + (ar ? ("حقوق الملكية الآن مقابل إغلاق " + dayAr + " (تاريخ أساس الرصيد لدى الوسيط).")
+                                     : ("Equity now vs the " + dayEn + " close (the broker's balance date)."))
+                };
+            }
+            return {
+                today: false,
+                label: ar ? "ربح/خسارة آخر لقطة" : "P/L · last snapshot",
+                title: ar ? "الوسيط غير متصل — الرقم من آخر حالة محفوظة وتاريخ أساسه غير معروف."
+                          : "Broker offline — the figure is from the last committed state; its baseline date is unknown."
+            };
+        },
+        /**
+         * Unverified-halt sentence built client-side from the API's structured
+         * fields (halt_note_code, halt_recorded_drawdown_pct,
+         * halt_measured_drawdown_pct) so it reads in the page language (audit D8).
+         */
+        haltNote: function (src, lang) {
+            src = src || {};
+            var ar = lang === "ar";
+            var rec = toNum(src.halt_recorded_drawdown_pct), mea = toNum(src.halt_measured_drawdown_pct);
+            var code = src.halt_note_code || (src.halt_verified === false ? "no_evidence" : null);
+            if (code === "contradicted" && rec !== null && mea !== null) {
+                return ar
+                    ? ("التراجع المسجّل " + rec.toFixed(2) + "% يتعارض مع التراجع المقاس " + mea.toFixed(2) + "%؛ بانتظار الإلغاء المعتمد.")
+                    : ("Recorded " + rec.toFixed(2) + "% drawdown contradicts measured " + mea.toFixed(2) + "%; governed clear pending.");
+            }
+            if (code === "no_evidence") {
+                return ar ? "لا يوجد دليل مسجّل يدعم هذا الإيقاف؛ بانتظار المراجعة المعتمدة."
+                          : (src.halt_note || "Halt has no recorded evidence; governed review pending.");
+            }
+            return ar ? "" : (src.halt_note || "");
+        },
         /** { date: "YYYY-MM-DD", minutes: minutes-since-midnight } in New York time. */
         etParts: etParts,
         /**

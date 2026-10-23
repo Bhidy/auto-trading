@@ -260,7 +260,7 @@
                     qtyEl.textContent = data.positions_count;
                     
                     if (data.halted && data.halt_verified === false) {
-                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--unverified" title="${escHtml(data.halt_note || '')}">${lang === 'ar' ? 'متوقف · غير مُتحقق' : 'Halted · unverified'}</span>`;
+                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--unverified" title="${escHtml(ATFmt.haltNote(data, lang))}">${lang === 'ar' ? 'متوقف · غير مُتحقق' : 'Halted · unverified'}</span>`;
                     } else if (data.halted) {
                         statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--halted">${lang === 'ar' ? 'متوقف' : 'Halted'}</span>`;
                     } else if (data.live_connected) {

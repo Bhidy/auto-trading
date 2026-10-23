@@ -179,7 +179,15 @@ def read_safety_state(root: Path):
                 state = json.load(f)
         except Exception:
             state = None
-        out[label] = {"state": state, "recon": None}
+        out[label] = {"state": state, "recon": None, "pending_exits": None}
+        pend = root / Path(rel).parent / "pending_exits.json"
+        try:
+            with open(pend) as f:
+                data = json.load(f)
+            out[label]["pending_exits"] = data if isinstance(data, list) else (
+                list(data.values()) if isinstance(data, dict) else None)
+        except Exception:
+            pass
     for label, rel in RECONCILE_SOURCES.items():
         try:
             with open(root / rel) as f:
@@ -187,6 +195,18 @@ def read_safety_state(root: Path):
         except Exception:
             out.setdefault(label, {"state": None, "recon": None})
     return out
+
+
+def halt_evidence_verified(state) -> bool:
+    """Same predicate as autonomous_runner.annotate_halt_verification: an explicit
+    engine flag wins; otherwise (legacy state not yet rewritten by a runner) the
+    evidence must carry BOTH a timestamp and an equity value — a partial or
+    unauditable evidence object is NOT verification."""
+    flag = (state or {}).get("halt_verified")
+    if isinstance(flag, bool):
+        return flag
+    ev = (state or {}).get("halt_evidence")
+    return isinstance(ev, dict) and bool(ev.get("at")) and ev.get("equity") is not None
 
 
 def assess_safety_state(books: dict):
@@ -205,11 +225,33 @@ def assess_safety_state(books: dict):
         st = (b or {}).get("state") or {}
         if st.get("halted"):
             ev = st.get("halt_evidence") or {}
+            # A halt with no recorded evidence (or one the engine flagged as
+            # unverified) is how P1 sat frozen for 108 days on a phantom read —
+            # say so explicitly and point at the governed clear (audit 2026-10-23).
+            unverified = not halt_evidence_verified(st)
+            kind = "UNVERIFIED HALT" if unverified else "HALTED"
+            age = ""
+            set_at = _date_of(st.get("halt_set_at"))
+            if set_at:
+                try:
+                    age = f", {(datetime.now(timezone.utc).date() - datetime.fromisoformat(set_at).date()).days}d old"
+                except ValueError:
+                    age = ""
             problems.append(
-                f"{label} — HALTED: {st.get('halt_reason') or 'no reason recorded'}"
-                f" (until: {st.get('halt_until') or 'MANUAL REVIEW'})"
+                f"{label} — {kind}: {st.get('halt_reason') or 'no reason recorded'}"
+                f" (until: {st.get('halt_until') or 'MANUAL REVIEW'}{age})"
                 + (f"; tripped on equity ${ev.get('equity')} vs independent "
-                   f"${ev.get('independent_equity')}" if ev else ""))
+                   f"${ev.get('independent_equity')}" if ev else "")
+                + ("; no evidence recorded — verify against the broker and, if phantom, "
+                   "add a governed halt_clear in config/strategy_controls.json"
+                   if unverified else ""))
+        today_utc = datetime.now(timezone.utc).date().isoformat()
+        stuck = [x for x in ((b or {}).get("pending_exits") or [])
+                 if (_date_of((x or {}).get("submitted_at")) or today_utc) < today_utc]
+        if stuck:
+            problems.append(f"{label} — {len(stuck)} exit order(s) still unsettled from a prior "
+                            f"session (data/pending_exits.json): "
+                            f"{', '.join(str((x or {}).get('symbol')) for x in stuck[:8])}")
         shorts = ((b or {}).get("recon") or {}).get("short_positions") or []
         if shorts:
             problems.append(f"{label} — SHORT position(s) in a long-only book: "
