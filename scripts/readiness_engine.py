@@ -36,6 +36,7 @@ for _p in (REPO_ROOT, os.path.join(REPO_ROOT, "scripts")):
 
 from shared import readiness as R  # noqa: E402
 from shared.alpaca_http import resilient_request  # noqa: E402
+from shared.reconcile import is_open_trade  # noqa: E402
 from shared.research_provenance import data_fingerprint  # noqa: E402
 from performance_tracker import is_partial_trim, whole_trades  # noqa: E402
 import heartbeat  # noqa: E402
@@ -365,7 +366,8 @@ def family_k(registry, th=None):
 def exposure_end(s, log, as_of):
     """Last session a sleeve still carried positions in its book. ``end_date``
     is only the last session it OPENED entries: lots keep moving the book's
-    returns until they exit. Open lot (or no row selector / no log) => exposed
+    returns until they exit. Open lot (``shared.reconcile.is_open_trade``, so a
+    status-less legacy entry counts as open) or no row selector / no log => exposed
     through ``as_of`` (fail closed: an unknown exposure is never assumed gone);
     otherwise the later of end_date and the last recorded exit."""
     if not s.get("end_date"):
@@ -373,7 +375,8 @@ def exposure_end(s, log, as_of):
     rows = sleeve_rows(s["id"], log, s["start_date"], as_of) if log is not None else None
     if rows is None:
         return as_of
-    if any(str(t.get("status") or "").lower() == "open" for t in rows):
+    # The shared predicate: a status-less legacy entry is OPEN (shared/reconcile).
+    if any(is_open_trade(t) for t in rows):
         return as_of
     exits = [d for d in (R.iso_date_et(t.get("exit_timestamp")) for t in rows) if d]
     return min(max([s["end_date"]] + exits), as_of)

@@ -707,3 +707,28 @@ def test_predictable_cs_holds_its_level_through_a_volatility_jump():
                 false_go += 1
                 break
     assert false_go <= 1
+
+
+# --- review round 2 (Codex on PR #105) -----------------------------------------
+
+def test_near_flat_burn_in_cannot_give_one_return_unbounded_weight():
+    # Codex counterexample: 20 alternating +/-1e-8 returns, one -1% return, 39
+    # zeros. An ordinary t-statistic is ~ -1; without a scale floor the CS upper
+    # bound went negative and the incubation Sharpe check FAILED on one return.
+    y = [1e-8 if i % 2 else -1e-8 for i in range(20)] + [-0.01] + [0.0] * 39
+    th = R.THRESHOLDS
+    up = R.predictable_cs(y, [0.0] * 60, th["cs_rho_sessions"], th["incubation_alpha"], fit_beta=False,
+                          sigma_floor=th["cs_sigma_floor_daily"])["upper"]
+    assert up is not None and up > 0
+    g = R.incubation_gate(y, [0.0] * 60, {"sharpe_excess": 0.0, "vol": 0.05, "max_drawdown": 0.1})
+    assert g["value"]["checks"]["sharpe_not_contradicted"] is True
+
+
+def test_status_less_legacy_lot_counts_as_open_exposure():
+    import readiness_engine as E
+    leg = {"id": "p3-event-driven-legacy", "book": "portfolio_3",
+           "start_date": "2026-05-27", "end_date": "2026-10-03"}
+    rows = [{"symbol": "KO", "side": "buy", "timestamp": "2026-09-30T14:00:00Z"}]   # no status => open
+    assert E.exposure_end(leg, rows, "2026-10-30") == "2026-10-30"
+    marker = [{"symbol": "KO", "side": "sell", "timestamp": "2026-09-30T14:00:00Z"}]  # P2-style exit marker
+    assert E.exposure_end(leg, marker, "2026-10-30") == "2026-10-03"
