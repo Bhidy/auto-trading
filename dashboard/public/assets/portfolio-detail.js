@@ -149,6 +149,10 @@
        numbers stay LTR inside Arabic text (audit 2026-10-23 D1/D15/D17). */
     function sMoney(n, d) { return ATFmt.ltr(ATFmt.signedMoney(n, d)); }
     function sPct(n) { return ATFmt.ltr(ATFmt.signedPct(n)); }
+    // A holding with no live price (offline / missing quote) shows "—", never
+    // "$0.00" beside a non-zero market value, and no derived day change (N7).
+    function hasPx(h) { return isFinite(h.lastPrice) && h.lastPrice > 0; }
+    function lastPx(h) { return hasPx(h) ? '$' + fmt(h.lastPrice) : '<span title="' + il('No live price', 'لا يوجد سعر مباشر') + '">—</span>'; }
     function escHtml(s) { return String(s).replace(/[&<>"']/g, function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
     /* ── Shared branded tooltip for non-Chart.js elements ────────────────
@@ -310,15 +314,17 @@
     /* ─── Header Strip ────────────────────────────────────────────────── */
     function renderHeader() {
         if (!metrics) return; // never render with degraded/null state
-        var todayClass  = metrics.todayGain  >= 0 ? 'pf-pos' : 'pf-neg';
-        var gainClass   = metrics.totalGain  >= 0 ? 'pf-pos' : 'pf-neg';
-        var retClass    = metrics.totalReturn >= 0 ? 'pf-pos' : 'pf-neg';
+        var todayClass  = ATFmt.signClass(metrics.todayGain);
+        var gainClass   = ATFmt.signClass(metrics.totalGain);
+        var retClass    = ATFmt.signClass(metrics.totalReturn);
         
         var isServer = portfolio.isServer || false;
         var isAgg = portfolio.isAggregated || false;
+        var unverifiedHalt = portfolio.halted && portfolio.haltVerified === false;
         var statusLabel = isAgg ? (lang === 'ar' ? '3 محافظ مدمجة' : '3 Combined') :
+                          unverifiedHalt ? il('Halted · unverified', 'متوقف · غير مُتحقق') :
                           (portfolio.halted) ? t('underperform') : t('outperform');
-        var statusClass = isAgg ? 'pf-pos' : (portfolio.halted) ? 'pf-neg' : 'pf-pos';
+        var statusClass = isAgg ? 'pf-pos' : unverifiedHalt ? 'pf-warn' : (portfolio.halted) ? 'pf-neg' : 'pf-pos';
         var statusSub = isAgg ? (lang === 'ar' ? 'عرض مجمع للقراءة فقط' : 'Read-only Aggregate View') :
                         isServer ? 'Algorithmic Mode' : 'Sandbox Mode';
 
@@ -335,7 +341,7 @@
             kpi(t('invested'),    '$' + fmt(metrics.invested), null),
             kpi(t('dividends'),   formattedBp, null)
         ];
-        if (!isAgg) kpis.push(kpi(t('vsEgx'), statusLabel, statusSub, statusClass));
+        if (!isAgg) kpis.push(kpi(t('vsEgx'), statusLabel, statusSub, statusClass).replace('class="pf-kpi"', 'class="pf-kpi pf-kpi--status"'));
 
         document.getElementById('pfDashHeader').innerHTML =
             '<div class="pf-dash-header-inner">' +
@@ -361,8 +367,8 @@
     function kpi(label, value, sub, cls) {
         return '<div class="pf-kpi">' +
             '<div class="pf-kpi__label">' + label + '</div>' +
-            '<div class="pf-kpi__value pf-num' + (cls ? ' ' + cls : '') + '">' + escHtml(String(value)) + '</div>' +
-            (sub ? '<div class="pf-kpi__sub pf-num' + (cls ? ' ' + cls : '') + '">' + escHtml(String(sub)) + '</div>' : '') +
+            '<div class="pf-kpi__value pf-num' + (cls ? ' ' + cls : '') + '" title="' + escHtml(String(value)) + '">' + escHtml(String(value)) + '</div>' +
+            (sub ? '<div class="pf-kpi__sub pf-num' + (cls ? ' ' + cls : '') + '" title="' + escHtml(String(sub)) + '">' + escHtml(String(sub)) + '</div>' : '') +
         '</div>';
     }
 
@@ -373,7 +379,19 @@
 
         // Emergency Lock/Halt Banner
         var haltBanner = '';
-        if (portfolio.halted) {
+        if (portfolio.halted && portfolio.haltVerified === false) {
+            // Recorded halt contradicted by measured data: say exactly that, in amber —
+            // never the red "SYSTEM LOCKDOWN" of a verified breach (audit N6).
+            var mdd = portfolio.haltMeasuredDrawdownPct;
+            haltBanner = `<div class="pf-halt-banner-premium pf-halt-unverified" role="status">
+                <svg class="pf-halt-unverified__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r="0.6" fill="currentColor"/></svg>
+                <div>
+                    <h4>${il('Unverified halt — pending governed clear', 'إيقاف غير مُتحقق منه — بانتظار الإلغاء المعتمد')}</h4>
+                    <p dir="auto">${escHtml(portfolio.haltNote || il('The recorded halt is not supported by measured data.', 'الإيقاف المسجّل غير مدعوم بالبيانات المقاسة.'))}</p>
+                    ${mdd != null && isFinite(mdd) ? '<p class="pf-halt-unverified__meta">' + il('Measured drawdown', 'التراجع المقاس') + ': ' + ATFmt.ltr(Number(mdd).toFixed(2) + '%') + ' · ' + il('Trading stays paused until the clear is approved.', 'يبقى التداول متوقفاً حتى اعتماد الإلغاء.') + '</p>' : ''}
+                </div>
+            </div>`;
+        } else if (portfolio.halted) {
             haltBanner = `<div class="pf-halt-banner-premium" style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:var(--pf-radius); padding:1rem 1.5rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:1rem; color:#ef4444;">
                 <div style="font-size:1.8rem; line-height:1; font-weight:900;">!</div>
                 <div>
@@ -412,7 +430,7 @@
             // Triple clone the indices for seamless looping marquee scroll
             for (var k = 0; k < 3; k++) {
                 Object.entries(indices).forEach(function ([sym, ind]) {
-                    var cls = ind.change_pct >= 0 ? 'pf-pos' : 'pf-neg';
+                    var cls = ATFmt.signClass(ind.change_pct);
                     var arrow = ind.change_pct >= 0 ? '▲' : '▼';
                     var sign = ind.change_pct >= 0 ? '+' : '';
                     itemsHtml += '<div class="pf-ticker-item">' +
@@ -669,9 +687,15 @@
             MetricSummaryItem(bl('Risk / Return Snapshot', 'لقطة المخاطر / العائد'), 'sumRisk') +
         '</div>';
     }
+    // Broker connection state drives the chip: "LIVE" only when the API says the
+    // broker feed is connected; otherwise the figures are the last committed
+    // state and the chip says so (audit N7).
+    function brokerLive() { return !!(portfolio && portfolio.liveConnected === true); }
+    function offlineChipText() { return bl('Offline · last commit', 'غير متصل · آخر حفظ'); }
     function LivePill() {
-        return '<div class="pf-live-pill" id="benchLivePill" title="' + bl('Auto-updating live', 'تحديث تلقائي مباشر') + '">' +
-            '<span class="pf-live-dot"></span><span id="benchLiveTs">' + bl('LIVE', 'مباشر') + '</span>' +
+        var live = brokerLive();
+        return '<div class="pf-live-pill' + (live ? '' : ' is-offline') + '" id="benchLivePill" title="' + (live ? bl('Auto-updating live', 'تحديث تلقائي مباشر') : bl('Broker feed offline — showing the last committed state', 'تغذية الوسيط غير متصلة — تُعرض آخر حالة محفوظة')) + '">' +
+            '<span class="pf-live-dot"></span><span id="benchLiveTs">' + (live ? bl('LIVE', 'مباشر') : offlineChipText()) + '</span>' +
         '</div>';
     }
 
@@ -751,14 +775,35 @@
         node.textContent = text;
         if (cls !== undefined) { node.classList.remove('pf-pos', 'pf-neg'); if (cls) node.classList.add(cls); }
     }
-    function bmDrawEmpty(canvas, isDark) {
+    function bmDrawEmpty(canvas, isDark, msg) {
         if (perfChart) { perfChart.destroy(); perfChart = null; }
+        // Size the backing store to the CSS box (HiDPI) so the message renders at
+        // 13px crisp — not stretched from a stale Chart.js bitmap size.
+        var w = canvas.clientWidth || (canvas.parentElement && canvas.parentElement.clientWidth) || 600;
+        var h = canvas.clientHeight || 260;
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
         var cx = canvas.getContext('2d');
-        cx.clearRect(0, 0, canvas.width, canvas.height);
-        cx.font = '13px Manrope';
+        cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cx.clearRect(0, 0, w, h);
+        cx.font = '600 13px Manrope, sans-serif';
         cx.fillStyle = isDark ? '#a39a92' : '#7a6b5e';
         cx.textAlign = 'center';
-        cx.fillText(bl('Benchmark history syncing…', 'جارٍ مزامنة بيانات المقارنة…'), canvas.width / 2, canvas.height / 2);
+        cx.textBaseline = 'middle';
+        cx.fillText(msg || bl('Benchmark history syncing…', 'جارٍ مزامنة بيانات المقارنة…'), w / 2, h / 2);
+    }
+    // 1D with no genuine intraday series: say so — never plot daily/journal
+    // points under a "today" caption (audit N3).
+    function bmIntradayUnavailable(canvas, isDark) {
+        bmDrawEmpty(canvas, isDark, bl('Intraday history unavailable', 'السجل اللحظي غير متاح'));
+        _benchLastGood = null;
+        var sub = document.querySelector('.pf-bench-sub');
+        if (sub) sub.textContent = bl('Intraday equity history is not available for this book right now.',
+                                      'سجل رأس المال اللحظي غير متاح لهذه المحفظة حالياً.');
+        var note = document.getElementById('benchBaselineNote');
+        if (note) note.textContent = bl('Pick 1W or longer for the daily history.', 'اختر أسبوعاً أو أكثر لعرض السجل اليومي.');
+        ['kpiPReturn', 'kpiSpyReturn', 'kpiRelative'].forEach(function (id) { bmSetText(id, '—', ''); });
+        bmSetText('benchInsightText', bl('No intraday data to compare — select 1W or longer.', 'لا توجد بيانات لحظية للمقارنة — اختر أسبوعاً أو أكثر.'));
     }
 
     /* ── Drawer: fetch → compute → draw → patch (race-safe, last-good) ────── */
@@ -775,6 +820,7 @@
         bmFetchEquity(chartPeriod).then(function (equityRows) {
             if (token !== _benchToken) return; // superseded
             if (!equityRows || equityRows.length < 2) {
+                if (intraday) { bmIntradayUnavailable(canvas, isDark); return; }
                 if (!_benchLastGood) bmDrawEmpty(canvas, isDark);
                 return;
             }
@@ -923,11 +969,11 @@
         });
 
         // ── Patch KPI cards ──
-        bmSetText('kpiPReturn', pct(pReturn), pReturn >= 0 ? 'pf-pos' : 'pf-neg');
+        bmSetText('kpiPReturn', pct(pReturn), ATFmt.signClass(pReturn));
         if (spyReturn === null) { bmSetText('kpiSpyReturn', '—', ''); }
-        else { bmSetText('kpiSpyReturn', pct(spyReturn), spyReturn >= 0 ? 'pf-pos' : 'pf-neg'); }
+        else { bmSetText('kpiSpyReturn', pct(spyReturn), ATFmt.signClass(spyReturn)); }
         if (relative === null) { bmSetText('kpiRelative', '—', ''); }
-        else { bmSetText('kpiRelative', pct(relative), relative >= 0 ? 'pf-pos' : 'pf-neg'); }
+        else { bmSetText('kpiRelative', pct(relative), ATFmt.signClass(relative)); }
         bmSetText('kpiMaxDD', fmt(maxDD, 2) + '%', maxDD < 0 ? 'pf-neg' : '');
 
         // ── Insight badge ──
@@ -1008,7 +1054,9 @@
 
         // ── Live pill timestamp ──
         var ts = new Date();
-        bmSetText('benchLiveTs', bl('Updated ', 'تحديث ') + ATFmt.etTime(ts, true) + ' ET');
+        var pillEl = document.getElementById('benchLivePill');
+        if (pillEl) pillEl.classList.toggle('is-offline', !brokerLive());
+        bmSetText('benchLiveTs', brokerLive() ? bl('Updated ', 'تحديث ') + ATFmt.etTime(ts, true) + ' ET' : offlineChipText());
 
         _benchLastGood = { period: chartPeriod, mode: chartMode };
     }
@@ -1274,7 +1322,7 @@
                     '<span>' + il('Portfolio Intelligence', 'ذكاء المحفظة') + '</span>' +
                 '</div>' +
                 '<div class="pf-hub-tabs">' + tabBar + '</div>' +
-                '<span class="pf-live-pill"><span class="pf-live-dot"></span>' + il('Live', 'مباشر') + '</span>' +
+                '<span class="pf-live-pill' + (brokerLive() ? '' : ' is-offline') + '"><span class="pf-live-dot"></span>' + (brokerLive() ? il('Live', 'مباشر') : offlineChipText()) + '</span>' +
             '</div>' +
             '<div class="pf-hub-pane">' + pane + '</div>';
 
@@ -1458,8 +1506,8 @@
             var ret = s.cost > 0 ? (s.gain / s.cost) * 100 : 0;
             var winRate = s.count > 0 ? (s.wins / s.count) * 100 : 0;
             var dd = Math.min.apply(null, s.rets.concat(0)); // worst position return (<=0)
-            var dayCls = s.day >= 0 ? 'pf-pos' : 'pf-neg';
-            var retCls = ret >= 0 ? 'pf-pos' : 'pf-neg';
+            var dayCls = ATFmt.signClass(s.day);
+            var retCls = ATFmt.signClass(ret);
             var color = s.color || palette[i % palette.length];
             // spark: cumulative path from per-position returns (visual shape of dispersion)
             var sparkVals = s.rets.slice().sort(function (a, b) { return a - b; });
@@ -1932,19 +1980,19 @@
     function holdingsOverviewTable() {
         var ths = [t('symbol'), t('qty'), t('avgCost'), t('lastPrice'), t('mktValue'), t('weight'), t('dayChange'), t('totalPL'), t('action')];
         var rows = metrics.holdings.map(function(h){
-            var dayClass = h.dayChange >= 0 ? 'pf-pos' : 'pf-neg';
-            var plClass  = h.totalGain  >= 0 ? 'pf-pos' : 'pf-neg';
-            var intraClass = (h.unrealizedIntradayPl || 0) >= 0 ? 'pf-pos' : 'pf-neg';
+            var dayClass = ATFmt.signClass(h.dayChange);
+            var plClass  = ATFmt.signClass(h.totalGain);
+            var intraClass = ATFmt.signClass((h.unrealizedIntradayPl || 0));
             var activeClass = h.symbol === selectedSymbol ? 'style="background:rgba(229,90,31,0.06); font-weight:bold;"' : '';
             return '<tr data-symbol="' + h.symbol + '" ' + activeClass + '>' +
                 '<td>' + symChip(h) + '</td>' +
                 '<td class="num pf-num">' + h.quantity.toLocaleString() + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.avgCost) + '</td>' +
-                '<td class="num pf-num">$' + fmt(h.lastPrice) + '</td>' +
+                '<td class="num pf-num">' + lastPx(h) + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.marketValue) + '</td>' +
                 '<td class="num pf-num">' + h.weight.toFixed(1) + '%</td>' +
-                '<td class="num"><span class="' + dayClass + ' pf-num">' + sMoney(h.dayChange) + '</span>' +
-                    '<br><span class="' + dayClass + ' pf-num" style="font-size:.7rem;">' + sPct(h.dayChangePct) + '</span>' +
+                '<td class="num"><span class="' + (hasPx(h) ? dayClass : '') + ' pf-num">' + (hasPx(h) ? sMoney(h.dayChange) : '—') + '</span>' +
+                    (hasPx(h) ? '<br><span class="' + dayClass + ' pf-num" style="font-size:.7rem;">' + sPct(h.dayChangePct) + '</span>' : '') +
                     ((h.unrealizedIntradayPl !== undefined && h.unrealizedIntradayPl !== 0) ? 
                         `<br><span class="${intraClass} pf-num" style="font-size:0.65rem; opacity:0.85; font-weight:600;">${il('Day', 'اليوم')}: ${sMoney(h.unrealizedIntradayPl)}</span>` : '') +
                 '</td>' +
@@ -1968,18 +2016,18 @@
             t('dayChange')
         ];
         var rows = metrics.holdings.map(function(h){
-            var plCls = h.totalGain  >= 0 ? 'pf-pos' : 'pf-neg';
-            var dayCls = h.dayChange >= 0 ? 'pf-pos' : 'pf-neg';
-            var intraCls = (h.unrealizedIntradayPl || 0) >= 0 ? 'pf-pos' : 'pf-neg';
+            var plCls = ATFmt.signClass(h.totalGain);
+            var dayCls = ATFmt.signClass(h.dayChange);
+            var intraCls = ATFmt.signClass((h.unrealizedIntradayPl || 0));
             var activeClass = h.symbol === selectedSymbol ? 'style="background:rgba(229,90,31,0.06); font-weight:bold;"' : '';
             return '<tr data-symbol="' + h.symbol + '" ' + activeClass + '><td>' + symChip(h) + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.avgCost) + '</td>' +
-                '<td class="num pf-num">$' + fmt(h.lastPrice) + '</td>' +
+                '<td class="num pf-num">' + lastPx(h) + '</td>' +
                 '<td class="num pf-num">$' + fmt(h.costBasis || (h.quantity * h.avgCost)) + '</td>' +
                 '<td class="num pf-num ' + plCls + '">' + sMoney(h.totalGain) + '</td>' +
                 '<td class="num pf-num ' + plCls + '">' + sPct(h.totalReturn) + '</td>' +
                 '<td class="num pf-num ' + intraCls + '">' + sMoney(h.unrealizedIntradayPl) + ' (' + sPct(h.unrealizedIntradayPlpc) + ')</td>' +
-                '<td class="num pf-num ' + dayCls + '">' + sMoney(h.dayChange) + ' (' + sPct(h.dayChangePct) + ')</td>' +
+                '<td class="num pf-num ' + (hasPx(h) ? dayCls : '') + '">' + (hasPx(h) ? sMoney(h.dayChange) + ' (' + sPct(h.dayChangePct) + ')' : '—') + '</td>' +
             '</tr>';
         }).join('');
         return thTable(ths) + '<tbody>' + rows + '</tbody></table>';
@@ -2346,7 +2394,7 @@
                 '<div style="flex:1; min-height:300px;"><canvas id="tabOverviewChart"></canvas></div>' +
                 '<div class="pf-mini-cards" style="width:200px;display:flex;flex-direction:column;gap:0.35rem;overflow-y:auto;max-height:300px;">' +
                     metrics.holdings.map(function(h,i){
-                        var plCls = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
+                        var plCls = ATFmt.signClass(h.totalGain);
                         return '<div style="padding:0.5rem 0.65rem;border:1px solid var(--line);border-radius:var(--pf-radius-sm);cursor:pointer;" class="pf-mini-card" data-sym="'+h.symbol+'">' +
                             '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                                 '<span style="font-weight:700;font-size:0.8rem;">'+h.symbol+'</span>' +
@@ -2411,7 +2459,7 @@
             '<div style="min-height:320px;"><canvas id="tabPerfChart"></canvas></div>' +
             '<div class="pf-chart-stats" style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.75rem;">' +
                 metrics.holdings.map(function(h){
-                    var cl = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
+                    var cl = ATFmt.signClass(h.totalGain);
                     return '<div style="padding:0.4rem 0.8rem;border:1px solid var(--line);border-radius:var(--pf-radius-sm);flex:1;min-width:100px;">' +
                         '<span style="font-weight:700;font-size:0.75rem;">'+h.symbol+'</span>' +
                         '<span class="pf-num '+cl+'" style="float:right;font-size:0.75rem;">'+sMoney(h.totalGain)+'</span>' +
@@ -2675,7 +2723,7 @@
         var winRate = holds.length ? Math.round(gainers.length / holds.length * 100) : 0;
 
         function row(h) {
-            var cls  = h.totalGain >= 0 ? 'pf-pos' : 'pf-neg';
+            var cls  = ATFmt.signClass(h.totalGain);
             return '<div class="pf-contrib-row">' +
                 '<div class="pf-contrib-chip" style="background:' + h.color + '">' + h.symbol.slice(0,3) + '</div>' +
                 '<span class="pf-contrib-name">' + h.symbol + '</span>' +
@@ -2701,13 +2749,13 @@
                     '<div class="pf-contrib-donut-stat">' +
                         '<span class="pf-contrib-donut-dot" style="background:#22c55e;"></span>' +
                         '<span style="font-size:.68rem;color:var(--muted);">' + il('Gainers', 'رابحون') + '</span>' +
-                        '<span class="pf-num pf-pos" style="font-size:.8rem;font-weight:700;">+$' + fmt(totalGain, 0) + '</span>' +
+                        '<span class="pf-num ' + ATFmt.signClass(totalGain, 0) + '" style="font-size:.8rem;font-weight:700;">' + sMoney(totalGain, 0) + '</span>' +
                         '<span style="font-size:.65rem;color:var(--muted);">' + gainers.length + ' ' + il('pos.', 'مركز') + '</span>' +
                     '</div>' +
                     '<div class="pf-contrib-donut-stat">' +
                         '<span class="pf-contrib-donut-dot" style="background:#ef4444;"></span>' +
                         '<span style="font-size:.68rem;color:var(--muted);">' + il('Losers', 'خاسرون') + '</span>' +
-                        '<span class="pf-num pf-neg" style="font-size:.8rem;font-weight:700;">-$' + fmt(totalLoss, 0) + '</span>' +
+                        '<span class="pf-num ' + ATFmt.signClass(-totalLoss, 0) + '" style="font-size:.8rem;font-weight:700;">' + sMoney(-totalLoss, 0) + '</span>' +
                         '<span style="font-size:.65rem;color:var(--muted);">' + losers.length + ' ' + il('pos.', 'مركز') + '</span>' +
                     '</div>' +
                 '</div>' +

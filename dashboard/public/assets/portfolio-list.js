@@ -114,7 +114,7 @@
             // Triple clone the indices for seamless looping marquee scroll
             for (var k = 0; k < 3; k++) {
                 Object.entries(indices).forEach(function ([sym, ind]) {
-                    var cls = ind.change_pct >= 0 ? 'pf-pos' : 'pf-neg';
+                    var cls = ATFmt.signClass(ind.change_pct);
                     var arrow = ind.change_pct >= 0 ? '▲' : '▼';
                     var sign = ind.change_pct >= 0 ? '+' : '';
                     itemsHtml += '<div class="pf-ticker-item">' +
@@ -255,11 +255,13 @@
                     var totalReturn = ((data.equity - initialCapital) / initialCapital) * 100;
                     
                     retEl.textContent = pct(totalReturn);
-                    retEl.className = totalReturn >= 0 ? 'pf-pos pf-num' : 'pf-neg pf-num';
+                    retEl.className = (ATFmt.signClass(totalReturn) + ' pf-num').trim();
                     
                     qtyEl.textContent = data.positions_count;
                     
-                    if (data.halted) {
+                    if (data.halted && data.halt_verified === false) {
+                        statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--unverified" title="${escHtml(data.halt_note || '')}">${lang === 'ar' ? 'متوقف · غير مُتحقق' : 'Halted · unverified'}</span>`;
+                    } else if (data.halted) {
                         statusEl.innerHTML = `<span class="pf-status-badge pf-status-badge--halted">${lang === 'ar' ? 'متوقف' : 'Halted'}</span>`;
                     } else if (data.live_connected) {
                         // PAPER accounts: "live" would read as real money (audit D9).
@@ -283,7 +285,7 @@
                 var m = PFStore.computeMetrics(portfolio);
                 valEl.textContent = '$' + fmt(m.totalValue, 2);
                 retEl.textContent = pct(m.totalReturn);
-                retEl.className = m.totalReturn >= 0 ? 'pf-pos pf-num' : 'pf-neg pf-num';
+                retEl.className = (ATFmt.signClass(m.totalReturn) + ' pf-num').trim();
                 qtyEl.textContent = m.holdingsCount;
                 statusEl.innerHTML = `<span class="pf-status-badge">${lang === 'ar' ? 'عرض محلي' : 'Local demo'}</span>`;
             });

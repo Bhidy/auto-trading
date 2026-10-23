@@ -227,6 +227,10 @@
             (changePct !== null && changePct !== undefined && isFinite(changePct) ? ' (' + ATFmt.signedPct(changePct) + ')' : '');
     }
 
+    // A usable market price is a finite number > 0; anything else is "no price".
+    function livePrice(v) { var n = parseFloat(v); return isFinite(n) && n > 0 ? n : null; }
+    function money2(n) { return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
     function fmtMoney(n) {
         n = parseFloat(n) || 0;
         var a = Math.abs(n), sign = n < 0 ? '-' : '';   // "-$1.2K", never "$-1.2K"
@@ -305,7 +309,7 @@
             var spyPctEl = document.getElementById('spyPctChange');
             if (spyPctEl) {
                 spyPctEl.textContent = (pctChg >= 0 ? '+' : '') + pctChg.toFixed(2) + '%';
-                spyPctEl.className = 'pf-num ' + (pctChg >= 0 ? 'pf-pos' : 'pf-neg');
+                spyPctEl.className = 'pf-num ' + (ATFmt.signClass(pctChg));
             }
         }
     }
@@ -315,6 +319,9 @@
         var data = await apiFetch('/api/market/quotes?symbols=' + (symbols || allSymbols).join(','));
         if (!data) return;
         Object.entries(data).forEach(function ([sym, q]) {
+            // Never cache a missing/zero price: it would later render as "$0.00"
+            // and a fake −100% position P&L (audit N4).
+            if (!livePrice(q && q.price)) return;
             stockPriceDatabase[sym] = {
                 price: q.price || 0,
                 changePct: q.changePct || 0,
@@ -438,8 +445,8 @@
 
         container.innerHTML = '';
         data.forEach(function (pf) {
-            var pctClass = pf.dayPnlPct >= 0 ? 'pf-pos' : 'pf-neg';
-            var totalClass = pf.totalReturn >= 0 ? 'pf-pos' : 'pf-neg';
+            var pctClass = ATFmt.signClass(pf.dayPnlPct);
+            var totalClass = ATFmt.signClass(pf.totalReturn);
             var arrow = pf.dayPnlPct >= 0 ? '▲' : '▼';
             var card = document.createElement('a');
             card.href = '/portfolio-detail.html?id=' + pf.id;
@@ -603,8 +610,10 @@
             loadFiftyTwoWeekRange(activeSymbol);
 
             // Merge (never replace) so OHLC / bid / ask survive for live ticks.
-            stockPriceDatabase[activeSymbol] = Object.assign(stockPriceDatabase[activeSymbol] || {}, { price: price, changePct: changePct, prev: prevClose });
-            if (change !== null) stockPriceDatabase[activeSymbol].change = change;
+            if (livePrice(price)) {
+                stockPriceDatabase[activeSymbol] = Object.assign(stockPriceDatabase[activeSymbol] || {}, { price: price, changePct: changePct, prev: prevClose });
+                if (change !== null) stockPriceDatabase[activeSymbol].change = change;
+            }
             updateSelectedListStyles();
 
             if (window.loadChartForPeriod) loadChartForPeriod('1D');
@@ -696,7 +705,7 @@
             }
 
             positionsLoaded = true;
-            var totalMktVal = 0, totalPnl = 0, totalCost = 0;
+            var totalMktVal = 0, totalPnl = 0, totalCost = 0, pricedCount = 0;
             var cash = data.account ? data.account.cash : 0;
             var portfolioValue = data.account ? data.account.portfolio_value || data.account.equity : 0;
             var html = '';
@@ -705,18 +714,24 @@
                 var qty = p.quantity || 0;
                 var avg = p.avgCost || 0;
                 var sym = p.symbol;
-                var price = stockPriceDatabase[sym] ? stockPriceDatabase[sym].price : (p.lastPrice || avg);
-                var mktVal = qty * price;
+                // Live quote first, then the broker's last price — never avg cost
+                // (that fabricates a 0 P&L) and never a 0 (fabricates −100%).
+                var price = livePrice(stockPriceDatabase[sym] && stockPriceDatabase[sym].price) || livePrice(p.lastPrice);
                 var costBasis = p.cost_basis || (qty * avg);
-                var pnl = mktVal - costBasis;
-                var pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
-                totalMktVal += mktVal;
-                totalPnl += pnl;
-                totalCost += costBasis;
+                var priced = price !== null;
+                var mktVal = priced ? qty * price : null;
+                var pnl = priced ? mktVal - costBasis : null;
+                var pnlPct = priced && costBasis > 0 ? (pnl / costBasis) * 100 : null;
+                if (priced) {
+                    pricedCount++;
+                    totalMktVal += mktVal;
+                    totalPnl += pnl;
+                    totalCost += costBasis;
+                }
 
-                var sign = pnl >= 0 ? '▲' : '▼';
-                var cls = pnl >= 0 ? 'pf-pos' : 'pf-neg';
-                var colorStyle = pnl >= 0 ? 'color: var(--pf-green);' : 'color: var(--pf-red);';
+                var sign = !priced ? '' : (pnl > 0 ? '▲ ' : (pnl < 0 ? '▼ ' : ''));
+                var cls = !priced || pnl === 0 ? '' : (pnl > 0 ? 'pf-pos' : 'pf-neg');
+                var colorStyle = !priced || pnl === 0 ? 'color: var(--muted);' : (pnl > 0 ? 'color: var(--pf-green);' : 'color: var(--pf-red);');
                 var hiddenCls = idx >= 10 ? ' pf-pos-extra' : '';
                 html += '<tr class="' + hiddenCls + '" data-qty="' + qty + '" data-avg="' + avg + '" data-cost-basis="' + costBasis + '" style="transition: background-color 150ms ease;">' +
                     '<td style="font-weight:800;font-family:var(--pf-mono);cursor:pointer; display:flex; align-items:center; gap:0.45rem;" onclick="document.dispatchEvent(new CustomEvent(\'mp:selectSymbol\',{detail:\'' + sym + '\'}))">' +
@@ -725,10 +740,10 @@
                     '</td>' +
                     '<td style="font-family:var(--pf-mono);">' + qty.toLocaleString() + '</td>' +
                     '<td style="font-family:var(--pf-mono);">$' + avg.toFixed(2) + '</td>' +
-                    '<td class="mp-tick-target" style="font-family:var(--pf-mono);">$' + price.toFixed(2) + '</td>' +
-                    '<td style="font-family:var(--pf-mono);">$' + mktVal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
-                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700; ' + colorStyle + '">' + sign + ' $' + Math.abs(pnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
-                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700; ' + colorStyle + '">' + (pnl >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%</td>' +
+                    '<td class="mp-tick-target" style="font-family:var(--pf-mono);">' + (priced ? '$' + price.toFixed(2) : '—') + '</td>' +
+                    '<td style="font-family:var(--pf-mono);">' + (priced ? money2(mktVal) : '—') + '</td>' +
+                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700; ' + colorStyle + '">' + (priced ? sign + ATFmt.signedMoney(pnl) : '—') + '</td>' +
+                    '<td class="' + cls + '" style="font-family:var(--pf-mono);font-weight:700; ' + colorStyle + '">' + (pnlPct !== null ? ATFmt.signedPct(pnlPct) : '—') + '</td>' +
                 '</tr>';
             });
 
@@ -755,11 +770,19 @@
             var mktValSummary = document.getElementById('mktValSummary');
             if (mktValSummary) mktValSummary.textContent = fmtMoney(portfolioValue || totalMktVal + cash);
 
+            // Unrealized % over PRICED rows only, with coverage stated when partial.
             var mktValChg = document.getElementById('mktValChg');
-            if (mktValChg && totalCost > 0) {
-                var totalPnlPct = (totalPnl / totalCost) * 100;
-                mktValChg.textContent = (totalPnl >= 0 ? '▲ +' : '▼ ') + totalPnlPct.toFixed(2) + '%';
-                mktValChg.className = totalPnl >= 0 ? 'pf-pos' : 'pf-neg';
+            if (mktValChg) {
+                var nTotal = data.positions.length;
+                var coverage = pricedCount < nTotal ? ' · ' + (lang === 'ar' ? ('مسعّر ' + pricedCount + ' من ' + nTotal) : (pricedCount + ' of ' + nTotal + ' priced')) : '';
+                if (totalCost > 0 && pricedCount > 0) {
+                    var totalPnlPct = (totalPnl / totalCost) * 100;
+                    mktValChg.textContent = (totalPnl > 0 ? '▲ ' : (totalPnl < 0 ? '▼ ' : '')) + ATFmt.signedPct(totalPnlPct) + coverage;
+                    mktValChg.className = ATFmt.signClass(totalPnl);
+                } else {
+                    mktValChg.textContent = '—' + coverage;
+                    mktValChg.className = '';
+                }
             }
 
             var cashBalText = document.getElementById('cashBalText');
@@ -770,7 +793,7 @@
                 var dayPnl = data.account.day_pnl || 0;
                 var dayPnlPct = data.account.day_pnl_pct || 0;
                 dayChgText.innerHTML = (dayPnl >= 0 ? '▲ +' : '▼ ') + fmtMoney(Math.abs(dayPnl)) + ' (' + (dayPnl >= 0 ? '+' : '') + Math.abs(dayPnlPct).toFixed(2) + '%)';
-                dayChgText.className = dayPnl >= 0 ? 'pf-pos' : 'pf-neg';
+                dayChgText.className = ATFmt.signClass(dayPnl);
             }
 
             var bpVal = document.getElementById('buyingPowerVal');
@@ -1328,7 +1351,7 @@
             Object.values(portfolioHoldings).forEach(function (pf) {
                 var sym = pf.id === 'portfolio_1' ? 'SIB' : pf.id === 'portfolio_2' ? 'CSH' : 'CSN';
                 var name = pf.label;
-                var pctClass = pf.dayPnlPct >= 0 ? 'pf-pos' : 'pf-neg';
+                var pctClass = ATFmt.signClass(pf.dayPnlPct);
                 var arrow = pf.dayPnlPct >= 0 ? '▲' : '▼';
                 var sign = pf.dayPnlPct >= 0 ? '+' : '';
 
@@ -1616,7 +1639,7 @@
             for (var k = 0; k < 3; k++) {
                 allItems.forEach(function ([sym, ind]) {
                     var pct = ind.change_pct || ind.change_pct === 0 ? ind.change_pct : (ind.changePct || 0);
-                    var cls = pct >= 0 ? 'pf-pos' : 'pf-neg';
+                    var cls = ATFmt.signClass(pct);
                     var arrow = pct >= 0 ? '▲' : '▼';
                     html += `<div class="pf-ticker-item"><span class="sym">${sym}</span> <span class="price pf-num">$${(ind.price || 0).toFixed(2)}</span> <span class="chg ${cls} pf-num">${arrow} ${(pct >= 0 ? '+' : '') + (Math.abs(pct) || 0).toFixed(2)}%</span></div>`;
                 });
@@ -1642,13 +1665,13 @@
             if (spyChgEl && spy.change_pct !== undefined) {
                 var pct = spy.change_pct || 0;
                 spyChgEl.textContent = (pct >= 0 ? '▲ +' : '▼ ') + Math.abs(pct).toFixed(2) + '%';
-                spyChgEl.className = 'mp-header-meta pf-num ' + (pct >= 0 ? 'pf-pos' : 'pf-neg');
+                spyChgEl.className = 'mp-header-meta pf-num ' + (ATFmt.signClass(pct));
             }
             if (qqqPriceEl && qqq.price) qqqPriceEl.textContent = '$' + (qqq.price || 0).toFixed(2);
             if (qqqChgEl && qqq.change_pct !== undefined) {
                 var qPct = qqq.change_pct || 0;
                 qqqChgEl.textContent = (qPct >= 0 ? '▲ +' : '▼ ') + Math.abs(qPct).toFixed(2) + '%';
-                qqqChgEl.className = 'mp-header-meta pf-num ' + (qPct >= 0 ? 'pf-pos' : 'pf-neg');
+                qqqChgEl.className = 'mp-header-meta pf-num ' + (ATFmt.signClass(qPct));
             }
 
             // Also update legacy S&P 500 header (for backward compat)
@@ -1658,7 +1681,7 @@
             if (legacySpyChg && spy.change_pct !== undefined) {
                 var lpct = spy.change_pct || 0;
                 legacySpyChg.textContent = (lpct >= 0 ? '▲ +' : '▼ ') + Math.abs(lpct).toFixed(2) + '%';
-                legacySpyChg.className = 'mp-header-meta pf-num ' + (lpct >= 0 ? 'pf-pos' : 'pf-neg');
+                legacySpyChg.className = 'mp-header-meta pf-num ' + (ATFmt.signClass(lpct));
             }
         } catch (e) { console.warn('Header widget update failed:', e); }
     }
@@ -1758,7 +1781,7 @@
                 if (!symCell) return;
                 var sym = symCell.textContent.trim().toUpperCase();
                 var db = stockPriceDatabase[sym];
-                if (!db) return;
+                if (!db || !livePrice(db.price)) return;   // keep "—"; never tick in a $0
 
                 // Update market price (Column 3)
                 var mktPriceTd = tr.cells[3];
@@ -1780,16 +1803,17 @@
                 // Update P&L (Column 5)
                 var pnlTd = tr.cells[5];
                 if (pnlTd) {
-                    var sign = pnl >= 0 ? '▲' : '▼';
-                    pnlTd.textContent = sign + ' $' + Math.abs(pnl).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-                    pnlTd.className = pnl >= 0 ? 'pf-pos' : 'pf-neg';
+                    pnlTd.textContent = (pnl > 0 ? '▲ ' : (pnl < 0 ? '▼ ' : '')) + ATFmt.signedMoney(pnl);
+                    pnlTd.className = ATFmt.signClass(pnl);
+                    pnlTd.style.color = '';
                 }
 
                 // Update P&L% (Column 6)
                 var pnlPctTd = tr.cells[6];
                 if (pnlPctTd) {
-                    pnlPctTd.textContent = (pnl >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%';
-                    pnlPctTd.className = pnl >= 0 ? 'pf-pos' : 'pf-neg';
+                    pnlPctTd.textContent = ATFmt.signedPct(pnlPct);
+                    pnlPctTd.className = ATFmt.signClass(pnl);
+                    pnlPctTd.style.color = '';
                 }
             });
         }

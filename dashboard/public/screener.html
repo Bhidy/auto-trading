@@ -50,6 +50,15 @@
         .scr-wl-name { font-weight: 700; font-size: .92rem; margin-bottom: .5rem; }
         .scr-wl-symbols { font-family: var(--pf-mono); font-size: .75rem; color: var(--muted); }
         .scr-wl-actions { display: flex; gap: .45rem; margin-top: .65rem; }
+        /* Watchlist header wraps on phones instead of overflowing (audit N9) */
+        .scr-wl-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .65rem; margin-bottom: .5rem; }
+        .scr-wl-controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+        .scr-wl-controls select { min-width: 180px; max-width: 100%; }
+        @media (max-width: 560px) {
+            .scr-wl-controls { flex: 1 1 100%; }
+            .scr-wl-controls select { flex: 1 1 0; min-width: 0; }
+            .scr-search { min-width: 0; width: 100%; }
+        }
         /* Create-watchlist dialog — shared pf-modal / pf-field system (audit D11) */
         .scr-wl-modal { max-width: 440px; }
         .scr-wl-modal__title { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.35rem; letter-spacing: -0.01em; }
@@ -73,7 +82,7 @@
                     <ellipse cx="475" cy="606" rx="140" ry="32" fill="#FFC396"/><rect x="335" y="552" width="280" height="54" fill="#FFC396"/><ellipse cx="475" cy="552" rx="140" ry="32" fill="#FFF1E8"/>
                     <ellipse cx="495" cy="500" rx="120" ry="28" fill="#FFC396"/><rect x="375" y="454" width="240" height="46" fill="#FFC396"/><ellipse cx="495" cy="454" rx="120" ry="28" fill="#FFF1E8"/>
                 </svg>
-                <span style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
+                <span dir="ltr" style="font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -0.02em; display: inline-flex; font-weight: 400;">
                     <span style="color: var(--ink);">Auto</span><span style="color: var(--teal); font-style: italic; margin-inline-start: 4px;">Trading.</span>
                 </span>
             </a>
@@ -176,10 +185,10 @@
 
         <!-- Watchlists Section -->
         <div class="scr-wl-section">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+            <div class="scr-wl-head">
                 <h2 style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;margin:0;" data-key="wl_title">Alpaca Watchlists</h2>
-                <div style="display:flex;gap:.5rem;align-items:center;">
-                    <select id="wlPortfolio" aria-label="Select portfolio for watchlist" class="scr-filter" style="min-width:180px;"></select>
+                <div class="scr-wl-controls">
+                    <select id="wlPortfolio" aria-label="Select portfolio for watchlist" class="scr-filter"></select>
                     <button class="pf-btn pf-btn--sm pf-btn--primary" id="btnNewWl" data-key="btn_new_wl">+ New Watchlist</button>
                 </div>
             </div>

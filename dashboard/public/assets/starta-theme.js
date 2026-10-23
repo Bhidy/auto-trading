@@ -153,8 +153,15 @@
         },
         /** Numbers keep LTR order inside Arabic (RTL) text: "-0.85%" never becomes "0.85%-". */
         ltr: function (s) { return '<bdi dir="ltr" class="at-num">' + s + "</bdi>"; },
-        /** "pf-pos" / "pf-neg" — colour class that always matches the sign shown. */
-        signClass: function (n) { var v = toNum(n); return v !== null && v < 0 ? "pf-neg" : "pf-pos"; },
+        /** "pf-pos" / "pf-neg" / "" — colour matches the sign shown; an exact zero
+            (after rounding to `d` decimals, default 2) or missing value is neutral (N11). */
+        signClass: function (n, d) {
+            var v = toNum(n);
+            if (v === null) return "";
+            var p = Math.pow(10, typeof d === "number" ? d : 2);
+            var r = Math.round(v * p) / p;
+            return r > 0 ? "pf-pos" : (r < 0 ? "pf-neg" : "");
+        },
         toDate: toDate,
         /** "14:35" in New York time (24h). */
         etTime: function (v, withSeconds) {
@@ -201,6 +208,22 @@
             return String(s == null ? "" : s).replace(/\b(Positive|Negative) momentum \(/g, "$1 composite momentum (");
         }
     };
+
+    // ── PAPER tag in the shared header (audit N7): every page states, next to the
+    // wordmark, that these are paper (simulated-money) accounts.
+    function addPaperTag() {
+        document.querySelectorAll(".site-nav a.brand, nav a.brand").forEach(function (brand) {
+            if (brand.querySelector(".at-paper-tag")) return;
+            var tag = document.createElement("span");
+            tag.className = "at-paper-tag";
+            tag.textContent = "Paper";
+            tag.setAttribute("title", "Paper trading — simulated money, not real capital");
+            tag.setAttribute("aria-label", "Paper trading account");
+            brand.appendChild(tag);
+        });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addPaperTag);
+    else addPaperTag();
 
     // ── Logo fallback (D13): when a ticker logo is missing locally AND on the CDN,
     // swap the broken <img> for a brand-styled initials tile instead of a 404 glyph.

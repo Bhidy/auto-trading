@@ -102,6 +102,9 @@
                     liveConnected: data.live_connected,
                     halted: data.halted,
                     haltReason: data.halt_reason,
+                    haltVerified: data.halt_verified === undefined ? null : data.halt_verified,
+                    haltMeasuredDrawdownPct: data.halt_measured_drawdown_pct === undefined ? null : data.halt_measured_drawdown_pct,
+                    haltNote: data.halt_note || null,
                     isAggregated: data.is_aggregated || false,
                     transactions: (data.trade_log || []).map(function(t, idx) {
                         return {
@@ -125,6 +128,18 @@
             });
     }
 
+    // True only for a real intraday series: not flagged unavailable, not a
+    // journal/daily fallback, timestamps carry a time, and it spans ≤ 2 days.
+    function isIntradaySeries(data) {
+        if (!data || data.unavailable || !Array.isArray(data.history) || data.history.length < 2) return false;
+        if (/journal|daily|supabase/i.test(String(data.source || '')) && !/^alpaca_live$/.test(String(data.source))) return false;
+        var h = data.history;
+        var first = String(h[0].date || h[0].timestamp || ''), last = String(h[h.length - 1].date || h[h.length - 1].timestamp || '');
+        if (first.indexOf('T') < 0 && first.indexOf(' ') < 0) return false;
+        var span = (new Date(last).getTime() - new Date(first).getTime()) / 86400000;
+        return isFinite(span) && span <= 2;
+    }
+
     // Compiles historical equity list for charts
     function loadEquityHistory(id, period) {
         if (!SERVER_PORTFOLIOS.includes(id)) {
@@ -142,6 +157,12 @@
                 return res.json();
             })
             .then(function (data) {
+                // 1D must be genuinely intraday. A journal/daily fallback (months of
+                // daily closes) must never be plotted under "Today vs previous
+                // close" (audit N3) — report it as unavailable instead.
+                if (p === '1D' && !isIntradaySeries(data)) {
+                    return { source: (data && data.source) || 'unavailable', unavailable: true, base_value: (data && data.base_value) || 100000, history: [] };
+                }
                 if (data && data.history && data.history.length > 0) {
                     return data;
                 }
@@ -481,6 +502,9 @@
                 liveConnected: data.live_connected,
                 halted: data.halted,
                 haltReason: data.halt_reason,
+                haltVerified: data.halt_verified === undefined ? null : data.halt_verified,
+                haltMeasuredDrawdownPct: data.halt_measured_drawdown_pct === undefined ? null : data.halt_measured_drawdown_pct,
+                haltNote: data.halt_note || null,
                 isAggregated: data.is_aggregated || false,
                 transactions: []
             };

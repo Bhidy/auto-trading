@@ -687,3 +687,28 @@ html[dir="rtl"] div.pf-num { unicode-bidi: plaintext; text-align: match-parent; 
     font-weight: 600; letter-spacing: -0.02em; line-height: 1;
     vertical-align: middle; overflow: hidden; user-select: none;
 }
+
+/* PAPER tag beside the wordmark on every page (audit N7). */
+.at-paper-tag {
+    display: inline-flex; align-items: center; flex-shrink: 0;
+    margin-inline-start: .15rem; padding: .16rem .5rem;
+    border-radius: 999px; border: 1px solid rgba(229, 90, 31, .28);
+    background: var(--teal-soft); color: var(--teal-dark);
+    font-family: Manrope, Arial, sans-serif; font-size: .62rem; font-weight: 800;
+    letter-spacing: .08em; text-transform: uppercase; line-height: 1;
+    direction: ltr; unicode-bidi: isolate; font-style: normal;
+}
+
+/* Tablet/small-laptop nav (821–1180px): the full link row plus the wordmark,
+   PAPER tag and controls overflowed the bar (links clipped at 834px). */
+@media (min-width: 821px) and (max-width: 1180px) {
+    .nav-inner { padding: 0 1.1rem; gap: .9rem; }
+    .nav-links { gap: .85rem; }
+    .nav-links a { letter-spacing: .06em; font-size: .66rem; }
+    .site-nav a.brand > span[dir="ltr"] { font-size: 19px !important; }
+}
+@media (max-width: 480px) {
+    .nav-inner { padding: 0 .9rem; gap: .6rem; }
+    .site-nav a.brand { gap: .45rem !important; }
+    .at-paper-tag { font-size: .55rem; padding: .14rem .38rem; letter-spacing: .04em; }
+}

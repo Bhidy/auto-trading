@@ -224,7 +224,7 @@
                         var q = data[sym];
                         if (q) {
                             var sign = q.change >= 0 ? '▲' : '▼';
-                            var cls = q.change >= 0 ? 'pf-pos' : 'pf-neg';
+                            var cls = ATFmt.signClass(q.change);
                             html += `<div class="pf-ticker-item">
                                 <span class="sym">${sym}</span>
                                 <span class="price pf-num">$${q.price.toFixed(2)}</span>
