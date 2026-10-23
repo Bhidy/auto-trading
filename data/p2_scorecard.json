@@ -1,0 +1,318 @@
+{
+  "spec_id": "p2-satellite-scorecard-v1",
+  "spec_hash": "bff3520adc18651d5086769405627fbfc8d9fb06798a814c0bc04200ef0b8619",
+  "generated_at": "2026-10-23T09:34:15.766726+00:00",
+  "status": "INSUFFICIENT_N",
+  "gated_cohort": "post",
+  "acceptance": {
+    "n": {
+      "value": 3,
+      "threshold": 50,
+      "result": "INSUFFICIENT_N"
+    },
+    "alpha_t": {
+      "value": -1.1915,
+      "threshold": 2.0,
+      "result": "INSUFFICIENT_N"
+    },
+    "profit_factor": {
+      "value": 0.0,
+      "threshold": 1.3,
+      "result": "INSUFFICIENT_N"
+    },
+    "dsr": {
+      "value": null,
+      "threshold": 0.95,
+      "result": "INSUFFICIENT_N"
+    }
+  },
+  "beta_used": 1.0,
+  "book_beta_diagnostic": {
+    "beta": -0.5746,
+    "n_pairs": 96,
+    "r_squared": 0.0003,
+    "reliable": false,
+    "reliability_rule": "r_squared >= 0.3 and 0 < beta < 2; otherwise not used even as a sensitivity",
+    "span": [
+      "2026-05-27",
+      "2026-10-13"
+    ],
+    "caveat": "Intraday-timestamped snapshots vs SPY closes (asynchronous) and a book blended with the benchmark ETF sleeve + cash: diagnostic only."
+  },
+  "honest_trial_count": {
+    "n_trials": 34,
+    "derivation": {
+      "p2_congress_copy_backtest.json": 5,
+      "p2_congress_technical_confirmation_backtest.json": 8,
+      "p2_cluster_buy_backtest.json": 15,
+      "p2_disclosure_lag_study.json": 4,
+      "live_pipeline_versions": 2
+    }
+  },
+  "spy_history": [
+    "2023-06-16",
+    "2026-10-13"
+  ],
+  "lot_counts": {
+    "lots": 22,
+    "CLOSED": 12,
+    "PARTIAL": 2,
+    "OPEN": 4,
+    "UNPRICED": 4,
+    "unbenchmarkable": 0
+  },
+  "cohorts": {
+    "pre": {
+      "stats": {
+        "n": 9,
+        "mean_return": 0.074334,
+        "mean_spy_return": 2e-05,
+        "mean_alpha": 0.074314,
+        "win_rate": 0.5556,
+        "profit_factor": 3.5212,
+        "profit_factor_no_losses": false,
+        "total_pnl": 1126.28,
+        "n_basis_from_limit_price": 3,
+        "alpha_sd": 0.164804,
+        "alpha_t": 1.3528,
+        "dsr": null,
+        "dsr_reason": "refused: N=9 < 50 (too few round trips for a DSR verdict)"
+      },
+      "round_trips": [
+        {
+          "symbol": "TER",
+          "entry_date": "2026-05-27",
+          "exit_date": "2026-06-25",
+          "n_slices": 2,
+          "cost_basis": 2582.16,
+          "pnl": 657.62,
+          "return": 0.254678,
+          "spy_return": -0.021703,
+          "alpha": 0.276381,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "P",
+          "entry_date": "2026-05-27",
+          "exit_date": "2026-06-18",
+          "n_slices": 1,
+          "cost_basis": 1475.26,
+          "pnl": -182.11,
+          "return": -0.123443,
+          "spy_return": -0.005129,
+          "alpha": -0.118313,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "WDAY",
+          "entry_date": "2026-05-27",
+          "exit_date": "2026-06-18",
+          "n_slices": 1,
+          "cost_basis": 1384.68,
+          "pnl": 346.69,
+          "return": 0.250376,
+          "spy_return": -0.005129,
+          "alpha": 0.255505,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "INTU",
+          "entry_date": "2026-05-27",
+          "exit_date": "2026-06-18",
+          "n_slices": 1,
+          "cost_basis": 1250.48,
+          "pnl": -114.43,
+          "return": -0.091509,
+          "spy_return": -0.005129,
+          "alpha": -0.08638,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "HD",
+          "entry_date": "2026-05-27",
+          "exit_date": "2026-08-26",
+          "n_slices": 1,
+          "cost_basis": 1268.4,
+          "pnl": 74.08,
+          "return": 0.058404,
+          "spy_return": 0.020637,
+          "alpha": 0.037767,
+          "basis_from_limit_price": true
+        },
+        {
+          "symbol": "PG",
+          "entry_date": "2026-05-27",
+          "exit_date": "2026-08-26",
+          "n_slices": 1,
+          "cost_basis": 1475.7,
+          "pnl": -25.94,
+          "return": -0.017578,
+          "spy_return": 0.020637,
+          "alpha": -0.038215,
+          "basis_from_limit_price": true
+        },
+        {
+          "symbol": "T",
+          "entry_date": "2026-05-29",
+          "exit_date": "2026-06-18",
+          "n_slices": 1,
+          "cost_basis": 1485.6,
+          "pnl": -124.25,
+          "return": -0.083636,
+          "spy_return": -0.012693,
+          "alpha": -0.070944,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "MEDP",
+          "entry_date": "2026-05-29",
+          "exit_date": "2026-08-31",
+          "n_slices": 3,
+          "cost_basis": 1344.51,
+          "pnl": 368.38,
+          "return": 0.273988,
+          "spy_return": -0.005469,
+          "alpha": 0.279458,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "PH",
+          "entry_date": "2026-05-29",
+          "exit_date": "2026-08-31",
+          "n_slices": 1,
+          "cost_basis": 854.55,
+          "pnl": 126.24,
+          "return": 0.147727,
+          "spy_return": 0.01416,
+          "alpha": 0.133567,
+          "basis_from_limit_price": true
+        }
+      ]
+    },
+    "post": {
+      "stats": {
+        "n": 3,
+        "mean_return": -0.04843,
+        "mean_spy_return": -0.002023,
+        "mean_alpha": -0.046406,
+        "win_rate": 0.0,
+        "profit_factor": 0.0,
+        "profit_factor_no_losses": false,
+        "total_pnl": -395.62,
+        "n_basis_from_limit_price": 0,
+        "alpha_sd": 0.067459,
+        "alpha_t": -1.1915,
+        "dsr": null,
+        "dsr_reason": "refused: N=3 < 50 (too few round trips for a DSR verdict)"
+      },
+      "round_trips": [
+        {
+          "symbol": "PANW",
+          "entry_date": "2026-08-12",
+          "exit_date": "2026-09-02",
+          "n_slices": 1,
+          "cost_basis": 2690.81,
+          "pnl": -358.69,
+          "return": -0.133302,
+          "spy_return": -0.009489,
+          "alpha": -0.123813,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "PG",
+          "entry_date": "2026-08-24",
+          "exit_date": "2026-08-26",
+          "n_slices": 1,
+          "cost_basis": 3080.91,
+          "pnl": -36.42,
+          "return": -0.011821,
+          "spy_return": 0.003419,
+          "alpha": -0.01524,
+          "basis_from_limit_price": false
+        },
+        {
+          "symbol": "PG",
+          "entry_date": "2026-09-21",
+          "exit_date": "2026-09-21",
+          "n_slices": 1,
+          "cost_basis": 3067.05,
+          "pnl": -0.51,
+          "return": -0.000166,
+          "spy_return": 0.0,
+          "alpha": -0.000166,
+          "basis_from_limit_price": false
+        }
+      ]
+    }
+  },
+  "excluded_lots": [
+    {
+      "lot": "15d012db-940f-4873-a0dd-db7459c66822",
+      "symbol": "DHR",
+      "entry_date": "2026-05-27",
+      "reason": "UNPRICED"
+    },
+    {
+      "lot": "68cc5850-8d75-402d-a9b8-151d04abeaeb",
+      "symbol": "SPGI",
+      "entry_date": "2026-05-27",
+      "reason": "UNPRICED"
+    },
+    {
+      "lot": "e7ff1fba-4380-46cc-8d23-6836aa7d7bc3",
+      "symbol": "MA",
+      "entry_date": "2026-05-27",
+      "reason": "UNPRICED"
+    },
+    {
+      "lot": "3950d7fb-a89a-426e-a6bf-b69ea7184de3",
+      "symbol": "PGR",
+      "entry_date": "2026-05-27",
+      "reason": "UNPRICED"
+    },
+    {
+      "lot": "7f4c0aae-17e9-476b-a66c-784424561431",
+      "symbol": "KR",
+      "entry_date": "2026-08-10",
+      "reason": "OPEN"
+    },
+    {
+      "lot": "d94cef7e-10f4-4558-918e-244d15d880d1",
+      "symbol": "CB",
+      "entry_date": "2026-09-29",
+      "reason": "PARTIAL"
+    },
+    {
+      "lot": "6126d285-7fa7-40aa-a590-aaaca2841e6a",
+      "symbol": "KO",
+      "entry_date": "2026-09-29",
+      "reason": "OPEN"
+    },
+    {
+      "lot": "2c75b872-458c-441f-9d7c-acf4e8e616a2",
+      "symbol": "AMGN",
+      "entry_date": "2026-10-05",
+      "reason": "OPEN"
+    },
+    {
+      "lot": "a6682c97-2ef3-449f-b952-78a6bc1e6f24",
+      "symbol": "HD",
+      "entry_date": "2026-10-05",
+      "reason": "PARTIAL"
+    },
+    {
+      "lot": "f8cc3e48-4cc7-4304-be08-1645b16948ad",
+      "symbol": "T",
+      "entry_date": "2026-10-19",
+      "reason": "OPEN"
+    }
+  ],
+  "caveats": [
+    "Measurement only \u2014 no live parameter or order is changed by this artifact.",
+    "Pre cohort lots use the old Capitol-Trades pipeline and some cost bases come from the submitted limit price (entry_price absent); informational, never gated.",
+    "SPY window = close on entry date -> close on exit date (entries/exits are intraday).",
+    "Survivorship/selection: only disclosures the pipeline captured; Senate filings not covered while Capitol Trades is WAF-blocked.",
+    "Paper fills; live fills may differ."
+  ],
+  "disclosure": "Hypothetical/paper research for internal model-risk use \u2014 not investment advice."
+}

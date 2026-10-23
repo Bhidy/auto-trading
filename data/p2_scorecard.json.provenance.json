@@ -1,0 +1,69 @@
+{
+  "artifact": "data/p2_scorecard.json",
+  "source": "scripts/research/p2_scorecard.py",
+  "fingerprint": {
+    "as_of": "2026-10-23T09:34:15.769601+00:00",
+    "inputs": [
+      {
+        "path": "docs/specs/p2_satellite.json",
+        "exists": true,
+        "sha256": "bf176cf0ff0124a4079e17ea5250a2ec6a9489e9f5996c7c0268517b9f0e882d",
+        "bytes": 3705
+      },
+      {
+        "path": "political-copy-bot/data/trade_log.json",
+        "exists": true,
+        "sha256": "af9fd0afa41012dd0628ad4af2278504259298dcbb5d5088396ad9f7b1bce81c",
+        "bytes": 38418
+      },
+      {
+        "path": "data/deep/core_equity.json",
+        "exists": true,
+        "sha256": "41007aac1824f9a4b783c5376d198c2c99e44715957fe7bd5bc8ade4646f006d",
+        "bytes": 377198
+      },
+      {
+        "path": "data/core_equity.json",
+        "exists": true,
+        "sha256": "d1cc3645d2208315fb92c72558d4d51db59041f418754bc4859979809f445fdb",
+        "bytes": 140616
+      },
+      {
+        "path": "data/p2_congress_copy_backtest.json",
+        "exists": true,
+        "sha256": "481daa4056a5350d66266b6e02594227c30ac49161371638b2ebdb55b9669e3e",
+        "bytes": 25516
+      },
+      {
+        "path": "data/p2_congress_technical_confirmation_backtest.json",
+        "exists": true,
+        "sha256": "9c126d8c4fd4c4ff0c0814ac7801e79343945dab92ece81f4e2eb4a6235dcd6e",
+        "bytes": 28661
+      },
+      {
+        "path": "data/p2_cluster_buy_backtest.json",
+        "exists": true,
+        "sha256": "688340345a77807276ec5edde0c8d92b213b3b4436e045e6c91f35d17ec30491",
+        "bytes": 45529
+      },
+      {
+        "path": "data/p2_disclosure_lag_study.json",
+        "exists": true,
+        "sha256": "1724c0dd30cc3dd7b9e5a8f8bf64e3b77ed1a0ce8e7de13df5b0e4ec2bd27099",
+        "bytes": 1449
+      }
+    ],
+    "combined_sha256": "88aee32c33082df2e915b0ecc73bb11869f00411ef01d18bcdd407ccc4a72192",
+    "meta": {
+      "spec_hash": "bff3520adc18651d5086769405627fbfc8d9fb06798a814c0bc04200ef0b8619"
+    }
+  },
+  "warnings": [
+    "Measurement only \u2014 no live parameter or order is changed by this artifact.",
+    "Pre cohort lots use the old Capitol-Trades pipeline and some cost bases come from the submitted limit price (entry_price absent); informational, never gated.",
+    "SPY window = close on entry date -> close on exit date (entries/exits are intraday).",
+    "Survivorship/selection: only disclosures the pipeline captured; Senate filings not covered while Capitol Trades is WAF-blocked.",
+    "Paper fills; live fills may differ."
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}
