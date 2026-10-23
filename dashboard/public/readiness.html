@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="/assets/portfolio.css">
     <style>
         /* Live-Readiness — "Verdict Room". Every colour derives from a RiseWealth
-           token (news-public.css / portfolio.css). The hero is a brand-ink band in
-           BOTH themes (colour-blocking); everything below follows the theme. */
+           token (news-public.css / portfolio.css). The whole page, hero included,
+           follows the theme: light ground in light mode, brand-ink in dark. */
         .rx {
             --rx-serif: 'DM Serif Display', Georgia, serif;
             --rx-ui: 'Manrope', system-ui, sans-serif;
@@ -51,23 +51,26 @@
 
         /* ── Hero: brand ink band ── */
         .rx-hero {
-            --h-bg: #0E0805; --h-card: #1A0F08; --h-ink: #FFF1E8; --h-muted: #A39A92; --h-line: rgba(255, 255, 255, 0.08);
+            --h-bg: var(--page); --h-card: var(--surface); --h-ink: var(--ink); --h-muted: var(--muted); --h-line: var(--line);
+            --h-big: var(--teal); --h-of: rgba(26, 15, 8, 0.22); --h-sh: var(--rx-sh);
+            background: var(--h-bg); color: var(--h-ink); padding: clamp(96px, 11vw, 132px) 0 clamp(40px, 6vw, 72px);
+            border-bottom: 1px solid var(--h-line);
+        }
+        [data-theme="dark"] .rx-hero {
+            --h-bg: #140C07; --h-card: #1A0F08; --h-ink: #FFF1E8; --h-muted: #A39A92; --h-line: rgba(255, 255, 255, 0.08);
+            --h-big: #FF8A3D; --h-of: #6B5F55; --h-sh: none;
             --c-ink: #FFF1E8; --c-muted: #A39A92; --c-line: rgba(255, 255, 255, 0.12); --c-acc: #FF8A3D;
             --c-pos: #22c55e; --c-neg: #ef4444; --c-wait: #FFA86A; --c-bg: #1A0F08; --c-acc-ink: #FF8A3D;
-            background: var(--h-bg); color: var(--h-ink); padding: clamp(96px, 11vw, 132px) 0 clamp(40px, 6vw, 72px);
         }
-        [data-theme="dark"] .rx-hero { --h-bg: #140C07; border-bottom: 1px solid var(--h-line); }
-        .rx-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; font-family: var(--rx-mono); font-size: 12px; color: var(--h-muted); }
-        .rx-paper { border: 1px solid rgba(255, 138, 61, 0.5); color: #FF8A3D; border-radius: 999px; padding: 4px 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-        .rx-top { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 48px); align-items: end; margin-top: 28px; }
+        .rx-top { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 48px); align-items: end; }
         .rx-top h1 { font-size: clamp(2.6rem, 6vw, 4.5rem); line-height: 1.04; letter-spacing: -0.02em; }
         .rx-lede { margin: 18px 0 0; max-width: 34rem; font-size: clamp(1rem, 1.4vw, 1.15rem); line-height: 1.55; color: var(--h-muted); }
         .rx-count { display: flex; align-items: flex-end; gap: 18px; justify-content: flex-end; }
-        .rx-count .big { font-family: var(--rx-serif); font-size: clamp(6rem, 13vw, 10.5rem); line-height: .9; color: #FF8A3D; }
-        .rx-count .big.go { color: #22c55e; }
-        .rx-count .of { font-family: var(--rx-serif); font-size: clamp(2.4rem, 4.5vw, 3.5rem); color: #6B5F55; }
+        .rx-count .big { font-family: var(--rx-serif); font-size: clamp(6rem, 13vw, 10.5rem); line-height: .9; color: var(--h-big); }
+        .rx-count .big.go { color: var(--c-pos); }
+        .rx-count .of { font-family: var(--rx-serif); font-size: clamp(2.4rem, 4.5vw, 3.5rem); color: var(--h-of); }
         .rx-count p { margin: 0 0 14px; max-width: 12rem; font-size: 15px; line-height: 1.45; }
-        .rx-lead { margin-top: clamp(32px, 5vw, 52px); background: var(--h-card); border: 1px solid var(--h-line); border-radius: 18px; padding: clamp(18px, 2.4vw, 28px); }
+        .rx-lead { margin-top: clamp(32px, 5vw, 52px); background: var(--h-card); border: 1px solid var(--h-line); border-radius: 18px; box-shadow: var(--h-sh); padding: clamp(18px, 2.4vw, 28px); }
         .rx-lead-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px 28px; }
         .rx-cap { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--h-muted); }
         [dir="rtl"] .rx-cap, [dir="rtl"] .rx-kick { letter-spacing: 0; }
@@ -77,7 +80,7 @@
         .rx-stats dt { font-size: 12px; color: var(--h-muted); }
         .rx-stats dd { margin: 4px 0 0; font-family: var(--rx-mono); font-size: 22px; font-weight: 600; }
         .rx-stats dd small { font-size: 12px; color: var(--h-muted); font-weight: 500; }
-        .rx-stats dd.acc { color: #FF8A3D; }
+        .rx-stats dd.acc { color: var(--c-acc-ink); }
         .rx-chart { position: relative; margin-top: 18px; min-height: 120px; outline: none; }
         .rx-chart:focus-visible { box-shadow: 0 0 0 2px var(--c-acc); border-radius: 8px; }
         .rx-note { margin: 12px 0 0; font-size: 14px; color: var(--h-muted); }
@@ -85,6 +88,7 @@
 
         /* ── Sections ── */
         .rx-sec { margin-top: clamp(48px, 7vw, 80px); }
+        .rx-sec:last-child { padding-bottom: clamp(56px, 7vw, 96px); }
         .rx-sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px 24px; }
         .rx-sec-head h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); letter-spacing: -0.01em; }
         .rx-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--muted); }
@@ -92,7 +96,6 @@
         #alerts:not(:empty) { margin-top: 24px; display: grid; gap: 10px; }
         .rd-alert { border-radius: 12px; padding: .8rem 1rem; border: 1px solid var(--rx-neg); background: var(--pf-red-soft); font-size: .88rem; line-height: 1.55; }
         .rd-alert.warn { border-color: var(--rx-wait); background: var(--rx-wait-soft); }
-        .rd-alert.note { background: transparent; border-style: dashed; border-color: var(--rx-line-strong); color: var(--muted); font-size: .8rem; }
 
         /* status glyphs: shape AND colour (colour-blind safe) */
         .gl { display: inline-block; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; vertical-align: middle; }
@@ -204,8 +207,6 @@
         .q { color: var(--muted); font-weight: 500; }
 
         /* ── Footer ── */
-        .rx-foot { margin-top: clamp(56px, 7vw, 88px); padding: 22px 0 64px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; font-size: 12px; color: var(--muted); line-height: 1.55; }
-        .rx-foot code { font-family: var(--rx-mono); font-size: 11.5px; }
 
         /* ── Charts (geometry from assets/readiness-charts.js; colours from tokens) ── */
         .rc { display: block; overflow: visible; font-family: var(--rx-ui); }
@@ -331,7 +332,6 @@
     <main class="rx" id="rx">
         <section class="rx-hero" aria-labelledby="rx-title">
             <div class="rx-wrap">
-                <div class="rx-meta"><span class="rx-paper" data-key="paper_chip">Paper only</span><span id="meta"></span></div>
                 <div class="rx-top">
                     <div>
                         <h1 id="rx-title" data-key="hero_title">Live-Readiness</h1>
@@ -346,14 +346,6 @@
         <div class="rx-wrap">
             <div id="alerts"></div>
 
-            <section class="rx-sec" aria-labelledby="mx-h">
-                <div class="rx-sec-head">
-                    <h2 id="mx-h" data-key="mx_h">Every gate, every strategy</h2>
-                    <div class="rx-legend" id="legend"></div>
-                </div>
-                <div class="mx-box" id="mxBox"></div>
-            </section>
-
             <section class="rx-sec" aria-labelledby="bk-h">
                 <div class="rx-sec-head">
                     <h2 id="bk-h"></h2>
@@ -362,7 +354,14 @@
                 <div id="book" role="tabpanel"></div>
             </section>
 
-            <footer class="rx-foot" id="foot"></footer>
+            <section class="rx-sec" aria-labelledby="mx-h">
+                <div class="rx-sec-head">
+                    <h2 id="mx-h" data-key="mx_h">Every gate, every strategy</h2>
+                    <div class="rx-legend" id="legend"></div>
+                </div>
+                <div class="mx-box" id="mxBox"></div>
+            </section>
+
         </div>
     </main>
 
@@ -447,7 +446,6 @@
                 unavailable: '<b>Readiness report unavailable.</b> No verdict is shown rather than a guessed one. {why}',
                 why_absent: 'The engine has not published a report yet.', why_malformed: 'The published report failed validation.', why_network: 'The API could not be reached.',
                 eng_warn: '<b>Engine warning:</b> {w}',
-                eng_note: '<b>Data note:</b> {w}',
                 no_sleeves: 'No sleeve of this portfolio is registered with the engine.',
                 no_verdict: 'No verdict is shown until a valid engine report is available.',
                 f_rule: 'Verdict rule', f_rule_t: 'GO only if every hard gate passes. Exits-only and quarantined versions are NOT ELIGIBLE. No percentage score is computed. Real capital remains a human decision.',
@@ -524,7 +522,6 @@
                 unavailable: '<b>تقرير الجاهزية غير متاح.</b> لا نعرض حكماً بدلاً من تخمينه. {why}',
                 why_absent: 'لم ينشر المحرك تقريراً بعد.', why_malformed: 'التقرير المنشور لم يجتز التحقق.', why_network: 'تعذّر الوصول إلى الواجهة.',
                 eng_warn: '<b>تحذير من المحرك:</b> {w}',
-                eng_note: '<b>ملاحظة بيانات:</b> {w}',
                 no_sleeves: 'لا توجد استراتيجية مسجلة لهذه المحفظة في المحرك.',
                 no_verdict: 'لا يُعرض أي حكم حتى يتوفر تقرير صالح من المحرك.',
                 f_rule: 'قاعدة الحكم', f_rule_t: '«جاهز» فقط إذا نجحت كل الشروط الإلزامية. الإصدارات المعزولة أو التي في وضع الخروج فقط «غير مؤهلة». لا تُحسب أي نسبة مئوية. يبقى رأس المال الحقيقي قراراً بشرياً.',
@@ -671,17 +668,12 @@
                 var n = sessionsSince(report.generated_at);
                 if (n != null && n > 2) out.push('<div class="rd-alert warn" role="status"><div>' + tm('stale', { n: L(n), when: L(ATFmt.etDateTime(report.generated_at)) }) + '</div></div>');
                 // Routine, already-handled data facts (e.g. the initial funding deposit
-                // excluded from returns) are notes, not warnings: one compact line, so
-                // real warnings keep their signal.
-                var notes = [], warns = [];
+                // excluded from returns) are not shown; real warnings keep their signal.
                 (report.warnings || []).forEach(function (w) {
                     var txt = typeof w === 'string' ? w : JSON.stringify(w);
-                    (/cash-flow sessions excluded/i.test(txt) ? notes : warns).push(txt);
-                });
-                warns.forEach(function (txt) {
+                    if (/cash-flow sessions excluded/i.test(txt)) return;
                     out.push('<div class="rd-alert warn" role="status"><div>' + tm('eng_warn', { w: EN(txt) }) + '</div></div>');
                 });
-                if (notes.length) out.push('<div class="rd-alert note" role="note"><div>' + tm('eng_note', { w: EN(notes.join(' · ')) }) + '</div></div>');
             } else if (reportErr) {
                 out.push('<div class="rd-alert" role="alert"><div>' + tm('unavailable', { why: t(reportErr === 'absent' ? 'why_absent' : (reportErr === 'malformed' ? 'why_malformed' : 'why_network')) }) + '</div></div>');
             }
@@ -693,9 +685,7 @@
         var RC = window.ReadinessCharts;
         var X = {
             en: {
-                paper_chip: 'Paper only',
                 hero_lede: 'Which strategies have earned real capital — and the one thing still standing in the way of each.',
-                meta_line: 'Methodology {v} · Session {d} · Broker data, refreshed daily',
                 count_l: 'strategy versions cleared for live capital',
                 lead_cap: 'Furthest-along edge test', lead_none: 'No strategy is accruing live edge evidence yet.',
                 lead_note: 'Edge is proven when the lower bound clears the GO line. Today the band still spans zero.',
@@ -723,14 +713,10 @@
                 c_book_tag: 'Book-level series', c_shared_tag: 'Book-level, not credited',
                 c_no_edge: 'No edge claimed — readiness covers risk and operations only.',
                 c_edge_wait: '{n} of {m} returns before an edge verdict',
-                c_band_above: 'Edge band today: {lo} to {hi} a year — the full trajectory is the chart above.',
-                f_rule_s: 'GO only when every hard gate passes. Real capital remains a human decision.',
-                f_disc_s: 'Paper-trading evidence for internal model-risk use — not investment advice.'
+                c_band_above: 'Edge band today: {lo} to {hi} a year — the full trajectory is the chart above.'
             },
             ar: {
-                paper_chip: 'تداول ورقي فقط',
                 hero_lede: 'أي الاستراتيجيات استحقت رأس مال حقيقي — وما الشرط الوحيد الذي ما زال يعترض كل واحدة منها.',
-                meta_line: 'المنهجية {v} · جلسة {d} · بيانات الوسيط، تُحدَّث يومياً',
                 count_l: 'إصدارات استراتيجيات مؤهلة لرأس مال حقيقي',
                 lead_cap: 'أبعد اختبار تفوق تقدماً', lead_none: 'لا توجد استراتيجية تجمع أدلة تفوق حية بعد.',
                 lead_note: 'يثبت التفوق عندما يتجاوز الحد الأدنى خط «جاهز». ما زال النطاق اليوم يشمل الصفر.',
@@ -758,9 +744,7 @@
                 c_book_tag: 'سلسلة على مستوى المحفظة', c_shared_tag: 'على مستوى المحفظة، غير محتسبة',
                 c_no_edge: 'لا ادعاء بالتفوق — الجاهزية تغطي المخاطر والتشغيل فقط.',
                 c_edge_wait: '{n} من {m} عائداً قبل حكم التفوق',
-                c_band_above: 'نطاق التفوق اليوم: من {lo} إلى {hi} سنوياً — المسار الكامل في الرسم أعلاه.',
-                f_rule_s: '«جاهز» فقط عندما تنجح كل الشروط الإلزامية. يبقى رأس المال الحقيقي قراراً بشرياً.',
-                f_disc_s: 'أدلة تداول ورقي لإدارة مخاطر النماذج داخلياً — ليست نصيحة استثمارية.'
+                c_band_above: 'نطاق التفوق اليوم: من {lo} إلى {hi} سنوياً — المسار الكامل في الرسم أعلاه.'
             }
         };
         Object.keys(X).forEach(function (lg) { Object.keys(X[lg]).forEach(function (k) { T[lg][k] = X[lg][k]; }); });
@@ -793,14 +777,12 @@
 
         // ── Hero ──
         function renderHero() {
-            var meta = document.getElementById('meta'), count = document.getElementById('count'), lead = document.getElementById('lead');
+            var count = document.getElementById('count'), lead = document.getElementById('lead');
             if (!report) {
-                meta.textContent = '';
                 count.innerHTML = '';
                 lead.innerHTML = '<div class="rx-empty-chart">' + (reportErr ? t('no_verdict') : t('loading_t')) + '</div>';
                 return;
             }
-            meta.innerHTML = tm('meta_line', { v: L('v' + (report.methodology_version || '—')), d: dateLabel(report.as_of_session) });
             var cc = RL.clearedCount(report);
             count.innerHTML = '<span dir="ltr" style="display:flex;align-items:baseline"><span class="big' + (cc.cleared > 0 ? ' go' : '') + '">' + esc(cc.cleared) + '</span><span class="of">/' + esc(cc.total) + '</span></span>' +
                 '<p>' + t('count_l') + '</p>';
@@ -1029,17 +1011,9 @@
         var rzT = null;
         window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(function () { drawCharts(false); }, 120); });
 
-        function renderFoot() {
-            var f = document.getElementById('foot'), r = report || {}, pv = r.provenance || {};
-            f.innerHTML = '<span>' + t('f_rule_s') + '</span>' +
-                '<span>' + (r.methodology_doc ? '<code dir="ltr">' + esc(r.methodology_doc) + '</code>' : '') +
-                    (pv.combined_sha256 ? ' · ' + L(String(pv.combined_sha256).slice(0, 12)) : '') + '</span>' +
-                '<span>' + t('f_disc_s') + '</span>';
-        }
-
         function renderAll(keepOpen) {
             charts = []; lastW = {};
-            renderHero(); renderAlerts(); renderLegend(); renderMatrix(); renderTabs(); renderBook(keepOpen); renderFoot();
+            renderHero(); renderAlerts(); renderLegend(); renderMatrix(); renderTabs(); renderBook(keepOpen);
             drawCharts(true);
         }
 
