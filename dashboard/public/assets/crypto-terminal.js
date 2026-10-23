@@ -16,7 +16,7 @@
             ct_buy: 'BUY', ct_sell: 'SELL', ct_order_type: 'Order Type', ct_tif: 'Time in Force',
             ct_qty: 'Quantity', ct_notional: 'Notional ($)', ct_limit_price: 'Limit Price',
             ct_stop_price: 'Stop Price', ct_place_order: 'Place Buy Order',
-            ct_size: 'Size', ct_price: 'Price', ct_total: 'Total', ct_time: 'Time',
+            ct_size: 'Size', ct_price: 'Price', ct_total: 'Total', ct_time: 'Time (ET)',
             ct_symbol: 'Symbol', ct_side: 'Side', ct_avg_entry: 'Avg Entry', ct_mkt_val: 'Mkt Value',
             ct_unrealized: 'Unrealized P&L', ct_pct: '%',
             ct_spread_label: 'Spread',
@@ -39,7 +39,7 @@
             ct_buy: 'شراء', ct_sell: 'بيع', ct_order_type: 'نوع الأمر', ct_tif: 'مدة الصلاحية',
             ct_qty: 'الكمية', ct_notional: 'القيمة ($)', ct_limit_price: 'سعر الحد',
             ct_stop_price: 'سعر الوقف', ct_place_order: 'أمر شراء',
-            ct_size: 'الحجم', ct_price: 'السعر', ct_total: 'الإجمالي', ct_time: 'الوقت',
+            ct_size: 'الحجم', ct_price: 'السعر', ct_total: 'الإجمالي', ct_time: 'الوقت (ET)',
             ct_symbol: 'الرمز', ct_side: 'الاتجاه', ct_avg_entry: 'متوسط الدخول', ct_mkt_val: 'القيمة السوقية',
             ct_unrealized: 'الربح/الخسارة', ct_pct: '%',
             ct_spread_label: 'الفارق',
@@ -113,10 +113,11 @@
         return n.toFixed(2);
     }
 
+    // Exchange-clock (New York) time, labelled ET — the same convention as every
+    // other market timestamp on the site (audit D4); never the viewer's zone.
     function fmtTime(iso) {
         if (!iso) return '—';
-        var d = new Date(iso);
-        return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        return ATFmt.etTime(iso, true);
     }
 
     function showToast(msg, type) {
@@ -387,7 +388,7 @@
             }).join('');
 
             $('ctOrderbook').innerHTML = askHtml + spreadHtml + bidHtml;
-            $('obLastUpdate').textContent = fmtTime(book.t || new Date().toISOString());
+            $('obLastUpdate').textContent = fmtTime(book.t || new Date().toISOString()) + ' ET';
         } catch (e) {
             $('ctOrderbook').innerHTML = '<div class="ct-pos-empty">Failed to load orderbook</div>';
         }
@@ -611,12 +612,13 @@
         bars.forEach(function (bar, i) {
             if (i % labelInterval !== 0) return;
             var x = padL + i * barW + barW / 2;
-            var d = new Date(bar.t);
             var lbl = '';
             if (currentTf === '1Day') {
-                lbl = (d.getMonth() + 1) + '/' + d.getDate();
+                // A daily crypto candle is the UTC calendar day it is stamped with.
+                var ds = String(bar.t || '').slice(0, 10).split('-');
+                lbl = ds.length === 3 ? (parseInt(ds[1], 10) + '/' + parseInt(ds[2], 10)) : '';
             } else {
-                lbl = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+                lbl = ATFmt.etTime(bar.t);
             }
             ctx.fillText(lbl, x, h - padB + 14);
         });

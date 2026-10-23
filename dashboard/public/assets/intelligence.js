@@ -194,7 +194,8 @@
     setPill(status, 'ok', g.total_decisions + ' logged');
     const rows = (g.decisions || []).map(dn => {
       const knobs = Object.keys(dn.changed_knobs || {});
-      const when = dn.timestamp ? new Date(dn.timestamp).toLocaleString() : '—';
+      // Exchange clock, labelled ET — never the viewer's local zone (audit D4).
+      const when = dn.timestamp ? ATFmt.etDateTime(dn.timestamp) : '—';
       return `<tr>
         <td class="mono" style="font-size:.72rem">${esc(when)}</td>
         <td><span class="pill ${dn.approved ? 'pill-ok' : 'pill-warn'}">${dn.approved ? 'approved' : 'reverted'}</span></td>

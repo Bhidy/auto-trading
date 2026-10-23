@@ -385,7 +385,7 @@ dashboard/
 │   ├── portfolio.html     # Portfolio list (60s card refresh)
 │   ├── portfolio-detail.html  # Portfolio dashboard (30s refresh)
 │   ├── market-pulse.html  # Market pulse (2.5s micro-tick + 30s full)
-│   ├── alerts.html        # Alerts (30s signals + 12s ticker)
+│   ├── alerts.html        # Legacy: client-side redirect to /settings (price alerts are demo, local-only)
 │   ├── intelligence.html  # System intelligence + Engine Safety (halts, pending fills)
 │   ├── readiness.html     # Live-readiness gates
 │   ├── orders.html        # Orders (30s refresh)
@@ -441,7 +441,6 @@ All of the above are **already set in Vercel production** (configured 2026-05). 
 | Crypto Terminal | Snapshot | 10s |
 | Crypto Terminal | Positions | 15s |
 | Crypto Terminal | Bars | 30s |
-| Alerts | Signals feed | 30s |
 | All pages | Index ticker marquee | 8-12s |
 
 ---

@@ -486,3 +486,11 @@ html.has-motion [data-reveal="scale"] { transform: scale(.96); }
   html.has-motion [data-reveal] { opacity: 1 !important; transform: none !important; }
   * { scroll-behavior: auto !important; }
 }
+
+/* Halt states on the home book tiles (audit 2026-10-23 D7) — same semantics as
+   the /portfolio badges: amber = recorded halt not supported by measured data,
+   red = verified halt. The status dot stops pulsing in both. */
+.pf-live.is-unverified { color: #B45309; }
+[data-theme="dark"] .pf-live.is-unverified { color: #FBBF24; }
+.pf-live.is-halted { color: var(--pf-red, #ef4444); }
+.pf-live.is-unverified .d, .pf-live.is-halted .d { animation: none; box-shadow: none; }

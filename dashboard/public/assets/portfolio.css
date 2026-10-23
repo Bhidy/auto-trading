@@ -2134,3 +2134,8 @@ html[dir="rtl"] .pf-halt-unverified h4 { letter-spacing: 0; }
 .pf-kpi--status .pf-kpi__value { font-family: inherit; font-weight: 700; }
 html[dir="rtl"] .pf-kpi--status .pf-kpi__value,
 html[dir="rtl"] .pf-kpi--status .pf-kpi__sub { unicode-bidi: normal; text-align: start; }
+
+/* Day-P/L basis (audit 2026-10-23 D1): the KPI names its real baseline; the
+   glyph signals the explanatory tooltip on the whole KPI cell. */
+.pf-kpi[title] { cursor: help; }
+.pf-kpi__info { font-size: .7rem; opacity: .7; text-transform: none; letter-spacing: 0; }
