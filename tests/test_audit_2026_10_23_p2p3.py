@@ -675,3 +675,11 @@ def test_heartbeat_partial_legacy_evidence_is_unverified():
     assert hb.halt_evidence_verified({"halt_evidence": {"at": "x", "equity": 1.0}}) is True
     assert hb.halt_evidence_verified({"halt_verified": False,
                                       "halt_evidence": {"at": "x", "equity": 1.0}}) is False
+
+
+def test_heartbeat_flags_unmatched_exit_fills():
+    hb = _hb()
+    alert, summary = hb.assess_safety_state({"P1 Self Improving Brain": {
+        "state": {"halted": False}, "recon": None, "pending_exits": [],
+        "unmatched_exits": [{"order_id": "o1", "symbol": "CAT", "unmatched_qty": 2}]}})
+    assert alert is True and "unmatched_exits.json" in summary and "CAT" in summary

@@ -95,3 +95,19 @@ P1/P3 active: not before a redesign + 90 days paper.
 - P2 is House-only while Capitol Trades stays WAF-blocked (Senate disclosures not covered).
 - Statistical confidence: confirming Sharpe 1.0 at 95% needs ~2.7 years of data; passing the
   90-day gate is necessary, not sufficient.
+
+## 8. Follow-up rounds (same day)
+
+| Round | Source | Outcome |
+|---|---|---|
+| 2 | Codex review of #93 (3) + #95 (2) | Unmatched exit remainder kept for reconciliation (never lost); EOD settlement retried while fills pend; whole-trade win-rate/expectancy (partial trims aggregated); journal overlay covers the full gap since deploy; heartbeat uses the engine's halt-evidence predicate. |
+| 2 | Skills / agent-instruction audit | Committee skill made advisory-only (never call Alpaca MCP order tools — bound to P1, auto-allowed); reads strategy controls first. portfolio-optimizer statuses corrected (CPCV, triple-barrier, HRP exist). CLAUDE.md: ~14 stale facts fixed + "AUDIT 2026-10-23 INVARIANTS". Vendored Alpaca `reference.md` hash-locked (verified vs upstream). |
+| 2 | Ops | Smoke auth probe fixed (Vercel edge 404 = safe; app 404 = bypass); CodeQL restored (repo public); all actions SHA-pinned; Node 22. |
+| 3 | Post-deploy production audit | P1 equity, cash, 6 positions, orders reconciled to the broker to the cent. Fixed: pre-open "Today's P/L" now labelled with its real basis date and S&P compared over the same window; real sectors; overlay serves a book's state + trade log from one snapshot; ET timestamps; halt badge on home; AR halt text; paginated assets; trimmed health; script-src CSP on pages (verified: Chart.js and TradingView load, no console errors). |
+| 4 | Residual wiring | `unmatched_exits.json` surfaced on the Engine Safety panel and alerted by the heartbeat. |
+
+**Accepted gaps (not fixable in code):**
+- **Senate disclosures for P2.** `efdsearch.senate.gov` returns Akamai "Access Denied" to automated clients and the public senate-stock-watcher dataset returns 403. Circumventing bot protection is out of bounds; P2 stays House-only.
+- **Strategy edge.** No book passes DSR ≥ 0.95; real money stays No-Go (§5–6).
+- **Dormant unapproved P1 knob values** (threshold 0.70 / stop 1.5 ATR / size 0.5) remain in `data/strategy_params.json`; inert while the active satellite is off, to be reset only inside a validated redesign.
+- **Global rate limiting** requires a Vercel firewall rule in the owner's account (per-instance limiter in code).

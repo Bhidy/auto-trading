@@ -701,10 +701,8 @@ function getPortfolioPaths(id) {
 
 
 // Engine safety ledgers surfaced by the intelligence endpoint (see getIntelligencePaths).
-const SAFETY_FILES = ['haltGovernance', 'pendingExits', 'pendingEntries', 'bookedFills'];
+const SAFETY_FILES = ['haltGovernance', 'pendingExits', 'pendingEntries', 'bookedFills', 'unmatchedExits'];
 
-// Seed the live-state overlay with every per-portfolio file so even the first
-// request after a cold start serves the latest committed state.
 // Seed the live-state overlay with every file the API reads for every book (state,
 // trade log, signals, params, learning report, intelligence + safety ledgers), so
 // the first request after a cold start is served from ONE refresh of all of them
@@ -748,6 +746,9 @@ function getIntelligencePaths(id) {
         pendingExits: d('pending_exits.json'),
         pendingEntries: d('pending_entries.json'),
         bookedFills: d('booked_fills.json'),
+        // Exit fills larger than the logged lots (Codex review of #93): the
+        // remainder waits here until a lot exists — a reconciliation item.
+        unmatchedExits: d('unmatched_exits.json'),
     };
 }
 
@@ -765,6 +766,13 @@ function buildSafetyState(id, paths) {
     const exits = readJsonFile(paths.pendingExits, null);
     const entries = readJsonFile(paths.pendingEntries, null);
     const fills = readJsonFile(paths.bookedFills, null);
+    const unmatched = readJsonFile(paths.unmatchedExits, null);
+    const unmatchedRows = (unmatched && typeof unmatched === 'object' && !Array.isArray(unmatched))
+        ? Object.values(unmatched).filter(x => x && typeof x === 'object')
+            .map(u => ({ order_id: str(u.order_id), symbol: str(u.symbol), unmatched_qty: num(u.unmatched_qty),
+                fill_price: num(u.cum_px), reason: str(u.reason), at: str(u.at) }))
+            .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))
+        : [];
 
     const pendingRow = (p, kind) => ({
         kind, order_id: str(p.order_id), symbol: str(p.symbol), qty: num(p.qty),
@@ -824,7 +832,8 @@ function buildSafetyState(id, paths) {
     return {
         engine_managed: id === 'portfolio_1',
         files: { halt_governance: gov !== null, pending_exits: exits !== null,
-            pending_entries: entries !== null, booked_fills: fills !== null },
+            pending_entries: entries !== null, booked_fills: fills !== null,
+            unmatched_exits: unmatched !== null },
         halt: {
             halted,
             reason: halted ? str(state.halt_reason) : null,
@@ -845,6 +854,7 @@ function buildSafetyState(id, paths) {
             total: pending.length, orders: pending.slice(0, 25),
         },
         booked_fills: { count: fillRows.length, latest: latestFills.slice(0, 5) },
+        unmatched_exits: { count: unmatchedRows.length, rows: unmatchedRows.slice(0, 25) },
     };
 }
 
