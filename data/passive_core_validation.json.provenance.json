@@ -1,0 +1,65 @@
+{
+  "artifact": "data/passive_core_validation.json",
+  "source": "scripts/research/passive_core_eval.py",
+  "fingerprint": {
+    "as_of": "2026-10-23T09:34:16.507212+00:00",
+    "inputs": [
+      {
+        "path": "docs/specs/passive_core.json",
+        "exists": true,
+        "sha256": "d0b1ce0b5dcfca4c8f4f0e81fd7b34760d0150c59fa2f4205e99622ed384b948",
+        "bytes": 5402
+      },
+      {
+        "path": "data/core_equity.json",
+        "exists": true,
+        "sha256": "d1cc3645d2208315fb92c72558d4d51db59041f418754bc4859979809f445fdb",
+        "bytes": 140616
+      },
+      {
+        "path": "data/deep/core_equity.json",
+        "exists": true,
+        "sha256": "41007aac1824f9a4b783c5376d198c2c99e44715957fe7bd5bc8ade4646f006d",
+        "bytes": 377198
+      },
+      {
+        "path": "data/deep/defensive.json",
+        "exists": true,
+        "sha256": "22ee91489160913e57432b04dfd23258b59ebc9736af8675b60bc5d1b4602151",
+        "bytes": 365789
+      },
+      {
+        "path": "data/deep_wide5/core.json",
+        "exists": true,
+        "sha256": "24004f802015d702ca6583daec1dafa6303c3e549d1f9919ed3c0d9f1238c72a",
+        "bytes": 629965
+      },
+      {
+        "path": "data/deep_wide5/defensive.json",
+        "exists": true,
+        "sha256": "579e5b2cab2ddd93a0a20f0554c579e753eca5ca38aa81543545007ff23f1b8b",
+        "bytes": 612095
+      },
+      {
+        "path": "data/defensive.json",
+        "exists": true,
+        "sha256": "dd8091d7b3d29bb97ccd323a343040fef7b99e316c9673a37b86a1cc2cd7dc25",
+        "bytes": 137811
+      }
+    ],
+    "combined_sha256": "306547a0826f17a8b3bf541e6236016b5a2cebd9a96e6c7aa19de4631e12b062",
+    "meta": {
+      "spec_hash": "8dc10af05a7513ce2f70a2d647613da56867336fee0a71f6874d2e7f494eb817"
+    }
+  },
+  "warnings": [
+    "Price-only bars (split-adjusted, NOT dividend-adjusted): distributions are excluded. The core's income-heavy sleeve (TLT, SHY, BIL) is understated more than SPY, so this test is biased AGAINST the core.",
+    "Cash remainder earns 0% (conservative).",
+    "IEX-feed closes (free tier) differ slightly from consolidated closes; thin ETFs (BIL, SHY) occasionally miss IEX bars and those dates are dropped from the common axis.",
+    "Not a blind test: data/core_satellite_backtest_5y.json (2026-06-18) already evaluated this same 8-ETF basket on overlapping 5y data. The basket was not fitted (no tunable parameters), but its selection was informed by that study, so this is a pre-registered CONFIRMATION on overlapping history, not a fresh out-of-sample test.",
+    "Regime coverage: the committed span (mid-2023 onward) is a predominantly rising-equity regime; only the extended_5y dataset (when present) includes the 2022 joint bond+equity drawdown.",
+    "Survivorship: the universe is 8 large, long-lived ETFs chosen today; no delisting risk modeled.",
+    "Backtest is simulation (hypothetical, paper) \u2014 not live performance."
+  ],
+  "disclosure": "Research artifact for internal model-risk use only \u2014 not investment advice. Derived from the recorded inputs below and reproducible from their fingerprints."
+}

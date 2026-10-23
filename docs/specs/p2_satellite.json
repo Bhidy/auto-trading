@@ -1,0 +1,41 @@
+{
+  "spec_id": "p2-satellite-scorecard-v1",
+  "portfolio": "portfolio_2",
+  "pre_registered_at": "2026-10-23",
+  "pre_registration_note": "Measurement-only scorecard for the LIVE P2 copy-trade sleeve as currently specified by docs/specs/p2_spec.json. Acceptance criteria, cohort split, round-trip definition, benchmark and trial-count method were fixed here BEFORE scripts/research/p2_scorecard.py was run on the real trade log. It places no orders and changes no live parameter.",
+  "measures_spec": "p2-capitol-shadow-v1",
+  "universe": "US-listed equities bought by copying US-politician BUY disclosures (benchmark_sleeve rows excluded)",
+  "timeframe": "1Day",
+  "indicators": [
+    {"name": "SMA", "params": {"period": 50}},
+    {"name": "RSI", "params": {"period": 14, "overbought": 70}}
+  ],
+  "entry_rule": "as live (p2_spec.json): politician BUY disclosure + technical confirmation; conviction-bucket sizing",
+  "exit_rule": "as live (p2_spec.json): stop-loss / trailing stop / take-profit / time exit / mirrored politician SELL",
+  "signal_bar": "t (disclosure observed by close of day t)",
+  "fill": {"model": "limit", "bar": "t+1", "look_ahead_ack": false},
+  "sizing": "as live; scorecard returns are per-lot (realized P&L / cost basis), so sizing does not enter alpha",
+  "fees_bps": 5.0,
+  "slippage_bps": 5.0,
+  "friction_note": "Live round trips are scored on REALIZED broker P&L (fills already include slippage; Alpaca commission = 0). No extra friction is added to trades, and the SPY comparator is frictionless — both choices are conservative for alpha.",
+  "benchmark": "beta-matched SPY over the identical holding window: alpha = lot_return - beta * SPY_return(entry_date close -> exit_date close)",
+  "beta_policy": {
+    "gate_beta": 1.0,
+    "reason": "P2 book equity (journal account snapshots) is intraday-timestamped and blended with the benchmark ETF sleeve and cash, so its beta is not the beta of a single fully-invested copy-trade lot. beta=1 (market-adjusted return) is the gate; the book-equity beta is reported as a diagnostic and used as a sensitivity only when reliable (r_squared >= 0.3 and 0 < beta < 2)."
+  },
+  "round_trip_definition": "A lot = all BUY rows sharing one broker order_id (fallback: symbol+date). Partial exits are summed slice-by-slice. A lot is a CLOSED round trip only when every slice is closed with a realized pnl; a lot with an open remainder is reported separately and excluded from N. Slices closed without a recorded pnl (reconciler orphans) make the lot UNPRICED and excluded — never imputed. benchmark_sleeve rows and SELL exit markers are not lots.",
+  "cohorts": {
+    "split_date": "2026-07-04",
+    "pre": "entry date <= 2026-07-04 (old Capitol-Trades pipeline; informational only)",
+    "post": "entry date > 2026-07-04 (House-FD pipeline; the ONLY cohort that is gated)"
+  },
+  "trial_count_method": "Honest N = distinct P2 rule configurations evaluated in committed research artifacts (count of 'overall' result blocks in data/p2_congress_copy_backtest.json, data/p2_congress_technical_confirmation_backtest.json, data/p2_cluster_buy_backtest.json) + size of the max_disclosure_age grid in data/p2_disclosure_lag_study.json + 2 live pipeline versions. DSR benchmark = expected max per-trade Sharpe of N zero-skill trials (False Strategy Theorem, null variance 1/(N_obs-1)).",
+  "acceptance": {
+    "min_n": 50,
+    "alpha_t_min": 2.0,
+    "profit_factor_min": 1.3,
+    "profit_factor_basis": "realized $ P&L per closed round trip",
+    "dsr_min": 0.95,
+    "status_rule": "post-cohort N < min_n => INSUFFICIENT_N (values shown, no verdict). Otherwise PASS only if alpha t >= 2.0 AND PF >= 1.3 AND DSR >= 0.95, else FAIL."
+  }
+}
