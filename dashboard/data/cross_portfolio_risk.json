@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-10-23T00:02:38.515408+00:00",
-  "total_equity": 300776.29,
-  "gross_exposure_pct": 50.636,
+  "timestamp": "2026-10-23T00:09:06.576941+00:00",
+  "total_equity": 300815.85,
+  "gross_exposure_pct": 50.629,
   "by_symbol": {
     "C": {
       "market_value": 5425.26,
@@ -82,7 +82,7 @@
     },
     "KO": {
       "market_value": 8505.08,
-      "pct_of_total": 2.828,
+      "pct_of_total": 2.827,
       "books": [
         "portfolio_2",
         "portfolio_3"
@@ -111,14 +111,14 @@
     },
     "T": {
       "market_value": 3042.75,
-      "pct_of_total": 1.012,
+      "pct_of_total": 1.011,
       "books": [
         "portfolio_2"
       ]
     },
     "XLE": {
       "market_value": 8101.8,
-      "pct_of_total": 2.694,
+      "pct_of_total": 2.693,
       "books": [
         "portfolio_2"
       ]
@@ -146,7 +146,7 @@
     },
     "XLV": {
       "market_value": 8522.51,
-      "pct_of_total": 2.834,
+      "pct_of_total": 2.833,
       "books": [
         "portfolio_2"
       ]
@@ -160,7 +160,7 @@
     },
     "ANET": {
       "market_value": 7367.62,
-      "pct_of_total": 2.45,
+      "pct_of_total": 2.449,
       "books": [
         "portfolio_3"
       ]
@@ -190,11 +190,11 @@
   "by_sector": {
     "Unknown": {
       "market_value": 126413.2,
-      "pct_of_total": 42.029
+      "pct_of_total": 42.023
     },
     "Tech": {
       "market_value": 7367.62,
-      "pct_of_total": 2.45
+      "pct_of_total": 2.449
     },
     "Consumer": {
       "market_value": 10650.78,
@@ -210,7 +210,7 @@
   "single_name_breaches": [],
   "sector_breaches": [],
   "cluster_exposure_pct": {
-    "mega_cap_tech_ai": 6.482
+    "mega_cap_tech_ai": 6.481
   },
   "max_cluster_exposure_pct": 55.0,
   "cluster_breaches": [],
