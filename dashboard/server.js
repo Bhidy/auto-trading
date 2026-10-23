@@ -304,15 +304,19 @@ const STATE_RAW_BASE = (process.env.DASHBOARD_STATE_RAW_BASE
 const STATE_TTL_MS = Number(process.env.DASHBOARD_STATE_TTL_MS || 60000);
 const stateOverlay = new Map();      // absPath -> parsed JSON from latest main
 const hotStatePaths = new Set();     // absPaths this instance has been asked to read
-const stateMeta = { lastRefresh: 0, lastOk: 0, files: 0, errors: 0, inflight: null };
+const STATE_FAIL_BACKOFF_MS = 5 * 60000;   // after a fully failed refresh, stop retrying for 5 min
+const stateMeta = { lastRefresh: 0, lastOk: 0, files: 0, errors: 0, inflight: null, backoffUntil: 0 };
 
 function overlayKey(filePath) {
     const rel = path.relative(ROOT_DIR, path.resolve(filePath));
     if (!rel || rel.startsWith('..') || path.isAbsolute(rel) || !rel.endsWith('.json')) return null;
+    // Journals are listed from the bundle (readdir), so overlaying individual
+    // journal files cannot surface new days — keep them out of the refresh set.
+    if (/(^|\/)journal\//.test(rel.split(path.sep).join('/'))) return null;
     return rel.split(path.sep).join('/');
 }
 
-function fetchRawJson(rel, timeoutMs = 3000) {
+function fetchRawJson(rel, timeoutMs = 2500) {
     return new Promise((resolve, reject) => {
         const req = https.get(STATE_RAW_BASE + rel.split('/').map(encodeURIComponent).join('/'),
             { timeout: timeoutMs, headers: { 'User-Agent': 'auto-trading-dashboard' } }, (r) => {
@@ -328,7 +332,8 @@ function fetchRawJson(rel, timeoutMs = 3000) {
 }
 
 async function refreshStateOverlay() {
-    if (!LIVE_STATE || Date.now() - stateMeta.lastRefresh < STATE_TTL_MS) return;
+    const now = Date.now();
+    if (!LIVE_STATE || now - stateMeta.lastRefresh < STATE_TTL_MS || now < stateMeta.backoffUntil) return;
     if (stateMeta.inflight) return stateMeta.inflight;
     stateMeta.inflight = (async () => {
         const targets = [...hotStatePaths].map(p => [p, overlayKey(p)]).filter(([, k]) => k);
@@ -340,24 +345,28 @@ async function refreshStateOverlay() {
         });
         stateMeta.lastRefresh = Date.now();
         if (ok) stateMeta.lastOk = stateMeta.lastRefresh;
+        if (!ok && errors) stateMeta.backoffUntil = stateMeta.lastRefresh + STATE_FAIL_BACKOFF_MS;
         stateMeta.files = ok;
         stateMeta.errors = errors;
     })().finally(() => { stateMeta.inflight = null; });
     return stateMeta.inflight;
 }
 
+// Stale-while-revalidate: only a cold instance (empty overlay) waits for the
+// first refresh; afterwards requests are served immediately from the current
+// overlay while the next refresh runs in the background (after-audit N8).
 app.use('/api', (req, res, next) => {
-    refreshStateOverlay().then(() => next(), () => next());
+    const p = refreshStateOverlay();
+    if (stateOverlay.size === 0 && p) return p.then(() => next(), () => next());
+    if (p) p.catch(() => {});
+    return next();
 });
 
 // Helper to read JSON files safely (latest committed state first, bundle second)
 function readJsonFile(filePath, defaultValue = {}) {
     if (LIVE_STATE && overlayKey(filePath)) {
         const abs = path.resolve(filePath);
-        if (!hotStatePaths.has(abs)) {
-            hotStatePaths.add(abs);
-            stateMeta.lastRefresh = 0;            // pick it up on the next request
-        }
+        if (!hotStatePaths.has(abs)) hotStatePaths.add(abs);   // joins the next scheduled refresh
         if (stateOverlay.has(abs)) return stateOverlay.get(abs);
     }
     try {
@@ -613,7 +622,8 @@ app.get('/api/intelligence/cross-portfolio', async (req, res) => {
     for (const id of Object.keys(portfoliosConfig)) {
         const d = await fetchPortfolioData(id);
         if (!d) continue;
-        const equity = d.account ? parseFloat(d.account.equity) : 100000;
+        const fbAcct = d.account ? null : stateAccountFallback(d.localState);
+        const equity = d.account ? parseFloat(d.account.equity) : (fbAcct ? fbAcct.equity : 0);
         totalEquity += equity;
         const positions = (d.positions && d.positions.length)
             ? d.positions.map(p => ({ symbol: p.symbol, mv: Math.abs(parseFloat(p.market_value || 0)) }))
@@ -735,12 +745,57 @@ function parsePositionLive(p, equity) {
     };
 }
 
+// Last committed account snapshot for a book whose live broker read failed.
+// Returns null when the state carries no equity (the book is then reported in
+// `missing_portfolios`, never filled with a made-up placeholder).
+function stateAccountFallback(localState) {
+    const ls = localState || {};
+    const acct = ls.account || {};
+    const equity = parseFloat(ls.equity ?? acct.portfolio_value ?? acct.equity);
+    if (!Number.isFinite(equity)) return null;
+    const cash = parseFloat(ls.cash ?? acct.cash);
+    const dayPnl = parseFloat(ls.day_pnl || 0) || 0;
+    const pos = ls.positions;
+    return {
+        equity,
+        cash: Number.isFinite(cash) ? cash : 0,
+        day_pnl: dayPnl,
+        last_equity: equity - dayPnl,
+        positions_count: Array.isArray(pos) ? pos.length : (pos && typeof pos === 'object') ? Object.keys(pos).length : (Number(pos) || 0),
+    };
+}
+
+// Is a recorded halt consistent with the account as measured now? A kill-switch
+// halt that records e.g. "73.94% drawdown" while equity is within a few % of its
+// reference is a phantom (the 2026-07-07 bad-equity latch). The engine clears such
+// halts only through the governed `halt_clear`; the dashboard must not present
+// them as a verified lockdown in the meantime (after-audit N6).
+function haltAssessment(localState, equity, initialCapital) {
+    const ls = localState || {};
+    if (!ls.halted) return { halt_verified: null, halt_measured_drawdown_pct: null, halt_note: null };
+    const ref = Math.max(Number(initialCapital) || 100000, parseFloat(ls.peak_equity) || 0);
+    const eq = parseFloat(equity);
+    const measured = Number.isFinite(eq) && ref > 0 ? Math.max(0, (ref - eq) / ref * 100) : null;
+    const m = /Kill switch:\s*([\d.]+)%/i.exec(ls.halt_reason || '');
+    const recorded = m ? parseFloat(m[1]) : null;
+    if (ls.halt_verified === false) {
+        return { halt_verified: false, halt_measured_drawdown_pct: measured,
+                 halt_note: ls.halt_unverified_reason || 'Halt has no recorded evidence; governed review pending.' };
+    }
+    if (recorded !== null && measured !== null && recorded - measured > 5) {
+        return { halt_verified: false, halt_measured_drawdown_pct: Math.round(measured * 100) / 100,
+                 halt_note: `Recorded ${recorded.toFixed(2)}% drawdown contradicts measured ${measured.toFixed(2)}%; governed clear pending.` };
+    }
+    return { halt_verified: true, halt_measured_drawdown_pct: measured === null ? null : Math.round(measured * 100) / 100, halt_note: null };
+}
+
 // 2. Fetch live and local status for a portfolio card
 app.get('/api/portfolio/all/summary', async (req, res) => {
     loadConfig();
     let totalEquity = 0, totalCash = 0, totalDayPnL = 0, totalPositions = 0;
     const labels = [];
     const missingBooks = [];
+    const staleBooks = [];
     const haltedBooks = [];
     let anyLive = false;
     for (const id of Object.keys(portfoliosConfig)) {
@@ -757,15 +812,16 @@ app.get('/api/portfolio/all/summary', async (req, res) => {
         } else {
             // Live broker unavailable: use the last committed state, never a made-up
             // $100K placeholder. A book with no recorded equity is reported as missing.
-            const localState = d.localState || {};
-            const acct = localState.account || {};
-            const eq = parseFloat(localState.equity ?? acct.portfolio_value ?? acct.equity);
-            const cash = parseFloat(localState.cash ?? acct.cash);
-            if (Number.isFinite(eq)) totalEquity += eq; else missingBooks.push(id);
-            if (Number.isFinite(cash)) totalCash += cash;
-            totalDayPnL += parseFloat(localState.day_pnl || 0) || 0;
-            const pos = localState.positions;
-            totalPositions += Array.isArray(pos) ? pos.length : (pos && typeof pos === 'object') ? Object.keys(pos).length : (Number(pos) || 0);
+            const fb = stateAccountFallback(d.localState);
+            if (fb) {
+                totalEquity += fb.equity;
+                totalCash += fb.cash;
+                totalDayPnL += fb.day_pnl;
+                totalPositions += fb.positions_count;
+                staleBooks.push(id);
+            } else {
+                missingBooks.push(id);
+            }
         }
         if (d.localState && d.localState.halted) haltedBooks.push(`${d.cfg.label}: ${d.localState.halt_reason || 'halted'}`);
     }
@@ -786,6 +842,7 @@ app.get('/api/portfolio/all/summary', async (req, res) => {
         halted: haltedBooks.length > 0,
         halt_reason: haltedBooks.length ? haltedBooks.join(' | ') : null,
         missing_portfolios: missingBooks,
+        stale_portfolios: staleBooks,
         live_connected: anyLive
     });
 });
@@ -803,6 +860,7 @@ app.get('/api/portfolio/all/details', async (req, res) => {
     let aggregatedStrategyParams = {};
     let aggregatedLearningReports = [];
     const missingDetailBooks = [];
+    const staleDetailBooks = [];
     const haltedDetailBooks = [];
 
     for (const id of Object.keys(portfoliosConfig)) {
@@ -828,8 +886,19 @@ app.get('/api/portfolio/all/details', async (req, res) => {
                 aggregatedPositions[key] = parsed;
             });
         } else {
-            // No live account: do not invent $100K/$200K placeholders (honesty rule).
-            missingDetailBooks.push(id);
+            // No live account: fall back to the last committed snapshot (marked stale),
+            // never to invented $100K/$200K placeholders and never to $0 (which showed
+            // a -100% "loss" for the whole book — after-audit N1).
+            const fb = stateAccountFallback(d.localState);
+            if (fb) {
+                totalEquity += fb.equity;
+                totalCash += fb.cash;
+                totalLastEquity += fb.last_equity;
+                totalDayPnL += fb.day_pnl;
+                staleDetailBooks.push(id);
+            } else {
+                missingDetailBooks.push(id);
+            }
         }
         if (d.localState && d.localState.halted) haltedDetailBooks.push(`${d.cfg.label}: ${d.localState.halt_reason || 'halted'}`);
         if (d.orders && d.orders.length) aggregatedOrders = aggregatedOrders.concat(d.orders);
@@ -890,6 +959,7 @@ app.get('/api/portfolio/all/details', async (req, res) => {
         halted: haltedDetailBooks.length > 0,
         halt_reason: haltedDetailBooks.length ? haltedDetailBooks.join(' | ') : null,
         missing_portfolios: missingDetailBooks,
+        stale_portfolios: staleDetailBooks,
         account: {
             equity: totalEquity,
             cash: totalCash,
@@ -961,22 +1031,14 @@ app.get('/api/portfolio/all/equity-history', async (req, res) => {
         } catch (e) {}
     }
 
-    // For dates where fewer portfolios contributed, add $100K per missing portfolio
+    // A combined point is only real when EVERY book reported that date. Partial
+    // dates are dropped — never padded with a $100K placeholder, and an empty
+    // result is reported as unavailable, never seeded (after-audit N2).
     for (const d of Object.keys(combinedHistory)) {
-        const missing = portfolioCount - (dateContributors[d] || 0);
-        if (missing > 0) combinedHistory[d] += missing * 100000;
+        if ((dateContributors[d] || 0) < portfolioCount) delete combinedHistory[d];
     }
-
     if (Object.keys(combinedHistory).length === 0) {
-        const seedDate = new Date(); seedDate.setDate(seedDate.getDate() - 30);
-        combinedHistory[seedDate.toISOString().slice(0, 10)] = baseCapital;
-        let todayEq = 0;
-        for (const id of Object.keys(portfoliosConfig)) {
-            const paths = getPortfolioPaths(id);
-            const localState = readJsonFile(paths.state, {});
-            todayEq += parseFloat(localState.equity || 100000);
-        }
-        combinedHistory[new Date().toISOString().slice(0, 10)] = todayEq;
+        return res.json({ source: 'unavailable', unavailable: true, base_value: baseCapital, history: [] });
     }
 
     const dates = Object.keys(combinedHistory).sort();
@@ -1016,8 +1078,9 @@ app.get('/api/portfolio/:id/summary', async (req, res) => {
     const paths = getPortfolioPaths(id);
     const localState = readJsonFile(paths.state, {});
 
-    let liveEquity = 100000;
-    let liveCash = 100000;
+    let liveEquity = null;
+    let liveCash = null;
+    let isStale = false;
     let liveDayPnL = 0;
     let liveDayPnLPct = 0;
     let livePositionsCount = 0;
@@ -1040,26 +1103,15 @@ app.get('/api/portfolio/:id/summary', async (req, res) => {
         isLiveConnected = true;
     } catch (e) {
         console.warn(`[Summary] Live Alpaca request failed for ${id}, falling back to local files:`, e.message);
-        // Local state fallback
-        if (id === 'portfolio_1') {
-            liveEquity = localState.equity || 100000;
-            liveCash = localState.cash || 100000;
-            liveDayPnL = localState.day_pnl || 0;
-            liveDayPnLPct = (localState.day_pnl_pct || 0) * 100;
-            livePositionsCount = localState.positions ? Object.keys(localState.positions).length : 0;
-        } else if (id === 'portfolio_2') {
-            const acct = localState.account || {};
-            liveEquity = parseFloat(acct.portfolio_value || acct.equity || 100000);
-            liveCash = parseFloat(acct.cash || 100000);
-            liveDayPnLPct = parseFloat(acct.daily_pnl_pct || 0);
-            liveDayPnL = liveEquity * (liveDayPnLPct / 100);
-            livePositionsCount = localState.positions ? localState.positions.length : 0;
-        } else if (id === 'portfolio_3') {
-            liveEquity = localState.equity || 100000;
-            liveCash = localState.cash || 100000;
-            livePositionsCount = localState.positions || 0;
-            liveDayPnL = 0; // default local
-            liveDayPnLPct = 0;
+        // Last committed snapshot (marked stale); null when none — never a $100K placeholder.
+        const fb = stateAccountFallback(localState);
+        if (fb) {
+            liveEquity = fb.equity;
+            liveCash = fb.cash;
+            liveDayPnL = fb.day_pnl;
+            liveDayPnLPct = fb.last_equity > 0 ? (fb.day_pnl / fb.last_equity) * 100 : 0;
+            livePositionsCount = fb.positions_count;
+            isStale = true;
         }
     }
 
@@ -1075,7 +1127,9 @@ app.get('/api/portfolio/:id/summary', async (req, res) => {
         positions_count: livePositionsCount,
         halted: isHalted,
         halt_reason: haltReason,
-        live_connected: isLiveConnected
+        ...haltAssessment(localState, liveEquity, cfg.initial_capital),
+        live_connected: isLiveConnected,
+        stale: isStale
     });
 });
 
@@ -1149,7 +1203,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
     } else {
         // Fallback mapping of positions from local json
         if (id === 'portfolio_1' && localState.positions) {
-            const totalEq = localState.equity || 100000;
+            const totalEq = parseFloat(localState.equity) || 0;
             positionsList = Object.entries(localState.positions).map(([sym, p]) => {
                 const qty = p.qty;
                 const entry = p.avg_price;
@@ -1170,7 +1224,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                 };
             });
         } else if (id === 'portfolio_2' && localState.positions) {
-            const totalEq = parseFloat(localState.account?.portfolio_value || 100000);
+            const totalEq = parseFloat(localState.account?.portfolio_value) || 0;
             positionsList = (localState.positions || []).map(p => {
                 const qty = parseFloat(p.qty);
                 const entry = parseFloat(p.avg_entry);
@@ -1204,7 +1258,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
                 console.error("Error reading portfolio_3 journal files:", e);
             }
             const lastJournal = journals[journals.length - 1] || {};
-            const totalEq = localState.equity || 100000;
+            const totalEq = parseFloat(localState.equity) || 0;
             positionsList = (lastJournal.positions || []).map(p => {
                 const qty = parseFloat(p.qty);
                 const entry = parseFloat(p.entry);
@@ -1235,6 +1289,7 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
         live_connected: isLiveConnected,
         halted: localState.halted || false,
         halt_reason: localState.halt_reason || null,
+        ...haltAssessment(localState, isLiveConnected ? parseFloat(liveAccount.equity) : (stateAccountFallback(localState) || {}).equity, cfg.initial_capital),
         account: isLiveConnected ? {
             equity: parseFloat(liveAccount.equity),
             cash: parseFloat(liveAccount.cash),
@@ -1260,37 +1315,18 @@ app.get('/api/portfolio/:id/details', async (req, res) => {
             options_level: parseInt(liveAccount.options_approved_level || 0),
             created_at: liveAccount.created_at || null
         } : (() => {
-            if (id === 'portfolio_1') {
-                return {
-                    equity: parseFloat(localState.equity || 100000),
-                    cash: parseFloat(localState.cash || 100000),
-                    buying_power: parseFloat(localState.cash || 100000) * 2,
-                    day_pnl: parseFloat(localState.day_pnl || 0),
-                    day_pnl_pct: parseFloat(localState.day_pnl_pct || 0) * 100
-                };
-            } else if (id === 'portfolio_2') {
-                const acct = localState.account || {};
-                const eq = parseFloat(acct.portfolio_value || acct.equity || 100000);
-                const cs = parseFloat(acct.cash || 100000);
-                const pct = parseFloat(acct.daily_pnl_pct || 0);
-                return {
-                    equity: eq,
-                    cash: cs,
-                    buying_power: parseFloat(acct.buying_power || cs * 2),
-                    day_pnl: eq * (pct / 100),
-                    day_pnl_pct: pct
-                };
-            } else { // portfolio_3
-                // Honesty rule: when Alpaca is unreachable, fall back ONLY to real
-                // committed state — never fabricated literals (audit 2026-06-18).
-                return {
-                    equity: parseFloat(localState.equity || 100000),
-                    cash: parseFloat(localState.cash || 100000),
-                    buying_power: parseFloat(localState.cash || 100000) * 2,
-                    day_pnl: parseFloat(localState.day_pnl || 0),
-                    day_pnl_pct: parseFloat(localState.day_pnl_pct || 0) * 100
-                };
-            }
+            // Offline: last committed snapshot, flagged stale; null when the state has
+            // no equity — never $100K/$200K placeholders (after-audit N1/N7).
+            const fb = stateAccountFallback(localState);
+            return fb ? {
+                equity: fb.equity,
+                cash: fb.cash,
+                buying_power: null,
+                day_pnl: fb.day_pnl,
+                day_pnl_pct: fb.last_equity > 0 ? (fb.day_pnl / fb.last_equity) * 100 : 0,
+                last_equity: fb.last_equity,
+                stale: true
+            } : null;
         })(),
         positions: positionsList,
         orders: liveOrders,
@@ -1451,7 +1487,13 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
         }
     }
 
-    // Fallback: parse journal files
+    // Fallback: parse journal files. Journals hold ONE end-of-day equity per
+    // session, so they can never answer an intraday request (a 1D chart built from
+    // months of daily points was captioned "Today vs previous close" — N3).
+    const isIntraday = period === '1D' || !/^1D(ay)?$/.test(timeframe);
+    if (isIntraday) {
+        return res.json({ source: 'unavailable', unavailable: true, reason: 'intraday history unavailable', base_value: 100000, history: [] });
+    }
     const history = [];
     try {
         if (fs.existsSync(paths.journalDir)) {
@@ -1465,18 +1507,23 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
                 const dateStr = file.replace('.json', '');
 
                 if (Array.isArray(dayEntries) && dayEntries.length > 0) {
-                    let equityVal = 100000;
+                    // Only a recorded equity becomes a point — a journal day without
+                    // one is skipped, never defaulted to $100K (honesty rule).
+                    let equityVal = null;
                     if (id === 'portfolio_1') {
                         const eod = dayEntries.find(e => e.mode === 'end-of-day') || dayEntries[dayEntries.length - 1];
-                        equityVal = eod.account?.equity || eod.account?.ending_equity || 100000;
+                        equityVal = eod.account?.equity ?? eod.account?.ending_equity;
                     } else if (id === 'portfolio_2') {
                         const entry = dayEntries[dayEntries.length - 1] || {};
-                        equityVal = parseFloat(entry.account_snapshot?.equity || 100000);
+                        equityVal = entry.account_snapshot?.equity;
                     } else if (id === 'portfolio_3') {
                         const entry = dayEntries[dayEntries.length - 1] || {};
-                        equityVal = entry.audit?.equity || 100000;
+                        equityVal = entry.audit?.equity;
                     }
-                    history.push({ date: dateStr, equity: equityVal, profit_loss: 0, profit_loss_pct: 0 });
+                    const eqNum = parseFloat(equityVal);
+                    if (Number.isFinite(eqNum) && eqNum > 0) {
+                        history.push({ date: dateStr, equity: eqNum, profit_loss: eqNum - 100000, profit_loss_pct: (eqNum - 100000) / 1000 });
+                    }
                 }
             }
         }
@@ -1485,19 +1532,7 @@ app.get('/api/portfolio/:id/equity-history', async (req, res) => {
     }
 
     if (history.length === 0) {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        let currentEq = 100000;
-        try {
-            const account = await alpacaRequest('GET', `${cfg.base_url}/v2/account`, cfg.api_key, cfg.api_secret);
-            currentEq = parseFloat(account.equity);
-        } catch (e) {
-            const localState = readJsonFile(paths.state, {});
-            currentEq = localState.equity || 100000;
-        }
-        const seedDate = new Date();
-        seedDate.setDate(seedDate.getDate() - 30);
-        history.push({ date: seedDate.toISOString().slice(0, 10), equity: 100000, profit_loss: 0, profit_loss_pct: 0 });
-        history.push({ date: todayStr, equity: currentEq, profit_loss: currentEq - 100000, profit_loss_pct: ((currentEq - 100000) / 100000) * 100 });
+        return res.json({ source: 'unavailable', unavailable: true, base_value: 100000, history: [] });
     }
 
     let finalHistory = history;

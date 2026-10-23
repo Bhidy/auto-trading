@@ -111,3 +111,46 @@ test('unknown API routes return JSON 404', async () => {
     assert.equal(r.status, 404);
     assert.deepEqual(JSON.parse(r.body), { error: 'Not found.' });
 });
+
+// ── Honesty rule regressions (after-audit 2026-10-23 N1/N2/N3/N6) ─────────────
+// Offline (no broker keys): every figure must come from committed state or be
+// reported unavailable — never a $100K/$0 placeholder or an invented series.
+
+test('N1: combined details never collapse to $0 / -100% when the broker is offline', async () => {
+    const r = await request('GET', '/api/portfolio/all/details');
+    assert.equal(r.status, 200);
+    const d = JSON.parse(r.body);
+    const books = (d.stale_portfolios || []).length + (d.missing_portfolios || []).length;
+    assert.equal(books, 3, 'every offline book is reported stale or missing');
+    if ((d.stale_portfolios || []).length) assert.ok(d.account.equity > 0, 'stale books contribute their committed equity');
+});
+
+test('N2: combined equity history is never padded or seeded', async () => {
+    const r = await request('GET', '/api/portfolio/all/equity-history?period=1M&timeframe=1D');
+    const d = JSON.parse(r.body);
+    assert.ok(d.unavailable === true || d.history.length === 0 || d.source !== 'alpaca' || d.history.every(p => p.equity > 0));
+    if (d.unavailable) assert.deepEqual(d.history, []);
+});
+
+test('N3: intraday equity history is unavailable, not daily points relabelled', async () => {
+    const r = await request('GET', '/api/portfolio/portfolio_1/equity-history?period=1D&timeframe=5Min');
+    const d = JSON.parse(r.body);
+    assert.equal(d.unavailable, true);
+    assert.deepEqual(d.history, []);
+});
+
+test('N6: summary exposes halt verification fields', async () => {
+    const r = await request('GET', '/api/portfolio/portfolio_1/summary');
+    const d = JSON.parse(r.body);
+    for (const k of ['halt_verified', 'halt_measured_drawdown_pct', 'halt_note', 'stale']) assert.ok(k in d, `missing ${k}`);
+    if (d.halted && /Kill switch: 73\.94%/.test(d.halt_reason || '')) {
+        assert.equal(d.halt_verified, false, 'phantom 73.94% halt must not present as verified');
+    }
+});
+
+test('no $100K placeholder equity anywhere offline', async () => {
+    for (const id of ['portfolio_1', 'portfolio_2', 'portfolio_3']) {
+        const d = JSON.parse((await request('GET', `/api/portfolio/${id}/summary`)).body);
+        assert.notEqual(d.equity, 100000, `${id} summary shows a placeholder`);
+    }
+});

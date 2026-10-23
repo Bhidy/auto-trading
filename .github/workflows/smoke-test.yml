@@ -165,11 +165,15 @@ jobs:
               print('FAIL: live state overlay not serving fresh state'); sys.exit(1)
           " || FAILURES=$((FAILURES + 1))
 
-          echo "--- Mutation auth gate (no token => 401/503, never reaches a handler) ---"
-          for P in /api/portfolio/portfolio_1/order /API/portfolio/portfolio_1/order /Api/portfolio/portfolio_1/positions/close-all; do
+          echo "--- Mutation auth gate (no token => 401/503 before routing) ---"
+          # Zero-risk probe: these paths match NO handler, so even if the gate
+          # ever regressed nothing could execute — the request would just 404,
+          # which this check treats as a FAILURE (the gate must answer first).
+          # Never probe real order/close endpoints from CI.
+          for P in /api/__auth_probe__ /API/__auth_probe__ /Api/portfolio/__auth_probe__/x; do
             CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$PROD_URL$P" -H 'content-type: application/json' -d '{}')
             echo "POST $P -> $CODE"
-            case "$CODE" in 401|503|400|404) ;; *) echo "FAIL: unauthenticated mutation reached $P ($CODE)"; FAILURES=$((FAILURES + 1));; esac
+            case "$CODE" in 401|503) ;; *) echo "FAIL: auth gate did not reject $P first ($CODE)"; FAILURES=$((FAILURES + 1));; esac
           done
 
           echo "=== SMOKE TEST: $FAILURES failures ==="
