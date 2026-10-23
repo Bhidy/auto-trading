@@ -1,0 +1,433 @@
+{
+  "week": "2026-W42",
+  "timestamp": "2026-10-23T23:17:58.083168+00:00",
+  "account": {
+    "equity": 97505.42,
+    "cash": 31670.94,
+    "portfolio_value": 97505.42
+  },
+  "performance": {
+    "overall": {
+      "total_trades": 86,
+      "wins": 28,
+      "losses": 58,
+      "win_rate": 0.326,
+      "avg_pnl_pct": -2.22,
+      "avg_win_pct": 1.69,
+      "avg_loss_pct": -4.11,
+      "win_loss_ratio": 0.41,
+      "max_win_pct": 7.77,
+      "max_loss_pct": -30.65,
+      "expectancy": -115.03,
+      "total_pnl": -8355.64,
+      "partial_trims_excluded": 6,
+      "profit_factor": 0.35,
+      "per_trade_sharpe": -0.45,
+      "sharpe_estimate": -0.45
+    },
+    "last_7d": {
+      "total_trades": 3,
+      "wins": 0,
+      "losses": 3,
+      "win_rate": 0.0,
+      "avg_pnl_pct": -18.59,
+      "avg_win_pct": 0,
+      "avg_loss_pct": -18.59,
+      "win_loss_ratio": 0.0,
+      "max_win_pct": -9.7,
+      "max_loss_pct": -30.65,
+      "expectancy": -955.58,
+      "total_pnl": -1988.66,
+      "partial_trims_excluded": 2,
+      "profit_factor": 0.31,
+      "per_trade_sharpe": -1.72,
+      "sharpe_estimate": -1.72
+    },
+    "last_30d": {
+      "total_trades": 3,
+      "wins": 0,
+      "losses": 3,
+      "win_rate": 0.0,
+      "avg_pnl_pct": -18.59,
+      "avg_win_pct": 0,
+      "avg_loss_pct": -18.59,
+      "win_loss_ratio": 0.0,
+      "max_win_pct": -9.7,
+      "max_loss_pct": -30.65,
+      "expectancy": -955.58,
+      "total_pnl": -1329.77,
+      "partial_trims_excluded": 4,
+      "profit_factor": 0.54,
+      "per_trade_sharpe": -1.72,
+      "sharpe_estimate": -1.72
+    },
+    "by_bucket": {
+      "momentum": {
+        "trades": 3,
+        "win_rate": 0.0,
+        "total_pnl": -2866.74,
+        "avg_pnl_pct": -18.59
+      },
+      "defensive": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -46.39,
+        "avg_pnl_pct": -0.23
+      },
+      "sector_momentum": {
+        "trades": 20,
+        "win_rate": 0.4,
+        "total_pnl": -541.44,
+        "avg_pnl_pct": -0.89
+      },
+      "unknown": {
+        "trades": 10,
+        "win_rate": 0.1,
+        "total_pnl": -1951.7,
+        "avg_pnl_pct": -4.45
+      },
+      "aggressive_growth": {
+        "trades": 23,
+        "win_rate": 0.261,
+        "total_pnl": -3993.87,
+        "avg_pnl_pct": -2.84
+      },
+      "core_equity": {
+        "trades": 29,
+        "win_rate": 0.448,
+        "total_pnl": -492.47,
+        "avg_pnl_pct": -0.26
+      }
+    },
+    "by_symbol": {
+      "GS": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -16.67,
+        "avg_pnl_pct": -0.32
+      },
+      "XLY": {
+        "trades": 5,
+        "win_rate": 0.2,
+        "total_pnl": -297.66,
+        "avg_pnl_pct": -1.31
+      },
+      "XLE": {
+        "trades": 4,
+        "win_rate": 0.25,
+        "total_pnl": -674.24,
+        "avg_pnl_pct": -4.03
+      },
+      "GLD": {
+        "trades": 3,
+        "win_rate": 0.667,
+        "total_pnl": -25.34,
+        "avg_pnl_pct": 0.09
+      },
+      "MS": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -1.35,
+        "avg_pnl_pct": -0.03
+      },
+      "MU": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -370.73,
+        "avg_pnl_pct": -7.44
+      },
+      "XLK": {
+        "trades": 11,
+        "win_rate": 0.455,
+        "total_pnl": 15.66,
+        "avg_pnl_pct": -0.54
+      },
+      "NVDA": {
+        "trades": 3,
+        "win_rate": 0.333,
+        "total_pnl": -753.73,
+        "avg_pnl_pct": -3.34
+      },
+      "SHY": {
+        "trades": 2,
+        "win_rate": 0.0,
+        "total_pnl": -24.49,
+        "avg_pnl_pct": -0.18
+      },
+      "XLI": {
+        "trades": 3,
+        "win_rate": 0.667,
+        "total_pnl": 574.99,
+        "avg_pnl_pct": 2.18
+      },
+      "QQQ": {
+        "trades": 8,
+        "win_rate": 0.5,
+        "total_pnl": -480.5,
+        "avg_pnl_pct": -1.13
+      },
+      "AMD": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -371.02,
+        "avg_pnl_pct": -7.33
+      },
+      "LRCX": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -566.24,
+        "avg_pnl_pct": -10.45
+      },
+      "INTC": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -638.73,
+        "avg_pnl_pct": -11.84
+      },
+      "AMZN": {
+        "trades": 7,
+        "win_rate": 0.143,
+        "total_pnl": -1074.2,
+        "avg_pnl_pct": -2.6
+      },
+      "GOOGL": {
+        "trades": 6,
+        "win_rate": 0.0,
+        "total_pnl": -1684.33,
+        "avg_pnl_pct": -4.8
+      },
+      "TLT": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -202.04,
+        "avg_pnl_pct": -1.89
+      },
+      "MRK": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -147.15,
+        "avg_pnl_pct": -2.76
+      },
+      "AAPL": {
+        "trades": 3,
+        "win_rate": 0.667,
+        "total_pnl": -361.96,
+        "avg_pnl_pct": -1.48
+      },
+      "TSLA": {
+        "trades": 4,
+        "win_rate": 0.25,
+        "total_pnl": -689.66,
+        "avg_pnl_pct": -3.59
+      },
+      "C": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -836.52,
+        "avg_pnl_pct": -15.42
+      },
+      "DIA": {
+        "trades": 2,
+        "win_rate": 1.0,
+        "total_pnl": 254.47,
+        "avg_pnl_pct": 1.41
+      },
+      "IWM": {
+        "trades": 3,
+        "win_rate": 1.0,
+        "total_pnl": 458.41,
+        "avg_pnl_pct": 3.72
+      },
+      "BIL": {
+        "trades": 4,
+        "win_rate": 0.0,
+        "total_pnl": -62.59,
+        "avg_pnl_pct": -0.16
+      },
+      "SPY": {
+        "trades": 7,
+        "win_rate": 0.286,
+        "total_pnl": -456.78,
+        "avg_pnl_pct": -1.44
+      },
+      "MSFT": {
+        "trades": 1,
+        "win_rate": 1.0,
+        "total_pnl": 48.94,
+        "avg_pnl_pct": 0.79
+      },
+      "CAT": {
+        "trades": 1,
+        "win_rate": 0.0,
+        "total_pnl": -1509.15,
+        "avg_pnl_pct": -30.65
+      }
+    }
+  },
+  "market_regime": "BULL",
+  "rebalancing": {
+    "current_allocation": {
+      "core_equity": 0.0,
+      "aggressive_growth": 0.0,
+      "sector_momentum": 0.0,
+      "crypto": 0.0,
+      "defensive": 0.0,
+      "cash": 100.0
+    },
+    "adjusted_targets": {
+      "core_equity": 20.8,
+      "aggressive_growth": 26.0,
+      "sector_momentum": 15.6,
+      "crypto": 10.4,
+      "penny_lab": 5.2,
+      "defensive_cash": 16.7,
+      "options_testing": 5.2
+    },
+    "regime": "BULL",
+    "rebalance_actions": [
+      {
+        "bucket": "core_equity",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 20.8,
+        "drift_pct": 20.8,
+        "dollar_amount": 20313.63
+      },
+      {
+        "bucket": "aggressive_growth",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 26.0,
+        "drift_pct": 26.0,
+        "dollar_amount": 25392.04
+      },
+      {
+        "bucket": "sector_momentum",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 15.6,
+        "drift_pct": 15.6,
+        "dollar_amount": 15235.22
+      },
+      {
+        "bucket": "crypto",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 10.4,
+        "drift_pct": 10.4,
+        "dollar_amount": 10156.81
+      },
+      {
+        "bucket": "penny_lab",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 5.2,
+        "drift_pct": 5.2,
+        "dollar_amount": 5078.41
+      },
+      {
+        "bucket": "defensive_cash",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 16.7,
+        "drift_pct": 16.7,
+        "dollar_amount": 16250.9
+      },
+      {
+        "bucket": "options_testing",
+        "action": "INCREASE",
+        "current_pct": 0.0,
+        "target_pct": 5.2,
+        "drift_pct": 5.2,
+        "dollar_amount": 5078.41
+      }
+    ],
+    "hrp_advisory": {
+      "enabled": false,
+      "weights": null,
+      "note": "HRP tilts OFF (set HRP_TILTS_ENABLED=1) \u2014 no effect on allocation."
+    }
+  },
+  "positions": [
+    {
+      "symbol": "AMAT",
+      "qty": "17",
+      "market_value": "6405.09",
+      "unrealized_pl": "-5.78",
+      "unrealized_plpc": "-0.0009",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "AMD",
+      "qty": "13",
+      "market_value": "6696.5977",
+      "unrealized_pl": "-21.2823",
+      "unrealized_plpc": "-0.00317",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "DE",
+      "qty": "10",
+      "market_value": "6461.5",
+      "unrealized_pl": "98.6",
+      "unrealized_plpc": "0.0155",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "INTC",
+      "qty": "77",
+      "market_value": "6652.8",
+      "unrealized_pl": "1.599983",
+      "unrealized_plpc": "0.00024",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "JNJ",
+      "qty": "25",
+      "market_value": "6595.25",
+      "unrealized_pl": "-8.25",
+      "unrealized_plpc": "-0.00125",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "LLY",
+      "qty": "5",
+      "market_value": "6389.4",
+      "unrealized_pl": "-23.15",
+      "unrealized_plpc": "-0.00361",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "MPC",
+      "qty": "15",
+      "market_value": "6855",
+      "unrealized_pl": "2781.045",
+      "unrealized_plpc": "0.68264",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "MRK",
+      "qty": "46",
+      "market_value": "6688.4",
+      "unrealized_pl": "51.58003",
+      "unrealized_plpc": "0.00777",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "PSX",
+      "qty": "24",
+      "market_value": "6796.32",
+      "unrealized_pl": "2504.64",
+      "unrealized_plpc": "0.5836",
+      "bucket": "unknown"
+    },
+    {
+      "symbol": "SLB",
+      "qty": "118",
+      "market_value": "6294.12",
+      "unrealized_pl": "898.479966",
+      "unrealized_plpc": "0.16652",
+      "bucket": "unknown"
+    }
+  ]
+}
