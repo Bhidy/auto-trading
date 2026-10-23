@@ -240,7 +240,9 @@
                     costBasis: p.cost_basis || (p.quantity * p.avgCost),
                     unrealizedIntradayPl: p.unrealized_intraday_pl || 0,
                     unrealizedIntradayPlpc: p.unrealized_intraday_plpc || 0,
-                    exchange: p.exchange || ''
+                    exchange: p.exchange || '',
+                    // Strategy sleeve tag from the API (P3 allocator forward test) or null.
+                    sleeve: p.sleeve || null
                 };
             });
             

@@ -474,13 +474,13 @@
 }
 .pf-donut-center span:first-child { font-family: var(--pf-mono); font-size: .9rem; font-weight: 700; }
 .pf-donut-center span:last-child  { font-size: .62rem; color: var(--muted); }
-.pf-donut-legend { flex: 1; display: flex; flex-direction: column; gap: .35rem; }
+.pf-donut-legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .35rem; }
 .pf-legend-row {
     display: flex; align-items: center; gap: .5rem;
     font-size: .75rem;
 }
 .pf-legend-dot { width: .55rem; height: .55rem; border-radius: 50%; flex-shrink: 0; }
-.pf-legend-name { flex: 1; color: var(--muted); }
+.pf-legend-name { flex: 1; min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pf-legend-pct { font-family: var(--pf-mono); font-size: .72rem; font-weight: 600; }
 
 /* Sector bars */
@@ -2033,7 +2033,7 @@ body {
    typical MacBook widths (1280px) without relying on the CSS zoom rule. */
 @media (max-width: 880px) {
     .pf-terminal-layout { grid-template-columns: 1fr; }
-    .pf-hub-ov { grid-template-columns: 1fr; }
+    .pf-hub-ov { grid-template-columns: minmax(0, 1fr); }
     .pf-hub-risk-top { grid-template-columns: 1fr; }
     .pf-intel-row--health { grid-template-columns: 1fr; }
     .pf-intel-row--trio  { grid-template-columns: 1fr; }
@@ -2139,3 +2139,36 @@ html[dir="rtl"] .pf-kpi--status .pf-kpi__sub { unicode-bidi: normal; text-align:
    glyph signals the explanatory tooltip on the whole KPI cell. */
 .pf-kpi[title] { cursor: help; }
 .pf-kpi__info { font-size: .7rem; opacity: .7; text-transform: none; letter-spacing: 0; }
+
+/* ── P3 allocator forward-test sleeve: position badge + status card ───── */
+.pf-sleeve-badge {
+    display: inline-block; line-height: 1; margin-inline-start: .35rem;
+    padding: .15rem .45rem; border-radius: 999px;
+    font-family: var(--pf-mono); font-size: .58rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+    background: var(--teal-soft); color: var(--teal); border: 1px solid rgba(229,90,31,.22);
+}
+.pf-alloc-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: .85rem 1rem; margin: 0;
+}
+.pf-alloc-grid > div { min-width: 0; }
+@media (max-width: 600px) { .pf-alloc-grid > .pf-alloc-wide { grid-column: 1 / -1; } }
+.pf-alloc-grid dt {
+    font-family: var(--pf-mono); font-size: .6rem; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--muted); margin-bottom: .3rem;
+}
+.pf-alloc-grid dd { margin: 0; font-size: .82rem; color: var(--ink); overflow-wrap: anywhere; }
+.pf-alloc-dim { color: var(--muted); font-size: .74rem; }
+.pf-alloc-empty { color: var(--muted); font-size: .82rem; }
+.pf-alloc-warn {
+    margin-top: .9rem; padding: .55rem .8rem; border-radius: .6rem; font-size: .78rem;
+    background: var(--teal-soft); color: var(--ink); border: 1px solid rgba(229,90,31,.22);
+}
+
+/* Phones: stack the allocation donut above its legend so long asset-class names
+   ("International Equity", "Cash & T-Bills") never clip the card (audit 2026-10-23). */
+@media (max-width: 480px) {
+    .pf-donut-wrap { flex-direction: column; align-items: stretch; }
+    .pf-donut-canvas-wrap { align-self: center; }
+}

@@ -328,6 +328,48 @@
       </div>`;
   }
 
+  // ---- P3 allocator forward test (allocator_state.json, read-only) ----
+  function renderAllocator(a, show) {
+    const card = $('cardAllocator');
+    if (!card) return;
+    card.hidden = !show;
+    if (!show) return;
+    const status = $('allocStatus');
+    if (!a || !a.available) {
+      setPill(status, 'muted', 'n/a');
+      $('allocBody').innerHTML = '<div class="empty-note">No allocator state recorded yet.</div>';
+      return;
+    }
+    const st = a.status ? a.status.replace(/_/g, ' ') : null;
+    setPill(status, a.buys_blocked ? 'warn' : (st ? 'ok' : 'muted'), st || 'no run yet');
+    const w100 = (v) => (v === null || v === undefined) ? null : v * 100;
+    const ord = a.last_run_orders || {};
+    const r = a.residual_tbill;
+    const residual = !r ? 'Not recorded in state'
+      : (r.added && r.added.length
+        ? r.added.map(x => `${esc(x.symbol)} <span class="mono">${pct(w100(x.weight))}</span>`).join(' · ')
+          + (r.cash_residual !== null ? ` <span class="mono" style="color:var(--muted)">· cash ${pct(w100(r.cash_residual))}</span>` : '')
+        : esc(r.rule || 'No residual added'));
+    const targets = (a.targets || []).map(t =>
+      `<span class="reason-chip">${esc(t.symbol)} · ${pct(w100(t.target_w), 1)}</span>`).join('');
+    $('allocBody').innerHTML = `
+      <div class="metric-row">
+        <div class="metric"><div class="label">Month</div><div class="value state">${esc(a.targets_month || '—')}</div>
+          <div class="mono" style="font-size:.62rem;color:var(--muted);margin-top:.3rem">${a.targets_frozen_at ? 'targets frozen ' + esc(a.targets_frozen_at) : 'targets not frozen'}</div></div>
+        <div class="metric"><div class="label">Cap shortfall</div><div class="value">${fmtNum(a.cap_shortfall_pct, 1)}<span class="unit">%</span></div></div>
+        <div class="metric"><div class="label">Last run orders</div><div class="value">${ord.filled || 0}<span class="unit">/${ord.count || 0} filled</span></div></div>
+        <div class="metric"><div class="label">Open lots</div><div class="value">${a.open_lots || 0}</div></div>
+      </div>
+      <dl class="kv" style="margin-top:1rem">
+        <dt>Strategy</dt><dd class="mono" style="font-size:.76rem">${esc(a.strategy_tag || a.strategy || '—')}</dd>
+        <dt>Last run</dt><dd class="mono">${esc(etStamp(a.last_run_at))}</dd>
+        <dt>T-bill residual</dt><dd>${residual}</dd>
+        ${a.buys_blocked ? `<dt>Buys blocked</dt><dd>${esc(a.buys_blocked)}</dd>` : ''}
+        ${a.note ? `<dt>Note</dt><dd style="color:var(--muted)">${esc(a.note)}</dd>` : ''}
+      </dl>
+      ${targets ? `<div style="margin-top:.9rem"><div class="card-sub" style="margin-bottom:.4rem">Frozen targets (share of equity)</div>${targets}</div>` : ''}`;
+  }
+
   async function loadAll() {
     $('lastUpdated').textContent = I18N[lang].refreshing;
     try {
@@ -356,7 +398,9 @@
       renderGovernance(intel.governance, intel.validation && intel.validation.self_learning);
       renderReconcile(intel.reconciliation);
       renderSafety(intel.safety);
+      renderAllocator(intel.allocator, id === 'portfolio_3');
     } catch (e) {
+      renderAllocator(null, id === 'portfolio_3');
       setPill($('safeStatus'), 'muted', 'n/a');
       ['safeBody', 'valBody', 'execBody', 'acctBody', 'govBody', 'recBody'].forEach(b => {
         $(b).innerHTML = '<div class="empty-note">Unavailable.</div>';
@@ -388,7 +432,7 @@
       intel_sub: 'Execution quality, model validation, fee-aware accounting, cross-portfolio risk and fully-automated governance — the evidence behind every autonomous decision.',
       seg_all: 'All Books', t_conc: 'Cross-Portfolio Concentration', t_val: 'Validation', t_exec: 'Execution Quality',
       t_acct: 'Fee-Aware Accounting', t_gov: 'Automated Governance', t_rec: 'Reconciliation',
-      t_safe: 'Engine Safety',
+      t_safe: 'Engine Safety', t_alloc: 'Allocator · Forward Test',
       refreshing: 'Refreshing…', updated: 'Updated'
     },
     ar: {
@@ -399,7 +443,7 @@
       intel_sub: 'جودة التنفيذ، والتحقق من النماذج، والمحاسبة بعد الرسوم، ومخاطر المحافظ مجتمعة، والحوكمة الآلية — الأدلة وراء كل قرار آلي.',
       seg_all: 'كل المحافظ', t_conc: 'التركّز عبر المحافظ', t_val: 'التحقق', t_exec: 'جودة التنفيذ',
       t_acct: 'المحاسبة بعد الرسوم', t_gov: 'الحوكمة الآلية', t_rec: 'المطابقة',
-      t_safe: 'سلامة المحرك',
+      t_safe: 'سلامة المحرك', t_alloc: 'المُخصِّص · اختبار أمامي',
       refreshing: 'جارٍ التحديث…', updated: 'آخر تحديث'
     }
   };
