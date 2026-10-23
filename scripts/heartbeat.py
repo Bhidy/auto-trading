@@ -197,6 +197,18 @@ def read_safety_state(root: Path):
     return out
 
 
+def halt_evidence_verified(state) -> bool:
+    """Same predicate as autonomous_runner.annotate_halt_verification: an explicit
+    engine flag wins; otherwise (legacy state not yet rewritten by a runner) the
+    evidence must carry BOTH a timestamp and an equity value — a partial or
+    unauditable evidence object is NOT verification."""
+    flag = (state or {}).get("halt_verified")
+    if isinstance(flag, bool):
+        return flag
+    ev = (state or {}).get("halt_evidence")
+    return isinstance(ev, dict) and bool(ev.get("at")) and ev.get("equity") is not None
+
+
 def assess_safety_state(books: dict):
     """Pure decision logic (unit-tested). Returns (alert: bool, summary: str).
 
@@ -216,7 +228,7 @@ def assess_safety_state(books: dict):
             # A halt with no recorded evidence (or one the engine flagged as
             # unverified) is how P1 sat frozen for 108 days on a phantom read —
             # say so explicitly and point at the governed clear (audit 2026-10-23).
-            unverified = st.get("halt_verified") is False or not ev
+            unverified = not halt_evidence_verified(st)
             kind = "UNVERIFIED HALT" if unverified else "HALTED"
             age = ""
             set_at = _date_of(st.get("halt_set_at"))

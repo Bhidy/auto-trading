@@ -661,3 +661,17 @@ def test_heartbeat_clean_book_no_alert():
     alert, _ = hb.assess_safety_state({"P1 Self Improving Brain": {
         "state": {"halted": False}, "recon": None, "pending_exits": []}})
     assert alert is False
+
+
+def test_heartbeat_partial_legacy_evidence_is_unverified():
+    # Codex review on PR #95: a non-empty but partial evidence object (no
+    # timestamp / no equity) must not count as verification.
+    hb = _hb()
+    for ev in ({"independent_equity": 97000}, {"at": "2026-07-07T14:24:00Z"}, {"equity": 26060.51}):
+        alert, summary = hb.assess_safety_state({"P1 Self Improving Brain": {
+            "state": {"halted": True, "halt_reason": "Kill switch: 73.94% drawdown",
+                      "halt_evidence": ev}, "recon": None}})
+        assert alert is True and "UNVERIFIED HALT" in summary, ev
+    assert hb.halt_evidence_verified({"halt_evidence": {"at": "x", "equity": 1.0}}) is True
+    assert hb.halt_evidence_verified({"halt_verified": False,
+                                      "halt_evidence": {"at": "x", "equity": 1.0}}) is False

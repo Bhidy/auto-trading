@@ -209,3 +209,29 @@ test('health reports the journal overlay', async () => {
     assert.ok(d.liveState && d.liveState.journals, 'liveState.journals missing');
     assert.equal(d.liveState.journals.lookbackDays, 10);
 });
+
+// Codex review on PR #95: the journal overlay must cover the WHOLE gap between
+// the newest bundled journal and today, not a fixed 10-day window.
+test('journal overlay covers every day since the newest bundled journal', () => {
+    const fs = require('node:fs');
+    const os = require('node:os');
+    const path = require('node:path');
+    const { journalDatesToCover } = require('../server.js')._internals;
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jr-'));
+    try {
+        fs.writeFileSync(path.join(dir, '2026-07-02.json'), '[]');
+        fs.writeFileSync(path.join(dir, '2026-08-01.json'), '[]');
+        const now = Date.parse('2026-10-23T15:00:00Z');           // 11:00 ET
+        const dates = journalDatesToCover(dir, now);
+        assert.equal(dates[0], '2026-10-23');
+        assert.ok(dates.includes('2026-08-02'), 'first day after the bundle is covered');
+        assert.ok(!dates.includes('2026-08-01'), 'bundled day not re-fetched as a gap day');
+        assert.equal(dates.length, 83);                            // 08-02 .. 10-23 inclusive
+        const fresh = fs.mkdtempSync(path.join(os.tmpdir(), 'jr-'));
+        fs.writeFileSync(path.join(fresh, '2026-10-22.json'), '[]');
+        assert.equal(journalDatesToCover(fresh, now).length, 10, 'minimum window kept');
+        fs.rmSync(fresh, { recursive: true, force: true });
+    } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+    }
+});

@@ -431,21 +431,56 @@ function journalRepoRel(dir) {
     return /(^|\/)journal$/.test(posix) ? posix : null;
 }
 
+// Dates the overlay must cover for one journal directory: EVERY ET calendar day
+// after the newest journal in the deployed bundle through today (a deploy can be
+// weeks old — fetching only a fixed recent window left a silent multi-week gap
+// in journal-backed equity charts; Codex review on PR #95), and never fewer
+// than JOURNAL_LOOKBACK_DAYS. Capped at JOURNAL_MAX_GAP_DAYS (newest kept).
+const JOURNAL_MAX_GAP_DAYS = Number(process.env.DASHBOARD_JOURNAL_MAX_GAP_DAYS || 400);
+const JOURNAL_FETCH_BATCH = 20;
+function journalDatesToCover(abs, now = Date.now()) {
+    let newestBundled = null;
+    try {
+        if (fs.existsSync(abs)) {
+            for (const f of fs.readdirSync(abs)) {
+                const m = /^(\d{4}-\d{2}-\d{2})\.json$/.exec(f);
+                if (m && (!newestBundled || m[1] > newestBundled)) newestBundled = m[1];
+            }
+        }
+    } catch (e) { /* bundle unreadable: fall back to the minimum window */ }
+    const today = etDate(now);
+    let span = JOURNAL_LOOKBACK_DAYS;
+    if (newestBundled && newestBundled < today) {
+        const gap = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${newestBundled}T00:00:00Z`)) / 86400000);
+        span = Math.max(span, gap);
+    }
+    return recentEtDates(Math.min(span, JOURNAL_MAX_GAP_DAYS), now);
+}
+
 function refreshJournalDir(dir) {
     const rel = journalRepoRel(dir);
     if (!LIVE_STATE || !rel) return null;
     const abs = path.resolve(dir);
     let meta = journalDirMeta.get(abs);
-    if (!meta) { meta = { lastRefresh: 0, inflight: null }; journalDirMeta.set(abs, meta); }
+    if (!meta) { meta = { lastRefresh: 0, inflight: null, missing: new Set() }; journalDirMeta.set(abs, meta); }
     if (meta.inflight) return meta.inflight;
     if (Date.now() - meta.lastRefresh < JOURNAL_TTL_MS) return null;
     meta.inflight = (async () => {
-        const dates = recentEtDates(JOURNAL_LOOKBACK_DAYS);
-        const results = await Promise.allSettled(dates.map(dt =>
-            fetchRawJson(`${rel}/${dt}.json`, 2500, JOURNAL_RAW_BASE)));
-        results.forEach((r, i) => {
-            if (r.status === 'fulfilled') journalOverlay.set(path.join(abs, `${dates[i]}.json`), r.value);
-        });
+        const dates = journalDatesToCover(abs);
+        const live = new Set(dates.slice(0, 2));   // today + yesterday can still be appended
+        // Past days are immutable: fetch each once (hit or confirmed 404), then reuse.
+        const todo = dates.filter(dt => live.has(dt)
+            || (!journalOverlay.has(path.join(abs, `${dt}.json`)) && !meta.missing.has(dt)));
+        for (let i = 0; i < todo.length; i += JOURNAL_FETCH_BATCH) {
+            const batch = todo.slice(i, i + JOURNAL_FETCH_BATCH);
+            const results = await Promise.allSettled(batch.map(dt =>
+                fetchRawJson(`${rel}/${dt}.json`, 2500, JOURNAL_RAW_BASE)));
+            results.forEach((r, j) => {
+                const dt = batch[j];
+                if (r.status === 'fulfilled') journalOverlay.set(path.join(abs, `${dt}.json`), r.value);
+                else if (/HTTP 404/.test(String(r.reason && r.reason.message)) && !live.has(dt)) meta.missing.add(dt);
+            });
+        }
         meta.lastRefresh = Date.now();
     })().finally(() => { meta.inflight = null; });
     return meta.inflight;
@@ -3405,4 +3440,6 @@ if (require.main === module) {
     });
 }
 
+// Pure helpers exposed for unit tests only.
+app._internals = { journalDatesToCover };
 module.exports = app;
