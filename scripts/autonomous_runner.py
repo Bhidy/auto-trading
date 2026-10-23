@@ -814,14 +814,20 @@ def execute_exit(alpaca, symbol, qty, *, reason, coid_prefix, market=False,
     lp = None
     if market:
         _cancel_open_sells(alpaca, symbol, reason)
-        pos = alpaca.get_position(symbol)
-        if pos:
-            avail = int(float(pos.get("qty_available", pos.get("qty", 0)) or 0))
-            if avail <= 0:
-                log.warning(f"  {reason} {symbol}: no shares available (all reserved/sold)")
-                return None
-            qty = min(int(qty), avail)
-    else:
+    # Size against the LIVE long position, on every path. No position (e.g. a
+    # working sell filled during the cancel) -> NO order: selling what we don't
+    # hold would open a short and book a phantom exit.
+    pos = alpaca.get_position(symbol)
+    held = float((pos or {}).get("qty") or 0)
+    if not pos or held <= 0 or (pos.get("side") or "long") != "long":
+        log.warning(f"  {reason} {symbol}: no long position at the broker — no order")
+        return None
+    avail = float(pos.get("qty_available", held) or 0)
+    qty = int(min(float(qty), held, avail))
+    if qty <= 0:
+        log.warning(f"  {reason} {symbol}: no shares available (all reserved/sold) — no order")
+        return None
+    if not market:
         lp = marketable_limit_price(alpaca, symbol, "sell")
         if lp is None:
             log.warning(f"  {reason}: no live price for {symbol} — exit deferred to next run "
@@ -946,6 +952,54 @@ def _sleeve_symbols(params=None):
         syms |= {p.get("symbol") for p in pend if isinstance(p, dict) and p.get("symbol")}
     syms |= set((params or {}).get("core_basket") or ["SPY", "QQQ", "IWM", "DIA"])
     return syms
+
+
+DISASTER_EXCLUSIONS_FILE = "momentum_exclusions.json"
+
+
+def disaster_excluded(month):
+    d = load_json(DATA_DIR / DISASTER_EXCLUSIONS_FILE, {})
+    return set((d.get(month) or [])) if isinstance(d, dict) else set()
+
+
+def _record_disaster_exclusion(symbol, month=None):
+    month = month or et_session_date()[:7]
+    path = DATA_DIR / DISASTER_EXCLUSIONS_FILE
+    d = load_json(path, {})
+    if not isinstance(d, dict):
+        d = {}
+    syms = set(d.get(month) or [])
+    syms.add(symbol)
+    d[month] = sorted(syms)
+    for k in sorted(d)[:-6]:                 # keep ~6 months of history
+        d.pop(k, None)
+    save_json(path, d)
+
+
+def run_disaster_exits(alpaca, positions, params, source):
+    """Fire the schedule-managed disaster floor NOW (H1). In the trading session
+    this runs BEFORE the momentum rebalance, so a crashed lot is exited at its
+    own entry basis before any add could dilute the broker's blended average;
+    the name is then excluded from that month's buys. Returns symbols exited."""
+    from portfolio_manager import schedule_managed_disaster_triggers
+    lots = [t for t in load_json(DATA_DIR / "trade_log.json", [])
+            if isinstance(t, dict) and t.get("status") == "open"]
+    exited = []
+    for t in schedule_managed_disaster_triggers(positions, lots, params,
+                                                sleeve_symbols=_sleeve_symbols(params)):
+        sym = t["symbol"]
+        log.warning(f"  DISASTER STOP ({source}): {sym} — {t['reason']}")
+        _record_disaster_exclusion(sym)
+        try:
+            res = execute_exit(alpaca, sym, float(
+                (alpaca.get_position(sym) or {}).get("qty") or 0),
+                reason="disaster_stop", coid_prefix="p1stop", market=True, source=source)
+        except Exception as e:
+            log.error(f"::error::P1 disaster stop for {sym} failed: {e}")
+            continue
+        if res:
+            exited.append(sym)
+    return exited
 
 
 def _book_has_holdings(state):
@@ -1103,66 +1157,98 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits, budget=No
     use_trend = bool(params.get("momentum_use_trend", False))
     max_per_sector = params.get("momentum_max_per_sector", 4)
 
-    # Daily closes for the universe (need >=274 bars for 12-1 momentum). An
-    # explicit start is REQUIRED — without it the free feed returns a stub (the
-    # documented empty-period trap); ~420 calendar days ≈ 290 trading days.
-    _start = (datetime.now(timezone.utc) - timedelta(days=420)).strftime("%Y-%m-%d")
-    universe, sector_map = _momentum_universe()
-    closes_by_sym, prices = {}, {}
-    for sym in universe:
-        try:
-            bars = alpaca.get_stock_bars(sym, timeframe="1Day", start=_start, limit=500).get("bars") or []
-            closes = [float(b["c"]) for b in bars if b.get("c")]
-            if len(closes) >= 274:
-                closes_by_sym[sym] = closes
-                prices[sym] = closes[-1]
-        except Exception as e:
-            log.warning(f"  Momentum: bars unavailable for {sym}: {e}")
-    if len(closes_by_sym) < top_k:
-        log.error(f"::error::Momentum: only {len(closes_by_sym)} names have enough history "
-                  f"(need >= {top_k}); skipping rebalance to avoid a thin book.")
-        return True
-
-    spy_closes = None
-    try:
-        spy_bars = alpaca.get_stock_bars("SPY", timeframe="1Day", start=_start, limit=500).get("bars") or []
-        spy_closes = [float(b["c"]) for b in spy_bars if b.get("c")]
-        if spy_closes:
-            prices["SPY"] = spy_closes[-1]
-    except Exception as e:
-        log.warning(f"  Momentum: SPY bars unavailable ({e}); trend filter off this run.")
-
-    from momentum_selector import select_top_momentum, vol_target_scalar
-    raw = select_top_momentum(closes_by_sym, k=top_k, max_weight=0.08,
-                              use_trend=use_trend, market_closes=spy_closes,
-                              sector_map=sector_map, max_per_sector=max_per_sector)
-
-    # Volatility targeting (crash protection, 2026-07-04): scale gross exposure
-    # DOWN toward a target realized vol when the book is hot. Only de-risks
-    # (max_scale=1.0) so it can never breach a size cap. Off if vol_target unset.
-    vol_scale, book_vol = 1.0, None
-    vol_target = params.get("momentum_vol_target")
-    if raw and vol_target:
-        vol_scale, book_vol = vol_target_scalar(
-            closes_by_sym, raw, target_vol=float(vol_target),
-            lookback=int(params.get("momentum_vol_lookback", 63)),
-            min_scale=float(params.get("momentum_vol_min_scale", 0.30)))
-
-    targets = {s: w * sleeve_weight * vol_scale for s, w in raw.items()}  # rest cash
-    if not targets:
-        log.warning("  Momentum: RISK-OFF / no eligible names — target is cash; "
-                    "liquidating the momentum book.")
+    # M3: a month's targets are FROZEN at its first attempt. An incomplete month
+    # (12/day cap spill-over, unfilled limits, halt) retries only the remaining
+    # diff against those SAME targets — re-ranking every session would whipsaw
+    # the book daily as names cross the top-K boundary.
+    frozen = (mstate.get("targets_month") == month and mstate.get("rebalance_incomplete")
+              and isinstance(mstate.get("targets"), dict))
+    if frozen:
+        targets = {s: float(w) for s, w in mstate["targets"].items()}
+        vol_scale = float(mstate.get("vol_scale") or 1.0)
+        book_vol = mstate.get("book_vol")
+        closes_by_sym = {}
+        universe_size = int(mstate.get("universe_size") or 0)
+        prices = {}
+        for sym in targets:
+            try:
+                px = float(((alpaca.get_latest_trade(sym) or {}).get("trade") or {}).get("p") or 0)
+            except Exception:
+                px = 0.0
+            if px > 0:
+                prices[sym] = px
+        log.info(f"  Momentum: retrying {month} against FROZEN targets "
+                 f"({len(targets)} names, frozen {mstate.get('targets_frozen_at')}).")
     else:
-        _secs = {}
-        for s in targets:
-            _secs[sector_map.get(s, "?")] = _secs.get(sector_map.get(s, "?"), 0) + 1
-        _vol = (f"vol_scale={vol_scale:.2f} "
-                f"(book_vol={book_vol*100:.0f}%, target={float(vol_target)*100:.0f}%)"
-                if vol_target and book_vol else "vol_target off")
-        log.info(f"  Momentum: {len(targets)} names, per-sector {dict(_secs)} "
-                 f"(cap {max_per_sector}/sector), trend_filter={use_trend}, {_vol}.")
-        log.info(f"  Momentum: deploying {sum(targets.values())*100:.1f}% of equity "
-                 f"(rest cash).")
+        # Daily closes for the universe (need >=274 bars for 12-1 momentum). An
+        # explicit start is REQUIRED — without it the free feed returns a stub (the
+        # documented empty-period trap); ~420 calendar days ≈ 290 trading days.
+        _start = (datetime.now(timezone.utc) - timedelta(days=420)).strftime("%Y-%m-%d")
+        universe, sector_map = _momentum_universe()
+        closes_by_sym, prices = {}, {}
+        for sym in universe:
+            try:
+                bars = alpaca.get_stock_bars(sym, timeframe="1Day", start=_start, limit=500).get("bars") or []
+                closes = [float(b["c"]) for b in bars if b.get("c")]
+                if len(closes) >= 274:
+                    closes_by_sym[sym] = closes
+                    prices[sym] = closes[-1]
+            except Exception as e:
+                log.warning(f"  Momentum: bars unavailable for {sym}: {e}")
+        if len(closes_by_sym) < top_k:
+            log.error(f"::error::Momentum: only {len(closes_by_sym)} names have enough history "
+                      f"(need >= {top_k}); skipping rebalance to avoid a thin book.")
+            return True
+
+        spy_closes = None
+        try:
+            spy_bars = alpaca.get_stock_bars("SPY", timeframe="1Day", start=_start, limit=500).get("bars") or []
+            spy_closes = [float(b["c"]) for b in spy_bars if b.get("c")]
+            if spy_closes:
+                prices["SPY"] = spy_closes[-1]
+        except Exception as e:
+            log.warning(f"  Momentum: SPY bars unavailable ({e}); trend filter off this run.")
+
+        from momentum_selector import select_top_momentum, vol_target_scalar
+        raw = select_top_momentum(closes_by_sym, k=top_k, max_weight=0.08,
+                                  use_trend=use_trend, market_closes=spy_closes,
+                                  sector_map=sector_map, max_per_sector=max_per_sector)
+
+        # Volatility targeting (crash protection, 2026-07-04): scale gross exposure
+        # DOWN toward a target realized vol when the book is hot. Only de-risks
+        # (max_scale=1.0) so it can never breach a size cap. Off if vol_target unset.
+        vol_scale, book_vol = 1.0, None
+        vol_target = params.get("momentum_vol_target")
+        if raw and vol_target:
+            vol_scale, book_vol = vol_target_scalar(
+                closes_by_sym, raw, target_vol=float(vol_target),
+                lookback=int(params.get("momentum_vol_lookback", 63)),
+                min_scale=float(params.get("momentum_vol_min_scale", 0.30)))
+
+        targets = {s: w * sleeve_weight * vol_scale for s, w in raw.items()}  # rest cash
+        if not targets:
+            log.warning("  Momentum: RISK-OFF / no eligible names — target is cash; "
+                        "liquidating the momentum book.")
+        else:
+            _secs = {}
+            for s in targets:
+                _secs[sector_map.get(s, "?")] = _secs.get(sector_map.get(s, "?"), 0) + 1
+            _vol = (f"vol_scale={vol_scale:.2f} "
+                    f"(book_vol={book_vol*100:.0f}%, target={float(vol_target)*100:.0f}%)"
+                    if vol_target and book_vol else "vol_target off")
+            log.info(f"  Momentum: {len(targets)} names, per-sector {dict(_secs)} "
+                     f"(cap {max_per_sector}/sector), trend_filter={use_trend}, {_vol}.")
+            log.info(f"  Momentum: deploying {sum(targets.values())*100:.1f}% of equity "
+                     f"(rest cash).")
+        universe_size = len(closes_by_sym)
+
+    # H1: a name disaster-stopped this month is OUT of this month's book — never
+    # bought back by the rebalance (it would average down into the crash).
+    excluded = disaster_excluded(month)
+    if excluded & set(targets):
+        log.warning(f"  Momentum: excluding disaster-stopped {sorted(excluded & set(targets))} "
+                    f"from {month}'s targets")
+        targets = {s: w for s, w in targets.items() if s not in excluded}
 
     from portfolio_manager import compute_momentum_rebalance_orders
     positions = alpaca.get_positions()
@@ -1175,6 +1261,9 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits, budget=No
     orders = compute_momentum_rebalance_orders(
         positions, targets, equity, prices,
         min_notional=float(limits.get("min_position_notional_usd", 500)))
+    # A target with no price produces no order — that must keep the month OPEN,
+    # never read as "nothing left to do".
+    unpriced = sorted(s for s in targets if not prices.get(s))
     if len(orders) > 45:
         log.error(f"::error::Momentum: {len(orders)} rebalance orders is abnormally high; "
                   f"aborting as a safety stop.")
@@ -1189,7 +1278,8 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits, budget=No
 
     from performance_tracker import log_trade
     placed = confirmed = 0
-    deferred, pending = [], []
+    deferred = [{"symbol": u, "side": "buy", "why": "no price"} for u in unpriced]
+    pending = []
     for o in orders:
         sym, side, qty = o["symbol"], o["side"], o["qty"]
         if budget is not None and not budget.take(entry=(side == "buy")):
@@ -1280,10 +1370,12 @@ def run_momentum_sleeve(alpaca, equity, cash, portfolio_state, limits, budget=No
         "rebalance_count": int(mstate.get("rebalance_count", 0)) + 1,
         "as_of": now_iso,
         "targets": {s: round(w, 4) for s, w in targets.items()},
+        "targets_month": month,
+        "targets_frozen_at": (mstate.get("targets_frozen_at") if frozen else now_iso),
         "orders_placed": placed, "orders_confirmed": confirmed,
         "orders_deferred": deferred, "orders_pending": pending,
         "entries_allowed": bool(entries_allowed),
-        "universe_size": len(closes_by_sym),
+        "universe_size": universe_size,
         "vol_scale": round(vol_scale, 4),
         "book_vol": round(book_vol, 4) if book_vol else None,
         "deployed_pct": round(sum(targets.values()) * 100, 1),
@@ -1456,6 +1548,15 @@ def run_trading_session(alpaca: AlpacaClient):
     if entry_block:
         log.warning(f"::warning::P1 new entries blocked — {entry_block}. "
                     f"Risk-reducing exits still run.")
+
+    # Disaster floor BEFORE any allocator (H1): exits are never gated by entry
+    # blocks or preflight, and must see each lot's own basis before a rebalance
+    # add can dilute it.
+    try:
+        run_disaster_exits(alpaca, alpaca.get_positions(),
+                           load_json(DATA_DIR / "strategy_params.json", {}), "trading-session")
+    except Exception as e:
+        log.error(f"::error::P1 pre-session disaster check failed: {e}")
 
     # Preflight self-check FIRST (H2) — fail CLOSED before ANY order if the sizing
     # math, self-learned params, account health, risk limits, or data freshness
@@ -1885,7 +1986,10 @@ def refresh_intraday_regime(alpaca: AlpacaClient, portfolio_state: dict, signals
     """
     try:
         from analyst_v2 import detect_regime, regime_allocation_modifier
-        resp = alpaca.get_stock_bars("SPY", timeframe="1Day", limit=220)
+        # Explicit start (CLAUDE.md bars rule): without one the feed returns a
+        # single bar and the refresh never had enough history.
+        _start = (datetime.now(timezone.utc) - timedelta(days=330)).strftime("%Y-%m-%d")
+        resp = alpaca.get_stock_bars("SPY", timeframe="1Day", start=_start, limit=220)
         bars = resp.get("bars", []) if isinstance(resp, dict) else (resp or [])
         closes = [float(b["c"]) for b in bars if b.get("c")]
         if len(closes) < 50:
@@ -2061,6 +2165,8 @@ def run_intraday_monitor(alpaca: AlpacaClient):
                 _reason = {"STOP_LOSS_SELL": "stop_loss",
                            "HARD_STOP_SELL": "active_max_loss",
                            "DISASTER_STOP_SELL": "disaster_stop"}[action]
+                if action == "DISASTER_STOP_SELL":
+                    _record_disaster_exclusion(sym)
                 res = execute_exit(alpaca, sym, qty, reason=_reason,
                                    coid_prefix="p1stop", market=True)
                 if res:

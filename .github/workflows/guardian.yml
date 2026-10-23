@@ -53,6 +53,7 @@ on:
 
 permissions:
   contents: write
+  actions: read      # P1 freshness: is a p1-trading run for today still active?
 
 concurrency:
   group: guardian
@@ -61,6 +62,9 @@ concurrency:
 jobs:
   catchup:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
@@ -121,6 +125,9 @@ jobs:
       # so a native cron or another Guardian that committed while this job was
       # running is seen). Exit 0 = fresh (skip), 1 = stale (run).
       #   P1: data/signals.json            (written only by morning-research)
+      #       OR a P1 trading-session order (p1mom-/p1core-/p1-) at the BROKER
+      #       today (ground truth; survives a late/lost state commit) OR a
+      #       p1-trading run for today still queued/in progress (gh run list).
       #   P2: strategy_conformance.json     (written only by a market-open scan;
       #       portfolio_state.json is ALSO written by the hourly monitor, so it
       #       read fresh on days the scan never ran)
@@ -128,7 +135,7 @@ jobs:
       - name: Install freshness gate
         run: |
           cat > "$RUNNER_TEMP/guardian_fresh.py" << 'PY'
-          import datetime, json, subprocess, sys
+          import datetime, json, os, subprocess, sys
           from zoneinfo import ZoneInfo
 
           SOURCES = {
@@ -159,6 +166,56 @@ jobs:
                       return et_date(d[k])
               return ""
 
+          P1_SESSION_PREFIXES = ("p1mom-", "p1core-", "p1-")   # trading-session orders only
+
+          def p1_broker_traded_today():
+              """GROUND TRUTH: did a P1 trading session place an order this ET
+              session? Reads the broker (cheap GET /v2/orders?after=ET-midnight).
+              Catches a native run that traded but whose state commit is late or
+              lost. Monitor exits (p1stop/p1tp/p1time/p1cap) do not count."""
+              try:
+                  import requests
+                  with open("config/alpaca_config.json") as f:
+                      cfg = json.load(f)
+              except Exception:
+                  return False                       # no creds here: signals rule only
+              start = (datetime.datetime.now(ET).replace(hour=0, minute=0, second=0, microsecond=0)
+                       .astimezone(datetime.timezone.utc).isoformat())
+              try:
+                  r = requests.get(cfg["base_url"] + "/v2/orders", timeout=15,
+                                   headers={"APCA-API-KEY-ID": cfg["api_key"],
+                                            "APCA-API-SECRET-KEY": cfg["api_secret"]},
+                                   params={"status": "all", "after": start, "limit": 500})
+                  r.raise_for_status()
+                  orders = r.json() or []
+              except Exception as e:
+                  print(f"P1 broker order check unavailable ({e}) — signals rule only")
+                  return False
+              hits = [o for o in orders
+                      if str(o.get("client_order_id") or "").startswith(P1_SESSION_PREFIXES)]
+              if hits:
+                  print(f"P1 broker: {len(hits)} trading-session order(s) today")
+              return bool(hits)
+
+          def p1_trading_run_active(today):
+              """A native p1-trading run created this ET session that is still
+              queued/in progress will trade itself — don't race it."""
+              if not os.environ.get("GH_TOKEN"):
+                  return False
+              try:
+                  r = subprocess.run(["gh", "run", "list", "--workflow", "p1-trading.yml",
+                                      "--limit", "10", "--json", "status,createdAt"],
+                                     capture_output=True, text=True, timeout=30, check=False)
+                  runs = json.loads(r.stdout or "[]") if r.returncode == 0 else []
+              except Exception:
+                  return False
+              live = [x for x in runs if x.get("status") in
+                      ("queued", "in_progress", "waiting", "pending", "requested")
+                      and et_date(x.get("createdAt")) == today]
+              if live:
+                  print(f"P1: {len(live)} p1-trading run(s) for today still active")
+              return bool(live)
+
           pid = sys.argv[1]
           path, keys = SOURCES[pid]
           today = datetime.datetime.now(ET).strftime("%Y-%m-%d")
@@ -172,6 +229,8 @@ jobs:
                              capture_output=True, text=True, check=False)
           remote = stamp(r.stdout, keys) if r.returncode == 0 else ""
           fresh = max(local, remote) >= today
+          if not fresh and pid == "p1":
+              fresh = p1_broker_traded_today() or p1_trading_run_active(today)
           print(f"{pid.upper()} session={today} local={local or 'none'} "
                 f"origin/main={remote or 'none'} -> {'FRESH (skip)' if fresh else 'STALE (run)'}")
           sys.exit(0 if fresh else 1)

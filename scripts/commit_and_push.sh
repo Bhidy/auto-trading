@@ -138,6 +138,71 @@ def ts_of(d):
     return None
 
 
+def ts_parse(s):
+    """Aware UTC datetime for an ISO stamp ('Z', '+00:00', '-04:00' or naive=UTC);
+    None if unparseable. String comparison of mixed offsets is WRONG (audit L1):
+    '2026-10-23T11:00:00-04:00' is LATER than '2026-10-23T14:40:00+00:00'."""
+    import datetime as _dt
+    if not s:
+        return None
+    try:
+        d = _dt.datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=_dt.timezone.utc)
+    return d.astimezone(_dt.timezone.utc)
+
+
+def ours_is_newer(to, tt):
+    a, b = ts_parse(to), ts_parse(tt)
+    if a is not None and b is not None:
+        return a > b
+    if a is not None and b is None:
+        return True                    # a real timestamp beats a missing/garbage one
+    if a is None and b is not None:
+        return False
+    return (to or "") > (tt or "")
+
+
+# Halt state is STICKY (audit M1): a newer-timestamped snapshot from a run that
+# started on an OLDER base must never erase a halt (or a consumed clear / an
+# observation) that another run latched after that base — e.g. the monitor
+# latches a kill switch at 14:30 and a trading run based on 14:00 writes 14:40
+# with halted:false. Unless our side carries the governed clear record for
+# exactly that halt, it is a CONFLICT (remote kept, run fails loudly).
+HALT_KEYS = ("halted", "halt_reason", "halt_set_at", "halt_kind", "halt_until",
+             "halt_evidence", "halt_clears_consumed", "halt_observations")
+
+
+def halt_view(d):
+    d = d if isinstance(d, dict) else {}
+    return {k: d.get(k) for k in HALT_KEYS}
+
+
+def governed_clear_of(ours, theirs):
+    lh = ours.get("last_halt") if isinstance(ours, dict) else None
+    return (bool(theirs.get("halted")) and not ours.get("halted")
+            and isinstance(lh, dict) and lh.get("ended") == "human_clear"
+            and lh.get("halt_set_at") == theirs.get("halt_set_at")
+            and lh.get("halt_reason") == theirs.get("halt_reason"))
+
+
+def halt_guard(base, ours, theirs):
+    if not (isinstance(ours, dict) and isinstance(theirs, dict)):
+        return
+    if not any(k in ours or k in theirs for k in HALT_KEYS):
+        return
+    hb, ho, ht = halt_view(base), halt_view(ours), halt_view(theirs)
+    if canon(ht) != canon(hb) and canon(ho) != canon(ht):
+        if governed_clear_of(ours, theirs):
+            print("  halt: remote halt cleared by OUR governed clear record — ours kept")
+            return
+        raise Conflict("remote halt state changed since our base (halted="
+                       f"{theirs.get('halted')}, reason={theirs.get('halt_reason')!r}) "
+                       "and ours would overwrite it")
+
+
 def merge(base, ours, theirs):
     if canon(ours) == canon(theirs):
         return ours
@@ -177,10 +242,14 @@ try:
     ours = load(ours_p)
     theirs = load(theirs_p)
     if isinstance(ours, dict) and isinstance(theirs, dict) and (ts_of(ours) or ts_of(theirs)):
-        # Snapshot document: newest snapshot wins whole (ISO strings compare).
+        # Snapshot document: newest snapshot wins whole (parsed, offset-aware),
+        # except that halt state is sticky (see halt_guard).
         to, tt = ts_of(ours) or "", ts_of(theirs) or ""
-        merged = ours if to > tt else theirs
-        print(f"  snapshot: {'ours' if merged is ours else 'remote'} is newer ({max(to, tt)})")
+        merged = ours if ours_is_newer(to, tt) else theirs
+        if merged is ours:
+            halt_guard(base, ours, theirs)
+        print(f"  snapshot: {'ours' if merged is ours else 'remote'} is newer "
+              f"(ours={to or 'none'}, remote={tt or 'none'})")
     else:
         merged = merge(base, ours, theirs)
 except Conflict as e:
@@ -245,6 +314,37 @@ restore_owned() {
   done
 }
 
+# Atomic ledger groups (audit M2): within one data directory these files
+# describe ONE accounting state — the trade log, the fill ledger that says which
+# broker fills are already in it, the pending settlement queues and the
+# portfolio snapshot. Pushing some without the others corrupts it (e.g. the
+# ledger says "booked" while the trade-log row was withheld, so the fill can
+# never be re-booked). If any member is withheld, the whole group is.
+GROUP_FILES=" trade_log.json booked_fills.json pending_exits.json pending_entries.json portfolio_state.json "
+withhold_groups() {
+  local w f d dirs=" " already
+  for w in ${WITHHELD[@]+"${WITHHELD[@]}"}; do
+    case "$GROUP_FILES" in *" $(basename "$w") "*) dirs="$dirs$(dirname "$w") " ;; esac
+  done
+  [ "$dirs" = " " ] && return 0
+  for f in ${CHANGED[@]+"${CHANGED[@]}"}; do
+    d="$(dirname "$f")"
+    case "$dirs" in *" $d "*) ;; *) continue ;; esac
+    case "$GROUP_FILES" in *" $(basename "$f") "*) ;; *) continue ;; esac
+    already=0
+    for w in ${WITHHELD[@]+"${WITHHELD[@]}"}; do [ "$w" = "$f" ] && already=1; done
+    [ "$already" = 1 ] && continue
+    if git cat-file -e "origin/main:$f" 2>/dev/null; then
+      git show "origin/main:$f" > "$f"
+    else
+      rm -f "$f"
+    fi
+    WITHHELD+=("$f")
+    echo "::warning::Withholding $f with its ledger group in $d (atomic: a group member could not be merged). This run's version vs remote:"
+    git --no-pager diff --no-index -U0 -- "$f" "$SNAP/$f" 2>/dev/null | head -200 || true
+  done
+}
+
 finish() {
   if [ ${#WITHHELD[@]} -gt 0 ]; then
     echo "::error::commit_and_push [$LABEL]: withheld ${#WITHHELD[@]} file(s) whose remote copy changed concurrently and could not be merged safely: ${WITHHELD[*]}. Remote (newer) state was kept; this run's delta is printed above. Broker state is unaffected (idempotent client_order_ids); EOD reconciliation re-syncs the ledger."
@@ -276,6 +376,7 @@ for attempt in 1 2 3 4 5; do
   git reset --hard origin/main
 
   restore_owned
+  withhold_groups
   sync_dashboard
 
   git add -A

@@ -610,6 +610,24 @@ def politician_open_lot_qty(trade_log, symbol, politician) -> float:
     return total
 
 
+def exit_limit_price(alpaca, symbol: str, slip: float = 0.001):
+    """Marketable SELL limit off the LIVE quote (bid x (1-slip)); falls back to
+    the latest trade print; None when no live price exists — the caller then
+    skips the exit this run (retried next run) instead of sending a market
+    order. Only stop exits may be market orders (CLAUDE.md)."""
+    ref = 0.0
+    try:
+        ref = float(((alpaca.get_latest_quote(symbol) or {}).get("quote") or {}).get("bp") or 0)
+    except Exception:
+        ref = 0.0
+    if ref <= 0:
+        try:
+            ref = float(((alpaca.get_latest_trade(symbol) or {}).get("trade") or {}).get("p") or 0)
+        except Exception:
+            ref = 0.0
+    return round(ref * (1 - slip), 2) if ref > 0 else None
+
+
 def exit_client_order_id(kind: str, symbol: str, politician: str | None = None) -> str:
     """Deterministic idempotency key for a P2 EXIT order (audit 2026-10-23 D6).
 
@@ -1302,8 +1320,15 @@ class PoliticianBot:
                 log.info(f"ALPHA-CAPTURE EXIT for {symbol}: held {age_days}d "
                          f">= {alpha_capture_days}d ({unrealized_plpc:+.1f}%) — exiting full")
                 try:
+                    # Not a stop: marketable limit off the live bid (audit L3).
+                    lp = exit_limit_price(self.alpaca, symbol)
+                    if lp is None:
+                        log.warning(f"{symbol}: Alpha-capture exit deferred — no live price "
+                                    f"(no market-order fallback)")
+                        continue
                     order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                                    order_type="market", time_in_force="day",
+                                                    order_type="limit", limit_price=lp,
+                                                    time_in_force="day",
                                                     client_order_id=exit_client_order_id("tx", symbol))
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
                     closed_qty = 0.0
@@ -1328,8 +1353,15 @@ class PoliticianBot:
                 log.warning(f"MAX HOLD reached for {symbol}: held {age_days}d "
                             f">= {max_hold_days}d ({unrealized_plpc:+.1f}%) — exiting")
                 try:
+                    # Not a stop: marketable limit off the live bid (audit L3).
+                    lp = exit_limit_price(self.alpaca, symbol)
+                    if lp is None:
+                        log.warning(f"{symbol}: Max-hold exit deferred — no live price "
+                                    f"(no market-order fallback)")
+                        continue
                     order = self.alpaca.place_order(symbol=symbol, qty=qty, side="sell",
-                                                    order_type="market", time_in_force="day",
+                                                    order_type="limit", limit_price=lp,
+                                                    time_in_force="day",
                                                     client_order_id=exit_client_order_id("mh", symbol))
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))
                     closed_qty = 0.0
@@ -1356,13 +1388,14 @@ class PoliticianBot:
                 sell_qty = max(1, qty // 2)
                 log.info(f"TAKE PROFIT for {symbol}: {unrealized_plpc:.1f}% gain, selling {sell_qty}")
                 try:
-                    quote = self.alpaca.get_latest_quote(symbol)
-                    bid = float(quote.get("quote", {}).get("bp", 0))
-                    limit_price = round(bid * 0.999, 2) if bid > 0 else None
+                    limit_price = exit_limit_price(self.alpaca, symbol)
+                    if limit_price is None:
+                        log.warning(f"{symbol}: take-profit deferred — no live price "
+                                    f"(no market-order fallback)")
+                        continue
                     order = self.alpaca.place_order(
                         symbol=symbol, qty=sell_qty, side="sell",
-                        order_type="limit" if limit_price else "market",
-                        limit_price=limit_price,
+                        order_type="limit", limit_price=limit_price,
                         client_order_id=exit_client_order_id("tp", symbol),
                     )
                     _, fill_qty, fill_price = confirm_fill(self.alpaca, order.get("id"))

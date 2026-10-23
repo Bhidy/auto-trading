@@ -9,7 +9,7 @@ class _FakeAlpaca:
     def __init__(self, closes):
         self._closes = closes
 
-    def get_stock_bars(self, symbol, timeframe="1Day", limit=220):
+    def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
         return {"bars": [{"c": c} for c in self._closes]}
 
 

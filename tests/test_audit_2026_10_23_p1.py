@@ -341,7 +341,7 @@ def _two_lots(sym="XYZ"):
 def test_stop_exit_books_real_fill_fifo_and_pends_remainder(data, monkeypatch):
     _write(data / "trade_log.json", _two_lots())
     monkeypatch.setattr(ar, "confirm_fill", _fake_confirm({"o1": ("partially_filled", 8.0, 95.5)}))
-    br = Broker()
+    br = Broker(positions=[{"symbol": "XYZ", "qty": "10", "side": "long"}])
     res = ar.execute_exit(br, "XYZ", 10, reason="stop_loss", coid_prefix="p1stop", market=True)
     assert br.placed[0]["order_type"] == "market" and res["filled_qty"] == 8.0
     log = _read(data / "trade_log.json")
@@ -361,7 +361,7 @@ def test_stop_exit_books_real_fill_fifo_and_pends_remainder(data, monkeypatch):
 def test_unfilled_exit_never_books_a_phantom_price(data, monkeypatch):
     _write(data / "trade_log.json", _two_lots())
     monkeypatch.setattr(ar, "confirm_fill", _fake_confirm({}))
-    br = Broker(quotes={"XYZ": (90.0, 90.2)})
+    br = Broker(positions=[{"symbol": "XYZ", "qty": "10", "side": "long"}], quotes={"XYZ": (90.0, 90.2)})
     res = ar.execute_exit(br, "XYZ", 5, reason="take_profit", coid_prefix="p1tp")
     assert res["filled_qty"] == 0.0
     assert br.placed[0]["order_type"] == "limit" and br.placed[0]["limit_price"] == 89.91
@@ -390,7 +390,7 @@ def test_marketable_limit_uses_live_quote_then_last_trade():
 
 def test_momentum_month_open_until_fills_confirmed(data, monkeypatch, limits):
     _momentum_env(monkeypatch, data, {"AAA": 0.08})
-    br = MomBroker(positions=[], quotes={"AAA": (101.9, 102.0)})
+    br = MomBroker(positions=[], quotes={"AAA": (101.9, 102.0)}, prices={"AAA": 100.0})
     monkeypatch.setattr(ar, "confirm_fill", _fake_confirm({}))     # nothing fills
     ar.run_momentum_sleeve(br, 100_000.0, 100_000.0, {}, limits, budget=ar.TradeBudget(12))
     assert br.placed[0]["limit_price"] == 102.1                     # live ask x 1.001, not close 100
@@ -594,7 +594,7 @@ def test_item1_stop_exit_cancels_working_sell_and_sizes_to_available(data, monke
 
 def test_item2_422_without_prior_order_is_an_error(data):
     _write(data / "trade_log.json", _two_lots())
-    br = Rejecting()
+    br = Rejecting(positions=[{"symbol": "XYZ", "qty": "10", "side": "long"}])
     with pytest.raises(requests.HTTPError):
         ar.execute_exit(br, "XYZ", 5, reason="stop_loss", coid_prefix="p1stop", market=True)
     assert all(t["status"] == "open" for t in _read(data / "trade_log.json"))
@@ -602,7 +602,7 @@ def test_item2_422_without_prior_order_is_an_error(data):
 
 def test_item2_422_duplicate_resolves_prior_order_and_books_once(data):
     _write(data / "trade_log.json", _two_lots())
-    br = Rejecting()
+    br = Rejecting(positions=[{"symbol": "XYZ", "qty": "10", "side": "long"}])
     coid = ar.make_client_order_id("p1stop", "XYZ", "sell")
     br.by_coid[coid] = {"id": "prior1", "status": "filled", "filled_qty": "10",
                         "filled_avg_price": "95"}
@@ -768,3 +768,292 @@ def test_item8_unknown_broker_count_freezes_entries_not_exits(data, monkeypatch,
                            budget=ar.TradeBudget(12, entries_frozen=True))
     assert [o["side"] for o in br.placed] == ["sell"]
     assert "frozen" in _read(data / "momentum_state.json")["orders_deferred"][0]["why"]
+
+
+# ---------------------------------------------------------------------------
+# After-audit simulation follow-ups (H1/H2, M1-M5, L1-L4)
+# ---------------------------------------------------------------------------
+
+import os  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _cat_lot(entry=1003.0, qty=5, oc="momentum_sleeve"):
+    return {"id": "cat1", "symbol": "CAT", "status": "open", "qty": qty, "entry_price": entry,
+            "side": "buy", "order_class": oc, "timestamp": "2026-07-06T14:00:00+00:00"}
+
+
+def test_sim_h1_disaster_floor_is_per_lot_not_blended_average():
+    # 5 @ $1003 then a rebalance add of 4 @ $704 -> blended ~$870, now $716.
+    pos = [{"symbol": "CAT", "qty": "9", "side": "long", "avg_entry_price": "870",
+            "current_price": "716"}]
+    lots = [_cat_lot(), dict(_cat_lot(entry=704.0, qty=4), id="cat2")]
+    t = schedule_managed_disaster_triggers(pos, lots, {})
+    assert t and t[0]["basis_price"] == 1003.0 and t[0]["pnl_pct"] < -28
+
+
+def test_sim_h1_session_runs_disaster_before_momentum_and_excludes_name(data, monkeypatch, limits):
+    import analyst_v2
+    import shared.preflight as spf
+    _write(data / "risk_limits.json", limits)
+    _write(data / "portfolio_state.json", {"starting_equity": 100_000.0,
+                                           "day_start_equity": 97_000.0, "halted": False})
+    _write(data / "trade_log.json", [_cat_lot()])
+    calls = []
+    monkeypatch.setattr(analyst_v2, "load_adaptive_params", lambda: {})
+    monkeypatch.setattr(spf, "run_preflight", lambda **k: (True, {"warnings": [],
+                                                                  "hard_failures": []}))
+    monkeypatch.setattr(ar, "confirm_fill", _fake_confirm({"o1": ("filled", 5.0, 716.0)}))
+
+    def _mom(alpaca, *a, **k):
+        calls.append(("momentum", sorted(ar.disaster_excluded(ar.et_session_date()[:7]))))
+        return True
+    monkeypatch.setattr(ar, "run_momentum_sleeve", _mom)
+    cat = [{"symbol": "CAT", "qty": "5", "qty_available": "5", "side": "long",
+            "avg_entry_price": "1003", "current_price": "716", "market_value": "3580"}]
+    br = Broker(equities=(97_000.0,), positions=cat, prices={"CAT": 716.0})
+    ar.run_trading_session(br)
+    assert br.placed[0]["symbol"] == "CAT" and br.placed[0]["order_type"] == "market"
+    assert calls == [("momentum", ["CAT"])]                      # exit first, then excluded
+
+
+def test_sim_h1_momentum_never_buys_a_disaster_excluded_name(data, monkeypatch, limits):
+    _momentum_env(monkeypatch, data, {"CAT": 0.08})
+    ar._record_disaster_exclusion("CAT")
+    br = MomBroker(positions=[], quotes={"CAT": (715.0, 716.0)})
+    ar.run_momentum_sleeve(br, 100_000.0, 100_000.0, {}, limits, budget=ar.TradeBudget(12))
+    assert br.placed == []
+
+
+def test_sim_h2_no_position_means_no_order_on_either_path(data):
+    for market in (True, False):
+        br = Broker(quotes={"XYZ": (10.0, 10.1)})
+        assert ar.execute_exit(br, "XYZ", 10, reason="r", coid_prefix="p1stop",
+                               market=market) is None
+        assert br.placed == []
+    br = Broker(positions=[{"symbol": "XYZ", "qty": "3", "side": "long"}],
+                quotes={"XYZ": (10.0, 10.1)})
+    ar.execute_exit(br, "XYZ", 10, reason="r", coid_prefix="p1tp")
+    assert br.placed[0]["qty"] == 3                              # never more than held
+
+
+def test_sim_m3_incomplete_month_retries_frozen_targets(data, monkeypatch, limits):
+    import momentum_selector
+    _momentum_env(monkeypatch, data, {"AAA": 0.08})
+    br = MomBroker(positions=[], quotes={"AAA": (99.9, 100.0), "BBB": (49.9, 50.0)},
+                   prices={"AAA": 100.0, "BBB": 50.0})
+    ar.run_momentum_sleeve(br, 100_000.0, 100_000.0, {}, limits, budget=ar.TradeBudget(12))
+    frozen_at = _read(data / "momentum_state.json")["targets_frozen_at"]
+    monkeypatch.setattr(momentum_selector, "select_top_momentum",
+                        lambda *a, **k: {"BBB": 0.08})            # today's ranking moved
+    ar.run_momentum_sleeve(br, 100_000.0, 100_000.0, {}, limits, budget=ar.TradeBudget(12))
+    assert {o["symbol"] for o in br.placed} == {"AAA"}            # no whipsaw into BBB
+    ms = _read(data / "momentum_state.json")
+    assert set(ms["targets"]) == {"AAA"} and ms["targets_frozen_at"] == frozen_at
+
+
+def test_sim_m4_trade_ids_unique_and_legacy_ids_still_close(tmp_path, monkeypatch):
+    monkeypatch.setattr(pt, "DATA_DIR", str(tmp_path))
+    _write(tmp_path / "trade_log.json", [{"id": 1, "symbol": "OLD", "status": "open", "qty": 1,
+                                          "entry_price": 10.0, "side": "buy",
+                                          "timestamp": "2026-10-01T14:00:00+00:00"}])
+    a = pt.log_trade("AAA", "buy", 1, 10.0, "momentum", None, [])
+    b = pt.log_trade("AAA", "buy", 1, 10.0, "momentum", None, [])
+    assert isinstance(a, str) and a != b and len(a) == 32
+    pt.close_trade(a, 11.0, reason="t")
+    pt.close_trade(1, 9.0, reason="t")
+    st = {t["id"]: t["status"] for t in _read(tmp_path / "trade_log.json")}
+    assert st == {1: "closed", a: "closed", b: "open"}
+
+
+def test_sim_l2_intraday_regime_requests_explicit_start():
+    seen = {}
+
+    class B:
+        def get_stock_bars(self, symbol, timeframe="1Day", start=None, limit=220):
+            seen["start"] = start
+            return {"bars": [{"c": 100.0 + i} for i in range(220)]}
+    ar.refresh_intraday_regime(B(), {}, {"market_regime": "BULL"})
+    assert seen["start"] and seen["start"] < ar.et_session_date()
+
+
+def test_sim_l4_zero_jump_threshold_always_corroborates():
+    from shared.equity_guard import confirm_equity
+    acct = {"equity": 100_000.0, "cash": 100_000.0}
+    out = confirm_equity(acct, [], reference_equity=100_000.0, get_price=lambda s: 0,
+                         max_jump_pct=0.0)
+    assert out["independent_equity"] == 100_000.0 and out["ok"]
+
+
+def test_sim_l3_p2_non_stop_exits_are_marketable_limits():
+    sys.path.insert(0, os.path.join(REPO_ROOT, "political-copy-bot", "scripts"))
+    import politician_bot as pb
+
+    class Q:
+        def __init__(self, bp, p):
+            self.bp, self.p = bp, p
+
+        def get_latest_quote(self, s):
+            return {"quote": {"bp": self.bp}}
+
+        def get_latest_trade(self, s):
+            return {"trade": {"p": self.p}}
+    assert pb.exit_limit_price(Q(50.0, 0), "X") == 49.95
+    assert pb.exit_limit_price(Q(0, 20.0), "X") == 19.98
+    assert pb.exit_limit_price(Q(0, 0), "X") is None
+    src = open(os.path.join(REPO_ROOT, "political-copy-bot", "scripts", "politician_bot.py")).read()
+    for kind in ('"tx"', '"mh"', '"tp"'):
+        i = src.index(f"exit_client_order_id({kind}, symbol)")
+        assert 'order_type="market"' not in src[i - 700:i], kind
+
+
+# --- commit_and_push.sh in a temp git repo (M1 / M2 / L1) ---------------------
+
+needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git not installed")
+PSJ, TLJ, BFJ, SGJ = ("data/portfolio_state.json", "data/trade_log.json",
+                      "data/booked_fills.json", "data/signals.json")
+
+
+def _git(cwd, *args):
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True,
+                          text=True).stdout
+
+
+def _origin(tmp_path, files):
+    origin = tmp_path / "origin.git"
+    _git(tmp_path, "init", "-q", "--bare", "-b", "main", str(origin))
+    seed = tmp_path / "seed"
+    _git(tmp_path, "clone", "-q", str(origin), str(seed))
+    _git(seed, "checkout", "-q", "-b", "main")
+    for rel, content in files.items():
+        (seed / rel).parent.mkdir(parents=True, exist_ok=True)
+        (seed / rel).write_text(json.dumps(content, indent=2))
+    _git(seed, "add", "-A")
+    _git(seed, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "seed")
+    _git(seed, "push", "-q", "origin", "main")
+    return origin
+
+
+def _clone(tmp_path, origin, name):
+    _git(tmp_path, "clone", "-q", "-b", "main", str(origin), str(tmp_path / name))
+    return tmp_path / name
+
+
+def _push(repo, files):
+    for rel, content in files.items():
+        (repo / rel).write_text(json.dumps(content, indent=2))
+    _git(repo, "add", "-A")
+    _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "newer")
+    _git(repo, "push", "-q", "origin", "main")
+
+
+def _commit_script(repo):
+    return subprocess.run(["bash", os.path.join(REPO_ROOT, "scripts", "commit_and_push.sh"),
+                           "P1: test", "data"], cwd=repo, capture_output=True, text=True)
+
+
+def _remote(tmp_path, origin, rel):
+    chk = _clone(tmp_path, origin, f"chk{len(list(tmp_path.iterdir()))}")
+    p = chk / rel
+    return json.loads(p.read_text()) if p.exists() else None
+
+
+@needs_git
+def test_sim_m1_newer_snapshot_cannot_erase_a_halt_latched_after_our_base(tmp_path):
+    origin = _origin(tmp_path, {PSJ: {"last_updated": "2026-10-23T14:00:00+00:00",
+                                      "halted": False, "equity": 1}})
+    stale = _clone(tmp_path, origin, "stale")
+    _push(_clone(tmp_path, origin, "monitor"), {PSJ: {
+        "last_updated": "2026-10-23T14:30:00+00:00", "halted": True,
+        "halt_reason": "Kill switch: 19.00% drawdown", "halt_set_at": "2026-10-23T14:30:00+00:00"}})
+    (stale / PSJ).write_text(json.dumps({"last_updated": "2026-10-23T14:40:00+00:00",
+                                         "halted": False, "equity": 2}))
+    r = _commit_script(stale)
+    assert r.returncode == 1 and "halt" in r.stdout, r.stdout + r.stderr
+    assert _remote(tmp_path, origin, PSJ)["halted"] is True
+
+
+@needs_git
+def test_sim_m1_governed_clear_of_that_exact_halt_may_win(tmp_path):
+    halt = {"halted": True, "halt_reason": "Kill switch: 73.94% drawdown", "halt_set_at": None}
+    origin = _origin(tmp_path, {PSJ: {"last_updated": "2026-10-23T14:00:00+00:00", **halt}})
+    ours_repo = _clone(tmp_path, origin, "ours")
+    _push(_clone(tmp_path, origin, "monitor"), {PSJ: {
+        "last_updated": "2026-10-23T14:30:00+00:00", **halt,
+        "halt_observations": [{"at": "2026-10-23T14:30:00+00:00"}]}})
+    (ours_repo / PSJ).write_text(json.dumps({
+        "last_updated": "2026-10-23T14:40:00+00:00", "halted": False, "halt_reason": None,
+        "last_halt": {"halt_reason": halt["halt_reason"], "halt_set_at": None,
+                      "ended": "human_clear"}}))
+    r = _commit_script(ours_repo)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert _remote(tmp_path, origin, PSJ)["halted"] is False
+
+
+@needs_git
+def test_sim_l1_offset_aware_snapshot_compare(tmp_path):
+    origin = _origin(tmp_path, {PSJ: {"last_updated": "2026-10-23T14:00:00+00:00", "equity": 1}})
+    ours_repo = _clone(tmp_path, origin, "ours")
+    _push(_clone(tmp_path, origin, "other"), {PSJ: {"last_updated": "2026-10-23T14:40:00Z",
+                                                    "equity": 2}})
+    # 11:00 EDT == 15:00Z: NEWER, though it sorts lower as a string.
+    (ours_repo / PSJ).write_text(json.dumps({"last_updated": "2026-10-23T11:00:00-04:00",
+                                             "equity": 3}))
+    r = _commit_script(ours_repo)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert _remote(tmp_path, origin, PSJ)["equity"] == 3
+
+
+@needs_git
+def test_sim_m2_ledger_group_is_withheld_atomically(tmp_path):
+    origin = _origin(tmp_path, {TLJ: [{"id": 1, "status": "open"}], BFJ: {},
+                                SGJ: {"timestamp": "2026-10-22T13:00:00+00:00"}})
+    stale = _clone(tmp_path, origin, "stale")
+    _push(_clone(tmp_path, origin, "newer"), {TLJ: [{"id": 1, "status": "closed", "by": "newer"}]})
+    (stale / TLJ).write_text(json.dumps([{"id": 1, "status": "closed", "by": "stale"}]))
+    (stale / BFJ).write_text(json.dumps({"o1": {"qty": 5}}))
+    (stale / SGJ).write_text(json.dumps({"timestamp": "2026-10-23T13:00:00+00:00"}))
+    r = _commit_script(stale)
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert _remote(tmp_path, origin, BFJ) == {}                    # withheld WITH trade_log
+    assert _remote(tmp_path, origin, TLJ)[0]["by"] == "newer"
+    assert _remote(tmp_path, origin, SGJ)["timestamp"].startswith("2026-10-23")  # not in group
+
+
+# --- Guardian P1 freshness uses the broker as ground truth (M5) ---------------
+
+def _guardian_script():
+    text = open(os.path.join(REPO_ROOT, ".github", "workflows", "guardian.yml")).read()
+    tag = "cat > \"$RUNNER_TEMP/guardian_fresh.py\" << 'PY'\n"
+    start = text.index(tag) + len(tag)
+    end = text.index("\n          PY\n", start)
+    return "\n".join(ln[10:] if ln.startswith(" " * 10) else ln.strip()
+                     for ln in text[start:end].splitlines()) + "\n"
+
+
+@needs_git
+def test_sim_m5_guardian_p1_fresh_when_broker_has_todays_session_order(tmp_path):
+    origin = _origin(tmp_path, {"data/signals.json": {"timestamp": "2026-01-02T15:00:00+00:00"}})
+    repo = _clone(tmp_path, origin, "g")
+    (repo / "config").mkdir()
+    (repo / "config" / "alpaca_config.json").write_text(json.dumps(
+        {"api_key": "k", "api_secret": "s", "base_url": "https://fake"}))
+    fake = tmp_path / "fakemods"
+    fake.mkdir()
+    script = tmp_path / "guardian_fresh.py"
+    script.write_text(_guardian_script())
+    env = {k: v for k, v in os.environ.items() if k != "GH_TOKEN"}
+    env["PYTHONPATH"] = str(fake)
+    for coid, expect in (("p1stop-20261023-CAT-sell", 1), ("p1mom-20261023-AMD-buy", 0)):
+        (fake / "requests.py").write_text(
+            "class _R:\n"
+            "    def raise_for_status(self): pass\n"
+            f"    def json(self): return [{{'client_order_id': '{coid}'}}]\n"
+            "def get(*a, **k): return _R()\n")
+        r = subprocess.run([sys.executable, str(script), "p1"], cwd=repo, env=env,
+                           capture_output=True, text=True)
+        assert r.returncode == expect, (coid, r.stdout + r.stderr)

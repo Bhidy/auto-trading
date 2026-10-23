@@ -6,6 +6,7 @@ Tracks every trade outcome, computes win rates, and adapts strategy parameters.
 import json
 import os
 import sys
+import uuid
 from datetime import datetime, timezone, timedelta
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -48,7 +49,10 @@ def log_trade(symbol, side, qty, entry_price, bucket, signal_score, reasons,
     """
     log = load_json("trade_log.json", [])
     entry = {
-        "id": len(log) + 1,
+        # Globally unique (M4): ``len(log)+1`` collided when two runs appended
+        # concurrently and their logs were merged — close_trade matches by id,
+        # so a duplicate id closed the WRONG lot. Legacy int ids stay readable.
+        "id": uuid.uuid4().hex,
         "schema_version": SCHEMA_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "symbol": symbol,

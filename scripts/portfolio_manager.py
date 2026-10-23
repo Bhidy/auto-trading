@@ -452,14 +452,32 @@ def schedule_managed_disaster_triggers(positions, open_trades, params=None,
             cur = float(p.get("current_price", 0) or 0)
         except (TypeError, ValueError):
             continue
-        if qty <= 0 or entry <= 0 or cur <= 0:
+        if qty <= 0 or cur <= 0:
             continue                       # never act on an unpriced mark
-        pnl = (cur - entry) / entry * 100
+        # Evaluate PER LOT at the lot's own entry price: the broker's blended
+        # average is diluted by any later add (a rebalance buying 4 more CAT
+        # moved the blended loss from -28.6% to ~-18%, hiding the breach).
+        # The worst lot decides; with no lot, fall back to the broker average.
+        lot_entries = []
+        for t in open_lots:
+            if t["symbol"] != sym:
+                continue
+            try:
+                le = float(t.get("entry_price") or 0)
+            except (TypeError, ValueError):
+                le = 0.0
+            if le > 0:
+                lot_entries.append(le)
+        basis = max(lot_entries) if lot_entries else entry
+        if basis <= 0:
+            continue
+        pnl = (cur - basis) / basis * 100
         if pnl <= -pct:
             triggers.append({
                 "symbol": sym, "action": "DISASTER_STOP_SELL",
-                "current_price": cur, "pnl_pct": round(pnl, 2),
-                "reason": f"schedule-managed disaster stop {pnl:.1f}% <= -{pct:.1f}%"})
+                "current_price": cur, "pnl_pct": round(pnl, 2), "basis_price": basis,
+                "reason": (f"schedule-managed disaster stop: worst lot {pnl:.1f}% "
+                           f"(entry ${basis:,.2f}) <= -{pct:.1f}%")})
     return triggers
 
 

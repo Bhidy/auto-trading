@@ -77,7 +77,7 @@ def confirm_equity(account, positions, *, reference_equity=None, get_price=None,
 
     jump = abs(equity / ref - 1.0) * 100.0
     out["jump_pct"] = round(jump, 2)
-    if jump <= max_jump_pct:
+    if jump < max_jump_pct:
         out.update(ok=True, reason="within normal range")
         return out
 
