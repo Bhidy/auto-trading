@@ -63,6 +63,7 @@
         .rd-alert { display: flex; gap: .7rem; align-items: flex-start; padding: .8rem 1.05rem; margin-bottom: 1rem; border-radius: .85rem;
             border: 1px solid var(--rd-fail); background: var(--rd-fail-bg); font-size: .88rem; line-height: 1.55; }
         .rd-alert.warn { border-color: var(--rd-wait); background: var(--rd-wait-bg); }
+        .rd-alert.note { background: transparent; border-style: dashed; color: var(--muted); font-size: .82rem; padding: .55rem .9rem; }
         .rd-alert b { font-weight: 800; }
 
         /* ── Book tabs ── */
@@ -425,6 +426,7 @@
                 unavailable: '<b>Readiness report unavailable.</b> No verdict is shown rather than a guessed one. {why}',
                 why_absent: 'The engine has not published a report yet.', why_malformed: 'The published report failed validation.', why_network: 'The API could not be reached.',
                 eng_warn: '<b>Engine warning:</b> {w}',
+                eng_note: '<b>Data note:</b> {w}',
                 no_sleeves: 'No sleeve of this portfolio is registered with the engine.',
                 no_verdict: 'No verdict is shown until a valid engine report is available.',
                 f_rule: 'Verdict rule', f_rule_t: 'GO only if every hard gate passes. Exits-only and quarantined versions are NOT ELIGIBLE. No percentage score is computed. Real capital remains a human decision.',
@@ -499,6 +501,7 @@
                 unavailable: '<b>تقرير الجاهزية غير متاح.</b> لا نعرض حكماً بدلاً من تخمينه. {why}',
                 why_absent: 'لم ينشر المحرك تقريراً بعد.', why_malformed: 'التقرير المنشور لم يجتز التحقق.', why_network: 'تعذّر الوصول إلى الواجهة.',
                 eng_warn: '<b>تحذير من المحرك:</b> {w}',
+                eng_note: '<b>ملاحظة بيانات:</b> {w}',
                 no_sleeves: 'لا توجد استراتيجية مسجلة لهذه المحفظة في المحرك.',
                 no_verdict: 'لا يُعرض أي حكم حتى يتوفر تقرير صالح من المحرك.',
                 f_rule: 'قاعدة الحكم', f_rule_t: '«جاهز» فقط إذا نجحت كل الشروط الإلزامية. الإصدارات المعزولة أو التي في وضع الخروج فقط «غير مؤهلة». لا تُحسب أي نسبة مئوية. يبقى رأس المال الحقيقي قراراً بشرياً.',
@@ -803,9 +806,18 @@
             if (report) {
                 var n = sessionsSince(report.generated_at);
                 if (n != null && n > 2) out.push('<div class="rd-alert warn" role="status"><div>' + tm('stale', { n: L(n), when: L(ATFmt.etDateTime(report.generated_at)) }) + '</div></div>');
+                // Routine, already-handled data facts (e.g. the initial funding deposit
+                // excluded from returns) are notes, not warnings: one compact line, so
+                // real warnings keep their signal.
+                var notes = [], warns = [];
                 (report.warnings || []).forEach(function (w) {
-                    out.push('<div class="rd-alert warn" role="status"><div>' + tm('eng_warn', { w: EN(typeof w === 'string' ? w : JSON.stringify(w)) }) + '</div></div>');
+                    var txt = typeof w === 'string' ? w : JSON.stringify(w);
+                    (/cash-flow sessions excluded/i.test(txt) ? notes : warns).push(txt);
                 });
+                warns.forEach(function (txt) {
+                    out.push('<div class="rd-alert warn" role="status"><div>' + tm('eng_warn', { w: EN(txt) }) + '</div></div>');
+                });
+                if (notes.length) out.push('<div class="rd-alert note" role="note"><div>' + tm('eng_note', { w: EN(notes.join(' · ')) }) + '</div></div>');
             } else if (reportErr) {
                 out.push('<div class="rd-alert" role="alert"><div>' + tm('unavailable', { why: t(reportErr === 'absent' ? 'why_absent' : (reportErr === 'malformed' ? 'why_malformed' : 'why_network')) }) + '</div></div>');
             }

@@ -52,8 +52,12 @@ test('readiness: GET /api/readiness serves the committed engine report, no-store
     const onDisk = JSON.parse(fs.readFileSync(I.READINESS_REPORT_PATH, 'utf-8'));
     assert.deepEqual(body, onDisk, 'served verbatim — no server-side recomputation');
     assert.ok(Array.isArray(body.sleeves) && body.sleeves.length > 0);
+    // The engine publishes its own verdict vocabulary (v2.1 added BETA_SLEEVE and
+    // FORWARD_TEST_PASS); fall back to the v2.0 set for older reports.
+    const allowed = Array.isArray(body.verdict_values) && body.verdict_values.length
+        ? body.verdict_values : ['GO', 'NOT_READY', 'NOT_ELIGIBLE'];
     for (const s of body.sleeves) {
-        assert.ok(['GO', 'NOT_READY', 'NOT_ELIGIBLE'].includes(s.verdict), `${s.id} verdict ${s.verdict}`);
+        assert.ok(allowed.includes(s.verdict), `${s.id} verdict ${s.verdict}`);
         assert.equal(typeof s.gates_passed, 'number');
         assert.equal(typeof s.gates_total, 'number');
         assert.equal('score' in s || 'readiness_pct' in s, false, 'no percentage score in the report');
