@@ -17,7 +17,9 @@ legacy path):
     ``scale`` = live_cap / spec_cap, where live_cap = P3 hard per-symbol cap (8%)
     minus drift headroom (0.4pp) = 7.6%. Every weight, the band (2% x scale ~
     1.33% of equity, absolute) and the drift guard (12% x scale = 8%) scale the
-    same way. Residual = cash.
+    same way. From the 2026-11 freeze (amendment 2026-10-23) the residual goes
+    to the T-bill basket (each member <= 7.6%) within P3's gross-exposure room
+    at the freeze, as the parent spec does; only the rest is cash.
   * monthly: targets are frozen per calendar month from the latest completed
     close (= prior month-end close on the first session of the month; the latest
     close on a catch-up run). The month is done only when every order placed
@@ -93,7 +95,21 @@ DEFAULTS = {
     "max_spread_pct": 1.0,               # wider/crossed quote => use last trade
     "cash_buffer_pct": 0.005,            # cash never spent below 0.5% of equity
     "min_order_notional": 250.0,         # no dust top-ups / trims
+    "residual_gross_headroom": 0.01,     # T-bill residual stops 1pp below the gross cap
 }
+# Parent-spec residual rule (amendment 2026-10-23, docs/specs/crisis_core_v1_forward.json):
+# after the scaled weights, the residual goes to the T-bill basket in priority
+# order (each member <= live_cap), bounded by P3's gross-exposure room at the
+# freeze; only what is left after that is cash. Applies from the 2026-11 freeze
+# so the frozen 2026-10 targets (and the live book) are not churned mid-month.
+RESIDUAL_RULE_FROM_MONTH = "2026-11"
+AMENDMENTS = [{
+    "at": "2026-10-23", "forward_day": 1, "effective_from_freeze": RESIDUAL_RULE_FROM_MONTH,
+    "change": "residual after the scaled weights -> T-bill basket (BIL, SHV, SGOV, USFR; each "
+              "<= live_cap) within P3 gross room (80% incl. legacy, less 1pp headroom); rest cash",
+    "why": "audit-found deviation from the parent spec's residual rule (basket overflow -> cash "
+           "only after the basket is full); not a tuning",
+}]
 MAX_ORDER_RECORDS = 500
 MAX_SESSION_RECORDS = 400
 # Statuses whose filled_qty is FINAL for the order. ``done_for_day`` is not
@@ -159,6 +175,56 @@ def scale_targets(raw, params):
         if sw > 0:
             out[s] = sw
     return out
+
+
+def residual_budget(core_targets, legacy_gross_w, params):
+    """Weight available for the T-bill residual: the parent spec's residual
+    (1 - core) bounded by P3's gross-exposure room left after the core targets
+    AND the legacy book (T-bill ETFs count toward gross), less a headroom so
+    ordinary price drift does not leave the month permanently 'clipped'.
+    Cash room is implied: a long-only book's cash = equity - gross >= 1 - cap."""
+    core = sum(core_targets.values())
+    room = params["max_gross"] - params["residual_gross_headroom"] - core - max(0.0, legacy_gross_w)
+    return max(0.0, min(1.0 - core, room))
+
+
+def add_tbill_residual(core_targets, budget, available, params):
+    """Fill ``budget`` into BIL, SHV, SGOV, USFR (priority order, listed only),
+    each member's TOTAL weight <= live_cap. Returns (targets, added)."""
+    out = dict(core_targets)
+    added = {}
+    left = max(0.0, budget)
+    for s in TBILL_BASKET:
+        if left <= 1e-9:
+            break
+        if s not in available:
+            continue
+        room = params["live_cap"] - out.get(s, 0.0)
+        if room <= 1e-9:
+            continue
+        w = min(room, left)
+        out[s] = round(out.get(s, 0.0) + w, 10)
+        added[s] = round(w, 10)
+        left -= w
+    return out, added
+
+
+def legacy_gross_weight(positions, alloc_qty, equity):
+    """Legacy (non-allocator) market value / equity, from broker positions."""
+    if equity <= 0:
+        return 0.0
+    mv = 0.0
+    for p in positions or []:
+        try:
+            q = float(p.get("qty") or 0)
+            v = abs(float(p.get("market_value") or 0))
+        except (TypeError, ValueError):
+            continue
+        if q <= 0:
+            continue
+        lq = max(0.0, q - alloc_qty.get(p.get("symbol"), 0.0))
+        mv += v * lq / q
+    return mv / equity
 
 
 def is_allocator_lot(t):
@@ -808,6 +874,7 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
 
     if state is None:
         state = _new_state()
+    state["amendments"] = [dict(a) for a in AMENDMENTS]
     month = session[:7]
     if state.get("last_trade_session") == session:
         lg.info(f"P3 allocator already traded session {session} — settle-only")
@@ -854,9 +921,25 @@ def run_allocator(alpaca, *, data_dir, config_dir, controls=None, now=None,
                      f"stale={stale}) — no orders; a data gap is never read as 'unlisted'")
             return _finish("snapshot_incomplete", missing=missing, stale=stale)
         raw = spec_target_weights(set(snap))
+        core = scale_targets(raw, params)
+        targets_new = core
+        residual = {"rule": "none (pre-amendment months)", "budget": 0.0, "added": {}}
+        if month >= RESIDUAL_RULE_FROM_MONTH:
+            eq0 = float(account.get("equity") or 0)
+            lg_w = legacy_gross_weight(alpaca.get_positions() or [],
+                                       allocator_holdings(trade_log), eq0)
+            budget = residual_budget(core, lg_w, params)
+            targets_new, added = add_tbill_residual(core, budget, set(snap), params)
+            residual = {"rule": "parent-spec T-bill residual, amendment 2026-10-23",
+                        "legacy_gross_w_at_freeze": round(lg_w, 6),
+                        "budget": round(budget, 8), "added": added,
+                        "cash_residual": round(1.0 - sum(targets_new.values()), 8)}
+            lg.info(f"P3 allocator: T-bill residual {budget:.2%} (legacy gross {lg_w:.2%}) "
+                    f"-> {added}")
         state.update({
             "targets_month": month, "targets_frozen_at": snap_date,
-            "spec_weights": raw, "targets": scale_targets(raw, params),
+            "spec_weights": raw, "targets_core": core, "targets": targets_new,
+            "residual_tbill": residual,
             "snapshot_closes": {s: c for s, (_, c) in snap.items()},
             "scale": round(params["scale"], 8), "band": round(params["band"], 8),
             "live_cap": params["live_cap"], "hard_cap": params["hard_cap"],

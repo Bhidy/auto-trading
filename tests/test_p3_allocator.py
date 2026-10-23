@@ -946,3 +946,113 @@ def test_guardian_p3_freshness_counts_legacy_session_orders_not_allocator_orders
         r = subprocess.run([sys.executable, str(script), "p3"], cwd=repo, env=env,
                            capture_output=True, text=True)
         assert r.returncode == expect, (coid, r.stdout + r.stderr)
+
+
+# ---------------------------------------------------------------------------
+# Parent-spec T-bill residual (amendment 2026-10-23, effective 2026-11 freeze)
+# ---------------------------------------------------------------------------
+
+def _core():
+    return A.scale_targets(A.spec_target_weights(set(A.UNIVERSE)), params())
+
+
+def test_residual_budget_is_bounded_by_gross_room_with_headroom():
+    core = _core()
+    # No legacy: min(1 - 66.67%, 80% - 1pp - 66.67%) = 12.33%
+    assert A.residual_budget(core, 0.0, params()) == pytest.approx(0.79 - 2 / 3)
+    # Legacy 5% of equity eats gross room one-for-one.
+    assert A.residual_budget(core, 0.05, params()) == pytest.approx(0.74 - 2 / 3)
+    # Today's book (~32% legacy): no room => no residual (pure cash, as before).
+    assert A.residual_budget(core, 0.32, params()) == 0.0
+
+
+def test_residual_fills_basket_in_priority_order_each_member_capped():
+    core = _core()
+    t, added = A.add_tbill_residual(core, A.residual_budget(core, 0.0, params()),
+                                    set(A.UNIVERSE), params())
+    assert t["BIL"] == pytest.approx(0.076)                  # topped up to the cap first
+    assert t["SHV"] == pytest.approx(0.076)
+    assert t["SGOV"] == pytest.approx(0.79 - 2 / 3 - (0.076 - core["BIL"]) - 0.076)
+    assert "USFR" not in t
+    assert sum(t.values()) == pytest.approx(0.79)
+    assert all(w <= 0.076 + 1e-12 for w in t.values())
+    assert {s: t[s] for s in core if s not in A.TBILL_BASKET} == \
+        {s: core[s] for s in core if s not in A.TBILL_BASKET}   # risky untouched
+
+
+def test_residual_beyond_basket_capacity_stays_cash_and_skips_unlisted():
+    p = A.build_params(P3_LIMITS)
+    p["max_gross"] = 1.5                                      # room never binds here
+    core = _core()
+    t, _ = A.add_tbill_residual(core, A.residual_budget(core, 0.0, p), set(A.UNIVERSE), p)
+    for s in A.TBILL_BASKET:
+        assert t[s] == pytest.approx(0.076)                  # basket full: 4 x 7.6%
+    assert 1 - sum(t.values()) == pytest.approx(1 - 8 * 0.076 - 4 * 0.076)   # 8.8% cash
+    t2, _ = A.add_tbill_residual(core, 0.10, set(A.UNIVERSE) - {"SHV"}, p)
+    assert "SHV" not in t2 and t2["SGOV"] == pytest.approx(0.076)
+
+
+def test_legacy_gross_weight_excludes_allocator_shares():
+    pos = [{"symbol": "ANET", "qty": "100", "market_value": "14000"},
+           {"symbol": "BIL", "qty": "46", "market_value": "4209"}]
+    assert A.legacy_gross_weight(pos, {"BIL": 46.0}, 100_000) == pytest.approx(0.14)
+
+
+def test_october_targets_are_not_changed_mid_month(env):
+    b = FakeBroker()
+    run(b, env)                                   # 2026-10 frozen under the old rule
+    before = state(env)["targets"]
+    assert "SHV" not in before and before["BIL"] == pytest.approx(0.088 * 0.076 / 0.114)
+    n = len(b.placed)
+    out = run(b, env, now=NEXT)                   # later October session
+    assert len(b.placed) == n and out["status"] in ("month_already_complete", "drift_check")
+    assert state(env)["targets"] == before
+
+
+def test_october_refreeze_still_uses_the_pre_amendment_rule(env):
+    b = FakeBroker()
+    run(b, env)
+    assert state(env)["residual_tbill"]["budget"] == 0.0
+    assert state(env)["targets"] == state(env)["targets_core"]
+
+
+def test_november_freeze_with_legacy_room_zero_changes_nothing(env):
+    # Today's shape: legacy ~32% + the sleeve => no gross room for the residual.
+    legacy = [{"symbol": "ANET", "qty": 120}, {"symbol": "KO", "qty": 216}]
+    b = FakeBroker(equity=99_155.66, cash=67_201.88, positions=legacy)
+    run(b, env)
+    n = len(b.placed)
+    run(b, env, now=NOV)
+    st = state(env)
+    assert st["targets_month"] == "2026-11" and st["residual_tbill"]["budget"] == 0.0
+    assert st["targets"] == st["targets_core"]
+    new = b.placed[n:]
+    assert all(o["side"] == "buy" for o in new)              # no churn / sells
+    assert not {o["symbol"] for o in new} & {"SHV", "SGOV", "USFR"}
+
+
+def test_november_freeze_adds_basket_only_within_gross_room(env):
+    b = FakeBroker()
+    run(b, env)                                   # October core build (no legacy)
+    n = len(b.placed)
+    out = run(b, env, now=NOV)
+    st = state(env)
+    assert st["residual_tbill"]["budget"] == pytest.approx(0.79 - 2 / 3, abs=1e-6)
+    new = b.placed[n:]
+    assert all(o["side"] == "buy" for o in new)
+    assert {o["symbol"] for o in new} <= {"BIL", "SHV", "SGOV"}
+    gross = sum(float(p["qty"]) * PRICES[s] for s, p in b.positions.items())
+    assert gross <= 0.80 * b.equity
+    for s, p in b.positions.items():
+        assert float(p["qty"]) * PRICES[s] <= 0.08 * b.equity
+    assert out["status"] in ("month_complete", "month_in_progress")
+
+
+def test_residual_with_some_legacy_is_reduced_one_for_one(env):
+    legacy = [{"symbol": "ANET", "qty": 50}]                 # 7% of equity
+    b = FakeBroker(positions=legacy, cash=100_000 - 50 * 140)
+    run(b, env)
+    run(b, env, now=NOV)
+    st = state(env)
+    assert st["residual_tbill"]["legacy_gross_w_at_freeze"] == pytest.approx(0.07, abs=1e-3)
+    assert st["residual_tbill"]["budget"] == pytest.approx(0.79 - 2 / 3 - 0.07, abs=1e-3)
