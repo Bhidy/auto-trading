@@ -24,6 +24,7 @@ on:
       - "Guardian — Trading Catch-Up & Self-Heal"
       - "Market Data — Daily History Collector"
       - "Heartbeat — Daily Run Watchdog"
+      - "Readiness Engine v2 — Daily Report"
       # Audit 2026-10-23 D3: the quality gate and the production deploy were
       # unwatched — a red CI or a failed deploy raised nothing.
       - "CI — Lint & Tests"
