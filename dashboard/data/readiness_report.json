@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T20:31:37.610102+00:00",
+  "generated_at": "2026-10-24T01:07:32.742242+00:00",
   "as_of_session": "2026-10-23",
   "methodology_version": "2.3.0",
   "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.3)",
@@ -247,7 +247,7 @@
           "threshold": "<= 0",
           "value": 0,
           "status": "pass",
-          "detail": "11 entry orders checked (one order per symbol/side/session)",
+          "detail": "12 entry orders checked (one order per symbol/side/session)",
           "eta_sessions": null,
           "hard": true
         },
@@ -5150,7 +5150,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-10-23T20:31:51.344487+00:00",
+    "as_of": "2026-10-24T01:07:40.663161+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
@@ -5173,14 +5173,14 @@
       {
         "path": "data/trade_log.json",
         "exists": true,
-        "sha256": "13250f028a2a09028e532697ab22934d437a89ab7346664cd1d404ce98a6e6d0",
-        "bytes": 80817
+        "sha256": "3bfbf12e1779ce84480789363229746b2bd21ed6916b2a092bfde12c1c9f1aad",
+        "bytes": 82450
       },
       {
         "path": "data/reconciliation_report.json",
         "exists": true,
-        "sha256": "77a8b6022c13a3f3ab9f45dd54fdfe9e7355aa42a2a3f214fa863a46aed9d7d3",
-        "bytes": 275
+        "sha256": "e2d7ac08a3bdd8194fbe67431c5de29f389a1dca374c020002c5bcecd30e2ea5",
+        "bytes": 302
       },
       {
         "path": "political-copy-bot/data/trade_log.json",
@@ -5203,11 +5203,11 @@
       {
         "path": "event-driven-bot/data/reconciliation_report.json",
         "exists": true,
-        "sha256": "daf137723026d3475d32dd29c523576d3dfd30a3c8a9934f0df75a98d9bde93d",
-        "bytes": 275
+        "sha256": "9f3f4d67c6fe6e714aff4ce500df314e1b6a22ef7b945964e845fc7761a3d9e2",
+        "bytes": 277
       }
     ],
-    "combined_sha256": "5274ac97543e20d8c433a75d8ab6017854d5e8a922e3f56b231e9315000880c5",
+    "combined_sha256": "3e6c7bc687602f19745f001a893a5d73405cf49ed1540b21fc81469941930530",
     "meta": {
       "engine": "scripts/readiness_engine.py"
     }
