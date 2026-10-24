@@ -1521,5 +1521,280 @@
         ]
       }
     ]
+  },
+  {
+    "date": "2026-10-23",
+    "timestamp": "2026-10-24T00:04:02.889631+00:00",
+    "audit": {
+      "equity": 99126.39,
+      "cash": 20971.9,
+      "daily_pnl": 41.94,
+      "daily_pnl_pct": 0.042,
+      "day_start_equity": 99084.45,
+      "total_open_exposure": 78154.49,
+      "exposure_pct": 78.8,
+      "position_count": 14,
+      "trades_today": 9,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 12769.8,
+        "Unknown": 46354.15,
+        "Consumer": 11183.23,
+        "Healthcare": 7847.31
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "172.6",
+        "market_value": "7421.8",
+        "unrealized_pl": "54.18",
+        "pnl_pct": 0.73,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "BIL",
+        "qty": "46",
+        "entry": "91.64",
+        "current": "91.63",
+        "market_value": "4214.98",
+        "unrealized_pl": "-0.46",
+        "pnl_pct": -0.01,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "CTA",
+        "qty": "179",
+        "entry": "30.56",
+        "current": "30.77",
+        "market_value": "5507.83",
+        "unrealized_pl": "37.59",
+        "pnl_pct": 0.69,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "DBMF",
+        "qty": "168",
+        "entry": "32.64",
+        "current": "32.73",
+        "market_value": "5498.64",
+        "unrealized_pl": "15.12",
+        "pnl_pct": 0.28,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "132.69",
+        "market_value": "5705.67",
+        "unrealized_pl": "229.19",
+        "pnl_pct": 4.18,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "EFA",
+        "qty": "53",
+        "entry": "102.35",
+        "current": "102.63",
+        "market_value": "5439.39",
+        "unrealized_pl": "14.84",
+        "pnl_pct": 0.27,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "IEF",
+        "qty": "60",
+        "entry": "91.08",
+        "current": "91.1",
+        "market_value": "5466",
+        "unrealized_pl": "1.2",
+        "pnl_pct": 0.02,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "19",
+        "entry": "274.18",
+        "current": "275.75",
+        "market_value": "5239.25",
+        "unrealized_pl": "29.83",
+        "pnl_pct": 0.57,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "KMLM",
+        "qty": "177",
+        "entry": "30.85",
+        "current": "31.04",
+        "market_value": "5494.08",
+        "unrealized_pl": "33.63",
+        "pnl_pct": 0.62,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "92.84",
+        "market_value": "5477.56",
+        "unrealized_pl": "303.26",
+        "pnl_pct": 5.86,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "145.3206",
+        "market_value": "7847.3124",
+        "unrealized_pl": "-20.937582",
+        "pnl_pct": -0.27,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "382",
+        "market_value": "5348",
+        "unrealized_pl": "5.6",
+        "pnl_pct": 0.1,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "7",
+        "entry": "705.59",
+        "current": "704.88",
+        "market_value": "4934.16",
+        "unrealized_pl": "-4.97",
+        "pnl_pct": -0.1,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "6",
+        "entry": "760.393333",
+        "current": "759.97",
+        "market_value": "4559.82",
+        "unrealized_pl": "-2.539998",
+        "pnl_pct": -0.06,
+        "sector": "Unknown"
+      }
+    ],
+    "trades": [
+      {
+        "symbol": "CTA",
+        "side": "buy",
+        "qty": 179.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "DBMF",
+        "side": "buy",
+        "qty": 168.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "EFA",
+        "side": "buy",
+        "qty": 53.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "IEF",
+        "side": "buy",
+        "qty": 60.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "IWM",
+        "side": "buy",
+        "qty": 19.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "KMLM",
+        "side": "buy",
+        "qty": 177.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "QQQ",
+        "side": "buy",
+        "qty": 7.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "SPY",
+        "side": "buy",
+        "qty": 6.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 7.60% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      },
+      {
+        "symbol": "BIL",
+        "side": "buy",
+        "qty": 46.0,
+        "signal_type": "ALLOCATOR_REBALANCE",
+        "tranche": "allocator_forward_test",
+        "score": null,
+        "reasons": [
+          "crisis_core_v1 scaled target 5.87% vs allocator 0.00% (initial_buy)",
+          "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion"
+        ]
+      }
+    ]
   }
 ]
