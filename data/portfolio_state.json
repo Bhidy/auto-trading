@@ -1,8 +1,8 @@
 {
-  "equity": 97478.17,
+  "equity": 97937.14,
   "starting_equity": 100000.0,
   "day_start_equity": 97478.17,
-  "week_start_equity": 97970.98,
+  "week_start_equity": 97478.17,
   "positions": {
     "AMAT": {
       "qty": 17,
@@ -41,7 +41,7 @@
     },
     "MRK": {
       "qty": 46,
-      "avg_price": 144.278695,
+      "avg_price": 144.278696,
       "bucket": "unknown"
     },
     "PSX": {
@@ -56,21 +56,21 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 65807.23,
-  "long_market_value": 65807.23,
+  "total_exposure": 66267.465,
+  "long_market_value": 66267.465,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 31670.94,
-  "day_pnl": 0.0,
-  "day_pnl_pct": 0.0,
-  "week_pnl": -492.81,
-  "week_pnl_pct": -0.00503,
+  "cash": 31670.61,
+  "day_pnl": 458.97,
+  "day_pnl_pct": 0.004708,
+  "week_pnl": 458.97,
+  "week_pnl_pct": 0.004708,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-10-23T23:10:00.429516+00:00",
-  "week_start_iso_week": "2026-W43",
+  "last_updated": "2026-10-26T14:10:56.720428+00:00",
+  "week_start_iso_week": "2026-W44",
   "halt_clears_consumed": [
     "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
   ],
@@ -133,5 +133,7 @@
   "last_close_equity": 97478.17,
   "last_close_session_date": "2026-10-23",
   "last_eod_session_date": "2026-10-23",
-  "last_eod_completed_at": "2026-10-23T23:09:59.997493+00:00"
+  "last_eod_completed_at": "2026-10-23T23:09:59.997493+00:00",
+  "week_start_set_at": "2026-10-26T14:10:55.809417+00:00",
+  "week_start_source": "prior close 2026-10-23"
 }

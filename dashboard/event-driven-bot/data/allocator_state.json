@@ -3,7 +3,7 @@
   "strategy_tag": "crisis_core_v1_scaled",
   "mode": "paper_forward_test",
   "note": "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion",
-  "last_rebalance_month": null,
+  "last_rebalance_month": "2026-10",
   "targets_month": "2026-10",
   "targets_frozen_at": "2026-10-22",
   "targets": {
@@ -17,8 +17,8 @@
     "IEF": 0.076,
     "BIL": 0.0586666667
   },
-  "last_run_at": "2026-10-23T14:11:35.877128+00:00",
-  "last_trade_session": "2026-10-23",
+  "last_run_at": "2026-10-26T14:10:58.352092+00:00",
+  "last_trade_session": "2026-10-26",
   "orders": {
     "p3alloc-20261023-CTA-buy": {
       "client_order_id": "p3alloc-20261023-CTA-buy",
@@ -212,7 +212,7 @@
   "band": 0.01333333,
   "live_cap": 0.076,
   "hard_cap": 0.08,
-  "last_updated": "2026-10-23T14:11:52.936422+00:00",
+  "last_updated": "2026-10-26T14:10:59.647353+00:00",
   "session_targets": {
     "2026-10-23": {
       "equity": 98816.97,
@@ -242,138 +242,93 @@
       "room_factor": 0.734285,
       "buys_blocked": null,
       "deferred": []
+    },
+    "2026-10-26": {
+      "equity": 99151.82,
+      "targets": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "BIL": 0.0586666667
+      },
+      "targets_constrained": {
+        "SPY": 0.05276472,
+        "QQQ": 0.05444276,
+        "IWM": 0.05344701,
+        "EFA": 0.05608378,
+        "DBMF": 0.05552857,
+        "KMLM": 0.05509821,
+        "CTA": 0.05497638,
+        "IEF": 0.05562236,
+        "BIL": 0.04295374
+      },
+      "cap_shortfall_pct": 18.5749,
+      "room_factor": 1.0,
+      "buys_blocked": null,
+      "deferred": [],
+      "skipped_low_room": true,
+      "buy_cutoff": false
     }
   },
   "targets_constrained": {
-    "SPY": 0.05292188,
-    "QQQ": 0.054593,
-    "IWM": 0.05380219,
-    "EFA": 0.05528797,
-    "DBMF": 0.05584197,
-    "KMLM": 0.05572059,
-    "CTA": 0.05564236,
-    "IEF": 0.05572251,
-    "BIL": 0.04290308
+    "SPY": 0.05276472,
+    "QQQ": 0.05444276,
+    "IWM": 0.05344701,
+    "EFA": 0.05608378,
+    "DBMF": 0.05552857,
+    "KMLM": 0.05509821,
+    "CTA": 0.05497638,
+    "IEF": 0.05562236,
+    "BIL": 0.04295374
   },
-  "cap_shortfall_pct": 18.4231,
+  "cap_shortfall_pct": 18.5749,
   "last_run": {
-    "at": "2026-10-23T14:11:35.877128+00:00",
-    "orders": [
-      {
-        "client_order_id": "p3alloc-20261023-CTA-buy",
-        "symbol": "CTA",
-        "side": "buy",
-        "qty": 179.0,
-        "limit_price": 30.64,
-        "status": "filled",
-        "filled_qty": 179.0,
-        "filled_avg_price": 30.56,
-        "order_id": "9e570ef0-0492-4f9e-9d33-63ca29153cf1"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-DBMF-buy",
-        "symbol": "DBMF",
-        "side": "buy",
-        "qty": 168.0,
-        "limit_price": 32.72,
-        "status": "filled",
-        "filled_qty": 168.0,
-        "filled_avg_price": 32.64,
-        "order_id": "bde642f4-5757-4326-93cc-6409d5077830"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-EFA-buy",
-        "symbol": "EFA",
-        "side": "buy",
-        "qty": 53.0,
-        "limit_price": 102.6,
-        "status": "filled",
-        "filled_qty": 53.0,
-        "filled_avg_price": 102.35,
-        "order_id": "7c7c5f3e-b9fd-4f36-9137-e26aedb223b8"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-IEF-buy",
-        "symbol": "IEF",
-        "side": "buy",
-        "qty": 60.0,
-        "limit_price": 91.31,
-        "status": "filled",
-        "filled_qty": 60.0,
-        "filled_avg_price": 91.08,
-        "order_id": "82b90c85-a999-4cc3-9b20-ddba93847f8b"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-IWM-buy",
-        "symbol": "IWM",
-        "side": "buy",
-        "qty": 19.0,
-        "limit_price": 274.89,
-        "status": "filled",
-        "filled_qty": 19.0,
-        "filled_avg_price": 274.18,
-        "order_id": "800d0b0a-c150-4930-b0ac-b94fb494518a"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-KMLM-buy",
-        "symbol": "KMLM",
-        "side": "buy",
-        "qty": 177.0,
-        "limit_price": 30.93,
-        "status": "filled",
-        "filled_qty": 177.0,
-        "filled_avg_price": 30.85,
-        "order_id": "adbd0d84-ccb5-454a-b36f-95221258eb4f"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-QQQ-buy",
-        "symbol": "QQQ",
-        "side": "buy",
-        "qty": 7.0,
-        "limit_price": 707.15,
-        "status": "filled",
-        "filled_qty": 7.0,
-        "filled_avg_price": 705.59,
-        "order_id": "7f9dadeb-523b-4ed0-905a-6eddc516fe60"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-SPY-buy",
-        "symbol": "SPY",
-        "side": "buy",
-        "qty": 6.0,
-        "limit_price": 762.4,
-        "status": "filled",
-        "filled_qty": 6.0,
-        "filled_avg_price": 760.393333,
-        "order_id": "6daa4265-f2f5-4f0c-806f-d927e8e9145e"
-      },
-      {
-        "client_order_id": "p3alloc-20261023-BIL-buy",
-        "symbol": "BIL",
-        "side": "buy",
-        "qty": 46.0,
-        "limit_price": 91.87,
-        "status": "filled",
-        "filled_qty": 46.0,
-        "filled_avg_price": 91.64,
-        "order_id": "1dc302b6-a3e3-4610-9f60-034d5b58a9c6"
-      }
-    ],
+    "at": "2026-10-26T14:10:58.352092+00:00",
+    "orders": [],
     "skips": [],
     "deferred": [],
     "clipped": [],
-    "room": {
-      "cash": 67201.81,
-      "working_buy_notional": 0.0,
-      "gross_mv": 31615.16,
-      "cash_room": 66707.73,
-      "gross_room": 47438.42,
-      "room": 47438.42,
-      "factor": 0.734285
+    "skipped_low_room": {
+      "room": 1141.45,
+      "min_room": 1983.04,
+      "buys": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "CTA",
+        "KMLM",
+        "EFA",
+        "IEF",
+        "DBMF",
+        "BIL"
+      ]
     },
-    "cap_shortfall_pct": 18.4231,
-    "status": "month_in_progress",
-    "session": "2026-10-23",
+    "room": {
+      "cash": 20971.89,
+      "working_buy_notional": 0.0,
+      "gross_mv": 78180.0,
+      "cash_room": 20476.13,
+      "gross_room": 1141.45,
+      "room": 1141.45,
+      "factor": 1.0
+    },
+    "cap_shortfall_pct": 18.5749,
+    "status": "month_complete",
+    "session": "2026-10-26",
     "buys_blocked": null
-  }
+  },
+  "amendments": [
+    {
+      "at": "2026-10-23",
+      "forward_day": 1,
+      "effective_from_freeze": "2026-11",
+      "change": "residual after the scaled weights -> T-bill basket (BIL, SHV, SGOV, USFR; each <= live_cap) within P3 gross room (80% incl. legacy, less 1pp headroom); rest cash",
+      "why": "audit-found deviation from the parent spec's residual rule (basket overflow -> cash only after the basket is full); not a tuning"
+    }
+  ]
 }
