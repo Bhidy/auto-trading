@@ -1,5 +1,5 @@
 {
-  "equity": 98263.98,
+  "equity": 98294.01,
   "starting_equity": 100000.0,
   "day_start_equity": 98530.62,
   "week_start_equity": 97478.17,
@@ -56,20 +56,20 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 66591.7555,
-  "long_market_value": 66591.7555,
+  "total_exposure": 66623.39600000001,
+  "long_market_value": 66623.39600000001,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 31670.61,
-  "day_pnl": -266.64,
-  "day_pnl_pct": -0.002706,
-  "week_pnl": 785.81,
-  "week_pnl_pct": 0.008061,
+  "day_pnl": -236.61,
+  "day_pnl_pct": -0.002401,
+  "week_pnl": 815.84,
+  "week_pnl_pct": 0.008369,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-10-27T14:10:40.707664+00:00",
+  "last_updated": "2026-10-27T19:30:30.924827+00:00",
   "week_start_iso_week": "2026-W44",
   "halt_clears_consumed": [
     "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
@@ -115,7 +115,7 @@
   "halt_verified": null,
   "halt_unverified_reason": null,
   "current_regime": "BULL",
-  "current_regime_at": "2026-10-23T19:48:19.981168+00:00",
+  "current_regime_at": "2026-10-27T19:30:30.669635+00:00",
   "current_regime_modifiers": {
     "equity_mult": 1.0,
     "defensive_mult": 0.8,
