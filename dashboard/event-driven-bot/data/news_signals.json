@@ -1,50 +1,35 @@
 {
-  "timestamp": "2026-10-14T14:06:16.237858+00:00",
+  "timestamp": "2026-10-28T14:10:57.588127+00:00",
   "signals": [
     {
-      "symbol": "EMR",
-      "sector": "Industrials",
+      "symbol": "MU",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Emerson Electric, Raises Price Target to $188",
+      "headline": "Micron Stock Gains as SK Hynix Reports Record Revenue Above 100 Trillion Won",
       "source": "benzinga",
-      "created_at": "2026-10-14T13:51:29Z",
+      "created_at": "2026-10-28T14:07:56Z",
       "reasons": [
-        "Positive: 'outperform'"
+        "Positive: 'record revenue'"
       ],
       "tranche": "event_driven",
-      "price": 161.61,
-      "atr": 3.96
+      "price": 931.24,
+      "atr": 48.65
     },
     {
-      "symbol": "ETN",
-      "sector": "Industrials",
+      "symbol": "NVDA",
+      "sector": "Tech",
       "signal": "NEWS_BUY",
       "score": 0.3,
-      "headline": "RBC Capital Maintains Outperform on Eaton Corp, Raises Price Target to $526",
+      "headline": "Micron Stock Gains as SK Hynix Reports Record Revenue Above 100 Trillion Won",
       "source": "benzinga",
-      "created_at": "2026-10-14T13:50:42Z",
+      "created_at": "2026-10-28T14:07:56Z",
       "reasons": [
-        "Positive: 'outperform'"
+        "Positive: 'record revenue'"
       ],
       "tranche": "event_driven",
-      "price": 436.11,
-      "atr": 13.98
-    },
-    {
-      "symbol": "WBD",
-      "sector": "Media",
-      "signal": "NEWS_BUY",
-      "score": 0.3,
-      "headline": "Reported Earlier: Skydance Distributes 470.7M Warrants To Shareholders, Each Exercisable For 1 Class B Share At $12; Issues $11.98B In U.S. Notes And \u20ac546.5M In Euro Notes In Warner Bros. Discovery Merger Exchange",
-      "source": "benzinga",
-      "created_at": "2026-10-14T13:44:13Z",
-      "reasons": [
-        "Positive: 'merger'"
-      ],
-      "tranche": "event_driven",
-      "price": 30.94,
-      "atr": 0.33
+      "price": 217.23,
+      "atr": 6.01
     }
   ]
 }
