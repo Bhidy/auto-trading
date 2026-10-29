@@ -17,8 +17,8 @@
     "IEF": 0.076,
     "BIL": 0.0586666667
   },
-  "last_run_at": "2026-10-28T14:10:50.304392+00:00",
-  "last_trade_session": "2026-10-28",
+  "last_run_at": "2026-10-29T14:10:35.052948+00:00",
+  "last_trade_session": "2026-10-29",
   "orders": {
     "p3alloc-20261023-CTA-buy": {
       "client_order_id": "p3alloc-20261023-CTA-buy",
@@ -212,7 +212,7 @@
   "band": 0.01333333,
   "live_cap": 0.076,
   "hard_cap": 0.08,
-  "last_updated": "2026-10-28T14:10:54.602582+00:00",
+  "last_updated": "2026-10-29T14:10:36.124355+00:00",
   "session_targets": {
     "2026-10-23": {
       "equity": 98816.97,
@@ -335,6 +335,37 @@
       "deferred": [],
       "skipped_low_room": false,
       "buy_cutoff": false
+    },
+    "2026-10-29": {
+      "equity": 99712.57,
+      "targets": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "BIL": 0.0586666667
+      },
+      "targets_constrained": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "BIL": 0.05866667
+      },
+      "cap_shortfall_pct": 0.0,
+      "room_factor": 1.0,
+      "buys_blocked": null,
+      "deferred": [],
+      "skipped_low_room": false,
+      "buy_cutoff": false
     }
   },
   "targets_constrained": {
@@ -350,14 +381,14 @@
   },
   "cap_shortfall_pct": 0.0,
   "last_run": {
-    "at": "2026-10-28T14:10:50.304392+00:00",
+    "at": "2026-10-29T14:10:35.052948+00:00",
     "orders": [],
     "skips": [],
     "deferred": [],
     "clipped": [],
     "cap_shortfall_pct": 0.0,
     "status": "month_already_complete",
-    "session": "2026-10-28",
+    "session": "2026-10-29",
     "buys_blocked": null
   },
   "amendments": [
