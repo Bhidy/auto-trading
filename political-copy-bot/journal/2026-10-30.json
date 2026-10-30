@@ -20,5 +20,71 @@
     },
     "trades_executed": [],
     "trades_count": 0
+  },
+  {
+    "date": "2026-10-30",
+    "timestamp": "2026-10-30T19:32:44.227267",
+    "account_snapshot": {
+      "equity": "104221.99",
+      "cash": "8022.3",
+      "portfolio_value": "104221.99"
+    },
+    "trades_executed": [
+      {
+        "symbol": "T",
+        "side": "buy",
+        "qty": 145,
+        "limit_price": 21.43,
+        "entry_price": 21.4,
+        "arrival_price": 21.395,
+        "arrival_source": "quote_mid",
+        "intended_price": 21.395,
+        "slippage_pct": 0.0234,
+        "client_order_id": "p2-20261030-T-buy",
+        "filled_qty": 145.0,
+        "estimated_value": 3107.35,
+        "order_id": "7a51336e-ef69-4088-b150-5cebce0b3301",
+        "order_status": "filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "10/15/2026",
+        "disclosure_date": "10/29/2026",
+        "observed_date": "2026-10-30T19:32:38.328397",
+        "disclosure_lag_days": 15,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of AT&T Inc",
+        "timestamp": "2026-10-30T19:32:38.328567",
+        "date": "2026-10-30"
+      },
+      {
+        "symbol": "PLD",
+        "side": "buy",
+        "qty": 24,
+        "limit_price": 128.63,
+        "entry_price": 128.38,
+        "arrival_price": 124.69,
+        "arrival_source": "quote_mid",
+        "intended_price": 124.69,
+        "slippage_pct": 2.9593,
+        "client_order_id": "p2-20261030-PLD-buy",
+        "filled_qty": 24.0,
+        "estimated_value": 3087.12,
+        "order_id": "97f59ee0-f725-42b1-91ac-57335dec13a1",
+        "order_status": "filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "10/15/2026",
+        "disclosure_date": "10/29/2026",
+        "observed_date": "2026-10-30T19:32:42.941218",
+        "disclosure_lag_days": 15,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of Prologis, Inc. Common Stock",
+        "timestamp": "2026-10-30T19:32:42.941408",
+        "date": "2026-10-30"
+      }
+    ],
+    "trades_count": 2
   }
 ]
