@@ -1,8 +1,8 @@
 {
-  "equity": 97210.5,
+  "equity": 96363.08,
   "starting_equity": 100000.0,
   "day_start_equity": 97210.5,
-  "week_start_equity": 97478.17,
+  "week_start_equity": 97210.5,
   "positions": {
     "AMAT": {
       "qty": 17,
@@ -17,16 +17,6 @@
     "DE": {
       "qty": 10,
       "avg_price": 636.29,
-      "bucket": "unknown"
-    },
-    "JNJ": {
-      "qty": 25,
-      "avg_price": 264.14,
-      "bucket": "unknown"
-    },
-    "LLY": {
-      "qty": 5,
-      "avg_price": 1282.51,
       "bucket": "unknown"
     },
     "MPC": {
@@ -50,22 +40,22 @@
       "bucket": "unknown"
     }
   },
-  "trades_today": 0,
-  "total_exposure": 60630.3709,
-  "long_market_value": 60630.3709,
+  "trades_today": 2,
+  "total_exposure": 46096.62,
+  "long_market_value": 46096.62,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 36580.13,
-  "day_pnl": 0.0,
-  "day_pnl_pct": 0.0,
-  "week_pnl": -267.67,
-  "week_pnl_pct": -0.002746,
+  "cash": 50266.46,
+  "day_pnl": -847.42,
+  "day_pnl_pct": -0.008717,
+  "week_pnl": -847.42,
+  "week_pnl_pct": -0.008717,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-10-30T23:49:46.551060+00:00",
-  "week_start_iso_week": "2026-W44",
+  "last_updated": "2026-11-02T14:41:22.595171+00:00",
+  "week_start_iso_week": "2026-W45",
   "halt_clears_consumed": [
     "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
   ],
@@ -129,6 +119,6 @@
   "last_close_session_date": "2026-10-30",
   "last_eod_session_date": "2026-10-30",
   "last_eod_completed_at": "2026-10-30T23:49:46.398073+00:00",
-  "week_start_set_at": "2026-10-26T14:10:55.809417+00:00",
-  "week_start_source": "prior close 2026-10-23"
+  "week_start_set_at": "2026-11-02T14:40:41.815639+00:00",
+  "week_start_source": "prior close 2026-10-30"
 }

@@ -3,9 +3,9 @@
   "strategy_tag": "crisis_core_v1_scaled",
   "mode": "paper_forward_test",
   "note": "FORWARD TEST of a strategy that FAILED its backtest promotion gate (DD 14.8% > 12%, DSR 0.90 < 0.95) \u2014 paper only, not a promotion",
-  "last_rebalance_month": "2026-10",
-  "targets_month": "2026-10",
-  "targets_frozen_at": "2026-10-22",
+  "last_rebalance_month": "2026-11",
+  "targets_month": "2026-11",
+  "targets_frozen_at": "2026-10-30",
   "targets": {
     "SPY": 0.076,
     "QQQ": 0.076,
@@ -17,8 +17,8 @@
     "IEF": 0.076,
     "BIL": 0.0586666667
   },
-  "last_run_at": "2026-10-30T14:10:43.161626+00:00",
-  "last_trade_session": "2026-10-30",
+  "last_run_at": "2026-11-02T14:41:24.692465+00:00",
+  "last_trade_session": "2026-11-02",
   "orders": {
     "p3alloc-20261023-CTA-buy": {
       "client_order_id": "p3alloc-20261023-CTA-buy",
@@ -195,24 +195,24 @@
     "BIL": 0.08799999999999997
   },
   "snapshot_closes": {
-    "SPY": 763.96,
-    "QQQ": 704.47,
-    "IWM": 276.67,
-    "EFA": 103.15,
-    "DBMF": 32.46,
-    "KMLM": 30.48,
-    "CTA": 30.04,
-    "IEF": 91.2,
-    "BIL": 91.6,
-    "SHV": 110.31,
-    "SGOV": 100.62,
-    "USFR": 50.51
+    "SPY": 755.72,
+    "QQQ": 690.49,
+    "IWM": 279.33,
+    "EFA": 103.37,
+    "DBMF": 32.45,
+    "KMLM": 30.69,
+    "CTA": 29.94,
+    "IEF": 91.76,
+    "BIL": 91.7,
+    "SHV": 110.44,
+    "SGOV": 100.73,
+    "USFR": 50.4
   },
   "scale": 0.66666667,
   "band": 0.01333333,
   "live_cap": 0.076,
   "hard_cap": 0.08,
-  "last_updated": "2026-10-30T14:10:45.380243+00:00",
+  "last_updated": "2026-11-02T14:41:32.157627+00:00",
   "session_targets": {
     "2026-10-23": {
       "equity": 98816.97,
@@ -397,29 +397,84 @@
       "deferred": [],
       "skipped_low_room": false,
       "buy_cutoff": false
+    },
+    "2026-11-02": {
+      "equity": 98356.15,
+      "targets": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "BIL": 0.0586666667
+      },
+      "targets_constrained": {
+        "SPY": 0.05270516,
+        "QQQ": 0.05466569,
+        "IWM": 0.05588606,
+        "EFA": 0.05686012,
+        "DBMF": 0.05494712,
+        "KMLM": 0.05414239,
+        "CTA": 0.05222975,
+        "IEF": 0.05631135,
+        "BIL": 0.04374864
+      },
+      "cap_shortfall_pct": 18.517,
+      "room_factor": 1.0,
+      "buys_blocked": null,
+      "deferred": [],
+      "skipped_low_room": true,
+      "buy_cutoff": false
     }
   },
   "targets_constrained": {
-    "SPY": 0.076,
-    "QQQ": 0.076,
-    "IWM": 0.076,
-    "EFA": 0.076,
-    "DBMF": 0.076,
-    "KMLM": 0.076,
-    "CTA": 0.076,
-    "IEF": 0.076,
-    "BIL": 0.05866667
+    "SPY": 0.05270516,
+    "QQQ": 0.05466569,
+    "IWM": 0.05588606,
+    "EFA": 0.05686012,
+    "DBMF": 0.05494712,
+    "KMLM": 0.05414239,
+    "CTA": 0.05222975,
+    "IEF": 0.05631135,
+    "BIL": 0.04374864
   },
-  "cap_shortfall_pct": 0.0,
+  "cap_shortfall_pct": 18.517,
   "last_run": {
-    "at": "2026-10-30T14:10:43.161626+00:00",
+    "at": "2026-11-02T14:41:24.692465+00:00",
     "orders": [],
     "skips": [],
     "deferred": [],
     "clipped": [],
-    "cap_shortfall_pct": 0.0,
-    "status": "month_already_complete",
-    "session": "2026-10-30",
+    "skipped_low_room": {
+      "room": 1299.94,
+      "min_room": 1967.12,
+      "buys": [
+        "SPY",
+        "QQQ",
+        "CTA",
+        "KMLM",
+        "IWM",
+        "DBMF",
+        "IEF",
+        "EFA",
+        "BIL"
+      ]
+    },
+    "room": {
+      "cash": 20971.89,
+      "working_buy_notional": 0.0,
+      "gross_mv": 77384.98,
+      "cash_room": 20480.11,
+      "gross_room": 1299.94,
+      "room": 1299.94,
+      "factor": 1.0
+    },
+    "cap_shortfall_pct": 18.517,
+    "status": "month_complete",
+    "session": "2026-11-02",
     "buys_blocked": null
   },
   "amendments": [
@@ -430,5 +485,23 @@
       "change": "residual after the scaled weights -> T-bill basket (BIL, SHV, SGOV, USFR; each <= live_cap) within P3 gross room (80% incl. legacy, less 1pp headroom); rest cash",
       "why": "audit-found deviation from the parent spec's residual rule (basket overflow -> cash only after the basket is full); not a tuning"
     }
-  ]
+  ],
+  "targets_core": {
+    "SPY": 0.076,
+    "QQQ": 0.076,
+    "IWM": 0.076,
+    "EFA": 0.076,
+    "DBMF": 0.076,
+    "KMLM": 0.076,
+    "CTA": 0.076,
+    "IEF": 0.076,
+    "BIL": 0.0586666667
+  },
+  "residual_tbill": {
+    "rule": "parent-spec T-bill residual, amendment 2026-10-23",
+    "legacy_gross_w_at_freeze": 0.321344,
+    "budget": 0.0,
+    "added": {},
+    "cash_residual": 0.33333333
+  }
 }
