@@ -1,65 +1,65 @@
 {
-  "timestamp": "2026-10-30T23:49:46.378432+00:00",
+  "timestamp": "2026-11-03T02:21:14.664624+00:00",
   "overall": {
-    "total_trades": 87,
-    "wins": 28,
+    "total_trades": 89,
+    "wins": 30,
     "losses": 59,
-    "win_rate": 0.322,
-    "avg_pnl_pct": -2.5,
-    "avg_win_pct": 1.69,
+    "win_rate": 0.337,
+    "avg_pnl_pct": -2.33,
+    "avg_win_pct": 1.92,
     "avg_loss_pct": -4.49,
-    "win_loss_ratio": 0.38,
-    "max_win_pct": 7.77,
+    "win_loss_ratio": 0.43,
+    "max_win_pct": 8.47,
     "max_loss_pct": -30.65,
-    "expectancy": -133.73,
-    "total_pnl": -10097.47,
+    "expectancy": -123.2,
+    "total_pnl": -9427.45,
     "partial_trims_excluded": 6,
-    "profit_factor": 0.31,
-    "per_trade_sharpe": -0.45,
-    "sharpe_estimate": -0.45
+    "profit_factor": 0.36,
+    "per_trade_sharpe": -0.41,
+    "sharpe_estimate": -0.41
   },
   "last_7_days": {
-    "total_trades": 1,
-    "wins": 0,
+    "total_trades": 3,
+    "wins": 2,
     "losses": 1,
-    "win_rate": 0.0,
-    "avg_pnl_pct": -26.19,
-    "avg_win_pct": 0,
+    "win_rate": 0.667,
+    "avg_pnl_pct": -5.27,
+    "avg_win_pct": 5.2,
     "avg_loss_pct": -26.19,
-    "win_loss_ratio": 0.0,
-    "max_win_pct": -26.19,
+    "win_loss_ratio": 0.2,
+    "max_win_pct": 8.47,
     "max_loss_pct": -26.19,
-    "expectancy": -1741.83,
-    "total_pnl": -1741.83,
+    "expectancy": -357.27,
+    "total_pnl": -1071.81,
     "partial_trims_excluded": 0,
-    "profit_factor": 0.0,
-    "per_trade_sharpe": 0,
-    "sharpe_estimate": 0
+    "profit_factor": 0.38,
+    "per_trade_sharpe": -0.29,
+    "sharpe_estimate": -0.29
   },
   "last_30_days": {
-    "total_trades": 4,
-    "wins": 0,
+    "total_trades": 6,
+    "wins": 2,
     "losses": 4,
-    "win_rate": 0.0,
-    "avg_pnl_pct": -20.49,
-    "avg_win_pct": 0,
+    "win_rate": 0.333,
+    "avg_pnl_pct": -11.93,
+    "avg_win_pct": 5.2,
     "avg_loss_pct": -20.49,
-    "win_loss_ratio": 0.0,
-    "max_win_pct": -9.7,
+    "win_loss_ratio": 0.25,
+    "max_win_pct": 8.47,
     "max_loss_pct": -30.65,
-    "expectancy": -1152.14,
-    "total_pnl": -3071.6,
+    "expectancy": -656.43,
+    "total_pnl": -2401.58,
     "partial_trims_excluded": 4,
-    "profit_factor": 0.33,
-    "per_trade_sharpe": -2.13,
-    "sharpe_estimate": -2.13
+    "profit_factor": 0.48,
+    "per_trade_sharpe": -0.78,
+    "sharpe_estimate": -0.78
   },
   "by_bucket": {
     "momentum": {
-      "trades": 4,
-      "win_rate": 0.0,
-      "total_pnl": -4608.57,
-      "avg_pnl_pct": -20.49
+      "trades": 6,
+      "win_rate": 0.333,
+      "total_pnl": -3938.55,
+      "avg_pnl_pct": -11.93
     },
     "unknown": {
       "trades": 10,
@@ -93,6 +93,12 @@
     }
   },
   "by_symbol": {
+    "LLY": {
+      "trades": 1,
+      "win_rate": 1.0,
+      "total_pnl": 543.46,
+      "avg_pnl_pct": 8.47
+    },
     "SPY": {
       "trades": 7,
       "win_rate": 0.286,
@@ -110,6 +116,12 @@
       "win_rate": 0.0,
       "total_pnl": -2380.56,
       "avg_pnl_pct": -19.02
+    },
+    "JNJ": {
+      "trades": 1,
+      "win_rate": 1.0,
+      "total_pnl": 126.56,
+      "avg_pnl_pct": 1.92
     },
     "NVDA": {
       "trades": 3,
@@ -257,7 +269,8 @@
     }
   },
   "insights": [
-    "Bucket 'momentum' underperforming severely \u2014 consider reducing allocation",
+    "Win rate declining \u2014 tighten entry criteria",
+    "Losing money \u2014 reduce exposure and review strategy",
     "Bucket 'unknown' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
   ]
