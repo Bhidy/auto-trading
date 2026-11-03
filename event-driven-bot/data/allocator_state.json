@@ -17,8 +17,8 @@
     "IEF": 0.076,
     "BIL": 0.0586666667
   },
-  "last_run_at": "2026-11-02T14:41:24.692465+00:00",
-  "last_trade_session": "2026-11-02",
+  "last_run_at": "2026-11-03T14:40:38.680973+00:00",
+  "last_trade_session": "2026-11-03",
   "orders": {
     "p3alloc-20261023-CTA-buy": {
       "client_order_id": "p3alloc-20261023-CTA-buy",
@@ -212,7 +212,7 @@
   "band": 0.01333333,
   "live_cap": 0.076,
   "hard_cap": 0.08,
-  "last_updated": "2026-11-02T14:41:32.157627+00:00",
+  "last_updated": "2026-11-03T14:40:39.641019+00:00",
   "session_targets": {
     "2026-10-23": {
       "equity": 98816.97,
@@ -428,53 +428,60 @@
       "deferred": [],
       "skipped_low_room": true,
       "buy_cutoff": false
+    },
+    "2026-11-03": {
+      "equity": 98123.15,
+      "targets": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "BIL": 0.0586666667
+      },
+      "targets_constrained": {
+        "SPY": 0.076,
+        "QQQ": 0.076,
+        "IWM": 0.076,
+        "EFA": 0.076,
+        "DBMF": 0.076,
+        "KMLM": 0.076,
+        "CTA": 0.076,
+        "IEF": 0.076,
+        "BIL": 0.05866667
+      },
+      "cap_shortfall_pct": 0.0,
+      "room_factor": 1.0,
+      "buys_blocked": null,
+      "deferred": [],
+      "skipped_low_room": false,
+      "buy_cutoff": false
     }
   },
   "targets_constrained": {
-    "SPY": 0.05270516,
-    "QQQ": 0.05466569,
-    "IWM": 0.05588606,
-    "EFA": 0.05686012,
-    "DBMF": 0.05494712,
-    "KMLM": 0.05414239,
-    "CTA": 0.05222975,
-    "IEF": 0.05631135,
-    "BIL": 0.04374864
+    "SPY": 0.076,
+    "QQQ": 0.076,
+    "IWM": 0.076,
+    "EFA": 0.076,
+    "DBMF": 0.076,
+    "KMLM": 0.076,
+    "CTA": 0.076,
+    "IEF": 0.076,
+    "BIL": 0.05866667
   },
-  "cap_shortfall_pct": 18.517,
+  "cap_shortfall_pct": 0.0,
   "last_run": {
-    "at": "2026-11-02T14:41:24.692465+00:00",
+    "at": "2026-11-03T14:40:38.680973+00:00",
     "orders": [],
     "skips": [],
     "deferred": [],
     "clipped": [],
-    "skipped_low_room": {
-      "room": 1299.94,
-      "min_room": 1967.12,
-      "buys": [
-        "SPY",
-        "QQQ",
-        "CTA",
-        "KMLM",
-        "IWM",
-        "DBMF",
-        "IEF",
-        "EFA",
-        "BIL"
-      ]
-    },
-    "room": {
-      "cash": 20971.89,
-      "working_buy_notional": 0.0,
-      "gross_mv": 77384.98,
-      "cash_room": 20480.11,
-      "gross_room": 1299.94,
-      "room": 1299.94,
-      "factor": 1.0
-    },
-    "cap_shortfall_pct": 18.517,
-    "status": "month_complete",
-    "session": "2026-11-02",
+    "cap_shortfall_pct": 0.0,
+    "status": "month_already_complete",
+    "session": "2026-11-03",
     "buys_blocked": null
   },
   "amendments": [
