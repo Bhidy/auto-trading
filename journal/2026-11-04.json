@@ -1,0 +1,114 @@
+[
+  {
+    "date": "2026-11-04",
+    "timestamp": "2026-11-05T00:54:26.282127+00:00",
+    "mode": "end-of-day",
+    "account": {
+      "equity": 94607.25,
+      "cash": 50266.16,
+      "portfolio_value": 94607.25,
+      "daily_pnl": -1053.9100000000035,
+      "daily_pnl_pct": -1.102
+    },
+    "positions": [
+      {
+        "symbol": "AMAT",
+        "qty": "17",
+        "market_value": "6210.0116",
+        "unrealized_pl": "-200.8584",
+        "unrealized_plpc": "-0.03133"
+      },
+      {
+        "symbol": "AMD",
+        "qty": "13",
+        "market_value": "6305",
+        "unrealized_pl": "-412.88",
+        "unrealized_plpc": "-0.06146"
+      },
+      {
+        "symbol": "DE",
+        "qty": "10",
+        "market_value": "6765",
+        "unrealized_pl": "402.1",
+        "unrealized_plpc": "0.06319"
+      },
+      {
+        "symbol": "MPC",
+        "qty": "15",
+        "market_value": "5850",
+        "unrealized_pl": "1776.045",
+        "unrealized_plpc": "0.43595"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "46",
+        "market_value": "6935.0014",
+        "unrealized_pl": "298.181384",
+        "unrealized_plpc": "0.04493"
+      },
+      {
+        "symbol": "PSX",
+        "qty": "24",
+        "market_value": "6192",
+        "unrealized_pl": "1900.32",
+        "unrealized_plpc": "0.44279"
+      },
+      {
+        "symbol": "SLB",
+        "qty": "118",
+        "market_value": "6084.08",
+        "unrealized_pl": "688.439966",
+        "unrealized_plpc": "0.12759"
+      }
+    ],
+    "learning": {
+      "metrics_7d": {
+        "total_trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "win_rate": 0.667,
+        "avg_pnl_pct": -5.27,
+        "avg_win_pct": 5.2,
+        "avg_loss_pct": -26.19,
+        "win_loss_ratio": 0.2,
+        "max_win_pct": 8.47,
+        "max_loss_pct": -26.19,
+        "expectancy": -357.27,
+        "total_pnl": -1071.81,
+        "partial_trims_excluded": 0,
+        "profit_factor": 0.38,
+        "per_trade_sharpe": -0.29,
+        "sharpe_estimate": -0.29
+      },
+      "metrics_30d": {
+        "total_trades": 6,
+        "wins": 2,
+        "losses": 4,
+        "win_rate": 0.333,
+        "avg_pnl_pct": -11.93,
+        "avg_win_pct": 5.2,
+        "avg_loss_pct": -20.49,
+        "win_loss_ratio": 0.25,
+        "max_win_pct": 8.47,
+        "max_loss_pct": -30.65,
+        "expectancy": -656.43,
+        "total_pnl": -2401.58,
+        "partial_trims_excluded": 4,
+        "profit_factor": 0.48,
+        "per_trade_sharpe": -0.78,
+        "sharpe_estimate": -0.78
+      },
+      "updated_params_snapshot": {
+        "position_size_multiplier": 0.5,
+        "confidence_buy_threshold": 0.7,
+        "trailing_stop_atr_mult": 1.5
+      }
+    },
+    "insights": [
+      "Win rate declining \u2014 tighten entry criteria",
+      "Losing money \u2014 reduce exposure and review strategy",
+      "Bucket 'unknown' underperforming severely \u2014 consider reducing allocation",
+      "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
+    ]
+  }
+]
