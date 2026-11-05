@@ -164,5 +164,171 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-11-04",
+    "timestamp": "2026-11-05T01:01:33.609244+00:00",
+    "audit": {
+      "equity": 98776.46,
+      "cash": 20971.89,
+      "daily_pnl": 981.82,
+      "daily_pnl_pct": 1.004,
+      "day_start_equity": 97794.64,
+      "total_open_exposure": 77804.57,
+      "exposure_pct": 78.8,
+      "position_count": 14,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 12517.27,
+        "Unknown": 45374.91,
+        "Consumer": 11771.3,
+        "Healthcare": 8141.09
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "177.6937",
+        "market_value": "7640.8291",
+        "unrealized_pl": "273.2091",
+        "pnl_pct": 3.71,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "BIL",
+        "qty": "46",
+        "entry": "91.64",
+        "current": "91.42",
+        "market_value": "4205.32",
+        "unrealized_pl": "-10.12",
+        "pnl_pct": -0.24,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "CTA",
+        "qty": "179",
+        "entry": "30.56",
+        "current": "26.73",
+        "market_value": "4784.67",
+        "unrealized_pl": "-685.57",
+        "pnl_pct": -12.53,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "DBMF",
+        "qty": "168",
+        "entry": "32.64",
+        "current": "31.49",
+        "market_value": "5290.32",
+        "unrealized_pl": "-193.2",
+        "pnl_pct": -3.52,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "141.55",
+        "market_value": "6086.65",
+        "unrealized_pl": "610.17",
+        "pnl_pct": 11.14,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "EFA",
+        "qty": "53",
+        "entry": "102.35",
+        "current": "105.72",
+        "market_value": "5603.16",
+        "unrealized_pl": "178.61",
+        "pnl_pct": 3.29,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "IEF",
+        "qty": "60",
+        "entry": "91.08",
+        "current": "91.66",
+        "market_value": "5499.6",
+        "unrealized_pl": "34.8",
+        "pnl_pct": 0.64,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "19",
+        "entry": "274.18",
+        "current": "284.02",
+        "market_value": "5396.38",
+        "unrealized_pl": "186.96",
+        "pnl_pct": 3.59,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "KMLM",
+        "qty": "177",
+        "entry": "30.85",
+        "current": "29.22",
+        "market_value": "5171.94",
+        "unrealized_pl": "-288.51",
+        "pnl_pct": -5.28,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "KO",
+        "qty": "59",
+        "entry": "87.7",
+        "current": "96.35",
+        "market_value": "5684.65",
+        "unrealized_pl": "510.35",
+        "pnl_pct": 9.86,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "MRK",
+        "qty": "54",
+        "entry": "145.708333",
+        "current": "150.7609",
+        "market_value": "8141.0886",
+        "unrealized_pl": "272.838618",
+        "pnl_pct": 3.47,
+        "sector": "Healthcare"
+      },
+      {
+        "symbol": "PANW",
+        "qty": "14",
+        "entry": "381.6",
+        "current": "348.317",
+        "market_value": "4876.438",
+        "unrealized_pl": "-465.962",
+        "pnl_pct": -8.72,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "7",
+        "entry": "705.59",
+        "current": "689.02",
+        "market_value": "4823.14",
+        "unrealized_pl": "-115.99",
+        "pnl_pct": -2.35,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "6",
+        "entry": "760.393333",
+        "current": "766.73",
+        "market_value": "4600.38",
+        "unrealized_pl": "38.020002",
+        "pnl_pct": 0.83,
+        "sector": "Unknown"
+      }
+    ],
+    "trades": []
   }
 ]
