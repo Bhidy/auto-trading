@@ -3129,7 +3129,7 @@
     "timestamp": "2026-10-23T23:09:58.895390+00:00",
     "symbol": "MRK",
     "side": "buy",
-    "qty": 46.0,
+    "qty": 43.0,
     "entry_price": 144.2787,
     "intended_price": 144.3,
     "slippage_pct": -0.0148,
@@ -3151,5 +3151,37 @@
     "realized_pnl": null,
     "hold_days": null,
     "status": "open"
+  },
+  {
+    "id": "0a5f17a4fe1841b2a7b710edadae4b6a-trim-2026-11-05T14:40:38.593966+00:00",
+    "schema_version": 2,
+    "timestamp": "2026-10-23T23:09:58.895390+00:00",
+    "symbol": "MRK",
+    "side": "buy",
+    "qty": 3.0,
+    "entry_price": 144.2787,
+    "intended_price": 144.3,
+    "slippage_pct": -0.0148,
+    "bucket": "momentum",
+    "signal_score": null,
+    "reasons": [
+      "momentum top13 rebalance 2026-10 (late fill)"
+    ],
+    "borrow_status": null,
+    "order_class": "momentum_sleeve",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": 152.02,
+    "exit_timestamp": "2026-11-05T14:40:38.593966+00:00",
+    "gross_pnl": 23.22,
+    "fees": 0.01,
+    "pnl": 23.21,
+    "pnl_pct": 5.36,
+    "realized_pnl": 23.21,
+    "hold_days": null,
+    "status": "closed",
+    "exit_reason": "momentum_rebalance",
+    "parent_id": "0a5f17a4fe1841b2a7b710edadae4b6a",
+    "partial_trim": true
   }
 ]
