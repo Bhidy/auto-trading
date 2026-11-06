@@ -1,14 +1,14 @@
 {
   "status": "in_progress",
-  "as_of": "2026-11-05",
+  "as_of": "2026-11-06",
   "activated_at": "2026-07-06",
   "basis": "p1_account_level",
-  "days_on_paper": 122,
-  "track_days_measured": 88,
-  "oos_sharpe": 0.17,
-  "max_drawdown_pct": 4.54,
-  "momentum_fills": 17,
-  "rebalance_count": 10,
+  "days_on_paper": 123,
+  "track_days_measured": 89,
+  "oos_sharpe": -0.66,
+  "max_drawdown_pct": 7.01,
+  "momentum_fills": 18,
+  "rebalance_count": 11,
   "latest_vol_scale": 1.0,
   "latest_deployed_pct": 90.0,
   "gates": {
@@ -19,25 +19,25 @@
   },
   "checks": {
     "days_on_paper": {
-      "value": 122,
+      "value": 123,
       "threshold": 90,
       "op": ">=",
       "pass": true
     },
     "oos_sharpe": {
-      "value": 0.17,
+      "value": -0.66,
       "threshold": 1.0,
       "op": ">=",
       "pass": false
     },
     "max_drawdown_pct": {
-      "value": 4.54,
+      "value": 7.01,
       "threshold": 15.0,
       "op": "<=",
       "pass": true
     },
     "momentum_fills": {
-      "value": 17,
+      "value": 18,
       "threshold": 26,
       "op": ">=",
       "pass": false
