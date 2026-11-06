@@ -2832,15 +2832,18 @@
     "qty": 14.0,
     "entry_price": 381.6,
     "timestamp": "2026-09-29T23:45:30.590010+00:00",
-    "status": "open",
+    "status": "closed",
     "reconciled": true,
-    "reconcile_reason": "unlogged_position",
+    "reconcile_reason": "orphan_no_live_position",
     "reasons": [
       "reconciled from broker position"
     ],
-    "exit_price": null,
-    "pnl": null,
-    "pnl_pct": null
+    "exit_price": 322.3,
+    "pnl": -830.33,
+    "pnl_pct": -15.54,
+    "exit_timestamp": "2026-11-06T00:58:05.602540+00:00",
+    "exit_reason": "stop_loss",
+    "realized_pnl": -830.33
   },
   {
     "symbol": "TMO",
