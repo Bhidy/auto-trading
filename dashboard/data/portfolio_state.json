@@ -1,5 +1,5 @@
 {
-  "equity": 92160.05,
+  "equity": 92733.71,
   "starting_equity": 100000.0,
   "day_start_equity": 92159.92,
   "week_start_equity": 97210.5,
@@ -26,7 +26,7 @@
     },
     "MRK": {
       "qty": 43,
-      "avg_price": 144.278696,
+      "avg_price": 144.278605,
       "bucket": "unknown"
     },
     "PSX": {
@@ -41,20 +41,20 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 41437.8315,
-  "long_market_value": 41437.8315,
+  "total_exposure": 42012.61,
+  "long_market_value": 42012.61,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
-  "cash": 50722.22,
-  "day_pnl": 0.13,
-  "day_pnl_pct": 1e-06,
-  "week_pnl": -5050.45,
-  "week_pnl_pct": -0.051954,
+  "cash": 50722.2,
+  "day_pnl": 573.79,
+  "day_pnl_pct": 0.006226,
+  "week_pnl": -4476.79,
+  "week_pnl_pct": -0.046053,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-11-06T00:57:49.618136+00:00",
+  "last_updated": "2026-11-06T14:40:43.221829+00:00",
   "week_start_iso_week": "2026-W45",
   "halt_clears_consumed": [
     "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
