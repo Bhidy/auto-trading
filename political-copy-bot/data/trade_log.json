@@ -831,7 +831,14 @@
     "feed_source": "house_fd",
     "reason": "Copying David Taylor BUY of Kroger Company",
     "timestamp": "2026-08-10T14:25:14.674185",
-    "date": "2026-08-10"
+    "date": "2026-08-10",
+    "exit_price": 67.760727,
+    "exit_timestamp": "2026-11-09T14:41:19.530592+00:00",
+    "exit_reason": "time_exit",
+    "status": "closed",
+    "pnl": 619.23,
+    "realized_pnl": 619.23,
+    "pnl_pct": 19.93
   },
   {
     "symbol": "PANW",
@@ -1341,5 +1348,16 @@
     "reason": "Copying David Taylor BUY of Prologis, Inc. Common Stock",
     "timestamp": "2026-10-30T19:32:42.941408",
     "date": "2026-10-30"
+  },
+  {
+    "symbol": "KR",
+    "side": "sell",
+    "qty": 55,
+    "status": "exit_marker",
+    "fill_price": 67.760727,
+    "lots_closed_qty": 55.0,
+    "reason": "Alpha-capture time exit 91d at +20.0%",
+    "timestamp": "2026-11-09T14:41:19.531561",
+    "date": "2026-11-09"
   }
 ]
