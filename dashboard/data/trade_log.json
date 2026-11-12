@@ -2952,7 +2952,7 @@
     "timestamp": "2026-10-23T14:11:13.389434+00:00",
     "symbol": "AMD",
     "side": "buy",
-    "qty": 13.0,
+    "qty": 12.0,
     "entry_price": 516.76,
     "intended_price": 516.95,
     "slippage_pct": -0.0368,
@@ -3182,6 +3182,38 @@
     "status": "closed",
     "exit_reason": "momentum_rebalance",
     "parent_id": "0a5f17a4fe1841b2a7b710edadae4b6a",
+    "partial_trim": true
+  },
+  {
+    "id": "aadf684d93b4471e9c23686a2d390c73-trim-2026-11-12T14:40:47.162716+00:00",
+    "schema_version": 2,
+    "timestamp": "2026-10-23T14:11:13.389434+00:00",
+    "symbol": "AMD",
+    "side": "buy",
+    "qty": 1.0,
+    "entry_price": 516.76,
+    "intended_price": 516.95,
+    "slippage_pct": -0.0368,
+    "bucket": "momentum",
+    "signal_score": null,
+    "reasons": [
+      "momentum top13 rebalance 2026-10"
+    ],
+    "borrow_status": null,
+    "order_class": "momentum_sleeve",
+    "evidence_quality": null,
+    "catalyst_source": null,
+    "exit_price": 572.67,
+    "exit_timestamp": "2026-11-12T14:40:47.162716+00:00",
+    "gross_pnl": 55.91,
+    "fees": 0.02,
+    "pnl": 55.89,
+    "pnl_pct": 10.82,
+    "realized_pnl": 55.89,
+    "hold_days": null,
+    "status": "closed",
+    "exit_reason": "momentum_rebalance",
+    "parent_id": "aadf684d93b4471e9c23686a2d390c73",
     "partial_trim": true
   }
 ]
