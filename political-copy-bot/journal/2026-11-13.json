@@ -20,5 +20,78 @@
     },
     "trades_executed": [],
     "trades_count": 0
+  },
+  {
+    "date": "2026-11-13",
+    "timestamp": "2026-11-13T20:56:46.582437",
+    "account_snapshot": {
+      "equity": "104741.28",
+      "cash": "10369.18",
+      "portfolio_value": "104741.28"
+    },
+    "trades_executed": [
+      {
+        "symbol": "AMGN",
+        "side": "sell",
+        "qty": 3,
+        "status": "exit_marker",
+        "limit_price": 465.21,
+        "fill_price": 465.91,
+        "lots_closed_qty": 3.0,
+        "client_order_id": "p2csae451213-20261113-AMGN-sell",
+        "order_id": "d8139660-5a0e-407c-9e1b-6a2a1cdf815d",
+        "order_status": "pending_new",
+        "politician": "David Taylor",
+        "source": "backup",
+        "reason": "Copying David Taylor SELL of Amgen Inc. - Common Stock",
+        "timestamp": "2026-11-13T20:56:30.879502",
+        "date": "2026-11-13"
+      },
+      {
+        "symbol": "T",
+        "side": "buy",
+        "qty": 141,
+        "limit_price": 22.2,
+        "entry_price": 22.17,
+        "arrival_price": 22.165,
+        "arrival_source": "quote_mid",
+        "intended_price": 22.165,
+        "slippage_pct": 0.0226,
+        "client_order_id": "p2-20261113-T-buy",
+        "filled_qty": 133.0,
+        "estimated_value": 3130.2,
+        "order_id": "dc492eab-68c1-4c4a-8335-e0e02a0d1ec5",
+        "order_status": "partially_filled",
+        "politician": "David Taylor",
+        "politician_trade_size": "1K\u201315K",
+        "source": "backup",
+        "transaction_date": "11/03/2026",
+        "disclosure_date": "11/12/2026",
+        "observed_date": "2026-11-13T20:56:41.273428",
+        "disclosure_lag_days": 10,
+        "feed_source": "house_fd",
+        "reason": "Copying David Taylor BUY of AT&T Inc",
+        "timestamp": "2026-11-13T20:56:41.273720",
+        "date": "2026-11-13"
+      },
+      {
+        "symbol": "HD",
+        "side": "sell",
+        "qty": 1,
+        "status": "exit_marker",
+        "limit_price": 325.82,
+        "fill_price": 348.38,
+        "lots_closed_qty": 1.0,
+        "client_order_id": "p2csae451213-20261113-HD-sell",
+        "order_id": "97763f3c-8b80-4c86-9ae4-48615a99890d",
+        "order_status": "pending_new",
+        "politician": "David Taylor",
+        "source": "backup",
+        "reason": "Copying David Taylor SELL of Home Depot, Inc",
+        "timestamp": "2026-11-13T20:56:44.338876",
+        "date": "2026-11-13"
+      }
+    ],
+    "trades_count": 3
   }
 ]
