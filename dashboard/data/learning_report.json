@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-12T01:54:47.951239+00:00",
+  "timestamp": "2026-11-13T01:06:06.601889+00:00",
   "overall": {
     "total_trades": 89,
     "wins": 30,
@@ -12,8 +12,8 @@
     "max_win_pct": 8.47,
     "max_loss_pct": -30.65,
     "expectancy": -123.2,
-    "total_pnl": -9404.24,
-    "partial_trims_excluded": 7,
+    "total_pnl": -9348.35,
+    "partial_trims_excluded": 8,
     "profit_factor": 0.36,
     "per_trade_sharpe": -0.41,
     "sharpe_estimate": -0.41
@@ -27,7 +27,7 @@
     "win_loss_ratio": null,
     "max_win_pct": null,
     "max_loss_pct": null,
-    "total_pnl": 23.21,
+    "total_pnl": 55.89,
     "profit_factor": null,
     "sharpe_estimate": null,
     "expectancy": null
@@ -44,9 +44,9 @@
     "max_win_pct": 8.47,
     "max_loss_pct": -30.65,
     "expectancy": -656.43,
-    "total_pnl": -2688.3,
-    "partial_trims_excluded": 4,
-    "profit_factor": 0.42,
+    "total_pnl": -2632.41,
+    "partial_trims_excluded": 5,
+    "profit_factor": 0.43,
     "per_trade_sharpe": -0.78,
     "sharpe_estimate": -0.78
   },
