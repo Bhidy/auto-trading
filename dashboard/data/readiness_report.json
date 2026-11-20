@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-19T04:32:28.820956+00:00",
-  "as_of_session": "2026-11-18",
+  "generated_at": "2026-11-20T03:44:02.924985+00:00",
+  "as_of_session": "2026-11-19",
   "methodology_version": "2.3.0",
   "methodology_doc": "docs/LIVE_READINESS.md \u00a72 (v2.3)",
   "thresholds": {
@@ -76,15 +76,15 @@
       "claims_edge": true,
       "window": {
         "start": "2026-07-06",
-        "end": "2026-11-18",
-        "trading_days": 97,
-        "active_trading_days": 20,
+        "end": "2026-11-19",
+        "trading_days": 98,
+        "active_trading_days": 21,
         "halted_sessions": 77,
-        "daily_returns": 96,
-        "edge_returns": 19,
-        "aligned_with_spy": 19,
+        "daily_returns": 97,
+        "edge_returns": 20,
+        "aligned_with_spy": 20,
         "missing_sessions": [
-          "2026-11-18"
+          "2026-11-19"
         ],
         "data_fault_sessions": [],
         "cash_flow_sessions": []
@@ -105,10 +105,10 @@
           "id": "track_record",
           "name": "Paper track record (trading sessions)",
           "threshold": ">= 90",
-          "value": 20,
+          "value": 21,
           "status": "insufficient",
-          "detail": "20 active sessions since the version start (97 total, 77 halted/frozen excluded)",
-          "eta_sessions": 70,
+          "detail": "21 active sessions since the version start (98 total, 77 halted/frozen excluded)",
+          "eta_sessions": 69,
           "hard": true
         },
         {
@@ -116,10 +116,10 @@
           "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
           "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
-            "alpha_annual": -0.1485,
-            "t_hac": -0.302,
-            "dsr": 0.0112,
-            "n": 19,
+            "alpha_annual": -0.1935,
+            "t_hac": -0.416,
+            "dsr": 0.0077,
+            "n": 20,
             "cs_lower": null,
             "cs_upper": null
           },
@@ -154,7 +154,7 @@
           "threshold": "<= 15%",
           "value": 0.0864,
           "status": "pass",
-          "detail": "window 7.99% over 96 sessions; whole paper period 8.64%",
+          "detail": "window 7.99% over 97 sessions; whole paper period 8.64%",
           "eta_sessions": null,
           "hard": true,
           "window_value": 0.0799,
@@ -164,13 +164,13 @@
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
           "threshold": ">= 6% (live kill switch - drawdown from its reference)",
-          "value": 0.1181,
+          "value": 0.1121,
           "status": "pass",
-          "detail": "18% kill switch; drawdown 6.19% from $100,000 (P1 risk_officer.drawdown_reference_equity (max(start, verified peak)))",
+          "detail": "18% kill switch; drawdown 6.79% from $100,000 (P1 risk_officer.drawdown_reference_equity (max(start, verified peak)))",
           "eta_sessions": null,
           "hard": true,
           "reference_equity": 100000.0,
-          "current_drawdown": 0.0619
+          "current_drawdown": 0.0679
         },
         {
           "id": "worst_day",
@@ -222,8 +222,8 @@
               "return": 0.021
             },
             "correction": {
-              "sessions": 27,
-              "return": -0.0261
+              "sessions": 28,
+              "return": -0.0322
             }
           },
           "status": "pass",
@@ -267,7 +267,7 @@
           "threshold": "state updated within 1 session",
           "value": 0,
           "status": "pass",
-          "detail": "last activity 2026-11-18",
+          "detail": "last activity 2026-11-19",
           "eta_sessions": null,
           "hard": true
         },
@@ -275,28 +275,28 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 5,
+          "value": 6,
           "status": "insufficient",
-          "detail": "5 consecutive clean sessions",
-          "eta_sessions": 25,
+          "detail": "6 consecutive clean sessions",
+          "eta_sessions": 24,
           "hard": true
         }
       ],
       "edge": {
-        "alpha": -0.148458,
-        "alpha_daily": -0.00058912,
-        "beta": 0.7551,
-        "t_hac": -0.3016,
-        "ir": -1.1422,
-        "psr": 0.376,
-        "dsr": 0.0112,
+        "alpha": -0.193482,
+        "alpha_daily": -0.00076779,
+        "beta": 0.7561,
+        "t_hac": -0.4156,
+        "ir": -1.5236,
+        "psr": 0.3311,
+        "dsr": 0.0077,
         "dsr_informational": true,
-        "n": 19,
+        "n": 20,
         "trial_count": 20,
         "z_required": 3.546,
         "rf_source": "BIL daily total return",
         "status": "insufficient",
-        "eta_state": "too_early",
+        "eta_state": "not_converging",
         "decision_rule": "confidence_sequence",
         "cs_lower": null,
         "cs_upper": null,
@@ -309,15 +309,15 @@
           "pessimistic_sessions": null,
           "optimistic_sessions": null,
           "n_required": null,
-          "state": "too_early",
+          "state": "not_converging",
           "sessions_remaining": null,
-          "detail": "needs >= 20 daily returns to estimate",
+          "detail": "always-valid upper bound on alpha <= 0",
           "median_date": null,
           "pessimistic_date": null,
           "optimistic_date": null
         },
         "overall": {
-          "sessions_remaining": 70,
+          "sessions_remaining": 69,
           "projected_date": "2027-03-03",
           "label": "estimate (current alpha / trade / clean-session rates held constant)",
           "excludes_measurement_gaps": [
@@ -439,7 +439,8 @@
             "2026-11-12",
             "2026-11-13",
             "2026-11-16",
-            "2026-11-17"
+            "2026-11-17",
+            "2026-11-18"
           ],
           "cum_return": [
             -0.00038,
@@ -537,7 +538,8 @@
             0.022,
             0.01516,
             -0.00092,
-            -0.00561
+            -0.00561,
+            -0.01189
           ],
           "drawdown": [
             -0.00038,
@@ -635,7 +637,8 @@
             -0.03371,
             -0.04019,
             -0.05538,
-            -0.05982
+            -0.05982,
+            -0.06576
           ],
           "benchmark_cum": [
             0.0086,
@@ -733,12 +736,13 @@
             0.01903,
             0.01514,
             -0.00401,
-            -0.01428
+            -0.01428,
+            -0.01708
           ],
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 97 sessions since 2026-07-06. Binding: Paper track record (trading sessions) \u2014 20 active sessions since the version start (97 total, 77 halted/frozen excluded). Not yet measured (blocks GO): edge, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
+      "narrative": "NOT ELIGIBLE: sleeve is exits_only (no new evidence accrues). 98 sessions since 2026-07-06. Binding: Paper track record (trading sessions) \u2014 21 active sessions since the version start (98 total, 77 halted/frozen excluded). Not yet measured (blocks GO): edge, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p1-multifactor-satellite-v2",
@@ -843,13 +847,13 @@
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
           "threshold": ">= 6% (live kill switch - drawdown from its reference)",
-          "value": 0.1181,
+          "value": 0.1121,
           "status": "pass",
-          "detail": "18% kill switch; drawdown 6.19% from $100,000 (P1 risk_officer.drawdown_reference_equity (max(start, verified peak)))",
+          "detail": "18% kill switch; drawdown 6.79% from $100,000 (P1 risk_officer.drawdown_reference_equity (max(start, verified peak)))",
           "eta_sessions": null,
           "hard": true,
           "reference_equity": 100000.0,
-          "current_drawdown": 0.0619
+          "current_drawdown": 0.0679
         },
         {
           "id": "worst_day",
@@ -942,7 +946,7 @@
           "threshold": "state updated within 1 session",
           "value": 0,
           "status": "pass",
-          "detail": "last activity 2026-11-18",
+          "detail": "last activity 2026-11-19",
           "eta_sessions": null,
           "hard": true
         },
@@ -950,10 +954,10 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 5,
+          "value": 6,
           "status": "insufficient",
-          "detail": "5 consecutive clean sessions",
-          "eta_sessions": 25,
+          "detail": "6 consecutive clean sessions",
+          "eta_sessions": 24,
           "hard": true
         }
       ],
@@ -1104,15 +1108,15 @@
       "claims_edge": true,
       "window": {
         "start": "2026-07-06",
-        "end": "2026-11-18",
-        "trading_days": 97,
-        "active_trading_days": 97,
+        "end": "2026-11-19",
+        "trading_days": 98,
+        "active_trading_days": 98,
         "halted_sessions": 0,
-        "daily_returns": 96,
-        "edge_returns": 96,
-        "aligned_with_spy": 96,
+        "daily_returns": 97,
+        "edge_returns": 97,
+        "aligned_with_spy": 97,
         "missing_sessions": [
-          "2026-11-18"
+          "2026-11-19"
         ],
         "data_fault_sessions": [],
         "cash_flow_sessions": []
@@ -1133,9 +1137,9 @@
           "id": "track_record",
           "name": "Paper track record (trading sessions)",
           "threshold": ">= 90",
-          "value": 97,
+          "value": 98,
           "status": "pass",
-          "detail": "97 active sessions since the version start (97 total, 0 halted/frozen excluded)",
+          "detail": "98 active sessions since the version start (98 total, 0 halted/frozen excluded)",
           "eta_sessions": 0,
           "hard": true
         },
@@ -1144,15 +1148,15 @@
           "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
           "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
-            "alpha_annual": 0.0279,
-            "t_hac": 0.414,
-            "dsr": 0.0402,
-            "n": 96,
-            "cs_lower": -0.4813,
-            "cs_upper": 0.5985
+            "alpha_annual": 0.0144,
+            "t_hac": 0.207,
+            "dsr": 0.0267,
+            "n": 97,
+            "cs_lower": -0.4895,
+            "cs_upper": 0.5824
           },
           "status": "insufficient",
-          "detail": "alpha +2.79%/yr (beta 0.59); always-valid bounds [-48.13%, +59.85%]/yr at level 0.0083; info: t_HAC 0.41, DSR@34 0.040",
+          "detail": "alpha +1.44%/yr (beta 0.59); always-valid bounds [-48.95%, +58.24%]/yr at level 0.0083; info: t_HAC 0.21, DSR@34 0.027",
           "eta_sessions": null,
           "hard": true
         },
@@ -1180,13 +1184,13 @@
           "id": "max_drawdown",
           "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
-          "value": 0.0332,
+          "value": 0.0361,
           "status": "pass",
-          "detail": "window 3.32% over 96 sessions; whole paper period 3.32%",
+          "detail": "window 3.61% over 97 sessions; whole paper period 3.61%",
           "eta_sessions": null,
           "hard": true,
-          "window_value": 0.0332,
-          "book_value": 0.0332
+          "window_value": 0.0361,
+          "book_value": 0.0361
         },
         {
           "id": "kill_switch_headroom",
@@ -1227,7 +1231,7 @@
           "value": 3,
           "status": "insufficient",
           "detail": "pre-registered P2 scorecard post cohort (generated 2026-10-23); 3 in window",
-          "eta_sessions": 1520,
+          "eta_sessions": 1536,
           "hard": true
         },
         {
@@ -1237,7 +1241,7 @@
           "value": 0.0,
           "status": "insufficient",
           "detail": "PF not judged below 50 round trips (value shown)",
-          "eta_sessions": 1520,
+          "eta_sessions": 1536,
           "hard": true
         },
         {
@@ -1250,8 +1254,8 @@
               "return": 0.0293
             },
             "correction": {
-              "sessions": 27,
-              "return": -0.0204
+              "sessions": 28,
+              "return": -0.027
             }
           },
           "status": "pass",
@@ -1265,7 +1269,7 @@
           "threshold": "in_sync = true, report <= 1 session old",
           "value": true,
           "status": "not_measured",
-          "detail": "report is 3 sessions old",
+          "detail": "report is 4 sessions old",
           "eta_sessions": null,
           "hard": true
         },
@@ -1295,7 +1299,7 @@
           "threshold": "state updated within 1 session",
           "value": 0,
           "status": "pass",
-          "detail": "last activity 2026-11-18",
+          "detail": "last activity 2026-11-19",
           "eta_sessions": null,
           "hard": true
         },
@@ -1303,31 +1307,31 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 32,
+          "value": 33,
           "status": "pass",
-          "detail": "32 consecutive clean sessions",
+          "detail": "33 consecutive clean sessions",
           "eta_sessions": 0,
           "hard": true
         }
       ],
       "edge": {
-        "alpha": 0.027899,
-        "alpha_daily": 0.00011071,
-        "beta": 0.5879,
-        "t_hac": 0.4135,
-        "ir": 0.601,
-        "psr": 0.6434,
-        "dsr": 0.0402,
+        "alpha": 0.014442,
+        "alpha_daily": 5.731e-05,
+        "beta": 0.5898,
+        "t_hac": 0.2071,
+        "ir": 0.3076,
+        "psr": 0.5752,
+        "dsr": 0.0267,
         "dsr_informational": true,
-        "n": 96,
+        "n": 97,
         "trial_count": 34,
         "z_required": 3.769,
         "rf_source": "BIL daily total return",
         "status": "insufficient",
         "eta_state": "uncertain",
         "decision_rule": "confidence_sequence",
-        "cs_lower": -0.481301,
-        "cs_upper": 0.598478,
+        "cs_lower": -0.489485,
+        "cs_upper": 0.582409,
         "alpha_level": 0.008333,
         "rho": 252
       },
@@ -1337,12 +1341,12 @@
           "sessions_remaining": null,
           "median_sessions": null,
           "pessimistic_sessions": null,
-          "optimistic_sessions": 666,
+          "optimistic_sessions": 869,
           "n_required": null,
           "detail": "crossing beyond 2520 sessions at the estimate; the upper bound keeps it open \u2014 no central projection",
           "median_date": null,
           "pessimistic_date": null,
-          "optimistic_date": "2029-07-17"
+          "optimistic_date": "2030-05-08"
         },
         "overall": {
           "sessions_remaining": null,
@@ -1354,10 +1358,10 @@
           "edge_range": {
             "median_sessions": null,
             "pessimistic_sessions": null,
-            "optimistic_sessions": 666,
+            "optimistic_sessions": 869,
             "median_date": null,
             "pessimistic_date": null,
-            "optimistic_date": "2029-07-17"
+            "optimistic_date": "2030-05-08"
           }
         }
       },
@@ -1447,7 +1451,8 @@
             "2026-11-12",
             "2026-11-13",
             "2026-11-16",
-            "2026-11-17"
+            "2026-11-17",
+            "2026-11-18"
           ],
           "lower": [
             -37.98919,
@@ -1525,7 +1530,8 @@
             -0.48559,
             -0.47842,
             -0.47684,
-            -0.4813
+            -0.4813,
+            -0.48949
           ],
           "upper": [
             40.11422,
@@ -1603,7 +1609,8 @@
             0.61897,
             0.61785,
             0.6111,
-            0.59848
+            0.59848,
+            0.58241
           ],
           "point": [
             1.06251,
@@ -1681,7 +1688,8 @@
             0.06669,
             0.06971,
             0.06713,
-            0.05859
+            0.05859,
+            0.04646
           ]
         },
         "window": {
@@ -1781,7 +1789,8 @@
             "2026-11-12",
             "2026-11-13",
             "2026-11-16",
-            "2026-11-17"
+            "2026-11-17",
+            "2026-11-18"
           ],
           "cum_return": [
             0.0039,
@@ -1879,7 +1888,8 @@
             0.03051,
             0.02998,
             0.01792,
-            0.00834
+            0.00834,
+            0.00154
           ],
           "drawdown": [
             0.0,
@@ -1977,7 +1987,8 @@
             -0.00821,
             -0.00872,
             -0.02033,
-            -0.02955
+            -0.02955,
+            -0.03609
           ],
           "benchmark_cum": [
             0.0086,
@@ -2075,12 +2086,13 @@
             0.01903,
             0.01514,
             -0.00401,
-            -0.01428
+            -0.01428,
+            -0.01708
           ],
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT READY: 9/14 hard gates pass. 97 sessions since 2026-07-06. Alpha vs SPY +2.8%/yr (beta 0.59, n=96); always-valid bounds [-48.1%, +59.8%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +2.79%/yr (beta 0.59); always-valid bounds [-48.13%, +59.85%]/yr at level 0.0083; info: t_HAC 0.41, DSR@34 0.040. ETA: no projection \u2014 no convergence path for: edge, slippage. Not yet measured (blocks GO): reconciliation. Returns are BOOK-level (whole account)."
+      "narrative": "NOT READY: 9/14 hard gates pass. 98 sessions since 2026-07-06. Alpha vs SPY +1.4%/yr (beta 0.59, n=97); always-valid bounds [-48.9%, +58.2%]/yr. Binding: Benchmark-relative edge (always-valid alpha bound vs SPY) \u2014 alpha +1.44%/yr (beta 0.59); always-valid bounds [-48.95%, +58.24%]/yr at level 0.0083; info: t_HAC 0.21, DSR@34 0.027. ETA: no projection \u2014 no convergence path for: edge, slippage. Not yet measured (blocks GO): reconciliation. Returns are BOOK-level (whole account)."
     },
     {
       "id": "p2-benchmark-etf-v1",
@@ -2097,15 +2109,15 @@
       "claims_edge": false,
       "window": {
         "start": "2026-06-02",
-        "end": "2026-11-18",
-        "trading_days": 119,
-        "active_trading_days": 119,
+        "end": "2026-11-19",
+        "trading_days": 120,
+        "active_trading_days": 120,
         "halted_sessions": 0,
-        "daily_returns": 118,
-        "edge_returns": 118,
-        "aligned_with_spy": 118,
+        "daily_returns": 119,
+        "edge_returns": 119,
+        "aligned_with_spy": 119,
         "missing_sessions": [
-          "2026-11-18"
+          "2026-11-19"
         ],
         "data_fault_sessions": [],
         "cash_flow_sessions": []
@@ -2120,9 +2132,9 @@
           "id": "track_record",
           "name": "Paper track record (trading sessions)",
           "threshold": ">= 90",
-          "value": 119,
+          "value": 120,
           "status": "pass",
-          "detail": "119 active sessions since the version start (119 total, 0 halted/frozen excluded)",
+          "detail": "120 active sessions since the version start (120 total, 0 halted/frozen excluded)",
           "eta_sessions": 0,
           "hard": true
         },
@@ -2140,13 +2152,13 @@
           "id": "max_drawdown",
           "name": "Max drawdown (window and book)",
           "threshold": "<= 15%",
-          "value": 0.0332,
+          "value": 0.0361,
           "status": "pass",
-          "detail": "window 3.32% over 118 sessions; whole paper period 3.32%",
+          "detail": "window 3.61% over 119 sessions; whole paper period 3.61%",
           "eta_sessions": null,
           "hard": true,
-          "window_value": 0.0332,
-          "book_value": 0.0332
+          "window_value": 0.0361,
+          "book_value": 0.0361
         },
         {
           "id": "kill_switch_headroom",
@@ -2210,8 +2222,8 @@
               "return": 0.0446
             },
             "correction": {
-              "sessions": 27,
-              "return": -0.0204
+              "sessions": 28,
+              "return": -0.027
             }
           },
           "status": "pass",
@@ -2225,7 +2237,7 @@
           "threshold": "in_sync = true, report <= 1 session old",
           "value": true,
           "status": "not_measured",
-          "detail": "report is 3 sessions old",
+          "detail": "report is 4 sessions old",
           "eta_sessions": null,
           "hard": true
         },
@@ -2255,7 +2267,7 @@
           "threshold": "state updated within 1 session",
           "value": 0,
           "status": "pass",
-          "detail": "last activity 2026-11-18",
+          "detail": "last activity 2026-11-19",
           "eta_sessions": null,
           "hard": true
         },
@@ -2263,9 +2275,9 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 32,
+          "value": 33,
           "status": "pass",
-          "detail": "32 consecutive clean sessions",
+          "detail": "33 consecutive clean sessions",
           "eta_sessions": 0,
           "hard": true
         }
@@ -2441,7 +2453,8 @@
             "2026-11-12",
             "2026-11-13",
             "2026-11-16",
-            "2026-11-17"
+            "2026-11-17",
+            "2026-11-18"
           ],
           "cum_return": [
             0.00043,
@@ -2561,7 +2574,8 @@
             0.04581,
             0.04527,
             0.03303,
-            0.02331
+            0.02331,
+            0.01641
           ],
           "drawdown": [
             0.0,
@@ -2681,7 +2695,8 @@
             -0.00821,
             -0.00872,
             -0.02033,
-            -0.02955
+            -0.02955,
+            -0.03609
           ],
           "benchmark_cum": [
             0.00135,
@@ -2801,12 +2816,13 @@
             0.00337,
             -0.00046,
             -0.01932,
-            -0.02943
+            -0.02943,
+            -0.03219
           ],
           "benchmark_missing": []
         }
       },
-      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 9/11 hard gates pass. 119 sessions since 2026-06-02. Binding: Broker vs ledger reconciliation \u2014 report is 3 sessions old. ETA: evidence gates met; blocked only by measurement gaps. Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
+      "narrative": "BETA_SLEEVE \u2014 no edge claim; readiness = risk/ops only. 9/11 hard gates pass. 120 sessions since 2026-06-02. Binding: Broker vs ledger reconciliation \u2014 report is 4 sessions old. ETA: evidence gates met; blocked only by measurement gaps. Not yet measured (blocks GO): reconciliation, slippage. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     },
     {
       "id": "p3-event-driven-legacy",
@@ -2911,13 +2927,13 @@
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
           "threshold": ">= 6% (live kill switch - drawdown from its reference)",
-          "value": 0.1524,
+          "value": 0.1514,
           "status": "pass",
-          "detail": "18% kill switch; drawdown 2.76% from $100,000 (P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity)",
+          "detail": "18% kill switch; drawdown 2.86% from $100,000 (P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity)",
           "eta_sessions": null,
           "hard": true,
           "reference_equity": 100000.0,
-          "current_drawdown": 0.0276
+          "current_drawdown": 0.0286
         },
         {
           "id": "worst_day",
@@ -2943,9 +2959,9 @@
           "id": "sample",
           "name": "Closed round trips (whole trades)",
           "threshold": ">= 50",
-          "value": 83,
+          "value": 84,
           "status": "pass",
-          "detail": "whole trades (slices aggregated per lot) from the book trade log; 83 in window",
+          "detail": "whole trades (slices aggregated per lot) from the book trade log; 84 in window",
           "eta_sessions": 0,
           "hard": true
         },
@@ -2953,9 +2969,9 @@
           "id": "profit_factor",
           "name": "Profit factor",
           "threshold": ">= 1.3",
-          "value": 0.977,
+          "value": 0.952,
           "status": "fail",
-          "detail": "gross wins / gross losses over 83 round trips",
+          "detail": "gross wins / gross losses over 84 round trips",
           "eta_sessions": null,
           "hard": true
         },
@@ -3014,7 +3030,7 @@
           "threshold": "state updated within 1 session",
           "value": 0,
           "status": "pass",
-          "detail": "last activity 2026-11-18",
+          "detail": "last activity 2026-11-19",
           "eta_sessions": null,
           "hard": true
         },
@@ -3022,9 +3038,9 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 32,
+          "value": 33,
           "status": "pass",
-          "detail": "32 consecutive clean sessions",
+          "detail": "33 consecutive clean sessions",
           "eta_sessions": 0,
           "hard": true
         }
@@ -3756,15 +3772,15 @@
       "claims_edge": true,
       "window": {
         "start": "2026-10-23",
-        "end": "2026-11-18",
-        "trading_days": 19,
-        "active_trading_days": 19,
+        "end": "2026-11-19",
+        "trading_days": 20,
+        "active_trading_days": 20,
         "halted_sessions": 0,
-        "daily_returns": 18,
-        "edge_returns": 18,
-        "aligned_with_spy": 18,
+        "daily_returns": 19,
+        "edge_returns": 19,
+        "aligned_with_spy": 19,
         "missing_sessions": [
-          "2026-11-18"
+          "2026-11-19"
         ],
         "data_fault_sessions": [],
         "cash_flow_sessions": []
@@ -3790,10 +3806,10 @@
           "id": "track_record",
           "name": "Paper track record (trading sessions)",
           "threshold": ">= 90",
-          "value": 19,
+          "value": 20,
           "status": "insufficient",
-          "detail": "19 active sessions since the version start (19 total, 0 halted/frozen excluded)",
-          "eta_sessions": 71,
+          "detail": "20 active sessions since the version start (20 total, 0 halted/frozen excluded)",
+          "eta_sessions": 70,
           "hard": true
         },
         {
@@ -3801,10 +3817,10 @@
           "name": "Benchmark-relative edge (always-valid alpha bound vs SPY)",
           "threshold": "lower confidence-sequence bound on alpha > 0 (level 0.05/K), n >= 60",
           "value": {
-            "alpha_annual": 0.0508,
-            "t_hac": 0.348,
-            "dsr": 0.0289,
-            "n": 18,
+            "alpha_annual": 0.0557,
+            "t_hac": 0.401,
+            "dsr": 0.0322,
+            "n": 19,
             "cs_lower": null,
             "cs_upper": null
           },
@@ -3837,7 +3853,7 @@
           "name": "Live incubation consistent with the backtest (Stage B)",
           "threshold": ">= 60 returns; not significantly below 0.5x backtest Sharpe; vol ratio in [0.5, 1.5]; max DD <= 1.5x backtest",
           "value": {
-            "n": 18
+            "n": 19
           },
           "status": "not_measured",
           "detail": "no clean sleeve series: book-level series owned by NO sleeve (ambiguous owns_book_edge)",
@@ -3850,7 +3866,7 @@
           "threshold": "<= 15%",
           "value": 0.0924,
           "status": "pass",
-          "detail": "window 3.45% over 18 sessions; whole paper period 9.24%",
+          "detail": "window 3.45% over 19 sessions; whole paper period 9.24%",
           "eta_sessions": null,
           "hard": true,
           "window_value": 0.0345,
@@ -3860,13 +3876,13 @@
           "id": "kill_switch_headroom",
           "name": "Kill-switch headroom",
           "threshold": ">= 6% (live kill switch - drawdown from its reference)",
-          "value": 0.1524,
+          "value": 0.1514,
           "status": "pass",
-          "detail": "18% kill switch; drawdown 2.76% from $100,000 (P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity)",
+          "detail": "18% kill switch; drawdown 2.86% from $100,000 (P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity)",
           "eta_sessions": null,
           "hard": true,
           "reference_equity": 100000.0,
-          "current_drawdown": 0.0276
+          "current_drawdown": 0.0286
         },
         {
           "id": "worst_day",
@@ -3884,8 +3900,8 @@
           "threshold": "<= 3.0%",
           "value": null,
           "status": "insufficient",
-          "detail": "refused: n=18 < 60",
-          "eta_sessions": 42,
+          "detail": "refused: n=19 < 60",
+          "eta_sessions": 41,
           "hard": true
         },
         {
@@ -3918,8 +3934,8 @@
               "return": -0.003
             },
             "correction": {
-              "sessions": 12,
-              "return": -0.0157
+              "sessions": 13,
+              "return": -0.0167
             }
           },
           "status": "pass",
@@ -3963,7 +3979,7 @@
           "threshold": "state updated within 1 session",
           "value": 0,
           "status": "pass",
-          "detail": "last activity 2026-11-18",
+          "detail": "last activity 2026-11-19",
           "eta_sessions": null,
           "hard": true
         },
@@ -3971,23 +3987,23 @@
           "id": "exception_free",
           "name": "Unhandled-exception-free sessions",
           "threshold": ">= 30 consecutive sessions with zero failed runs",
-          "value": 32,
+          "value": 33,
           "status": "pass",
-          "detail": "32 consecutive clean sessions",
+          "detail": "33 consecutive clean sessions",
           "eta_sessions": 0,
           "hard": true
         }
       ],
       "edge": {
-        "alpha": 0.050784,
-        "alpha_daily": 0.00020152,
+        "alpha": 0.0557,
+        "alpha_daily": 0.00022103,
         "beta": 0.5701,
-        "t_hac": 0.3475,
-        "ir": 1.0246,
-        "psr": 0.6036,
-        "dsr": 0.0289,
+        "t_hac": 0.4013,
+        "ir": 1.1579,
+        "psr": 0.6196,
+        "dsr": 0.0322,
         "dsr_informational": true,
-        "n": 18,
+        "n": 19,
         "trial_count": 40,
         "z_required": 3.834,
         "rf_source": "BIL daily total return",
@@ -4013,7 +4029,7 @@
           "optimistic_date": null
         },
         "overall": {
-          "sessions_remaining": 71,
+          "sessions_remaining": 70,
           "projected_date": "2027-03-04",
           "label": "estimate (current alpha / trade / clean-session rates held constant)",
           "excludes_measurement_gaps": [
@@ -4055,7 +4071,8 @@
             "2026-11-12",
             "2026-11-13",
             "2026-11-16",
-            "2026-11-17"
+            "2026-11-17",
+            "2026-11-18"
           ],
           "cum_return": [
             -5e-05,
@@ -4075,7 +4092,8 @@
             0.00175,
             -0.00248,
             -0.01403,
-            -0.01866
+            -0.01866,
+            -0.01964
           ],
           "drawdown": [
             -5e-05,
@@ -4095,7 +4113,8 @@
             -0.00483,
             -0.00904,
             -0.02051,
-            -0.02511
+            -0.02511,
+            -0.02608
           ],
           "benchmark_cum": [
             -0.0055,
@@ -4115,12 +4134,13 @@
             -0.00899,
             -0.01277,
             -0.0314,
-            -0.04139
+            -0.04139,
+            -0.04411
           ],
           "benchmark_missing": []
         }
       },
-      "narrative": "NOT READY: 9/12 hard gates pass. 19 sessions since 2026-10-23. Binding: Paper track record (trading sessions) \u2014 19 active sessions since the version start (19 total, 0 halted/frozen excluded). ETA 2027-03-04 (estimate (current alpha / trade / clean-session rates held constant)). Not yet measured (blocks GO): edge. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
+      "narrative": "NOT READY: 9/12 hard gates pass. 20 sessions since 2026-10-23. Binding: Paper track record (trading sessions) \u2014 20 active sessions since the version start (20 total, 0 halted/frozen excluded). ETA 2027-03-04 (estimate (current alpha / trade / clean-session rates held constant)). Not yet measured (blocks GO): edge. Returns are BOOK-level and SHARED with another sleeve: no edge credit."
     }
   ],
   "books": {
@@ -4130,10 +4150,10 @@
       "equity_sources_tried": [
         "alpaca portfolio history (1D)"
       ],
-      "equity_points": 124,
+      "equity_points": 125,
       "first_date": "2026-05-22",
-      "last_date": "2026-11-17",
-      "last_equity": 93806.45,
+      "last_date": "2026-11-18",
+      "last_equity": 93213.86,
       "sleeves": [
         "p1-momentum-v1",
         "p1-multifactor-satellite-v2"
@@ -4151,7 +4171,7 @@
       "max_drawdown_paper_period": 0.0864,
       "kill_switch": {
         "reference_equity": 100000.0,
-        "current_equity": 93806.45,
+        "current_equity": 93213.86,
         "kill_drawdown": 0.18,
         "basis": "start",
         "source": "P1 risk_officer.drawdown_reference_equity (max(start, verified peak))"
@@ -4279,7 +4299,8 @@
           "2026-11-12",
           "2026-11-13",
           "2026-11-16",
-          "2026-11-17"
+          "2026-11-17",
+          "2026-11-18"
         ],
         "cum_return": [
           0.0,
@@ -4403,7 +4424,8 @@
           -0.03701,
           -0.04346,
           -0.0586,
-          -0.06303
+          -0.06303,
+          -0.06895
         ],
         "drawdown": [
           0.0,
@@ -4527,7 +4549,8 @@
           -0.04052,
           -0.04695,
           -0.06204,
-          -0.06644
+          -0.06644,
+          -0.07234
         ],
         "benchmark_cum": [
           0.00643,
@@ -4651,7 +4674,8 @@
           0.02038,
           0.01648,
           -0.00269,
-          -0.01298
+          -0.01298,
+          -0.01578
         ],
         "benchmark_missing": []
       },
@@ -4667,10 +4691,10 @@
       "equity_sources_tried": [
         "alpaca portfolio history (1D)"
       ],
-      "equity_points": 123,
+      "equity_points": 124,
       "first_date": "2026-05-26",
-      "last_date": "2026-11-17",
-      "last_equity": 102584.02,
+      "last_date": "2026-11-18",
+      "last_equity": 101892.14,
       "sleeves": [
         "p2-copy-v2",
         "p2-benchmark-etf-v1"
@@ -4682,10 +4706,10 @@
       "data_fault_sessions": [],
       "halted_sessions": 0,
       "halted_span": null,
-      "max_drawdown_paper_period": 0.0332,
+      "max_drawdown_paper_period": 0.0361,
       "kill_switch": {
         "reference_equity": 100000.0,
-        "current_equity": 102584.02,
+        "current_equity": 101892.14,
         "kill_drawdown": 0.15,
         "basis": "start",
         "source": "P2 check_kill_switch: drawdown from initial capital $100,000"
@@ -4812,7 +4836,8 @@
           "2026-11-12",
           "2026-11-13",
           "2026-11-16",
-          "2026-11-17"
+          "2026-11-17",
+          "2026-11-18"
         ],
         "cum_return": [
           -0.00022,
@@ -4935,7 +4960,8 @@
           0.04871,
           0.04817,
           0.0359,
-          0.02615
+          0.02615,
+          0.01923
         ],
         "drawdown": [
           -0.00022,
@@ -5058,7 +5084,8 @@
           -0.00821,
           -0.00872,
           -0.02033,
-          -0.02955
+          -0.02955,
+          -0.03609
         ],
         "benchmark_cum": [
           0.00545,
@@ -5181,7 +5208,8 @@
           0.01386,
           0.00999,
           -0.00907,
-          -0.01928
+          -0.01928,
+          -0.02207
         ],
         "benchmark_missing": []
       },
@@ -5197,10 +5225,10 @@
       "equity_sources_tried": [
         "alpaca portfolio history (1D)"
       ],
-      "equity_points": 123,
+      "equity_points": 124,
       "first_date": "2026-05-26",
-      "last_date": "2026-11-17",
-      "last_equity": 97235.89,
+      "last_date": "2026-11-18",
+      "last_equity": 97138.89,
       "sleeves": [
         "p3-event-driven-legacy",
         "p3-crisis-core-v1-forward"
@@ -5215,7 +5243,7 @@
       "max_drawdown_paper_period": 0.0924,
       "kill_switch": {
         "reference_equity": 100000.0,
-        "current_equity": 97235.89,
+        "current_equity": 97138.89,
         "kill_drawdown": 0.18,
         "basis": "start",
         "source": "P3 engine has only a daily-loss kill switch; system 18% drawdown limit from starting equity"
@@ -5342,7 +5370,8 @@
           "2026-11-12",
           "2026-11-13",
           "2026-11-16",
-          "2026-11-17"
+          "2026-11-17",
+          "2026-11-18"
         ],
         "cum_return": [
           0.00415,
@@ -5465,7 +5494,8 @@
           -0.00781,
           -0.01201,
           -0.02345,
-          -0.02803
+          -0.02803,
+          -0.029
         ],
         "drawdown": [
           0.0,
@@ -5588,7 +5618,8 @@
           -0.0645,
           -0.06845,
           -0.07924,
-          -0.08356
+          -0.08356,
+          -0.08448
         ],
         "benchmark_cum": [
           0.00545,
@@ -5711,7 +5742,8 @@
           0.01386,
           0.00999,
           -0.00907,
-          -0.01928
+          -0.01928,
+          -0.02207
         ],
         "benchmark_missing": []
       },
@@ -5737,7 +5769,7 @@
     "portfolio_3: cash-flow sessions excluded from returns: ['2026-05-27']"
   ],
   "provenance": {
-    "as_of": "2026-11-19T04:32:37.992608+00:00",
+    "as_of": "2026-11-20T03:44:13.981206+00:00",
     "inputs": [
       {
         "path": "config/strategy_registry.json",
@@ -5766,7 +5798,7 @@
       {
         "path": "data/reconciliation_report.json",
         "exists": true,
-        "sha256": "f5456b704440029acd6ed4a1a2bf42da4b2ce0e40081dc78bd3be0dff24335ae",
+        "sha256": "face60b3423835e530f175b8a19ea7fea8f543b979735299c3c86d153923b90f",
         "bytes": 300
       },
       {
@@ -5784,17 +5816,17 @@
       {
         "path": "event-driven-bot/data/trade_log.json",
         "exists": true,
-        "sha256": "519b3d438384949e8c5dca6c337f3bee3d757cc57c3af0afeac461398e4cfba7",
-        "bytes": 87493
+        "sha256": "22a85ed3a80e1499d7acb16d90c8da7c7e05e2ad1dfebef1787e4b4e6de19b48",
+        "bytes": 87757
       },
       {
         "path": "event-driven-bot/data/reconciliation_report.json",
         "exists": true,
-        "sha256": "cfd6527ba7cd5b6b74ed5c5061105a8acec640db658c52d5f9bd732c5adc8d2e",
+        "sha256": "32352da8459dc63547cdefd37ce052d86f1f700443fce58aa72d838f514d73f1",
         "bytes": 277
       }
     ],
-    "combined_sha256": "2f4a80c23dd067a648a3c47f7694b5472401877e37755a0d814bd5bfc38dce58",
+    "combined_sha256": "d4c8d35e7eb6590f2c36c0b5f97fb74651aba568ac6ce2de74f2d3496e42deb0",
     "meta": {
       "engine": "scripts/readiness_engine.py"
     }
