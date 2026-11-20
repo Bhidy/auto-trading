@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-20T01:47:17.333470+00:00",
+  "timestamp": "2026-11-20T01:52:32.302851+00:00",
   "positions_held": 11,
   "open_trades_logged": 11,
   "orphan_open_trades": [],
@@ -8,12 +8,5 @@
   "cost_basis_drift": [],
   "short_positions": [],
   "in_sync": true,
-  "reconcile_actions": [
-    {
-      "action": "close_orphan",
-      "symbol": "MRK",
-      "lots": 1,
-      "qty": 54.0
-    }
-  ]
+  "reconcile_actions": []
 }
