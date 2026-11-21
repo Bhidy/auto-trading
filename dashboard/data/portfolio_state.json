@@ -1,7 +1,7 @@
 {
-  "equity": 91094.2,
+  "equity": 90500.72,
   "starting_equity": 100000.0,
-  "day_start_equity": 91565.09,
+  "day_start_equity": 90500.72,
   "week_start_equity": 95546.44,
   "positions": {
     "AMAT": {
@@ -41,20 +41,20 @@
     }
   },
   "trades_today": 0,
-  "total_exposure": 39799.355,
-  "long_market_value": 39799.355,
+  "total_exposure": 39205.88,
+  "long_market_value": 39205.88,
   "short_exposure": 0,
   "crypto_exposure": 0,
   "gross_exposure_pct": 86.26,
   "cash": 51294.84,
-  "day_pnl": -470.89,
-  "day_pnl_pct": -0.005143,
-  "week_pnl": -4452.24,
-  "week_pnl_pct": -0.046598,
+  "day_pnl": 0.0,
+  "day_pnl_pct": 0.0,
+  "week_pnl": -5045.72,
+  "week_pnl_pct": -0.052809,
   "halted": false,
   "halt_reason": null,
   "halt_until": null,
-  "last_updated": "2026-11-20T14:40:31.940174+00:00",
+  "last_updated": "2026-11-21T01:32:15.580555+00:00",
   "week_start_iso_week": "2026-W47",
   "halt_clears_consumed": [
     "set_at=|reason=Kill switch: 73.94% drawdown|changed_at=2026-10-23"
@@ -109,16 +109,16 @@
   "morning_regime": "CORRECTION",
   "regime_deteriorated_intraday": false,
   "eod_settlement": {
-    "at": "2026-11-20T01:46:39.159836+00:00",
+    "at": "2026-11-21T01:32:14.551034+00:00",
     "pending_exits": 0,
     "pending_entries": 0,
     "unmatched_exits": 0,
     "error": null
   },
-  "last_close_equity": 91565.09,
-  "last_close_session_date": "2026-11-19",
-  "last_eod_session_date": "2026-11-19",
-  "last_eod_completed_at": "2026-11-20T01:46:39.998436+00:00",
+  "last_close_equity": 90500.72,
+  "last_close_session_date": "2026-11-20",
+  "last_eod_session_date": "2026-11-20",
+  "last_eod_completed_at": "2026-11-21T01:32:14.966486+00:00",
   "week_start_set_at": "2026-11-16T14:40:37.209945+00:00",
   "week_start_source": "prior close 2026-11-13"
 }
