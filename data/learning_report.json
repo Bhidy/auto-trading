@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-21T01:32:14.947276+00:00",
+  "timestamp": "2026-11-24T04:48:21.237655+00:00",
   "overall": {
     "total_trades": 89,
     "wins": 30,
@@ -33,22 +33,22 @@
     "expectancy": null
   },
   "last_30_days": {
-    "total_trades": 6,
+    "total_trades": 3,
     "wins": 2,
-    "losses": 4,
-    "win_rate": 0.333,
-    "avg_pnl_pct": -11.93,
+    "losses": 1,
+    "win_rate": 0.667,
+    "avg_pnl_pct": -5.27,
     "avg_win_pct": 5.2,
-    "avg_loss_pct": -20.49,
-    "win_loss_ratio": 0.25,
+    "avg_loss_pct": -26.19,
+    "win_loss_ratio": 0.2,
     "max_win_pct": 8.47,
-    "max_loss_pct": -30.65,
-    "expectancy": -656.43,
-    "total_pnl": -2981.37,
-    "partial_trims_excluded": 4,
-    "profit_factor": 0.35,
-    "per_trade_sharpe": -0.78,
-    "sharpe_estimate": -0.78
+    "max_loss_pct": -26.19,
+    "expectancy": -357.27,
+    "total_pnl": -992.71,
+    "partial_trims_excluded": 2,
+    "profit_factor": 0.43,
+    "per_trade_sharpe": -0.29,
+    "sharpe_estimate": -0.29
   },
   "by_bucket": {
     "momentum": {
@@ -265,8 +265,6 @@
     }
   },
   "insights": [
-    "Win rate declining \u2014 tighten entry criteria",
-    "Losing money \u2014 reduce exposure and review strategy",
     "Bucket 'unknown' underperforming severely \u2014 consider reducing allocation",
     "Bucket 'aggressive_growth' underperforming severely \u2014 consider reducing allocation"
   ]
