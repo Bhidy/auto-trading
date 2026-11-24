@@ -4,8 +4,8 @@
   "activated_at": "2026-07-06",
   "basis": "p1_account_level",
   "days_on_paper": 141,
-  "track_days_measured": 101,
-  "oos_sharpe": -0.69,
+  "track_days_measured": 102,
+  "oos_sharpe": -0.67,
   "max_drawdown_pct": 8.68,
   "momentum_fills": 19,
   "rebalance_count": 23,
@@ -25,7 +25,7 @@
       "pass": true
     },
     "oos_sharpe": {
-      "value": -0.69,
+      "value": -0.67,
       "threshold": 1.0,
       "op": ">=",
       "pass": false
