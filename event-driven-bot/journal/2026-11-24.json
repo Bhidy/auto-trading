@@ -1078,5 +1078,140 @@
       }
     ],
     "trades": []
+  },
+  {
+    "date": "2026-11-24",
+    "timestamp": "2026-11-25T04:29:31.766875+00:00",
+    "audit": {
+      "equity": 95341.51,
+      "cash": 38614.65,
+      "daily_pnl": 815.49,
+      "daily_pnl_pct": 0.863,
+      "day_start_equity": 94526.02,
+      "total_open_exposure": 56726.86,
+      "exposure_pct": 59.5,
+      "position_count": 11,
+      "trades_today": 0,
+      "closed_today": 0,
+      "win_rate_today": 0,
+      "sector_exposure": {
+        "Tech": 7116.5,
+        "Unknown": 43648.41,
+        "Consumer": 5961.95
+      }
+    },
+    "positions": [
+      {
+        "symbol": "ANET",
+        "qty": "43",
+        "entry": "171.34",
+        "current": "165.5",
+        "market_value": "7116.5",
+        "unrealized_pl": "-251.12",
+        "pnl_pct": -3.41,
+        "sector": "Tech"
+      },
+      {
+        "symbol": "BIL",
+        "qty": "46",
+        "entry": "91.64",
+        "current": "91.64",
+        "market_value": "4215.44",
+        "unrealized_pl": "0",
+        "pnl_pct": 0.0,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "CTA",
+        "qty": "179",
+        "entry": "30.56",
+        "current": "25.13",
+        "market_value": "4498.27",
+        "unrealized_pl": "-971.97",
+        "pnl_pct": -17.77,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "DBMF",
+        "qty": "168",
+        "entry": "32.64",
+        "current": "31.58",
+        "market_value": "5305.44",
+        "unrealized_pl": "-178.08",
+        "pnl_pct": -3.25,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "DG",
+        "qty": "43",
+        "entry": "127.36",
+        "current": "138.65",
+        "market_value": "5961.95",
+        "unrealized_pl": "485.47",
+        "pnl_pct": 8.87,
+        "sector": "Consumer"
+      },
+      {
+        "symbol": "EFA",
+        "qty": "53",
+        "entry": "102.35",
+        "current": "98.88",
+        "market_value": "5240.64",
+        "unrealized_pl": "-183.91",
+        "pnl_pct": -3.39,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "IEF",
+        "qty": "60",
+        "entry": "91.08",
+        "current": "91.64",
+        "market_value": "5498.4",
+        "unrealized_pl": "33.6",
+        "pnl_pct": 0.61,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "IWM",
+        "qty": "19",
+        "entry": "274.18",
+        "current": "266.26",
+        "market_value": "5058.94",
+        "unrealized_pl": "-150.48",
+        "pnl_pct": -2.89,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "KMLM",
+        "qty": "177",
+        "entry": "30.85",
+        "current": "28.92",
+        "market_value": "5118.84",
+        "unrealized_pl": "-341.61",
+        "pnl_pct": -6.26,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "QQQ",
+        "qty": "7",
+        "entry": "705.59",
+        "current": "632",
+        "market_value": "4424",
+        "unrealized_pl": "-515.13",
+        "pnl_pct": -10.43,
+        "sector": "Unknown"
+      },
+      {
+        "symbol": "SPY",
+        "qty": "6",
+        "entry": "760.393333",
+        "current": "714.74",
+        "market_value": "4288.44",
+        "unrealized_pl": "-273.919998",
+        "pnl_pct": -6.0,
+        "sector": "Unknown"
+      }
+    ],
+    "trades": []
   }
 ]
