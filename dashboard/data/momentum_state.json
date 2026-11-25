@@ -2,11 +2,10 @@
   "last_rebalance_month": "2026-07",
   "rebalance_incomplete": true,
   "activated_at": "2026-07-06T14:28:59.013337+00:00",
-  "rebalance_count": 24,
-  "as_of": "2026-11-24T14:40:37.396198+00:00",
+  "rebalance_count": 25,
+  "as_of": "2026-11-25T14:40:54.531277+00:00",
   "targets": {
     "MU": 0.0692,
-    "AMD": 0.0692,
     "INTC": 0.0692,
     "AMAT": 0.0692,
     "MPC": 0.0692,
@@ -29,6 +28,6 @@
   "universe_size": 115,
   "vol_scale": 1.0,
   "book_vol": 0.1819,
-  "deployed_pct": 90.0,
+  "deployed_pct": 83.0,
   "risk_off": false
 }
